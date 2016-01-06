@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title> VENTAS </title>
+    <script type="text/javascript">
+        
+        "use strict";
+
+        var data = {};
+        data.newItem = { desc: "", precio: 0.0 };
+        
+        window.onload = function() {
+            var note = document.getElementById('notifications');
+            
+            note.innerHTML += '<li>App initialized.</li>';
+            
+            var indexedDB = window.indexedDB || window.mozIndexedDB || window.webkitIndexedDB || window.msIndexedDB;
+//            window.IDBTransaction = window.IDBTransaction || window.webkitIDBTransaction || window.msIDBTransaction;
+//            window.IDBKeyRange = window.IDBKeyRange || window.webkitIDBKeyRange || window.msIDBKeyRange;
+            
+            var req = indexedDB.open("datos");
+            
+            req.onerror = function(e) { note.innerHTML += '<li>Error loading database.</li>'; };
+            req.onsuccess = function(e) { note.innerHTML += '<li>Database initialized.</li>'; data.datos = req.result; };
+        };
+                
+        function inputChange(e) {
+            e.target.value = "";
+            searchRequest(e);
+        }
+        
+        function keyPressed(e) {
+            if (e.key == 'Escape') {
+                e.target.value = "";
+            }
+        }
+        
+        function searchRequest(e) {
+            var xhttp = new XMLHttpRequest();
+            xhttp.open('GET', '/' + e.target.value);
+            xhttp.onreadystatechange = function() {
+                console.log('State value: ' + xhttp.readyState + '\n');
+            };
+            xhttp.send(null);
+        }
+        
+    </script>
+</head>
+
+<body>
+
+    <header> <button value="load" onclick="searchRequest(event)"> LOAD </button> </header>
+
+    <section id="buscar">
+        <label> Buscar: <input type="search" size=40 placeholder="Art&iacute;culo o Clave" onchange="inputChange(event);" onkeypress="keyPressed(event);"> </label>
+    </section>
+
+    <section id="resultados">
+        <table>
+            <caption> Resultados de b&uacute;squeda </caption>
+            <thead>
+                <tr> <th width=40> Descripci&oacute;n </th> <th> Precio </th> </tr>
+            </thead>
+            <tbody id="tabla-resultados"> </tbody>
+        </table>
+    </section>
+    
+    <footer> <ul id="notifications"> </ul> </footer>
+    
+</body>
+</html>
