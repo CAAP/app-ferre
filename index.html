@@ -5,27 +5,56 @@
     <meta charset="UTF-8">
     <title> VENTAS </title>
     <script type="text/javascript">
-        
+
         "use strict";
 
+        var note = document.getElementById('notifications');
         var data = {};
         data.newItem = { desc: "", precio: 0.0 };
         
-        window.onload = function() {
-            var note = document.getElementById('notifications');
-            
+        var errorFun = function(e) { note.innerHTML += '<li>Error loading database.</li>'; };
+        
+        function loadDB() {
             note.innerHTML += '<li>App initialized.</li>';
-            
+
             var indexedDB = window.indexedDB || window.mozIndexedDB || window.webkitIndexedDB || window.msIndexedDB;
-//            window.IDBTransaction = window.IDBTransaction || window.webkitIDBTransaction || window.msIDBTransaction;
 //            window.IDBKeyRange = window.IDBKeyRange || window.webkitIDBKeyRange || window.msIDBKeyRange;
             
             var req = indexedDB.open("datos");
-            
-            req.onerror = function(e) { note.innerHTML += '<li>Error loading database.</li>'; };
+            req.onerror = errorFun;
             req.onsuccess = function(e) { note.innerHTML += '<li>Database initialized.</li>'; data.datos = req.result; };
-        };
+            re.onupgradeneeded = function(e) {
+                var db = event.taget.result;
+                db.onerror = errorFun;
                 
+                var objStore = db.createObjectStore('datos', { keyPath: 'clave' } );
+                objStore.createIndex('desc', 'desc', { unique: false } );
+                
+                note.innerHTML += '<li> ObjectStore created. </li>';
+            };
+        }
+
+        function populateDB() {
+            var xhttp = new XMLHttpRequest();
+            xhttp.open('GET', 'ferre.json');
+            xhttp.onreadystatechange = function() {
+                if (xhttp.readyState == 4) {
+                    var datos = eval( '(' +  xhttp.responseText + ')' );
+                    
+                    var transaction = data.datos.transaction(['datos'], 'readwrite');
+                    transaction.onerror = function () { note.innerHTML += '<li> Transaction not opened due to error. </li>'; };
+                    var objStore = transaction.objectSore('datos');
+
+                    for (i=0; i<datos.length; i++) {
+                        objStore.add( datos[i] );
+                    }
+                    
+                    note.innerHTML += '<li> Data loaded to DB. </li>';
+                }
+            };
+            xhttp.send(null);
+        }
+                  
         function inputChange(e) {
             e.target.value = "";
             searchRequest(e);
@@ -45,7 +74,7 @@
             };
             xhttp.send(null);
         }
-        
+     
     </script>
 </head>
 
