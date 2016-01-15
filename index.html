@@ -17,44 +17,7 @@
         var data = {};
         var IDBKeyRange = window.IDBKeyRange || window.webkitIDBKeyRange || window.msIDBKeyRange;
 
-	window.onload = function() {
-            note = document.getElementById('notifications');
-            ans = document.getElementById('tabla-resultados');
-
-            var indexedDB = window.indexedDB || window.mozIndexedDB || window.webkitIndexedDB || window.msIndexedDB;
-
-            var req = indexedDB.open(DB_NAME, DB_VERSION);
-            req.onerror = function(e) { note.innerHTML += '<li>Error loading database: '+ e.target.errorCode + '. </li>'; };
-            req.onsuccess = function(e) { note.innerHTML += '<li>Database initialized.</li>'; data.datos = this.result; };
-            req.onupgradeneeded = function(e) {
-                note.innerHTML += '<li>Upgrade ongoing.</li>';
-                
-                var objStore = e.currentTarget.result.createObjectStore(DB_STORE_NAME, { keyPath: "clave" });
-                objStore.createIndex("desc", "desc", { unique: false } );
-                objStore.transaction.oncomplete = function(e) {
-                    note.innerHTML += '<li> ObjectStore created. Ready to add data into it. </li>';
-                }
-
-            };
-        };
-
-        function populateDB() {
-            var xhttp = new XMLHttpRequest();
-            xhttp.open('GET', 'ferre.json');
-            xhttp.onreadystatechange = function() {
-                if (xhttp.readyState == 4) {
-                    var datos = eval( '(' +  xhttp.responseText + ')' );
-                    
-                    var objStore = write2DB();
-                    for (var i in datos) { objStore.add( datos[i] ); }
-                    
-                    note.innerHTML += '<li> Data loaded to DB. </li>';
-                }
-            };
-            xhttp.send(null);
-        }
-
-         function write2DB() {
+        function write2DB() {
             var transaction = data.datos.transaction(DB_STORE_NAME, "readwrite");
             transaction.oncomplete = function(e) { note.innerHTML += '<li> RW transaction successfully done. </li>' };
             transaction.onerror = function(e) { note.innerHTML += '<li> RW transaction error:' + e.target.errorCode + '. </li>' };
@@ -70,7 +33,23 @@
             
             return transaction.objectStore(DB_STORE_NAME);
         }
-        
+ 
+        function populateDB() {
+            var xhttp = new XMLHttpRequest();
+            xhttp.open('GET', 'ferre.json');
+            xhttp.onreadystatechange = function() {
+                if (xhttp.readyState == 4) {
+                    var datos = eval( '(' +  xhttp.responseText + ')' );
+                    
+                    var objStore = write2DB();
+                    for (var i in datos) { objStore.add( datos[i] ); }
+                    
+                    note.innerHTML += '<li> Data loaded to DB. </li>';
+                }
+            };
+            xhttp.send(null);
+        }
+       
         function searchByDesc(s) {
 	    ans.innerHTML = '';
 
@@ -80,7 +59,7 @@
             index.openCursor( descRange ).onsuccess = function(e) {
                 var cursor = e.target.result;
                 if (cursor) {
-                    var item = "<tr><td>" + cursor.value.desc + "</td> <td>" + cursor.value.precio + "</td></tr>";
+                    var item = "<tr><td>" + cursor.value.desc + "</td> <td>" + cursor.value.precio + "</td> <td>" + cursor.value.fecha + "</td></tr>";
                     ans.innerHTML += item;
 		    k++;
 		    if (k == 5) { return; }
@@ -88,7 +67,38 @@
                 }
             };
         }
-        
+ 
+	window.onload = function() {
+            note = document.getElementById('notifications');
+            ans = document.getElementById('tabla-resultados');
+
+        var indexedDB = window.indexedDB || window.mozIndexedDB || window.webkitIndexedDB || window.msIndexedDB;
+
+            var req = indexedDB.open(DB_NAME, DB_VERSION);
+            req.onerror = function(e) { note.innerHTML += '<li>Error loading database: '+ e.target.errorCode + '. </li>'; };
+            req.onsuccess = function(e) { note.innerHTML += '<li>Database initialized.</li>'; data.datos = this.result; };
+            req.onupgradeneeded = function(e) {
+                note.innerHTML += '<li>Upgrade ongoing.</li>';
+                
+                var objStore = e.currentTarget.result.createObjectStore(DB_STORE_NAME, { keyPath: "clave" });
+                objStore.createIndex("desc", "desc", { unique: false } );
+                objStore.transaction.oncomplete = function(e) {
+                    note.innerHTML += '<li> ObjectStore created. Ready to add data into it. </li>';
+		    populateDB();
+                }
+
+            };
+        };
+
+	window.onclose = function() {
+        var indexedDB = window.indexedDB || window.mozIndexedDB || window.webkitIndexedDB || window.msIndexedDB;
+
+	    var req = indexedDB.deleteDatabase(DB_NAME);
+	    req.onerror = function(e) { console.log("Error deleting database."); };
+	    req.onsuccess = function(e) { console.log("Database deleted successfully.") };
+	}
+
+       
                  
         function inputChange(e) {
             searchByDesc(e.target.value);
@@ -106,7 +116,7 @@
 
 <body>
 
-    <header> <button value="load" onclick="populateDB()"> LOAD </button> </header>
+    <header> <button value="load"> LOAD </button> </header>
 
     <section id="buscar">
         <label> Buscar: <input type="search" size=40 placeholder="Art&iacute;culo o Clave" onchange="inputChange(event);" onkeypress="keyPressed(event);"> </label>
@@ -116,7 +126,7 @@
         <table>
             <caption> Resultados de b&uacute;squeda </caption>
             <thead>
-                <tr> <th width=40> Descripci&oacute;n </th> <th> Precio </th> </tr>
+                <tr> <th width=40> Descripci&oacute;n </th> <th> Precio </th> <th> Fecha </th> </tr>
             </thead>
             <tbody id="tabla-resultados"> </tbody>
         </table>
