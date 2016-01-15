@@ -15,13 +15,12 @@
         var note;
         var ans;
         var data = {};
-        var errorFun = function(e) { note.innerHTML += '<li>Error loading database.</li>'; };
         var IDBKeyRange = window.IDBKeyRange || window.webkitIDBKeyRange || window.msIDBKeyRange;
-        window.onload = loadDB;
 
-        function loadDB() {
+	window.onload = function() {
             note = document.getElementById('notifications');
             ans = document.getElementById('tabla-resultados');
+
             var indexedDB = window.indexedDB || window.mozIndexedDB || window.webkitIndexedDB || window.msIndexedDB;
 
             var req = indexedDB.open(DB_NAME, DB_VERSION);
@@ -37,9 +36,25 @@
                 }
 
             };
+        };
+
+        function populateDB() {
+            var xhttp = new XMLHttpRequest();
+            xhttp.open('GET', 'ferre.json');
+            xhttp.onreadystatechange = function() {
+                if (xhttp.readyState == 4) {
+                    var datos = eval( '(' +  xhttp.responseText + ')' );
+                    
+                    var objStore = write2DB();
+                    for (var i in datos) { objStore.add( datos[i] ); }
+                    
+                    note.innerHTML += '<li> Data loaded to DB. </li>';
+                }
+            };
+            xhttp.send(null);
         }
 
-        function write2DB() {
+         function write2DB() {
             var transaction = data.datos.transaction(DB_STORE_NAME, "readwrite");
             transaction.oncomplete = function(e) { note.innerHTML += '<li> RW transaction successfully done. </li>' };
             transaction.onerror = function(e) { note.innerHTML += '<li> RW transaction error:' + e.target.errorCode + '. </li>' };
@@ -70,25 +85,9 @@
             };
         }
         
-        function populateDB() {
-            loadDB();
-            var xhttp = new XMLHttpRequest();
-            xhttp.open('GET', 'ferre.json');
-            xhttp.onreadystatechange = function() {
-                if (xhttp.readyState == 4) {
-                    var datos = eval( '(' +  xhttp.responseText + ')' );
-                    
-                    var objStore = write2DB();
-                    for (i=0; i<datos.length; i++) { objStore.add( datos[i] ); }
-                    
-                    note.innerHTML += '<li> Data loaded to DB. </li>';
-                }
-            };
-            xhttp.send(null);
-        }
-                  
+                 
         function inputChange(e) {
-            searchByDesc(e.taget.value);
+            searchByDesc(e.target.value);
             e.target.value = "";
         }
         
