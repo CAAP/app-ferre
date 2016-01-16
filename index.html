@@ -42,6 +42,11 @@
 	    req.onsuccess = function() { note.innerHTML = '<li> Data cleared. </li>' };
 	}
 
+	function reloadDB() {
+	    clearDB();
+	    populateDB();
+	}
+
 	function countDB() {
 	    var objStore = readDB();
 	    var req = objStore.count();
@@ -73,7 +78,7 @@
             index.openCursor( descRange ).onsuccess = function(e) {
                 var cursor = e.target.result;
                 if (cursor) {
-                    var item = "<tr><td>" + cursor.value.desc + "</td> <td>" + cursor.value.precio + "</td> <td>" + cursor.value.fecha + "</td></tr>";
+                    var item = "<tr><td>" + cursor.value.desc + "</td> <td>" + cursor.value.precio1 + "</td> <td>" + cursor.value.fecha + "</td></tr>";
                     ans.innerHTML += item;
 		    k++;
 		    if (k == 5) { return; }
@@ -123,7 +128,7 @@
 
 <body>
 
-    <header> <button value="count" onclick="countDB()"> COUNT </button> <label id="notifications"></label> </header>
+    <header> <button value="count" onclick="countDB()"> COUNT </button>  <button value="reload" onclick="reloadDB()"> RELOAD </button> <label id="notifications"></label> </header>
 
     <section id="buscar">
         <label> Buscar: <input type="search" size=40 placeholder="Art&iacute;culo o Clave" onchange="inputChange(event);" onkeypress="keyPressed(event);"> </label>
