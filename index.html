@@ -18,6 +18,7 @@
         var IDBKeyRange = window.IDBKeyRange || window.webkitIDBKeyRange || window.msIDBKeyRange;
 
         function write2DB() {
+	    note.innerHTML = '';
             var transaction = data.datos.transaction(DB_STORE_NAME, "readwrite");
             transaction.oncomplete = function(e) { note.innerHTML += '<li> RW transaction successfully done. </li>' };
             transaction.onerror = function(e) { note.innerHTML += '<li> RW transaction error:' + e.target.errorCode + '. </li>' };
@@ -27,12 +28,25 @@
         }
         
         function readDB() {
+	    note.innerHTML = '';
             var transaction = data.datos.transaction(DB_STORE_NAME);
             transaction.oncomplete = function(e) { note.innerHTML += '<li> Read transaction successfully done. </li>' };
             transaction.onerror = function(e) { note.innerHTML += '<li> Read transaction error:' + e.target.errorCode + '. </li>' };
             
             return transaction.objectStore(DB_STORE_NAME);
         }
+
+	function clearDB() {
+	    var objStore = write2DB();
+	    var req = objStore.clear();
+	    req.onsuccess = function() { note.innerHTML = '<li> Data cleared. </li>' };
+	}
+
+	function countDB() {
+	    var objStore = readDB();
+	    var req = objStore.count();
+	    req.onsuccess = function() { note.innerHTML = '<li> Count: ' + req.result + '</li>'; return req.result; }
+	}
  
         function populateDB() {
             var xhttp = new XMLHttpRequest();
@@ -44,7 +58,7 @@
                     var objStore = write2DB();
                     for (var i in datos) { objStore.add( datos[i] ); }
                     
-                    note.innerHTML += '<li> Data loaded to DB. </li>';
+                    note.innerHTML = '<li> Data loaded to DB. </li>';
                 }
             };
             xhttp.send(null);
@@ -75,28 +89,21 @@
         var indexedDB = window.indexedDB || window.mozIndexedDB || window.webkitIndexedDB || window.msIndexedDB;
 
             var req = indexedDB.open(DB_NAME, DB_VERSION);
-            req.onerror = function(e) { note.innerHTML += '<li>Error loading database: '+ e.target.errorCode + '. </li>'; };
-            req.onsuccess = function(e) { note.innerHTML += '<li>Database initialized.</li>'; data.datos = this.result; };
+            req.onerror = function(e) { note.innerHTML = '<li>Error loading database: '+ e.target.errorCode + '. </li>'; };
+            req.onsuccess = function(e) { note.innerHTML = '<li>Database initialized.</li>'; data.datos = this.result; };
             req.onupgradeneeded = function(e) {
-                note.innerHTML += '<li>Upgrade ongoing.</li>';
+                note.innerHTML = '<li>Upgrade ongoing.</li>';
                 
                 var objStore = e.currentTarget.result.createObjectStore(DB_STORE_NAME, { keyPath: "clave" });
                 objStore.createIndex("desc", "desc", { unique: false } );
                 objStore.transaction.oncomplete = function(e) {
-                    note.innerHTML += '<li> ObjectStore created. Ready to add data into it. </li>';
+                    note.innerHTML = '<li> ObjectStore created. Ready to add data into it. </li>';
 		    populateDB();
                 }
 
             };
         };
 
-	window.onclose = function() {
-        var indexedDB = window.indexedDB || window.mozIndexedDB || window.webkitIndexedDB || window.msIndexedDB;
-
-	    var req = indexedDB.deleteDatabase(DB_NAME);
-	    req.onerror = function(e) { console.log("Error deleting database."); };
-	    req.onsuccess = function(e) { console.log("Database deleted successfully.") };
-	}
 
        
                  
@@ -116,7 +123,7 @@
 
 <body>
 
-    <header> <button value="load"> LOAD </button> </header>
+    <header> <button value="count" onclick="countDB()"> COUNT </button> <label id="notifications"></label> </header>
 
     <section id="buscar">
         <label> Buscar: <input type="search" size=40 placeholder="Art&iacute;culo o Clave" onchange="inputChange(event);" onkeypress="keyPressed(event);"> </label>
@@ -132,7 +139,7 @@
         </table>
     </section>
     
-    <footer> <ul id="notifications"> </ul> </footer>
+    <footer> <ul id="notifs"> </ul> </footer>
     
 </body>
 </html>
