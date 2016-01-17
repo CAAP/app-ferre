@@ -26,11 +26,11 @@
 
             var req = indexedDB.open(DB_NAME, DB_VERSION);
             req.onerror = function(e) { note.innerHTML += '<li>Error loading database: '+ e.target.errorCode + '. </li>'; };
-            req.onsuccess = function(e) { note.innerHTML += '<li>Database initialized.</li>'; data.datos = e.target.result; };
+            req.onsuccess = function(e) { note.innerHTML += '<li>Database initialized.</li>'; data.datos = this.result; };
             req.onupgradeneeded = function(e) {
                 note.innerHTML += '<li>Upgrade ongoing.</li>';
                 
-                var objStore = e.target.result.createObjectStore(DB_STORE_NAME, { keyPath: "clave" });
+                var objStore = e.currentTarget.result.createObjectStore(DB_STORE_NAME, { keyPath: "clave" });
                 objStore.createIndex("desc", "desc", { unique: false } );
                 objStore.transaction.oncomplete = function(e) {
                     note.innerHTML += '<li> ObjectStore created. Ready to add data into it. </li>';
