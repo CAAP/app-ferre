@@ -12,13 +12,16 @@
         const DB_VERSION = 1;
         const DB_STORE_NAME = 'datos-clave';
         
-        var note = document.getElementById('notifications');
-        var ans = document.getElementById('tabla-resultados');
+        var note;
+        var ans;
         var data = {};
         var errorFun = function(e) { note.innerHTML += '<li>Error loading database.</li>'; };
-        var IDBKeyRange = window.IDBKeyRange || window.webkitIDBKeyRange || window.msIDBKeyRange;;
+        var IDBKeyRange = window.IDBKeyRange || window.webkitIDBKeyRange || window.msIDBKeyRange;
+        window.onload = loadDB;
 
         function loadDB() {
+            note = document.getElementById('notifications');
+            ans = document.getElementById('tabla-resultados');
             var indexedDB = window.indexedDB || window.mozIndexedDB || window.webkitIndexedDB || window.msIndexedDB;
 
             var req = indexedDB.open(DB_NAME, DB_VERSION);
@@ -68,6 +71,7 @@
         }
         
         function populateDB() {
+            loadDB();
             var xhttp = new XMLHttpRequest();
             xhttp.open('GET', 'ferre.json');
             xhttp.onreadystatechange = function() {
