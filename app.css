@@ -1,0 +1,13 @@
+
+.desc th {
+    width: 300px;
+}
+
+.scrollable {
+    max-height: 200px;
+    overflow: auto;
+}
+
+#tabla-resultados tr:hover {
+    background-color: #ffff99;
+}
