@@ -8,6 +8,12 @@
     overflow: auto;
 }
 
-#tabla-resultados tr:hover {
+.tablas {
+    visibility: hidden;
+}
+
+.amarillo tr:hover {
     background-color: #ffff99;
 }
+
+

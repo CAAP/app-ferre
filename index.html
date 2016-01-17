@@ -16,13 +16,23 @@
         <label> Buscar: <input type="search" size=40 placeholder="Art&iacute;culo o Clave" onchange="inputChange(event);" onkeypress="keyPressed(event);"> </label>
     </section>
 
-    <section id="resultados" class="scrollable">
+    <section id="resultados" class="scrollable tablas">
         <table>
             <caption> Resultados de b&uacute;squeda </caption>
             <thead>
                 <tr> <th> Fecha </th> <th class="desc"> Descripci&oacute;n </th> <th> Precio1 </th> <th></th> <th> Precio2 </th> <th></th> </tr>
             </thead>
-	    <tbody id="tabla-resultados" onclick="myname(event)"></tbody>
+	    <tbody id="tabla-resultados" class="amarillo" onclick="myname(event)"></tbody>
+	</table>
+    </section>
+
+    <section id="ticket" class="tablas">
+	<table>
+           <caption> TICKET </caption>
+            <thead>
+                <tr> <th> Cantidad </th> <th class="desc"> Descripci&oacute;n </th> <th> Precio </th> <th> Unidad </th> </tr>
+            </thead>
+	    <tbody id="ticket-compra" class="amarillo"></tbody>
 	</table>
     </section>
     

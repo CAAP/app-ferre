@@ -4,9 +4,9 @@
         const DB_NAME = 'datos';
         const DB_VERSION = 2;
         const DB_STORE_NAME = 'datos-clave';
+	const TODAY = new Date().toDateString();
         
-        var note;
-        var ans;
+        var note, bag, ans;
         var data = {};
         var IDBKeyRange = window.IDBKeyRange || window.webkitIDBKeyRange || window.msIDBKeyRange;
 
@@ -70,6 +70,7 @@
         }
 
 	function search(s) {
+	    document.getElementById('resultados').style.visibility='visible';
 	    ans.innerHTML = '';
 	    if (s.length < 5)
 		searchByClave(s);
@@ -78,7 +79,7 @@
 	}
        
 	function newItem(a) {
-            var item = '<tr id="' + a.clave + '" onclick="myname(event)">' + '<td>' + a.fecha + "</td><td>" + a.desc + "</td><td>" + a.precio1 + "</td><td>" + a.u1 + "</td>";
+            var item = '<tr id="' + a.clave + '">' + '<td onclick="myname(event)">' + a.fecha + '</td><td>' + a.desc + "</td><td>" + a.precio1 + "</td><td>" + a.u1 + "</td>";
 	    item += a.precio2>0 ? "<td>"+a.precio2+"</td><td>"+a.u2+"</td>": '<td></td><td></td>';
 	    item += '</tr>';
 	    return item;
@@ -120,8 +121,9 @@
 	window.onload = function() {
             note = document.getElementById('notifications');
             ans = document.getElementById('tabla-resultados');
+	    bag = document.getElementById('ticket-compra');
 
-        var indexedDB = window.indexedDB || window.mozIndexedDB || window.webkitIndexedDB || window.msIndexedDB;
+	    var indexedDB = window.indexedDB || window.mozIndexedDB || window.webkitIndexedDB || window.msIndexedDB;
 
             var req = indexedDB.open(DB_NAME, DB_VERSION);
             req.onerror = function(e) { note.innerHTML = '<li>Error loading database: '+ e.target.errorCode + '. </li>'; };
@@ -156,6 +158,15 @@
 	}
 
 	function myname(e) {
-	    console.log('Click on me: '+e.target.parentElement.id);
+	    document.getElementById('ticket').style.visibility='visible';
+
+	    var id = e.target.parentElement.id;
+	    console.log('Click on me: '+id);
+
+	    var req = readDB().get( asnum(id) );
+	    req.onsuccess = function(ev) {
+		var q = ev.target.result;
+		bag.innerHTML += '<tr><td>1</td><td>'+q.desc+'</td><td>'+q.precio1+'</td><td>'+q.u1+'</td></tr>';
+	    }
 	}
 
