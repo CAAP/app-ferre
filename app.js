@@ -68,20 +68,48 @@
             };
             xhttp.send(null);
         }
-       
-        function searchByDesc(s) {
-	    ans.innerHTML = '';
 
+	function search(s) {
+	    ans.innerHTML = '';
+	    if (s.length < 5)
+		searchByClave(s);
+	    else
+		searchByDesc(s);
+	}
+       
+	function newItem(a) {
+            var item = '<tr id="' + a.clave + '" onclick="myname(event)">' + '<td>' + a.fecha + "</td><td>" + a.desc + "</td><td>" + a.precio1 + "</td><td>" + a.u1 + "</td>";
+	    item += a.precio2>0 ? "<td>"+a.precio2+"</td><td>"+a.u2+"</td>": '<td></td><td></td>';
+	    item += '</tr>';
+	    return item;
+	}
+
+	function asnum(s) {
+	    var n = Number(s);
+	    return Number.isNaN(n) ? s : n;
+	}
+
+        function searchByClave(s) {
+	    console.log('Searching by clave.');
+	    var req = readDB().get( asnum(s) );
+	    req.onerror =  function(e) { console.log('Error searching by clave.'); };
+	    req.onsuccess = function(e) {
+		if (e.target.result)
+		    ans.innerHTML += newItem(e.target.result);
+		else
+		    searchByDesc(s);
+	    };
+	}
+
+        function searchByDesc(s) {
+	    console.log('Searching by description.');
             var index = readDB().index("desc");
             var descRange = IDBKeyRange.lowerBound(s);
 	    var k = 0;
             index.openCursor( descRange ).onsuccess = function(e) {
                 var cursor = e.target.result;
                 if (cursor) {
-                    var item = '<tr name="clave" onclick="myname(event)">' + '<td>' + cursor.value.fecha + "</td><td>" + cursor.value.desc + "</td><td>" + cursor.value.precio1 + "</td><td>" + cursor.value.u1 + "</td>";
-		    item += cursor.value.precio2>0 ? "<td>"+cursor.value.precio2+"</td><td>"+cursor.value.u2+"</td>": '<td></td><td></td>';
-		    item += '</tr>';
-                    ans.innerHTML += item;
+                    ans.innerHTML += newItem(cursor.value);
 		    k++;
 		    if (k == 20) { return; }
                     cursor.continue();
@@ -113,7 +141,7 @@
 
 
         function inputChange(e) {
-            searchByDesc(e.target.value);
+            search(e.target.value);
             e.target.value = "";
         }
         
@@ -128,6 +156,6 @@
 	}
 
 	function myname(e) {
-	    console.log('Click on me: '+e.target.parentElement);
+	    console.log('Click on me: '+e.target.parentElement.id);
 	}
 
