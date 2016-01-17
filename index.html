@@ -8,32 +8,65 @@
 
         "use strict";
 
+        const DB_NAME = 'datos';
+        const DB_VERSION = 1;
+        const DB_STORE_NAME = 'datos-clave';
+        
         var note = document.getElementById('notifications');
+        var ans = document.getElementById('tabla-resultados');
         var data = {};
-        data.newItem = { desc: "", precio: 0.0 };
-        
         var errorFun = function(e) { note.innerHTML += '<li>Error loading database.</li>'; };
-        
-        function loadDB() {
-            note.innerHTML += '<li>App initialized.</li>';
+        var IDBKeyRange = window.IDBKeyRange || window.webkitIDBKeyRange || window.msIDBKeyRange;;
 
+        function loadDB() {
             var indexedDB = window.indexedDB || window.mozIndexedDB || window.webkitIndexedDB || window.msIndexedDB;
-//            window.IDBKeyRange = window.IDBKeyRange || window.webkitIDBKeyRange || window.msIDBKeyRange;
-            
-            var req = indexedDB.open("datos");
-            req.onerror = errorFun;
-            req.onsuccess = function(e) { note.innerHTML += '<li>Database initialized.</li>'; data.datos = req.result; };
-            re.onupgradeneeded = function(e) {
-                var db = event.taget.result;
-                db.onerror = errorFun;
+
+            var req = indexedDB.open(DB_NAME, DB_VERSION);
+            req.onerror = function(e) { note.innerHTML += '<li>Error loading database: '+ e.target.errorCode + '. </li>'; };
+            req.onsuccess = function(e) { note.innerHTML += '<li>Database initialized.</li>'; data.datos = e.target.result; };
+            req.onupgradeneeded = function(e) {
+                note.innerHTML += '<li>Upgrade ongoing.</li>';
                 
-                var objStore = db.createObjectStore('datos', { keyPath: 'clave' } );
-                objStore.createIndex('desc', 'desc', { unique: false } );
-                
-                note.innerHTML += '<li> ObjectStore created. </li>';
+                var objStore = e.target.result.createObjectStore(DB_STORE_NAME, { keyPath: "clave" });
+                objStore.createIndex("desc", "desc", { unique: false } );
+                objStore.transaction.oncomplete = function(e) {
+                    note.innerHTML += '<li> ObjectStore created. Ready to add data into it. </li>';
+                }
+
             };
         }
 
+        function write2DB() {
+            var transaction = data.datos.transaction(DB_STORE_NAME, "readwrite");
+            transaction.oncomplete = function(e) { note.innerHTML += '<li> RW transaction successfully done. </li>' };
+            transaction.onerror = function(e) { note.innerHTML += '<li> RW transaction error:' + e.target.errorCode + '. </li>' };
+            
+            var objStore = transaction.objectStore(DB_STORE_NAME);
+            return objStore;
+        }
+        
+        function readDB() {
+            var transaction = data.datos.transaction(DB_STORE_NAME);
+            transaction.oncomplete = function(e) { note.innerHTML += '<li> ROnly transaction successfully done. </li>' };
+            transaction.onerror = function(e) { note.innerHTML += '<li> ROnly transaction error:' + e.target.errorCode + '. </li>' };
+            
+            var ojbStore = transaction.objectStore(DB_STORE_NAME);
+            return objStore;
+        }
+        
+        function searchByDesc(s) {
+            var index = readDB().index("desc");
+            var descRange = IDBKeyRange.lowerBound(s);
+            index.openCursor( descRange ).onsuccess = function(e) {
+                var cursor = e.target.result;
+                if (cursor) {
+                    var item = "<tr><td>" + cursor.desc + "</td> <td>" + cursor.precio + "</td></tr>";
+                    ans.innerHTML += item;
+                    cursor.continue();
+                }
+            };
+        }
+        
         function populateDB() {
             var xhttp = new XMLHttpRequest();
             xhttp.open('GET', 'ferre.json');
@@ -41,13 +74,8 @@
                 if (xhttp.readyState == 4) {
                     var datos = eval( '(' +  xhttp.responseText + ')' );
                     
-                    var transaction = data.datos.transaction(['datos'], 'readwrite');
-                    transaction.onerror = function () { note.innerHTML += '<li> Transaction not opened due to error. </li>'; };
-                    var objStore = transaction.objectSore('datos');
-
-                    for (i=0; i<datos.length; i++) {
-                        objStore.add( datos[i] );
-                    }
+                    var objStore = write2DB();
+                    for (i=0; i<datos.length; i++) { objStore.add( datos[i] ); }
                     
                     note.innerHTML += '<li> Data loaded to DB. </li>';
                 }
@@ -56,8 +84,8 @@
         }
                   
         function inputChange(e) {
+            searchByDesc(e.taget.value);
             e.target.value = "";
-            searchRequest(e);
         }
         
         function keyPressed(e) {
@@ -65,16 +93,7 @@
                 e.target.value = "";
             }
         }
-        
-        function searchRequest(e) {
-            var xhttp = new XMLHttpRequest();
-            xhttp.open('GET', '/' + e.target.value);
-            xhttp.onreadystatechange = function() {
-                console.log('State value: ' + xhttp.readyState + '\n');
-            };
-            xhttp.send(null);
-        }
-     
+
     </script>
 </head>
 
