@@ -19,10 +19,12 @@
     <section id="resultados" class="scrollable tablas">
         <table>
             <caption> Resultados de b&uacute;squeda </caption>
+	    <dt>
             <thead>
                 <tr> <th> Fecha </th> <th class="desc"> Descripci&oacute;n </th> <th> Precio1 </th> <th></th> <th> Precio2 </th> <th></th> </tr>
             </thead>
-	    <tbody id="tabla-resultados" class="amarillo" onclick="myname(event)"></tbody>
+	    </dt>
+	    <tbody id="tabla-resultados" class="amarillo" onclick="add2bag(event)" ></tbody>
 	</table>
     </section>
 
@@ -30,9 +32,9 @@
 	<table>
            <caption> TICKET </caption>
             <thead>
-                <tr> <th> Cantidad </th> <th class="desc"> Descripci&oacute;n </th> <th> Precio </th> <th> Unidad </th> </tr>
+                <tr> <th> Cantidad </th><th class="desc"> Descripci&oacute;n </th><th> Precio </th><th> Descuento </th> </tr> 
             </thead>
-	    <tbody id="ticket-compra" class="amarillo"></tbody>
+	    <tbody id="ticket-compra" class="amarillo" oninput="changedEvent(event)"></tbody>
 	</table>
     </section>
     

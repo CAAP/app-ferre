@@ -12,6 +12,16 @@
     visibility: hidden;
 }
 
+.tablas th {
+    border-bottom: 2px solid black;
+    border-top: 2px solid black;
+}
+
+.tablas th {
+    position: sticky;
+    top: 0px;
+}
+
 .amarillo tr:hover {
     background-color: #ffff99;
 }

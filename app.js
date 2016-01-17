@@ -79,7 +79,7 @@
 	}
        
 	function newItem(a) {
-            var item = '<tr id="' + a.clave + '">' + '<td onclick="myname(event)">' + a.fecha + '</td><td>' + a.desc + "</td><td>" + a.precio1 + "</td><td>" + a.u1 + "</td>";
+            var item = '<tr id="' + a.clave + '"><td>' + a.fecha + '</td><td>' + a.desc + "</td><td>" + a.precio1 + "</td><td>" + a.u1 + "</td>";
 	    item += a.precio2>0 ? "<td>"+a.precio2+"</td><td>"+a.u2+"</td>": '<td></td><td></td>';
 	    item += '</tr>';
 	    return item;
@@ -141,7 +141,6 @@
             };
         };
 
-
         function inputChange(e) {
             search(e.target.value);
             e.target.value = "";
@@ -153,11 +152,9 @@
             }
         }
 
-	function scrolling(e) {
-	    console.log('Scrolling by: '+e.target.name);
-	}
+	function changedEvent(e) { console.log('Value: ' + e.target.innerHTML); }
 
-	function myname(e) {
+	function add2bag(e) {
 	    document.getElementById('ticket').style.visibility='visible';
 
 	    var id = e.target.parentElement.id;
@@ -166,7 +163,7 @@
 	    var req = readDB().get( asnum(id) );
 	    req.onsuccess = function(ev) {
 		var q = ev.target.result;
-		bag.innerHTML += '<tr><td>1</td><td>'+q.desc+'</td><td>'+q.precio1+'</td><td>'+q.u1+'</td></tr>';
+		bag.innerHTML += '<tr><td><label contentEditable=true>1</label></td><td>'+q.desc+'</td><td>'+q.precio1+' '+q.u1+'</td><td contentEditable=true>0</td></tr>';
 	    }
 	}
 
