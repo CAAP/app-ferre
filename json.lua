@@ -5,9 +5,14 @@ local st = require'carlos.string'
 
 local conn = sql.connect'ferre.db'
 
-local JSON = '{clave:"$clave", desc:"$desc", precio1:$precio1, precio2:$precio2, precio3:$precio3, unidad1:"$u1", unidad2:"$u2", unidad3:"$u3", fecha:"$fecha"}'
+local JSON = {'clave', 'desc', 'fecha', 'precio1', 'precio2', 'precio3', 'u1', 'u2', 'u3'}
 
-local function tostr( a ) a.u2 = a.u2 or ''; a.u3 = a.u3 or ''; return JSON:gsub( '%$(%w+)', a ) end
+local function asstr(x) return tonumber(x) or '"'..x..'"' end
+
+local function tostr(a)
+    local ret = fd.reduce( JSON, fd.filter(function(k) return a[k] end), fd.map(function(k) return k..':'..asstr(a[k]) end), fd.into, {} )
+    return '{' .. table.concat(ret, ', ') .. '}'
+end
 
 local N = conn.count'datosALL'
 
@@ -15,4 +20,4 @@ local QRY = "SELECT *, ROUND(costol*impuesto*descuento*p1,2) precio1, ROUND(cost
 
 local items = fd.reduce( conn.query(QRY), fd.map( tostr ), st.status(N), fd.into, {} )
 
-fs.dump('ferre.json', '[' .. table.concat(items, ',') .. ']')
+fs.dump('ferre.json', '[' .. table.concat(items, ', ') .. ']')
