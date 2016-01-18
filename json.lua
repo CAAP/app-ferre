@@ -18,8 +18,8 @@ local N = conn.count'datosALL'
 
 local QRY = "SELECT *, ROUND(costol*impuesto*descuento*p1,2) precio1, ROUND(costol*impuesto*descuento*p2,2) precio2, ROUND(costol*impuesto*descuento*p3,2) precio3 FROM datosALL"
 
-local items = fd.reduce( conn.query(QRY), fd.map( tovec ), st.status(N), fd.into, {} )
+local items = fd.take( 5000, conn.query(QRY), fd.map( tovec ), st.status(N), fd.into, {} )
 
 local keys = '[' .. table.concat(fd.reduce(JSON, fd.map(quot), fd.into, {}), ', ') .. ']'
 
-fs.dump('ferre.json', '{datos: ' .. table.concat(items, ', ') .. ', ks: ' .. keys .. '}')
+fs.dump('ferre.json', '{ks: ' .. keys ..', vs: [' .. table.concat(items, ', ') .. ']}')

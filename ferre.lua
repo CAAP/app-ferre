@@ -4,8 +4,9 @@ local fd = require'carlos.fold'
 local sql = require'carlos.sqlite'
 local st = require'carlos.string'
 
-local function encode( s ) return s:gusb('%s+$',''):gsub('%.+$',''):gsub('Ñ','&Ntilde;'):gsub('"', '&quot;')
-end
+-- gsub('Ñ','&Ntilde;'):
+
+local function encode( s ) return s:gsub('%s+$',''):gsub('%.+$',''):gsub('"', '&quot;') end
 
 local function readIn( a )
     local desc, clave, precio, fecha = encode( a[3] ), a[10], a[20], a[23]
