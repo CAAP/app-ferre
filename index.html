@@ -58,10 +58,17 @@
             xhttp.open('GET', 'ferre.json');
             xhttp.onreadystatechange = function() {
                 if (xhttp.readyState == 4) {
-                    var datos = eval( '(' +  xhttp.responseText + ')' );
+                    var mydata = eval( '(' +  xhttp.responseText + ')' );
+		    var datos = mydata.datos
+		    var ks = mydata.ks
+		    function mydata.asobj(a) {
+			var ret = {};
+			for (var i in ks) { ret[ks[i]] = a[i]; }
+			return ret;
+		    }
                     
                     var objStore = write2DB();
-                    for (var i in datos) { objStore.add( datos[i] ); }
+                    for (var i in datos) { objStore.add( mydata.asobj(datos[i]) ); }
                     
                     note.innerHTML = '<li> Data loaded to DB. </li>';
                 }
