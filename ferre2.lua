@@ -4,7 +4,7 @@ local fd = require'carlos.fold'
 local sql = require'carlos.sqlite'
 local st = require'carlos.string'
 
-local function encode( s ) return s:gsub('%.+',' '):gsub('Ñ','&Ntilde;'):gsub('"', '&quot;')
+local function encode( s ) return s:gsub('%s+$',''):gsub('%.+$',''):gsub('Ñ','&Ntilde;'):gsub('"', '&quot;')
 end
 
 local function readIn( a )
