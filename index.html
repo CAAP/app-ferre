@@ -28,17 +28,21 @@
 	</table>
     </section>
 
+    <menu type="context" id="bag-menu">
+	<menuitem label="Eliminar" />
+    </menu>
+
     <section id="ticket" class="tablas">
 	<table>
            <caption> TICKET </caption>
             <thead>
                 <tr> <th> Cantidad </th><th class="desc"> Descripci&oacute;n </th><th> Precio </th><th> Descuento </th><th> Total </th> </tr> 
             </thead>
-	    <tbody id="ticket-compra" class="amarillo" onchange="changedEvent(event)"></tbody>
+	    <tbody id="ticket-compra" class="amarillo" onchange="changedEvent(event)" contextmenu="bag-menu"></tbody>
 	</table>
     </section>
     
-    <footer> <a href="http://png.clipart.me/graphics/thumbs/747/cartoon-recycle-bin_74700058.jpg" class="icon"></a> </footer>
+    <footer> </footer>
     
 </body>
 </html>

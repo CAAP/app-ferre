@@ -1,15 +1,48 @@
 
         "use strict";
 
-        const DB_NAME = 'datos';
-        const DB_VERSION = 2;
+        const DB_DATA = 'datos';
+       	const DB_GOODS = 'tickets';
+	const DB_MEN = 'empleados';
+ 	const DB_VERSION = 2;
         const DB_STORE_NAME = 'datos-clave';
 	const TODAY = new Date().toDateString();
+	const ALPHA = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnopqrstuvwxyz";
         
         var note, bag, bin, ans;
         var data = {};
 	var hideBag = true;
         var IDBKeyRange = window.IDBKeyRange || window.webkitIDBKeyRange || window.msIDBKeyRange;
+
+	window.onload = function() {
+            note = document.getElementById('notifications');
+            ans = document.getElementById('tabla-resultados');
+	    bag = document.getElementById('ticket-compra');
+	    bin = document.getElementById('basurero');
+
+	    var indexedDB = window.indexedDB || window.mozIndexedDB || window.webkitIndexedDB || window.msIndexedDB;
+
+            var req = indexedDB.open(DB_DATA, DB_VERSION);
+            req.onerror = function(e) { note.innerHTML = '<li>Error loading database: '+ e.target.errorCode + '. </li>'; };
+            req.onsuccess = function(e) { note.innerHTML = '<li>Database initialized.</li>'; data.datos = this.result; };
+            req.onupgradeneeded = function(e) {
+                note.innerHTML = '<li>Upgrade ongoing.</li>';
+                
+                var objStore = e.currentTarget.result.createObjectStore(DB_STORE_NAME, { keyPath: "clave" });
+                objStore.createIndex("desc", "desc", { unique: false } );
+                objStore.transaction.oncomplete = function(e) {
+                    note.innerHTML = '<li> ObjectStore created. Ready to add data into it. </li>';
+		    populateDB();
+                };
+	    };
+        };
+
+ 	function newString(len) {
+	    var ret = "";
+	    for(var i=0; i<len; i++)
+		ret += ALPHA.chatAt(Math.floor(Math.random() * ALPHA.length + 0.5));
+	    return ret;
+	}
 
         function write2DB() {
 	    note.innerHTML = '';
@@ -120,39 +153,14 @@
             };
         }
  
-	window.onload = function() {
-            note = document.getElementById('notifications');
-            ans = document.getElementById('tabla-resultados');
-	    bag = document.getElementById('ticket-compra');
-	    bin = document.getElementById('basurero');
-
-	    var indexedDB = window.indexedDB || window.mozIndexedDB || window.webkitIndexedDB || window.msIndexedDB;
-
-            var req = indexedDB.open(DB_NAME, DB_VERSION);
-            req.onerror = function(e) { note.innerHTML = '<li>Error loading database: '+ e.target.errorCode + '. </li>'; };
-            req.onsuccess = function(e) { note.innerHTML = '<li>Database initialized.</li>'; data.datos = this.result; };
-            req.onupgradeneeded = function(e) {
-                note.innerHTML = '<li>Upgrade ongoing.</li>';
-                
-                var objStore = e.currentTarget.result.createObjectStore(DB_STORE_NAME, { keyPath: "clave" });
-                objStore.createIndex("desc", "desc", { unique: false } );
-                objStore.transaction.oncomplete = function(e) {
-                    note.innerHTML = '<li> ObjectStore created. Ready to add data into it. </li>';
-		    populateDB();
-                }
-
-            };
-        };
-
         function inputChange(e) {
             search(e.target.value);
             e.target.value = "";
         }
         
         function keyPressed(e) {
-            if (e.key == 'Escape') {
+            if (e.key == 'Escape')
                 e.target.value = "";
-            }
         }
 
 	function changedEvent(e) { console.log(e.target.name + ': ' + e.target.value); }
@@ -170,11 +178,7 @@
 	    req.onsuccess = function(ev) {
 		var q = ev.target.result;
 		bag.innerHTML += '<tr><td><input name="qty" type="text" size=3 value=1></td><td>'+q.desc+'</td><td class="pesos">'+q.precio1+' / '+q.u1+'</td><td class="pesos"><input name="rea" type="text" size=2 value=0>%</td><td class="pesos">'+q.precio1+'</td></tr>';
-	    }
+	    };
 	}
 
-        function dragging(e) { }
-
-	function move2bin(e) {
-	}
 
