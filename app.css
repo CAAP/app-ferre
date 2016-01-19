@@ -1,6 +1,22 @@
+td, th {
+    font: 100% arial;
+}
+
+.total {
+    font: bold italic 100% arial;
+    text-align: right;
+}
+
+strong {
+    color: red;
+    font: bold 200% arial;
+}
 
 .desc th {
-    width: 300px;
+    width: 400px;
+}
+.pesos {
+    text-align: right;
 }
 
 .scrollable {
@@ -20,5 +36,4 @@
 .amarillo tr:hover {
     background-color: #ffff99;
 }
-
 

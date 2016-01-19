@@ -6,8 +6,9 @@
         const DB_STORE_NAME = 'datos-clave';
 	const TODAY = new Date().toDateString();
         
-        var note, bag, ans;
+        var note, bag, bin, ans;
         var data = {};
+	var hideBag = true;
         var IDBKeyRange = window.IDBKeyRange || window.webkitIDBKeyRange || window.msIDBKeyRange;
 
         function write2DB() {
@@ -79,8 +80,9 @@
 	}
        
 	function newItem(a) {
-            var item = '<tr id="' + a.clave + '"><td>' + a.fecha + '</td><td>' + a.desc + "</td><td>" + a.precio1 + "</td><td>" + a.u1 + "</td>";
-	    item += a.precio2>0 ? "<td>"+a.precio2+"</td><td>"+a.u2+"</td>": '<td></td><td></td>';
+            var item = '<tr id="' + a.clave + '"><td>' + a.fecha + '</td><td>' + a.desc + '</td><td class="pesos">' + a.precio1 + " / " + a.u1 + "</td>";
+	    item += a.precio2>0 ? '<td class="pesos">'+a.precio2+" / "+a.u2+"</td>": '<td></td>';
+	    item += a.precio3>0 ? '<td class="pesos">'+a.precio3+" / "+a.u3+"</td>": '<td></td>';
 	    item += '</tr>';
 	    return item;
 	}
@@ -122,6 +124,7 @@
             note = document.getElementById('notifications');
             ans = document.getElementById('tabla-resultados');
 	    bag = document.getElementById('ticket-compra');
+	    bin = document.getElementById('basurero');
 
 	    var indexedDB = window.indexedDB || window.mozIndexedDB || window.webkitIndexedDB || window.msIndexedDB;
 
@@ -152,18 +155,26 @@
             }
         }
 
-	function changedEvent(e) { console.log('Value: ' + e.target.innerHTML); }
+	function changedEvent(e) { console.log(e.target.name + ': ' + e.target.value); }
 
 	function add2bag(e) {
-	    document.getElementById('ticket').style.visibility='visible';
-
+	    if (hideBag) {
+		document.getElementById('ticket').style.visibility='visible';
+		hideBag = false;
+	    }
+	    
 	    var id = e.target.parentElement.id;
 	    console.log('Click on me: '+id);
 
 	    var req = readDB().get( asnum(id) );
 	    req.onsuccess = function(ev) {
 		var q = ev.target.result;
-		bag.innerHTML += '<tr><td><label contentEditable=true>1</label></td><td>'+q.desc+'</td><td>'+q.precio1+' '+q.u1+'</td><td contentEditable=true>0</td></tr>';
+		bag.innerHTML += '<tr><td><input name="qty" type="text" size=3 value=1></td><td>'+q.desc+'</td><td class="pesos">'+q.precio1+' / '+q.u1+'</td><td class="pesos"><input name="rea" type="text" size=2 value=0>%</td><td class="pesos">'+q.precio1+'</td></tr>';
 	    }
+	}
+
+        function dragging(e) { }
+
+	function move2bin(e) {
 	}
 
