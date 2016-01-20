@@ -17,11 +17,6 @@
     border-top: 2px solid black;
 }
 
-.tablas th {
-    position: sticky;
-    top: 0px;
-}
-
 .amarillo tr:hover {
     background-color: #ffff99;
 }
