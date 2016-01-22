@@ -39,6 +39,10 @@ strong {
     background-color: #ffff99;
 }
 
-#ticket-compra td {
-    cursor: url(trash.png), url(bin-icon.png), default;
+.basura {
+    cursor: url(bin-icon.png), url(trash.png), default;
+}
+
+#resultados td {
+    cursor: copy;
 }
