@@ -15,6 +15,7 @@ strong {
 .desc th {
     width: 400px;
 }
+
 .pesos {
     text-align: right;
 }
@@ -26,6 +27,7 @@ strong {
 
 .tablas {
     visibility: hidden;
+    cursor: default;
 }
 
 .tablas th {

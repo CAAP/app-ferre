@@ -113,7 +113,7 @@
 	}
        
 	function newItem(a) {
-            var item = '<tr id="' + a.clave + '"><td>' + a.fecha + '</td><td>' + a.desc + '</td><td class="pesos">' + a.precio1 + " / " + a.u1 + "</td>";
+            var item = '<tr data-clave="' + a.clave + '"><td>' + a.fecha + '</td><td>' + a.desc + '</td><td class="pesos">' + a.precio1 + " / " + a.u1 + "</td>";
 	    item += a.precio2>0 ? '<td class="pesos">'+a.precio2+" / "+a.u2+"</td>": '<td></td>';
 	    item += a.precio3>0 ? '<td class="pesos">'+a.precio3+" / "+a.u3+"</td>": '<td></td>';
 	    item += '</tr>';
@@ -171,14 +171,22 @@
 		hideBag = false;
 	    }
 	    
-	    var id = e.target.parentElement.id;
-	    console.log('Click on me: '+id);
+	    var clave = e.target.parentElement.dataset.clave;
+	    console.log('Click on me: '+clave);
 
-	    var req = readDB().get( asnum(id) );
+	    var req = readDB().get( asnum(clave) );
 	    req.onsuccess = function(ev) {
 		var q = ev.target.result;
-		bag.innerHTML += '<tr><td><input name="qty" type="text" size=3 value=1></td><td>'+q.desc+'</td><td class="pesos">'+q.precio1+' / '+q.u1+'</td><td class="pesos"><input name="rea" type="text" size=2 value=0>%</td><td class="pesos">'+q.precio1+'</td></tr>';
+		bag.innerHTML += '<tr data-clave="'+q.clave+'"><td><input name="qty" type="text" size=3 value=1></td><td>'+q.desc+'</td><td class="pesos">'+q.precio1+' / '+q.u1+'</td><td class="pesos"><input name="rea" type="text" size=2 value=0>%</td><td class="pesos">'+q.precio1+'</td></tr>';
 	    };
 	}
 
+	function item2bin(e) {
+	    console.log('Clave: ' + e.target.parentElement.dataset.clave );
+	    var child = bag.removeChild( e.target.parentElement );
+	    if (!bag.hasChildNodes()) {
+		document.getElementById('ticket').style.visibility='hidden';
+		hideBag = true;
+	    }
+	}
 

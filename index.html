@@ -28,17 +28,13 @@
 	</table>
     </section>
 
-    <menu type="context" id="bag-menu">
-	<menuitem label="Eliminar" />
-    </menu>
-
     <section id="ticket" class="tablas">
 	<table>
            <caption> TICKET </caption>
             <thead>
                 <tr> <th> Cantidad </th><th class="desc"> Descripci&oacute;n </th><th> Precio </th><th> Descuento </th><th> Total </th> </tr> 
             </thead>
-	    <tbody id="ticket-compra" class="amarillo" onchange="changedEvent(event)" contextmenu="bag-menu"></tbody>
+	    <tbody id="ticket-compra" class="amarillo" onchange="changedEvent(event)" ondblclick="item2bin(event)"></tbody>
 	</table>
     </section>
     
