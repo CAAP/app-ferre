@@ -3,22 +3,24 @@
 
         const DB_DATA = 'datos';
        	const DB_BAG = 'tickets';
-//	const DB_MEN = 'empleados';
- 	const DB_VERSION = 2;
+ 	const DB_VERSION_DATA = 2;
+	const DB_VERSION_BAG = 1;
         const DB_STORE_DATA = 'datos-clave';
 	const DB_STORE_BAG = 'tickets-uid';
+	const DB_INDEX_DATA = 'desc';
+	const DB_INDEX_BAG = 'fecha';
 	const STRLEN = 5;
 	const TODAY = new Date();
 	const ALPHA = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnopqrstuvwxyz";
         
-        var note, bag, ans;
+        var note, bag, ans ;
         var data = {};
 	var hideBag = true;
         var IDBKeyRange = window.IDBKeyRange || window.webkitIDBKeyRange || window.msIDBKeyRange;
 
 	window.onload = function() {
 	    var opts = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-	    document.getElementById('fecha').innerHTML = TODAY.toLocaleDateString('es-MX', opts);
+	    document.getElementById('fecha').innerHTML = TODAY.toLocaleDateString('es-MX', opts) + ' | versi&oacute;n ' + 1.0 + ' | cArLoS&trade; &copy;&reg;';
 
             note = document.getElementById('notifications');
             ans = document.getElementById('tabla-resultados');
@@ -26,28 +28,28 @@
 
 	    var indexedDB = window.indexedDB || window.mozIndexedDB || window.webkitIndexedDB || window.msIndexedDB;
 
-            var req1 = indexedDB.open(DB_DATA, DB_VERSION);
+            var req1 = indexedDB.open(DB_DATA, DB_VERSION_DATA);
             req1.onerror = function(e) { note.innerHTML = '<li>Error loading database: '+ e.target.errorCode + '. </li>'; };
-            req1.onsuccess = function(e) { note.innerHTML = '<li>Database initialized.</li>'; data.datos = this.result; };
+            req1.onsuccess = function(e) { note.innerHTML = '<li>Database initialized.</li>'; data[DB_DATA] = this.result; };
             req1.onupgradeneeded = function(e) {
                 note.innerHTML += '<li>Upgrade ongoing.</li>';
                 
                 var objStore = e.currentTarget.result.createObjectStore(DB_STORE_DATA, { keyPath: "clave" });
-                objStore.createIndex("desc", "desc", { unique: false } );
+                objStore.createIndex(DB_INDEX_DATA, DB_INDEX_DATA, { unique: false } );
                 objStore.transaction.oncomplete = function(e) {
                     note.innerHTML += '<li> ObjectStore created. Ready to add data into it. </li>';
 		    populateDB();
                 };
 	    };
 
-	    var req2 = indexedDB.open(DB_BAG, 1);
+	    var req2 = indexedDB.open(DB_BAG, DB_VERSION_BAG);
 	    req2.onerror = function(e) { note.innerHTML += '<li>Error loading database: '+ e.target.errorCode + '. </li>'; };
-	    req2.onsuccess = function(e) { note.innerHTML += '<li>Database initialized.</li>'; data.tickets = this.result; };
+	    req2.onsuccess = function(e) { note.innerHTML += '<li>Database initialized.</li>'; data[DB_BAG] = this.result; };
 	    req2.onupgradeneeded = function(e) {
                 note.innerHTML += '<li>Upgrade ongoing.</li>';
                 
                 var objStore = e.currentTarget.result.createObjectStore(DB_STORE_BAG, { keyPath: "uid" });
-                objStore.createIndex("fecha", "fecha", { unique: false } );
+                objStore.createIndex(DB_INDEX_BAG, DB_INDEX_BAG, { unique: false } );
                 objStore.transaction.oncomplete = function(e) {
                     note.innerHTML += '<li> ObjectStore created. Ready to add items into it. </li>';
 //		    populateDB();
@@ -82,15 +84,17 @@
         }
 
 	function clearDB() {
-	    var db = DB_DATA;
-	    var store = DB_STORE_DATA;
+	    var db = DB_BAG;
+	    var store = DB_STORE_BAG;
 	    var objStore = write2DB(db, store);
 	    var req = objStore.clear();
 	    req.onsuccess = function() { note.innerHTML = '<li> Data cleared. </li>' };
 	}
 
 	function reloadDB() {
-	    clearDB();
+	    var db = DB_DATA;
+	    var store = DB_STORE_DATA;
+	    clearDB(db, store);
 	    populateDB();
 	}
 
