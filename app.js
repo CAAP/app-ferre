@@ -181,6 +181,19 @@
 	    return ret;
 	}
 
+	function getTicket() {
+	    if (session.get('ticket'))
+		return session.ticket;
+	    else {
+	        var uid = randString(STRLEN);
+	        var newTicket = { uid: uid, fecha: TODAY.toLocaleDateString('es'), version: 1.0, items: {} };
+	        var objStore = write2DB( BAG );
+	        objStore.add( newTicket );
+	        session.ticket = uid;
+	        return uid;
+	    }
+	}
+
 	function add2bag(e) {
 	    resultados.style.visibility='hidden';
 	    ans.innerHTML = '';
@@ -192,10 +205,8 @@
 	    var clave = asnum( e.target.parentElement.dataset.clave );
 	    console.log('Click on me: '+clave);
 
-	    var newTicket = { uid: randString(STRLEN), fecha: '', version: 1.0, items: {} };
-	    newTicket.items[clave] = { qty: 1, precio: 'precio1', rea: 0, version: 1, total: 0 };
-	    var objStore = write2DB( BAG );
-	    objStore.add( newTicket );
+	    var ticket = getTicket();
+//	    newTicket.items[clave] = { qty: 1, precio: 'precio1', rea: 0, version: 1, total: 0 };
  
 	    var req = readDB( DATA ).get( clave );
 	    req.onsuccess = function(ev) {

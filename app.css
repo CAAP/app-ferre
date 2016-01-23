@@ -40,7 +40,7 @@ strong {
 }
 
 .basura {
-    cursor: url(bin-icon.png), url(trash.png), default;
+    cursor: url(bin-icon.png), default;
 }
 
 #resultados td {
