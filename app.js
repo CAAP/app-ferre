@@ -1,14 +1,8 @@
 
         "use strict";
 
-        const DB_DATA = 'datos';
-       	const DB_BAG = 'tickets';
- 	const DB_VERSION_DATA = 2;
-	const DB_VERSION_BAG = 1;
-        const DB_STORE_DATA = 'datos-clave';
-	const DB_STORE_BAG = 'tickets-uid';
-	const DB_INDEX_DATA = 'desc';
-	const DB_INDEX_BAG = 'fecha';
+	const DATA = { VERSION: 2, DB: 'datos', STORE: 'datos-clave', INDEX: 'desc', KEY: 'clave', FILE; 'ferre.json' };
+	const BAG = { VERSION: 1, DB: 'tickets', STORE: 'tickets-uid', INDEX: 'fecha', KEY: 'uid', FILE: 'tickets.json' };
 	const STRLEN = 5;
 	const TODAY = new Date();
 	const ALPHA = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnopqrstuvwxyz";
@@ -17,6 +11,7 @@
         var data = {};
 	var hideBag = true;
         var IDBKeyRange = window.IDBKeyRange || window.webkitIDBKeyRange || window.msIDBKeyRange;
+	var session = sessionStorage;
 
 	window.onload = function() {
 	    var opts = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
@@ -28,34 +23,24 @@
 
 	    var indexedDB = window.indexedDB || window.mozIndexedDB || window.webkitIndexedDB || window.msIndexedDB;
 
-            var req1 = indexedDB.open(DB_DATA, DB_VERSION_DATA);
-            req1.onerror = function(e) { note.innerHTML = '<li>Error loading database: '+ e.target.errorCode + '. </li>'; };
-            req1.onsuccess = function(e) { note.innerHTML = '<li>Database initialized.</li>'; data[DB_DATA] = this.result; };
-            req1.onupgradeneeded = function(e) {
-                note.innerHTML += '<li>Upgrade ongoing.</li>';
-                
-                var objStore = e.currentTarget.result.createObjectStore(DB_STORE_DATA, { keyPath: "clave" });
-                objStore.createIndex(DB_INDEX_DATA, DB_INDEX_DATA, { unique: false } );
+	    loadDB(DATA);
+	    loadDB(BAG);
+	};
+
+	function loadDB(k) {
+	    var req = indexedDB.open(k.DB, k.VERSION);
+	    req.onerror = function(e) { note.innerHTML += '<li>Error loading database: ' + k.DB + ' | ' + e.target.errorCode + '. </li>'; };
+	    req.onsuccess = function(e) { note.innerHTML += '<li>Database ' + k.DB + ' initialized.</li>'; data[k.DB] = this.result; };
+	    req.onupgradeneeded = function(e) {
+	        note.innerHTML += '<li>Upgrade ongoing.</li>';
+                var objStore = e.currentTarget.result.createObjectStore(k.STORE, { keyPath: k.KEY });
+                objStore.createIndex(k.INDEX, k.INDEX, { unique: false } );
                 objStore.transaction.oncomplete = function(e) {
-                    note.innerHTML += '<li> ObjectStore created. Ready to add data into it. </li>';
-		    populateDB();
+                    note.innerHTML += '<li> ObjectStore ' + k.STORE + ' created successfully. </li>';
+//		    populateDB();
                 };
 	    };
-
-	    var req2 = indexedDB.open(DB_BAG, DB_VERSION_BAG);
-	    req2.onerror = function(e) { note.innerHTML += '<li>Error loading database: '+ e.target.errorCode + '. </li>'; };
-	    req2.onsuccess = function(e) { note.innerHTML += '<li>Database initialized.</li>'; data[DB_BAG] = this.result; };
-	    req2.onupgradeneeded = function(e) {
-                note.innerHTML += '<li>Upgrade ongoing.</li>';
-                
-                var objStore = e.currentTarget.result.createObjectStore(DB_STORE_BAG, { keyPath: "uid" });
-                objStore.createIndex(DB_INDEX_BAG, DB_INDEX_BAG, { unique: false } );
-                objStore.transaction.oncomplete = function(e) {
-                    note.innerHTML += '<li> ObjectStore created. Ready to add items into it. </li>';
-//		    populateDB();
-	        };
-            };
-	};
+	}
 
  	function randString(len) {
 	    var ret = "";
@@ -64,51 +49,46 @@
 	    return ret;
 	}
 
-        function write2DB(db, store) {
+        function write2DB( k ) {
 	    note.innerHTML = '';
-            var transaction = data[db].transaction(store, "readwrite");
+            var transaction = data[k.DB].transaction(k.STORE, "readwrite");
             transaction.oncomplete = function(e) { note.innerHTML += '<li> RW transaction successfully done. </li>' };
             transaction.onerror = function(e) { note.innerHTML += '<li> RW transaction error:' + e.target.errorCode + '. </li>' };
             
-            var objStore = transaction.objectStore(store);
-            return objStore;
+            return transaction.objectStore(k.STORE);
         }
         
-        function readDB(db, store) {
+        function readDB( k ) {
 	    note.innerHTML = '';
-            var transaction = data[db].transaction(store);
+            var transaction = data[k.DB].transaction(k.STORE);
             transaction.oncomplete = function(e) { note.innerHTML += '<li> Read transaction successfully done. </li>' };
             transaction.onerror = function(e) { note.innerHTML += '<li> Read transaction error:' + e.target.errorCode + '. </li>' };
             
-            return transaction.objectStore(store);
+            return transaction.objectStore(k.STORE);
         }
 
 	function clearDB() {
-	    var db = DB_BAG;
-	    var store = DB_STORE_BAG;
-	    var objStore = write2DB(db, store);
+	    var k = BAG;
+	    var objStore = write2DB( k );
 	    var req = objStore.clear();
 	    req.onsuccess = function() { note.innerHTML = '<li> Data cleared. </li>' };
 	}
 
 	function reloadDB() {
-	    var db = DB_DATA;
-	    var store = DB_STORE_DATA;
-	    clearDB(db, store);
+	    var k = DATA;
+	    clearDB( k );
 	    populateDB();
 	}
 
 	function countDB() {
-	    var db = DB_BAG;
-	    var store = DB_STORE_BAG;
-	    var objStore = readDB(db, store);
+	    var k = BAG;
+	    var objStore = readDB( k );
 	    var req = objStore.count();
 	    req.onsuccess = function() { note.innerHTML = '<li> Count: ' + req.result + '</li>'; }
 	}
  
         function populateDB() {
-	    var db = DB_DATA;
-	    var store = DB_STORE_DATA;
+	    var k = DATA;
             var xhttp = new XMLHttpRequest();
             xhttp.open('GET', 'ferre.json');
             xhttp.onreadystatechange = function() {
@@ -122,7 +102,7 @@
 			return ret;
 		    }
                     
-                    var objStore = write2DB(db, store);
+                    var objStore = write2DB( k );
                     for (var i in datos) { objStore.add( asobj(datos[i]) ); }
                     
                     note.innerHTML = '<li> Data loaded to DB. </li>';
@@ -133,7 +113,6 @@
 
 	function search(s) {
 	    document.getElementById('resultados').style.visibility='visible';
-//	    ans.innerHTML = '';
 	    if (s.length < 5)
 		searchByClave(s);
 	    else
@@ -155,7 +134,7 @@
 
         function searchByClave(s) {
 	    console.log('Searching by clave.');
-	    var req = readDB(DB_DATA, DB_STORE_DATA).get( asnum(s) );
+	    var req = readDB( DATA ).get( asnum(s) );
 	    req.onerror =  function(e) { console.log('Error searching by clave.'); };
 	    req.onsuccess = function(e) {
 		if (e.target.result)
@@ -167,7 +146,7 @@
 
         function searchByDesc(s) {
 	    console.log('Searching by description.');
-            var index = readDB(DB_DATA, DB_STORE_DATA).index("desc");
+            var index = readDB( DATA ).index("desc");
             var descRange = IDBKeyRange.lowerBound(s);
 	    var k = 0;
             index.openCursor( descRange ).onsuccess = function(e) {
@@ -215,10 +194,10 @@
 
 	    var newTicket = { uid: randString(STRLEN), fecha: '', version: 1.0, items: {} };
 	    newTicket.items[clave] = { qty: 1, precio: 'precio1', rea: 0, version: 1, total: 0 };
-	    var objStore = write2DB( DB_BAG, DB_STORE_BAG );
+	    var objStore = write2DB( BAG );
 	    objStore.add( newTicket );
  
-	    var req = readDB(DB_DATA, DB_STORE_DATA).get( clave );
+	    var req = readDB( DATA ).get( clave );
 	    req.onsuccess = function(ev) {
 		var q = ev.target.result;
 		bag.innerHTML += '<tr data-clave="'+q.clave+'"><td><input name="qty" type="text" size=3 value=1></td><td class="basura">'+q.desc+'</td><td class="pesos">'+precios(q)+'</td><td class="pesos"><input name="rea" type="text" size=2 value=0>%</td><td class="pesos">'+q.precio1+'</td></tr>';
