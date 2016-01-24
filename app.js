@@ -3,6 +3,7 @@
 
 	const DATA = { VERSION: 2, DB: 'datos', STORE: 'datos-clave', INDEX: 'desc', KEY: 'clave', FILE: 'ferre.json' };
 	const BAG = { VERSION: 1, DB: 'tickets', STORE: 'tickets-uid', INDEX: 'fecha', KEY: 'uid', FILE: 'tickets.json' };
+	const TICKET = { VERSION: 1, DB: 'ticket', STORE: 'ticket-clave', KEY: 'clave' };
 	const STRLEN = 5;
 	const TODAY = new Date();
 	const ALPHA = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnopqrstuvwxyz";
@@ -25,6 +26,8 @@
 
 	    loadDB(DATA);
 	    loadDB(BAG);
+	    loadDB(TICKET);
+//	    clearDB(TICKET); IMPOSSIBLE due to async
 	};
 
 	function loadDB(k) {
@@ -34,7 +37,7 @@
 	    req.onupgradeneeded = function(e) {
 	        note.innerHTML += '<li>Upgrade ongoing.</li>';
                 var objStore = e.currentTarget.result.createObjectStore(k.STORE, { keyPath: k.KEY });
-                objStore.createIndex(k.INDEX, k.INDEX, { unique: false } );
+		if (k.INDEX) { objStore.createIndex(k.INDEX, k.INDEX, { unique: false } ) }
                 objStore.transaction.oncomplete = function(e) {
                     note.innerHTML += '<li> ObjectStore ' + k.STORE + ' created successfully. </li>';
 //		    populateDB();
@@ -45,7 +48,7 @@
  	function randString(len) {
 	    var ret = "";
 	    for(var i=0; i<len; i++)
-		ret += ALPHA.charAt(Math.floor(Math.random() * ALPHA.length + 0.5));
+		ret += ALPHA.charAt(Math.floor( Math.random() * ALPHA.length ));
 	    return ret;
 	}
 
@@ -67,11 +70,10 @@
             return transaction.objectStore(k.STORE);
         }
 
-	function clearDB() {
-	    var k = BAG;
+	function clearDB( k ) {
 	    var objStore = write2DB( k );
 	    var req = objStore.clear();
-	    req.onsuccess = function() { note.innerHTML = '<li> Data cleared. </li>' };
+	    req.onsuccess = function() { note.innerHTML += '<li> Data cleared. </li>' };
 	}
 
 	function reloadDB() {
@@ -81,10 +83,10 @@
 	}
 
 	function countDB() {
-	    var k = BAG;
+	    var k = TICKET;
 	    var objStore = readDB( k );
 	    var req = objStore.count();
-	    req.onsuccess = function() { note.innerHTML = '<li> Count: ' + req.result + '</li>'; }
+	    req.onsuccess = function() { note.innerHTML += '<li> Count: ' + req.result + '</li>'; }
 	}
  
         function populateDB() {
@@ -146,7 +148,7 @@
 
         function searchByDesc(s) {
 	    console.log('Searching by description.');
-            var index = readDB( DATA ).index("desc");
+            var index = readDB( DATA ).index( DATA.INDEX );
             var descRange = IDBKeyRange.lowerBound(s);
 	    var k = 0;
             index.openCursor( descRange ).onsuccess = function(e) {
@@ -181,17 +183,41 @@
 	    return ret;
 	}
 
-	function getTicket() {
-	    if (session.get('ticket'))
-		return session.ticket;
-	    else {
+	function displayItem(q) {
+	    var ret = '<tr data-clave="'+q.clave+'">';
+	    ret += '<td><input name="qty" type="text" size=3 value=1></td>';
+	    ret += '<td class="basura">'+q.desc+'</td>';
+	    ret += '<td class="pesos">'+precios(q)+'</td>';
+	    ret += '<td class="pesos"><input name="rea" type="text" size=2 value=0>%</td>';
+	    ret += '<td class="pesos">'+q.precio1+'</td></tr>';
+	    return ret;
+	}
+
+	function add2ticket(q) {
+	    var objStore = write2DB( TICKET )
+	    var req = objStore.get( q.clave );
+	    req.onerror =  function(e) { console.log('Error searching item in ticket.'); };
+	    req.onsuccess = function(e) {
+		if (e.target.result)
+		    note.innerHTML += 'Item is already in the bag.';
+		else {
+		    q.qty =  1; q.precio = 'precio1'; q.rea = 0; q.version = 1;
+		    var reqUpdate = objStore.put( q );
+		    reqUpdate.onerror = function(e) { note.innerHTML += 'Error adding item to ticket.'; };
+		    reqUpdate.onsuccess = function(e) { bag.innerHTML += displayItem(q); };
+		}
+	    };
+	}
+
+	function getUID() {
+	    if (!session.UID) {
 	        var uid = randString(STRLEN);
-	        var newTicket = { uid: uid, fecha: TODAY.toLocaleDateString('es'), version: 1.0, items: {} };
+	        var newTicket = { uid: uid, fecha: TODAY.toLocaleDateString('es'), version: 1.0, items: new Map() };
 	        var objStore = write2DB( BAG );
 	        objStore.add( newTicket );
-	        session.ticket = uid;
-	        return uid;
+	        session.UID = uid;
 	    }
+	    return session.UID;
 	}
 
 	function add2bag(e) {
@@ -205,13 +231,10 @@
 	    var clave = asnum( e.target.parentElement.dataset.clave );
 	    console.log('Click on me: '+clave);
 
-	    var ticket = getTicket();
-//	    newTicket.items[clave] = { qty: 1, precio: 'precio1', rea: 0, version: 1, total: 0 };
- 
 	    var req = readDB( DATA ).get( clave );
 	    req.onsuccess = function(ev) {
 		var q = ev.target.result;
-		bag.innerHTML += '<tr data-clave="'+q.clave+'"><td><input name="qty" type="text" size=3 value=1></td><td class="basura">'+q.desc+'</td><td class="pesos">'+precios(q)+'</td><td class="pesos"><input name="rea" type="text" size=2 value=0>%</td><td class="pesos">'+q.precio1+'</td></tr>';
+		add2ticket(q);
 	    };
 	}
 
