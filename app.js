@@ -27,21 +27,38 @@
 	    loadDB(DATA);
 	    loadDB(BAG);
 	    loadDB(TICKET);
-//	    clearDB(TICKET); IMPOSSIBLE due to async
 	};
 
 	function loadDB(k) {
 	    var req = indexedDB.open(k.DB, k.VERSION);
 	    req.onerror = function(e) { note.innerHTML += '<li>Error loading database: ' + k.DB + ' | ' + e.target.errorCode + '. </li>'; };
-	    req.onsuccess = function(e) { note.innerHTML += '<li>Database ' + k.DB + ' initialized.</li>'; data[k.DB] = this.result; };
+	    req.onsuccess = function(e) { note.innerHTML += '<li>Database ' + k.DB + ' initialized.</li>'; data[k.DB] = this.result; if (k.DB == 'ticket') { loadTICKET(); } };
 	    req.onupgradeneeded = function(e) {
 	        note.innerHTML += '<li>Upgrade ongoing.</li>';
                 var objStore = e.currentTarget.result.createObjectStore(k.STORE, { keyPath: k.KEY });
 		if (k.INDEX) { objStore.createIndex(k.INDEX, k.INDEX, { unique: false } ) }
-                objStore.transaction.oncomplete = function(e) {
+                objStore.transaction.oncomplete = function(ev) {
                     note.innerHTML += '<li> ObjectStore ' + k.STORE + ' created successfully. </li>';
-//		    populateDB();
+//		    if (k.FILE) { populateDB( k.FILE ); }
                 };
+	    };
+	}
+
+	function loadTICKET() {
+	    var objStore = readDB(TICKET);
+	    var req = objStore.count();
+	    req.onsuccess = function(e) {
+		if (req.result > 0) {
+		    document.getElementById('ticket').style.visibility='visible';
+		    hideBag = false;
+		    objStore.openCursor().onsuccess = function(ev) {
+			var cursor = ev.target.result;
+			if (cursor) {
+			    bag.innerHTML += displayItem( cursor.value );
+		    	    cursor.continue();
+			}
+		    }
+		}
 	    };
 	}
 
@@ -162,19 +179,8 @@
                 }
             };
         }
- 
-        function inputChange(e) {
-            search(e.target.value);
-            e.target.value = "";
-        }
-        
-        function keyPressed(e) {
-            if (e.key == 'Escape')
-                e.target.value = "";
-        }
 
-	function changedEvent(e) { console.log(e.target.name + ': ' + e.target.value); }
-
+//FIX: selected price should be marked
 	function precios(q) {
 	    var ret = '<select name="precio"><option value="precio1" selected>'+q.precio1+' / '+q.u1+'</option>';
 	    ret += q.precio2>0 ? '<option value="precio2">'+q.precio2+' / '+q.u2+'</option>': '';
@@ -185,15 +191,15 @@
 
 	function displayItem(q) {
 	    var ret = '<tr data-clave="'+q.clave+'">';
-	    ret += '<td><input name="qty" type="text" size=3 value=1></td>';
+	    ret += '<td><input name="qty" type="text" size=3 value='+q.qty+'></td>';
 	    ret += '<td class="basura">'+q.desc+'</td>';
 	    ret += '<td class="pesos">'+precios(q)+'</td>';
-	    ret += '<td class="pesos"><input name="rea" type="text" size=2 value=0>%</td>';
-	    ret += '<td class="pesos">'+q.precio1+'</td></tr>';
+	    ret += '<td class="pesos"><input name="rea" type="text" size=2 value='+q.rea+'>%</td>';
+	    ret += '<td><label class="total">'+(q[q.precio] * q.qty * (1-q.rea/100))+'<label></td></tr>';
 	    return ret;
 	}
 
-	function add2ticket(q) {
+	function item2ticket(q) {
 	    var objStore = write2DB( TICKET )
 	    var req = objStore.get( q.clave );
 	    req.onerror =  function(e) { console.log('Error searching item in ticket.'); };
@@ -209,6 +215,9 @@
 	    };
 	}
 
+	function intoBag(clave) {
+	}
+
 	function getUID() {
 	    if (!session.UID) {
 	        var uid = randString(STRLEN);
@@ -219,8 +228,41 @@
 	    }
 	    return session.UID;
 	}
+ 
+        function inputChange(e) {
+            search(e.target.value);
+            e.target.value = "";
+        }
+        
+        function keyPressed(e) {
+            if (e.key == 'Escape')
+                e.target.value = "";
+        }
+
+	function changeItem(e) {
+	    var tr = e.target.parentElement.parentElement;
+	    var lbl = tr.querySelector('.total');
+	    var clave = asnum( tr.dataset.clave );
+	    var k = e.target.name;
+	    var v = e.target.value;
+
+	    note.innerHTML = clave + ' - ' + k + ': ' + v;
+
+	    var objStore = write2DB( TICKET )
+	    var req = objStore.get( clave );
+	    req.onerror =  function(e) { console.log('Error searching item in ticket.'); };
+	    req.onsuccess = function(ev) {
+		var q = this.result;
+		q[k] = v;
+		var reqUpdate = objStore.put( q );
+		reqUpdate.onerror = function(eve) { note.innerHTML += 'Error updating item in ticket.'; };
+		reqUpdate.onsuccess = function(eve) { lbl.innerHTML = q[q.precio] * q.qty * (1-q.rea/100); };
+	    };
+	}
 
 	function add2bag(e) {
+	    var clave = asnum( e.target.parentElement.dataset.clave );
+
 	    resultados.style.visibility='hidden';
 	    ans.innerHTML = '';
 	    if (hideBag) {
@@ -228,22 +270,23 @@
 		hideBag = false;
 	    }
 	    
-	    var clave = asnum( e.target.parentElement.dataset.clave );
-	    console.log('Click on me: '+clave);
-
 	    var req = readDB( DATA ).get( clave );
-	    req.onsuccess = function(ev) {
-		var q = ev.target.result;
-		add2ticket(q);
+	    req.onsuccess = function(e) {
+		var q = e.target.result;
+		item2ticket(q);
 	    };
 	}
 
 	function item2bin(e) {
-	    console.log('Clave: ' + e.target.parentElement.dataset.clave );
-	    var child = bag.removeChild( e.target.parentElement );
-	    if (!bag.hasChildNodes()) {
-		document.getElementById('ticket').style.visibility='hidden';
-		hideBag = true;
-	    }
+	    var clave = asnum( e.target.parentElement.dataset.clave );
+	    var tr = e.target.parentElement;
+	    var req = write2DB( TICKET ).delete( clave );
+	    req.onsuccess = function(ev) {
+		bag.removeChild( tr );
+		if (!bag.hasChildNodes()) {
+		    document.getElementById('ticket').style.visibility='hidden';
+		    hideBag = true;
+		}
+	    };
 	}
 
