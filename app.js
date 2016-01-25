@@ -55,7 +55,13 @@
 			var cursor = ev.target.result;
 			if (cursor) {
 			    bag.innerHTML += displayItem( cursor.value );
-		    	    cursor.continue();
+/*			    if (!(cursor.value.precio == ' precio1')) {
+				bag.lastElementChild.querySelector('option[value="precio1"]').selected=false;
+				bag.lastElementChild.querySelector('option[value="'+cursor.value.precio+'"]').selected=true;
+				bag.lastElementChild.querySelector('select').value = cursor.value.precio;
+			    }
+			    console.log(bag.lastElementChild.querySelector('option[selected="true"]'));
+*/		    	    cursor.continue();
 			}
 		    }
 		}
@@ -180,11 +186,13 @@
             };
         }
 
+	function isSelected(pred) { return pred ? 'selected>' : '>'; }
+
 //FIX: selected price should be marked
 	function precios(q) {
-	    var ret = '<select name="precio"><option value="precio1" selected>'+q.precio1+' / '+q.u1+'</option>';
-	    ret += q.precio2>0 ? '<option value="precio2">'+q.precio2+' / '+q.u2+'</option>': '';
-	    ret += q.precio3>0 ? '<option value="precio3">'+q.precio3+' / '+q.u3+'</option>': '';
+	    var ret = '<select name="precio"><option value="precio1"'+isSelected(q.precio=='precio1')+q.precio1+' / '+q.u1+'</option>';
+	    ret += q.precio2>0 ? '<option value="precio2"'+isSelected(q.precio=='precio2')+q.precio2+' / '+q.u2+'</option>': '';
+	    ret += q.precio3>0 ? '<option value="precio3"'+isSelected(q.precio=='precio3')+q.precio3+' / '+q.u3+'</option>': '';
 	    ret += '</select>';
 	    return ret;
 	}
@@ -195,7 +203,7 @@
 	    ret += '<td class="basura">'+q.desc+'</td>';
 	    ret += '<td class="pesos">'+precios(q)+'</td>';
 	    ret += '<td class="pesos"><input name="rea" type="text" size=2 value='+q.rea+'>%</td>';
-	    ret += '<td><label class="total">'+(q[q.precio] * q.qty * (1-q.rea/100))+'<label></td></tr>';
+	    ret += '<td class="pesos"><label class="total">'+(q[q.precio] * q.qty * (1-q.rea/100)).toFixed(2)+'<label></td></tr>';
 	    return ret;
 	}
 
@@ -256,7 +264,7 @@
 		q[k] = v;
 		var reqUpdate = objStore.put( q );
 		reqUpdate.onerror = function(eve) { note.innerHTML += 'Error updating item in ticket.'; };
-		reqUpdate.onsuccess = function(eve) { lbl.innerHTML = q[q.precio] * q.qty * (1-q.rea/100); };
+		reqUpdate.onsuccess = function(eve) { lbl.innerHTML = (q[q.precio] * q.qty * (1-q.rea/100)).toFixed(2); };
 	    };
 	}
 
