@@ -39,7 +39,7 @@
 		if (k.INDEX) { objStore.createIndex(k.INDEX, k.INDEX, { unique: false } ) }
                 objStore.transaction.oncomplete = function(ev) {
                     note.innerHTML += '<li> ObjectStore ' + k.STORE + ' created successfully. </li>';
-//		    if (k.FILE) { populateDB( k.FILE ); }
+		    if (k.FILE) { populateDB( k.FILE ); }
                 };
 	    };
 	}
@@ -55,13 +55,7 @@
 			var cursor = ev.target.result;
 			if (cursor) {
 			    bag.innerHTML += displayItem( cursor.value );
-/*			    if (!(cursor.value.precio == ' precio1')) {
-				bag.lastElementChild.querySelector('option[value="precio1"]').selected=false;
-				bag.lastElementChild.querySelector('option[value="'+cursor.value.precio+'"]').selected=true;
-				bag.lastElementChild.querySelector('select').value = cursor.value.precio;
-			    }
-			    console.log(bag.lastElementChild.querySelector('option[selected="true"]'));
-*/		    	    cursor.continue();
+		    	    cursor.continue();
 			}
 		    }
 		}
@@ -138,6 +132,7 @@
 
 	function search(s) {
 	    document.getElementById('resultados').style.visibility='visible';
+	    ans.innerHTML = '';
 	    if (s.length < 5)
 		searchByClave(s);
 	    else
@@ -152,10 +147,9 @@
 	    return item;
 	}
 
-	function asnum(s) {
-	    var n = Number(s);
-	    return Number.isNaN(n) ? s : n;
-	}
+	function asnum(s) { var n = Number(s); return Number.isNaN(n) ? s : n; }
+
+	function precioTotal(q) { return (q[q.precio] * q.qty * (1-q.rea/100)).toFixed(2); }
 
         function searchByClave(s) {
 	    console.log('Searching by clave.');
@@ -188,7 +182,6 @@
 
 	function isSelected(pred) { return pred ? 'selected>' : '>'; }
 
-//FIX: selected price should be marked
 	function precios(q) {
 	    var ret = '<select name="precio"><option value="precio1"'+isSelected(q.precio=='precio1')+q.precio1+' / '+q.u1+'</option>';
 	    ret += q.precio2>0 ? '<option value="precio2"'+isSelected(q.precio=='precio2')+q.precio2+' / '+q.u2+'</option>': '';
@@ -203,7 +196,7 @@
 	    ret += '<td class="basura">'+q.desc+'</td>';
 	    ret += '<td class="pesos">'+precios(q)+'</td>';
 	    ret += '<td class="pesos"><input name="rea" type="text" size=2 value='+q.rea+'>%</td>';
-	    ret += '<td class="pesos"><label class="total">'+(q[q.precio] * q.qty * (1-q.rea/100)).toFixed(2)+'<label></td></tr>';
+	    ret += '<td class="pesos"><label class="total">'+precioTotal(q)+'<label></td></tr>';
 	    return ret;
 	}
 
@@ -221,9 +214,6 @@
 		    reqUpdate.onsuccess = function(e) { bag.innerHTML += displayItem(q); };
 		}
 	    };
-	}
-
-	function intoBag(clave) {
 	}
 
 	function getUID() {
@@ -264,7 +254,7 @@
 		q[k] = v;
 		var reqUpdate = objStore.put( q );
 		reqUpdate.onerror = function(eve) { note.innerHTML += 'Error updating item in ticket.'; };
-		reqUpdate.onsuccess = function(eve) { lbl.innerHTML = (q[q.precio] * q.qty * (1-q.rea/100)).toFixed(2); };
+		reqUpdate.onsuccess = function(eve) { lbl.innerHTML = precioTotal(q); };
 	    };
 	}
 
