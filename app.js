@@ -2,7 +2,7 @@
         "use strict";
 
 	const DATA = { VERSION: 2, DB: 'datos', STORE: 'datos-clave', INDEX: 'desc', KEY: 'clave', FILE: 'ferre.json' };
-	const BAG = { VERSION: 1, DB: 'tickets', STORE: 'tickets-uid', INDEX: 'fecha', KEY: 'uid', FILE: 'tickets.json' };
+	const BAG = { VERSION: 1, DB: 'tickets', STORE: 'tickets-uid', INDEX: 'fecha', KEY: 'uid' };
 	const TICKET = { VERSION: 1, DB: 'ticket', STORE: 'ticket-clave', KEY: 'clave' };
 	const STRLEN = 5;
 	const TODAY = new Date();
@@ -26,7 +26,7 @@
 	    var indexedDB = window.indexedDB || window.mozIndexedDB || window.webkitIndexedDB || window.msIndexedDB;
 
 	    loadDB(DATA);
-	    loadDB(BAG);
+//	    loadDB(BAG);
 	    loadDB(TICKET);
 	};
 
