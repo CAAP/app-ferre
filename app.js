@@ -8,7 +8,7 @@
 	const TODAY = new Date();
 	const ALPHA = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnopqrstuvwxyz";
         
-        var note, bag, ans ;
+        var note, bag, ans, ttotal;
         var data = {};
 	var hideBag = true;
         var IDBKeyRange = window.IDBKeyRange || window.webkitIDBKeyRange || window.msIDBKeyRange;
@@ -21,6 +21,7 @@
             note = document.getElementById('notifications');
             ans = document.getElementById('tabla-resultados');
 	    bag = document.getElementById('ticket-compra');
+	    ttotal = document.getElementById('ticket-total');
 
 	    var indexedDB = window.indexedDB || window.mozIndexedDB || window.webkitIndexedDB || window.msIndexedDB;
 
@@ -51,15 +52,29 @@
 		if (req.result > 0) {
 		    document.getElementById('ticket').style.visibility='visible';
 		    hideBag = false;
+		    var total = 0;
 		    objStore.openCursor().onsuccess = function(ev) {
 			var cursor = ev.target.result;
 			if (cursor) {
-			    bag.innerHTML += displayItem( cursor.value );
+			    total += precioTotal( cursor.value );
+			    displayItem( cursor.value );
 		    	    cursor.continue();
-			}
+			} else { ttotal.innerHTML = todecs( total ); }
 		    }
 		}
 	    };
+	}
+
+	function bagTotal() {
+	    var total = 0;
+	    ttotal.innerHTML = '';
+	    readDB( TICKET ).openCursor().onsuccess = function(e) {
+		var cursor = e.target.result;
+		if (cursor) {
+		    total += precioTotal( cursor.value );
+		    cursor.continue();
+		} else { ttotal.innerHTML = todecs( total ); }
+	    }
 	}
 
  	function randString(len) {
@@ -149,7 +164,9 @@
 
 	function asnum(s) { var n = Number(s); return Number.isNaN(n) ? s : n; }
 
-	function precioTotal(q) { return (q[q.precio] * q.qty * (1-q.rea/100)).toFixed(2); }
+	function todecs(x) { return Math.floor( x * 100 ) / 100; }
+
+	function precioTotal(q) { return q[q.precio] * q.qty * (1-q.rea/100); }
 
         function searchByClave(s) {
 	    console.log('Searching by clave.');
@@ -196,8 +213,8 @@
 	    ret += '<td class="basura">'+q.desc+'</td>';
 	    ret += '<td class="pesos">'+precios(q)+'</td>';
 	    ret += '<td class="pesos"><input name="rea" type="text" size=2 value='+q.rea+'>%</td>';
-	    ret += '<td class="pesos"><label class="total">'+precioTotal(q)+'<label></td></tr>';
-	    return ret;
+	    ret += '<td class="pesos"><label class="total">'+precioTotal(q).toFixed(2)+'<label></td></tr>';
+	    bag.innerHTML += ret;
 	}
 
 	function item2ticket(q) {
@@ -211,7 +228,7 @@
 		    q.qty =  1; q.precio = 'precio1'; q.rea = 0; q.version = 1;
 		    var reqUpdate = objStore.put( q );
 		    reqUpdate.onerror = function(e) { note.innerHTML += 'Error adding item to ticket.'; };
-		    reqUpdate.onsuccess = function(e) { bag.innerHTML += displayItem(q); };
+		    reqUpdate.onsuccess = function(e) { displayItem(q); bagTotal(); };
 		}
 	    };
 	}
@@ -254,7 +271,7 @@
 		q[k] = v;
 		var reqUpdate = objStore.put( q );
 		reqUpdate.onerror = function(eve) { note.innerHTML += 'Error updating item in ticket.'; };
-		reqUpdate.onsuccess = function(eve) { lbl.innerHTML = precioTotal(q); };
+		reqUpdate.onsuccess = function(eve) { lbl.innerHTML = precioTotal(q).toFixed(2); bagTotal(); };
 	    };
 	}
 
@@ -284,7 +301,7 @@
 		if (!bag.hasChildNodes()) {
 		    document.getElementById('ticket').style.visibility='hidden';
 		    hideBag = true;
-		}
+		} else { bagTotal(); }
 	    };
 	}
 

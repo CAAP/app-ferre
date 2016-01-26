@@ -2,6 +2,10 @@ td {
     font: 100% arial;
 }
 
+table {
+    border-spacing: 6px 6px;
+}
+
 .total {
     font: bold italic 100% arial;
     text-align: right;
