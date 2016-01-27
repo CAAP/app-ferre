@@ -5,6 +5,7 @@
 	const BAG = { VERSION: 1, DB: 'tickets', STORE: 'tickets-uid', INDEX: 'fecha', KEY: 'uid' };
 	const TICKET = { VERSION: 1, DB: 'ticket', STORE: 'ticket-clave', KEY: 'clave' };
 	const STRLEN = 5;
+	const N = 25;
 	const TODAY = new Date();
 	const ALPHA = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnopqrstuvwxyz";
         
@@ -148,18 +149,21 @@
 	function search(s) {
 	    document.getElementById('resultados').style.visibility='visible';
 	    ans.innerHTML = '';
-	    if (s.length < 5)
-		searchByClave(s);
-	    else
-		searchByDesc(s);
+	    searchByClave(s);
 	}
        
-	function newItem(a) {
-            var item = '<tr data-clave="' + a.clave + '"><td>' + a.fecha + '</td><td>' + a.desc + '</td><td class="pesos">' + a.precio1 + " / " + a.u1 + "</td>";
-	    item += a.precio2>0 ? '<td class="pesos">'+a.precio2+" / "+a.u2+"</td>": '<td></td>';
-	    item += a.precio3>0 ? '<td class="pesos">'+a.precio3+" / "+a.u3+"</td>": '<td></td>';
-	    item += '</tr>';
-	    return item;
+	function newItem(a, j) {
+	    var row = ans.insertRow(j);
+	    row.dataset.clave = a.clave;
+	    row.insertCell().appendChild( document.createTextNode( a.fecha ) );
+	    row.insertCell().appendChild( document.createTextNode( a.desc ) );
+	    for (var k=1; k<4; k++) {
+		if (a['precio'+k] > 0) {
+		    var node = row.insertCell();
+		    node.appendChild( document.createTextNode(a['precio'+k]+' / '+a['u'+k]) );
+		    node.class = 'pesos';
+		}
+	    }
 	}
 
 	function asnum(s) { var n = Number(s); return Number.isNaN(n) ? s : n; }
@@ -168,13 +172,25 @@
 
 	function precioTotal(q) { return q[q.precio] * q.qty * (1-q.rea/100); }
 
+	function searching(j) {
+	    var k = 0;
+	    return function(e) {
+		var cursor = e.target.result;
+		if (cursor && k < N) {
+		    newItem(cursor.value, j);
+		    k++;
+		    cursor.continue();
+		} else { document.getElementById('resultados').scrollTop = N*24; }
+	    };
+	}
+
         function searchByClave(s) {
 	    console.log('Searching by clave.');
 	    var req = readDB( DATA ).get( asnum(s) );
 	    req.onerror =  function(e) { console.log('Error searching by clave.'); };
 	    req.onsuccess = function(e) {
 		if (e.target.result)
-		    ans.innerHTML += newItem(e.target.result);
+		    newItem(e.target.result);
 		else
 		    searchByDesc(s);
 	    };
@@ -183,19 +199,11 @@
         function searchByDesc(s) {
 	    console.log('Searching by description.');
             var index = readDB( DATA ).index( DATA.INDEX );
-            var descRange = IDBKeyRange.lowerBound(s);
-	    var k = 0;
-            index.openCursor( descRange ).onsuccess = function(e) {
-		ans.style.cursor = "wait";
-                var cursor = e.target.result;
-                if (cursor) {
-                    ans.innerHTML += newItem(cursor.value);
-		    k++;
-		    if (k == 20) { ans.style.cursor = "default"; return; }
-                    cursor.continue();
-                }
-            };
-        }
+            var rangeUp = IDBKeyRange.lowerBound(s);
+	    var rangeDown = IDBKeyRange.upperBound(s,true);
+            index.openCursor( rangeUp ).onsuccess = searching(-1);
+	    index.openCursor( rangeDown, 'prev' ).onsuccess = searching(0);
+	}
 
 	function isSelected(pred) { return pred ? 'selected>' : '>'; }
 
@@ -252,6 +260,8 @@
         function keyPressed(e) {
             if (e.key == 'Escape')
                 e.target.value = "";
+	    else
+		console.log(e.target);
         }
 
 	function changeItem(e) {

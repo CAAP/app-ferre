@@ -10,7 +10,7 @@
 
 <body lang="es-MX">
 
-    <header> <button value="count" onclick="countDB()"> COUNT </button>  <button value="reload" onclick="reloadDB()"> RELOAD </button> <label id="notifications"></label> </header>
+    <header> <label id="notifications"></label> </header>
 
     <section id="buscar">
         <label> Buscar: <input type="search" size=40 placeholder="Art&iacute;culo o Clave" onchange="inputChange(event);" onkeypress="keyPressed(event);"> </label>
@@ -18,7 +18,7 @@
 
     <section id="compras"></section>
 
-    <section id="resultados" class="scrollable tablas">
+    <section id="resultados" class="tablas scrollable">
         <table>
             <caption></caption>
 	    <dt>

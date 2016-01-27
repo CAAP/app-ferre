@@ -6,7 +6,7 @@ local st = require'carlos.string'
 
 -- gsub('Ñ','&Ntilde;'):
 
-local function encode( s ) return s:gsub('%s+$',''):gsub('%.+$',''):gsub('"', '&quot;') end
+local function encode( s ) return s:gsub('%s+$',''):gsub('%.+$',''):gsub('"', '&quote;') end
 
 local function readIn( a )
     local desc, clave, precio, fecha = encode( a[3] ), a[10], a[20], a[23]
