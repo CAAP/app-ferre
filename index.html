@@ -13,7 +13,7 @@
     <header> <label id="notifications"></label> </header>
 
     <section id="buscar">
-        <label> Buscar: <input type="search" size=40 placeholder="Art&iacute;culo o Clave" onchange="ferre.startSearch(event);" onkeypress="ferre.keyPressed(event);"> </label>
+        <label> Buscar: <input type="search" size=40 placeholder="Art&iacute;culo o Clave" onchange="ferre.startSearch(event)" onkeypress="ferre.keyPressed(event)"> </label>
     </section>
 
     <section id="compras"></section>
@@ -23,7 +23,7 @@
             <caption></caption>
 	    <dt>
             <thead>
-                <tr><th> Fecha </th><th class="desc"> Descripci&oacute;n </th><th> Precio1 </th><th> Precio2 </th><th> Precio3 </th></tr>
+                <tr><th> Fecha </th><th> Clave </th><th class="desc"> Descripci&oacute;n </th><th> Precio1 </th><th> Precio2 </th><th> Precio3 </th></tr>
             </thead>
 	    </dt>
 	    <tbody id="tabla-resultados" class="amarillo" onclick="ferre.add2bag(event)" ></tbody>
@@ -36,12 +36,12 @@
             <thead>
                 <tr> <th> Cantidad </th><th class="desc"> Descripci&oacute;n </th><th> Precio </th><th> Descuento </th><th> Total </th> </tr> 
             </thead>
-	    <tfoot><tr><th colspan=5 align="right"><button>Guardar</button>&emsp;<button>Imprimir</button>&emsp;<label id="ticket-total" class="total"></label></th></tr></tfoot>
+	    <tfoot><tr><th colspan=5 align="right"><button onclick="ferre.emptyBag()">Cancelar</button>&emsp;<button>Guardar</button>&emsp;<button>Imprimir</button>&emsp;<label id="ticket-total" class="total"></label></th></tr></tfoot>
 	    <tbody id="ticket-compra" class="amarillo" onchange="ferre.updateItem(event)" ondblclick="ferre.item2bin(event)"></tbody>
 	</table>
     </section>
     
-    <footer> <label id="fecha"></label> </footer>
+    <footer> <label id="copyright"></label> </footer>
     
 </body>
 </html>
