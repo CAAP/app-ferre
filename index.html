@@ -13,7 +13,7 @@
     <header> <label id="notifications"></label> </header>
 
     <section id="buscar">
-        <label> Buscar: <input type="search" size=40 placeholder="Art&iacute;culo o Clave" onchange="inputChange(event);" onkeypress="keyPressed(event);"> </label>
+        <label> Buscar: <input type="search" size=40 placeholder="Art&iacute;culo o Clave" onchange="ferre.startSearch(event);" onkeypress="ferre.keyPressed(event);"> </label>
     </section>
 
     <section id="compras"></section>
@@ -26,7 +26,7 @@
                 <tr><th> Fecha </th><th class="desc"> Descripci&oacute;n </th><th> Precio1 </th><th> Precio2 </th><th> Precio3 </th></tr>
             </thead>
 	    </dt>
-	    <tbody id="tabla-resultados" class="amarillo" onclick="add2bag(event)" ></tbody>
+	    <tbody id="tabla-resultados" class="amarillo" onclick="ferre.add2bag(event)" ></tbody>
 	</table>
     </section>
 
@@ -37,7 +37,7 @@
                 <tr> <th> Cantidad </th><th class="desc"> Descripci&oacute;n </th><th> Precio </th><th> Descuento </th><th> Total </th> </tr> 
             </thead>
 	    <tfoot><tr><th colspan=5 align="right"><button>Guardar</button>&emsp;<button>Imprimir</button>&emsp;<label id="ticket-total" class="total"></label></th></tr></tfoot>
-	    <tbody id="ticket-compra" class="amarillo" onchange="changeItem(event)" ondblclick="item2bin(event)"></tbody>
+	    <tbody id="ticket-compra" class="amarillo" onchange="ferre.updateItem(event)" ondblclick="ferre.item2bin(event)"></tbody>
 	</table>
     </section>
     
