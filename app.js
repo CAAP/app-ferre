@@ -48,7 +48,7 @@
 	    var readDB = transaction("readonly");
 
 	    var clearDB = function clearDB( k ) {
-		var req = write2DB( k ).objStore.clear();
+		var req = write2DB( k ).clear();
 		req.onsuccess = function() { console.log( 'Data cleared from DB; ' + k.DB ); };
 	    }
 
@@ -301,12 +301,10 @@
 		};
 	    };
 
-/*
 	    ferre.reloadDB = function reloadDB() {
 		clearDB( DATA );
 		populateDB( DATA );
 	    };
-*/
 	};
 
 	window.onload = function() {
