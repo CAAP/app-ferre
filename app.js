@@ -7,7 +7,6 @@
 	    TICKET: { VERSION: 1, DB: 'ticket', STORE: 'ticket-clave', KEY: 'clave' },
 	    STRLEN: 5,
 	    ALPHA: "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnopqrstuvwxyz",
-	    DATEFORMAT: { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' },
 	};
 
 	ferre.addFuns = function addFuns() {
@@ -20,7 +19,7 @@
 	    var ttotal = document.getElementById('ticket-total');
 	    var myticket = document.getElementById('ticket');
 	    var HIDEBAG = true;
-	    var N = 50;
+	    var N = 100;
 	    var TODAY = new Date();
 	    var TICKET = ferre.TICKET;
 	    var DATA = ferre.DATA;
@@ -58,28 +57,28 @@
 		readDB( TICKET ).openCursor().onsuccess = function(e) {
 		    var cursor = e.target.result;
 		    if (cursor) {
-			total += cursor.value.totalCents; //precioTotal( cursor.value );
+			total += cursor.value.totalCents;
 			cursor.continue();
 		    } else { ttotal.innerHTML = tocents( total ); }
 		};
 	    };
 
-//anon FN defined
+	    var asobj = function asobj(a, ks) {
+		var ret = {};
+		for (var i in ks) { ret[ks[i]] = a[i]; }
+		return ret;
+	    };
+
 	    var populateDB = function populateDB( k ) {
 		var xhttp = new XMLHttpRequest();
-		xhttp.open('GET', 'ferre.json');
+		xhttp.open('GET', k.FILE);
         	xhttp.onreadystatechange = function() {
 		    if (xhttp.readyState == 4) {
 			var mydata = eval( '(' +  xhttp.responseText + ')' );
-			var datos = mydata.vs
-			var ks = mydata.ks
-			var asobj = function asobj(a) {
-			    var ret = {};
-			    for (var i in ks) { ret[ks[i]] = a[i]; }
-			    return ret;
-			};
+			var datos = mydata[1];
+			var ks = mydata[0];
 			var objStore = write2DB( k );
-			for (var i in datos) { objStore.add( asobj(datos[i]) ); }
+			for (var i in datos) { objStore.add( asobj(datos[i], ks) ); }
 			console.log( 'Data loaded to DB: ' + k.DB );
 		    }
                 };
@@ -96,7 +95,7 @@
 		    if (k.INDEX) { objStore.createIndex(k.INDEX, k.INDEX, { unique: false } ) }
 		    objStore.transaction.oncomplete = function(ev) {
 			console.log('ObjectStore ' + k.STORE + ' created successfully.');
-			if (k.FILE) { populateDB( k.FILE ); }
+			if (k.FILE) { populateDB( k ); }
 		    };
 		};
 	    };
@@ -119,7 +118,6 @@
 		bag.innerHTML += ret;
 	    };
 
-// REPEATED CODE | LOOK ABOVE
 	    var loadTICKET = function loadTICKET() {
 		var objStore = readDB(TICKET);
 		var req = objStore.count();
@@ -131,7 +129,7 @@
 			objStore.openCursor().onsuccess = function(ev) {
 			    var cursor = ev.target.result;
 			    if (cursor) {
-				total += cursor.value.totalCents; //precioTotal( cursor.value );
+				total += cursor.value.totalCents;
 			        displayItem( cursor.value );
 		    	        cursor.continue();
 			    } else { ttotal.innerHTML = tocents( total ); }
@@ -183,7 +181,7 @@
 	    };
 
 	    var searchByDesc = function searchByDesc(s) {
-		console.log('Searching by description.');
+		console.log('Searching by description:' + s);
 		var index = readDB( DATA ).index( DATA.INDEX );
 		var rangeUp = IDBKeyRange.lowerBound(s);
 		var rangeDown = IDBKeyRange.upperBound(s,true);
@@ -192,18 +190,18 @@
 	    };
 
 	    var searchByClave = function searchByClave(s) {
-		console.log('Searching by clave.');
+		console.log('Searching by clave:' + s);
 		var req = readDB( DATA ).get( asnum(s) );
 		req.onerror =  function(e) { console.log('Error searching by clave.'); };
 		req.onsuccess = function(e) {
-		    if (e.target.result) { var ss = e.target.result.desc; searchByDesc(ss) } //newItem(e.target.result);
+		    if (e.target.result) { var ss = e.target.result.desc; searchByDesc(ss) }
 		    else { searchByDesc(s); }
 		};
 	    };
 
 	    var startSearch = function startSearch(e) {
 		document.getElementById('resultados').style.visibility='visible';
-		ans.innerHTML = '';
+		ans.innerHTML = ''; // clean result table
 		searchByClave(e.target.value);
 		e.target.value = ""; // clean input field
 	    };
@@ -223,7 +221,7 @@
 
 	    ferre.header = function ferreTodate() {
 		var DATEFORMAT = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-		var today = TODAY.toLocaleDateString('es-MX', this.DATEFORMAT);
+		var today = TODAY.toLocaleDateString('es-MX', DATEFORMAT);
 		note.innerHTML = '<li>' + today + '</li>';
 	    }
 
@@ -249,8 +247,8 @@
 
 	    ferre.add2bag = function add2bag(e) {
 		var clave = asnum( e.target.parentElement.dataset.clave );
-		resultados.style.visibility='hidden';
-		ans.innerHTML = '';
+//		resultados.style.visibility='hidden'; // hide result table
+//		ans.innerHTML = ''; // clear result table
 		if (HIDEBAG) {
 		    myticket.style.visibility='visible';
 		    HIDEBAG = false;
@@ -276,10 +274,11 @@
 		req.onerror =  function(e) { console.log('Error searching item in ticket.'); };
 		req.onsuccess = function(ev) {
 		    var q = this.result;
-		    q[k] = v;
+		    q[k] = asnum( v ); // FORCE cast to NUMBER
+		    q.totalCents = totalCents(q); // UPDATE partial TOTAL
 		    var reqUpdate = objStore.put( q );
 		    reqUpdate.onerror = function(eve) { console.log( 'Error updating item in ticket.' ); };
-		    reqUpdate.onsuccess = function(eve) { q.totalCents = totalCents(q); lbl.innerHTML = tocents( q.totalCents ); bagTotal(); };
+		    reqUpdate.onsuccess = function(eve) { lbl.innerHTML = tocents( q.totalCents ); bagTotal(); };
 		};
 	    };
 

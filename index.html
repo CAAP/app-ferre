@@ -12,11 +12,10 @@
 
     <header> <label id="notifications"></label> </header>
 
+    <div id="main">
+
     <section id="buscar">
         <label> Buscar: <input type="search" size=40 placeholder="Art&iacute;culo o Clave" onchange="ferre.startSearch(event)" onkeypress="ferre.keyPressed(event)"> </label>
-    </section>
-
-    <section id="compras"></section>
 
     <section id="resultados" class="tablas scrollable">
         <table>
@@ -30,6 +29,8 @@
 	</table>
     </section>
 
+    </section>
+
     <section id="ticket" class="tablas">
 	<table>
            <caption> TICKET </caption>
@@ -40,6 +41,8 @@
 	    <tbody id="ticket-compra" class="amarillo" onchange="ferre.updateItem(event)" ondblclick="ferre.item2bin(event)"></tbody>
 	</table>
     </section>
+
+    </div>
     
     <footer> <label id="copyright"></label> </footer>
     
