@@ -51,6 +51,10 @@ strong {
     cursor: copy;
 }
 
+#keys-resultados {
+    visibility: hidden;
+}
+
 #main {
     -webkit-display: flex;
     display: flex;

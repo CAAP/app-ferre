@@ -10,20 +10,20 @@
 	};
 
 	ferre.addFuns = function addFuns() {
-	    var IDBKeyRange =  window.IDBKeyRange || window.webkitIDBKeyRange || window.msIDBKeyRange;
-	    var indexedDB = window.indexedDB || window.mozIndexedDB || window.webkitIndexedDB || window.msIndexedDB;
-	    var note = document.getElementById('notifications');
-	    var res = document.getElementById('resultados');
-            var ans = document.getElementById('tabla-resultados');
-	    var bag = document.getElementById('ticket-compra');
-	    var ttotal = document.getElementById('ticket-total');
-	    var myticket = document.getElementById('ticket');
-	    var HIDEBAG = true;
-	    var N = 100;
-	    var TODAY = new Date();
-	    var TICKET = ferre.TICKET;
-	    var DATA = ferre.DATA;
-	    var DBs = [ DATA, TICKET];
+	    const IDBKeyRange =  window.IDBKeyRange || window.webkitIDBKeyRange || window.msIDBKeyRange;
+	    const indexedDB = window.indexedDB || window.mozIndexedDB || window.webkitIndexedDB || window.msIndexedDB;
+	    const note = document.getElementById('notifications');
+	    const res = document.getElementById('resultados');
+            const ans = document.getElementById('tabla-resultados');
+	    const bag = document.getElementById('ticket-compra');
+	    const ttotal = document.getElementById('ticket-total');
+	    const myticket = document.getElementById('ticket');
+	    const cmds = document.getElementById('keys-resultados');
+	    const N = 30; //100;
+	    const TODAY = new Date();
+	    const TICKET = ferre.TICKET;
+	    const DATA = ferre.DATA;
+	    const DBs = [ DATA, TICKET];
 
 	    var asnum = function asnum(s) { var n = Number(s); return Number.isNaN(n) ? s : n; };
 
@@ -51,15 +51,23 @@
 		req.onsuccess = function() { console.log( 'Data cleared from DB; ' + k.DB ); };
 	    }
 
+	    var clearTable = function(tb) { while (tb.firstChild) { tb.removeChild( tb.firstChild ); } };
+
+	    var toggleTicket = function toggleTicket() {
+		if (myticket.classList.toggle('visible'))
+		    myticket.style.visibility = 'visible';
+		else
+		    myticket.style.visibility = 'hidden';
+	    }
+
 	    var bagTotal = function bagTotal() {
 		var total = 0;
-		ttotal.innerHTML = '';
 		readDB( TICKET ).openCursor().onsuccess = function(e) {
 		    var cursor = e.target.result;
 		    if (cursor) {
 			total += cursor.value.totalCents;
 			cursor.continue();
-		    } else { ttotal.innerHTML = tocents( total ); }
+		    } else { ttotal.textContent = tocents( total ); }
 		};
 	    };
 
@@ -100,22 +108,40 @@
 		};
 	    };
 
-	    var precios = function precios(q) {
-		var ret = '<select name="precio"><option value="precio1"'+isSelected(q.precio=='precio1')+q.precio1+' / '+q.u1+'</option>';
-		ret += q.precio2>0 ? '<option value="precio2"'+isSelected(q.precio=='precio2')+q.precio2+' / '+q.u2+'</option>': '';
-		ret += q.precio3>0 ? '<option value="precio3"'+isSelected(q.precio=='precio3')+q.precio3+' / '+q.u3+'</option>': '';
-		ret += '</select>';
+	   var inputE = function inputE( a ) {
+		var ret = document.createElement('input');
+		a.map( function(o) { ret[o.k] = o.v;});
 		return ret;
-	    };
+	   };
+
+	    var precios = function precios(q) {
+		if ((q.precio2 == 0) && (q.precio3 == 0)) { return document.createTextNode( q.precio1.toFixed(2) ); }
+		var ret = document.createElement('select');
+		ret.name = 'precio';
+		for(var i=1;i<4;i++) {
+		    var k = 'precio'+i;
+		    if (q[k] > 0) {
+			var opt = document.createElement('option');
+			opt.value = k; opt.selected = (q.precio == k);
+			opt.appendChild( document.createTextNode( q[k] + ' / ' + q['u'+i]) );
+			ret.appendChild(opt);
+		    }
+		}
+		return ret;
+	    }
 
 	    var displayItem = function displayItem(q) {
-		var ret = '<tr data-clave="'+q.clave+'">';
-		ret += '<td><input name="qty" type="text" size=2 value='+q.qty+'></td>';
-		ret += '<td class="basura">'+q.desc+'</td>';
-		ret += '<td class="pesos">'+precios(q)+'</td>';
-		ret += '<td class="pesos"><input name="rea" type="text" size=2 value='+q.rea+'>%</td>';
-		ret += '<td class="pesos"><label class="total">'+tocents( q.totalCents )+'<label></td></tr>';
-		bag.innerHTML += ret;
+		var row = bag.insertRow();
+		row.dataset.clave = q.clave;
+		var qty = row.insertCell().appendChild( inputE( [{k:'type', v:'text'}, {k:'size', v:2}, {k:'name', v:'qty'}, {k:'value', v:q.qty}] ) );
+		var desc = row.insertCell();
+		desc.classList.add('basura'); desc.appendChild( document.createTextNode( q.desc ) );
+		var pcs = row.insertCell();
+		pcs.classList.add('pesos'); pcs.appendChild( precios(q) );
+		var rea = inputE( [{k:'type', v:'text'}, {k:'size', v:2}, {k:'name', v:'rea'}, {k:'value', v:q.rea}] );
+		var td = row.insertCell(); td.appendChild(rea); td.appendChild( document.createTextNode('%'));
+		var total = row.insertCell();
+		total.classList.add('pesos'); total.classList.add('total'); total.appendChild( document.createTextNode( tocents(q.totalCents) ) );
 	    };
 
 	    var loadTICKET = function loadTICKET() {
@@ -123,8 +149,7 @@
 		var req = objStore.count();
 		req.onsuccess = function(e) {
 		    if (req.result > 0) {
-			myticket.style.visibility='visible';
-			HIDEBAG = false;
+			toggleTicket();
 			var total = 0;
 			objStore.openCursor().onsuccess = function(ev) {
 			    var cursor = ev.target.result;
@@ -132,7 +157,7 @@
 				total += cursor.value.totalCents;
 			        displayItem( cursor.value );
 		    	        cursor.continue();
-			    } else { ttotal.innerHTML = tocents( total ); }
+			    } else { ttotal.textContent = tocents( total ); }
 			};
 		    }
 		};
@@ -143,12 +168,13 @@
 		row.dataset.clave = a.clave;
 		row.insertCell().appendChild( document.createTextNode( a.fecha ) );
 		row.insertCell().appendChild( document.createTextNode( a.clave ) );
-		row.insertCell().appendChild( document.createTextNode( a.desc ) );
+		var desc = row.insertCell();
+		desc.classList.add('desc'); desc.appendChild( document.createTextNode( a.desc ) );
 		for (var k=1; k<4; k++) {
 		    if (a['precio'+k] > 0) {
 			var node = row.insertCell();
 			node.appendChild( document.createTextNode(a['precio'+k]+' / '+a['u'+k]) );
-			node.class = 'pesos';
+			node.classList.add('pesos');
 		    }
 		}
 	    };
@@ -168,7 +194,7 @@
 		};
 	    };
 
-	    var searching = function searching(j) {
+	    var browsing = function browsing(j) {
 		var k = 0;
 		return function(e) {
 		    var cursor = e.target.result;
@@ -176,17 +202,24 @@
 			newItem(cursor.value, j);
 			k++;
 			cursor.continue();
-		    } else { res.scrollTop = N*27; }
+		    }
 		};
 	    };
+
+	    var indexCursor = function searchIndex(index, t, s) {
+		var range = (t.substr(0,4) == 'next') ? IDBKeyRange.lowerBound(s) : IDBKeyRange.upperBound(s);
+		var j = (t.substr(0,4) == 'next') ? -1 : 0;
+		index.openCursor( range, t ).onsuccess = browsing(j);
+	    }
 
 	    var searchByDesc = function searchByDesc(s) {
 		console.log('Searching by description:' + s);
 		var index = readDB( DATA ).index( DATA.INDEX );
-		var rangeUp = IDBKeyRange.lowerBound(s);
+		indexCursor(index, 'next', s);
+/*		var rangeUp = IDBKeyRange.lowerBound(s);
 		var rangeDown = IDBKeyRange.upperBound(s,true);
-		index.openCursor( rangeUp ).onsuccess = searching(-1);
-		index.openCursor( rangeDown, 'prev' ).onsuccess = searching(0);
+		index.openCursor( rangeUp ).onsuccess = browsing(-1);
+		index.openCursor( rangeDown, 'prev' ).onsuccess = browsing(0);*/
 	    };
 
 	    var searchByClave = function searchByClave(s) {
@@ -201,16 +234,16 @@
 
 	    var startSearch = function startSearch(e) {
 		document.getElementById('resultados').style.visibility='visible';
-		ans.innerHTML = ''; // clean result table
-		searchByClave(e.target.value);
+		clearTable( ans );
+		searchByClave(e.target.value.toUpperCase());
 		e.target.value = ""; // clean input field
 	    };
 
 	    var toggleBag = function toggleBag() {
-		if (!bag.hasChildNodes()) {
-		    myticket.style.visibility='hidden';
-		    HIDEBAG = true;
-		} else { bagTotal(); }
+		if (!bag.hasChildNodes())
+		   toggleTicket();
+		else
+		    bagTotal();
 	    };
 
  	    ferre.indexedDB = indexedDB;
@@ -245,14 +278,16 @@
 		}
 	    };
 
+	    ferre.retrieve = function retrieve(t) {
+		var s = (t == 'prev') ? ans.firstChild.querySelector('.desc').textContent : ans.lastChild.querySelector('.desc').textContent;
+		clearTable( ans );
+		var index = readDB( DATA ).index( DATA.INDEX );
+		indexCursor(index, t, s);
+	    };
+
 	    ferre.add2bag = function add2bag(e) {
 		var clave = asnum( e.target.parentElement.dataset.clave );
-//		resultados.style.visibility='hidden'; // hide result table
-//		ans.innerHTML = ''; // clear result table
-		if (HIDEBAG) {
-		    myticket.style.visibility='visible';
-		    HIDEBAG = false;
-		}
+		(myticket.classList.contains('visible') || toggleTicket());
 		var req = readDB( DATA ).get( clave );
 		req.onsuccess = function(e) {
 		    var q = e.target.result;
@@ -278,7 +313,7 @@
 		    q.totalCents = totalCents(q); // UPDATE partial TOTAL
 		    var reqUpdate = objStore.put( q );
 		    reqUpdate.onerror = function(eve) { console.log( 'Error updating item in ticket.' ); };
-		    reqUpdate.onsuccess = function(eve) { lbl.innerHTML = tocents( q.totalCents ); bagTotal(); };
+		    reqUpdate.onsuccess = function(eve) { lbl.textContent = tocents( q.totalCents ); bagTotal(); };
 		};
 	    };
 
@@ -295,7 +330,7 @@
 	    ferre.emptyBag = function emptyBag(e) {
 		var req = write2DB( TICKET ).clear()
 		req.onsuccess = function(ev) {
-		    bag.innerHTML = '';
+		    clearTable( bag );
 		    toggleBag();
 		};
 	    };
@@ -319,14 +354,6 @@
 	    for(var i=0; i<len; i++)
 		ret += ALPHA.charAt(Math.floor( Math.random() * ALPHA.length ));
 	    return ret;
-	}
-
-
-	function countDB() {
-	    var k = TICKET;
-	    var objStore = readDB( k );
-	    var req = objStore.count();
-	    req.onsuccess = function() { note.innerHTML += '<li> Count: ' + req.result + '</li>'; }
 	}
 
 	function getUID() {
