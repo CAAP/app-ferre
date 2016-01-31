@@ -6,6 +6,12 @@ table {
     border-spacing: 6px 6px;
 }
 
+iframe {
+    position: relative;
+    right: 0;
+    bottom: 0;
+}
+
 .total {
     font: bold italic 100% arial;
     text-align: right;

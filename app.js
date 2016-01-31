@@ -6,20 +6,19 @@
 	    BAG: { VERSION: 1, DB: 'tickets', STORE: 'tickets-uid', INDEX: 'fecha', KEY: 'uid' },
 	    TICKET: { VERSION: 1, DB: 'ticket', STORE: 'ticket-clave', KEY: 'clave' },
 	    STRLEN: 5,
-	    ALPHA: "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnopqrstuvwxyz",
+	    ALPHA: "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnopqrstuvwxyz"
 	};
 
 	ferre.addFuns = function addFuns() {
 	    const IDBKeyRange =  window.IDBKeyRange || window.webkitIDBKeyRange || window.msIDBKeyRange;
 	    const indexedDB = window.indexedDB || window.mozIndexedDB || window.webkitIndexedDB || window.msIndexedDB;
-	    const note = document.getElementById('notifications');
 	    const res = document.getElementById('resultados');
             const ans = document.getElementById('tabla-resultados');
 	    const bag = document.getElementById('ticket-compra');
 	    const ttotal = document.getElementById('ticket-total');
 	    const myticket = document.getElementById('ticket');
 	    const cmds = document.getElementById('keys-resultados');
-	    const N = 30; //100;
+	    const N = 20;
 	    const TODAY = new Date();
 	    const TICKET = ferre.TICKET;
 	    const DATA = ferre.DATA;
@@ -96,7 +95,7 @@
 	    var loadDB = function loadDB(k) {
 		var req = indexedDB.open(k.DB, k.VERSION);
 		req.onerror = function(e) {  console.log('Error loading database: ' + k.DB + ' | ' + e.target.errorCode); };
-	        req.onsuccess = function(e) { note.innerHTML += '<li>Database ' + k.DB + ' initialized.<li>'; k.CONN = e.target.result; if (k.DB == 'ticket') { loadTICKET(); } };
+	        req.onsuccess = function(e) { k.CONN = e.target.result; if (k.DB == 'ticket') { loadTICKET(); } };
 		req.onupgradeneeded = function(e) {
 		    console.log('Upgrade ongoing.');
 		    var objStore = e.target.result.createObjectStore(k.STORE, { keyPath: k.KEY });
@@ -145,7 +144,7 @@
 	    };
 
 	    var loadTICKET = function loadTICKET() {
-		var objStore = readDB(TICKET);
+		var objStore = readDB( TICKET );
 		var req = objStore.count();
 		req.onsuccess = function(e) {
 		    if (req.result > 0) {
@@ -163,6 +162,34 @@
 		};
 	    };
 
+	    ferre.printTICKET = function printTICKET(sURL) {
+		var a = ['qty', 'desc', 'rea'];
+		var ret = '<html><body><h1>FERRETERIA AGUILAR</h1><table><thead><tr><th>Cantidad</th><th>Descripci&oacute;n</th><th>Descuento</th><th>Precio</th><th>Total</th></tr></thead><tbody>'
+		var total = 0;
+		readDB( TICKET ).openCursor().onsuccess = function(e) {
+		    var cursor = e.target.result;
+		    if (cursor) {
+			var q = cursor.value;
+			total += q.totalCents;
+			ret += '<tr>';
+			a.map( function(k) { ret += '<td>'+ q[k] +'</td>'; } );
+			ret += '<td>'+q[q.precio]+'</td><td>'+tocents(q.totalCents)+'</td></tr>';
+			cursor.continue();
+		    } else {
+			var iframe = document.createElement('iframe');
+			myticket.appendChild(iframe);
+			var doc = iframe.contentWindow.document;
+			ret += '<tfoot><tr><th colspan=5 align="right">'+tocents(total)+'</th></tr></tfoot></tbody></table></body></html>'
+			doc.open();
+			doc.write(ret);
+			doc.close()
+			iframe.contentWindow.onafterprint = function () { myticket.removeChild(iframe); };
+			iframe.contentWindow.focus();
+			iframe.contentWindow.print();
+		    }
+		};
+	    };
+	
 	    var newItem = function newItem(a, j) {
 		var row = ans.insertRow(j);
 		row.dataset.clave = a.clave;
@@ -216,10 +243,6 @@
 		console.log('Searching by description:' + s);
 		var index = readDB( DATA ).index( DATA.INDEX );
 		indexCursor(index, 'next', s);
-/*		var rangeUp = IDBKeyRange.lowerBound(s);
-		var rangeDown = IDBKeyRange.upperBound(s,true);
-		index.openCursor( rangeUp ).onsuccess = browsing(-1);
-		index.openCursor( rangeDown, 'prev' ).onsuccess = browsing(0);*/
 	    };
 
 	    var searchByClave = function searchByClave(s) {
@@ -253,9 +276,10 @@
 	    ferre.loadDBs = function loadDBs() { DBs.forEach( loadDB ); };
 
 	    ferre.header = function ferreTodate() {
+	        var note = document.getElementById('notifications');
 		var DATEFORMAT = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
 		var today = TODAY.toLocaleDateString('es-MX', DATEFORMAT);
-		note.innerHTML = '<li>' + today + '</li>';
+		note.appendChild( document.createTextNode( today ) );
 	    }
 
 	    ferre.footer = function footer() {
@@ -367,4 +391,3 @@
 	    return session.UID;
 	}
  
-
