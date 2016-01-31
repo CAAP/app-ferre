@@ -164,7 +164,8 @@
 
 	    ferre.printTICKET = function printTICKET(sURL) {
 		var a = ['qty', 'desc', 'rea'];
-		var ret = '<html><body><h1>FERRETERIA AGUILAR</h1><table><thead><tr><th>Cantidad</th><th>Descripci&oacute;n</th><th>Descuento</th><th>Precio</th><th>Total</th></tr></thead><tbody>'
+		var ret = '<html><link href="/path/to/print.css" media="print" rel="stylesheet" />';
+		ret += '<body><h1>FERRETERIA AGUILAR</h1><table><thead><tr><th>Cantidad</th><th>Descripci&oacute;n</th><th>Descuento</th><th>Precio</th><th>Total</th></tr></thead><tbody>';
 		var total = 0;
 		readDB( TICKET ).openCursor().onsuccess = function(e) {
 		    var cursor = e.target.result;
@@ -173,7 +174,7 @@
 			total += q.totalCents;
 			ret += '<tr>';
 			a.map( function(k) { ret += '<td>'+ q[k] +'</td>'; } );
-			ret += '<td>'+q[q.precio]+'</td><td>'+tocents(q.totalCents)+'</td></tr>';
+			ret += '<td>'+q[q.precio].toFixed(2)+'</td><td>'+tocents(q.totalCents)+'</td></tr>';
 			cursor.continue();
 		    } else {
 			var iframe = document.createElement('iframe');
