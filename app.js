@@ -225,10 +225,9 @@
 
 	    var browsing = function browsing(j, M) {
 		var k = 0;
-		var NN = M || N;
 		return function(e) {
 		    var cursor = e.target.result;
-		    if (cursor && k < NN) {
+		    if (cursor && k < M) {
 			newItem(cursor.value, j);
 			k++;
 			cursor.continue();
@@ -236,10 +235,11 @@
 		};
 	    };
 
-	    var indexCursor = function searchIndex(index, t, s, k) {
-		var range = (t.substr(0,4) == 'next') ? IDBKeyRange.lowerBound(s, true) : IDBKeyRange.upperBound(s, true);
+	    var indexCursor = function searchIndex(index, t, s, M) {
+		var NN = M || N;
+		var range = (t.substr(0,4) == 'next') ? IDBKeyRange.lowerBound(s, NN<N) : IDBKeyRange.upperBound(s, NN<N);
 		var j = (t.substr(0,4) == 'next') ? -1 : 0;
-		index.openCursor( range, t ).onsuccess = browsing(j, k);
+		index.openCursor( range, t ).onsuccess = browsing(j, NN);
 	    }
 
 	    var searchByDesc = function searchByDesc(s) {
@@ -315,19 +315,26 @@
 		indexCursor(index, t, s, 1);
 	    };
 
-	    ferre.move = function move(e) {
+	    ferre.incdec = function incdec(e) {
 		switch (e.key) {
-		    case 'ArrowUp':
-		    case 'Up':
-			ferre.retrieve('prev');
+		    case '+':
+		    case 'Add':
+			e.target.value++;
 			break;
-		    case 'ArrowDown':
-		    case 'Down':
-			ferre.retrieve('next');
+		    case '-':
+		    case 'Subtract':
+			e.target.value--;
 			break;
 		    default: break;
 		}
 	    }
+
+	    ferre.scroll = function scroll(e) {
+		if (e.deltaY > 0)
+		    ferre.retrieve('next');
+		else
+		    ferre.retrieve('prev');
+	    };
 
 	    ferre.add2bag = function add2bag(e) {
 		var clave = asnum( e.target.parentElement.dataset.clave );
