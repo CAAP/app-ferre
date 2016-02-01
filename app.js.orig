@@ -17,14 +17,13 @@
 	    const bag = document.getElementById('ticket-compra');
 	    const ttotal = document.getElementById('ticket-total');
 	    const myticket = document.getElementById('ticket');
-	    const arrows = document.getElementById('arrows');
+	    const cmds = document.getElementById('keys-resultados');
 	    const N = 15;
 	    const TODAY = new Date();
 	    const TICKET = ferre.TICKET;
 	    const DATA = ferre.DATA;
 	    const DBs = [ DATA, TICKET];
-
-	    var sstr = '';
+	    var siguiente, anterior;
 
 	    var asnum = function asnum(s) { var n = Number(s); return Number.isNaN(n) ? s : n; };
 
@@ -193,7 +192,6 @@
 	
 	    var newItem = function newItem(a, j) {
 		var row = ans.insertRow(j);
-		if (a.desc.includes(sstr)) { row.classList.add('encontrado'); };
 		row.dataset.clave = a.clave;
 		row.insertCell().appendChild( document.createTextNode( a.fecha ) );
 		row.insertCell().appendChild( document.createTextNode( a.clave ) );
@@ -223,12 +221,11 @@
 		};
 	    };
 
-	    var browsing = function browsing(j, M) {
+	    var browsing = function browsing(j) {
 		var k = 0;
-		var NN = M || N;
 		return function(e) {
 		    var cursor = e.target.result;
-		    if (cursor && k < NN) {
+		    if (cursor && k < N) {
 			newItem(cursor.value, j);
 			k++;
 			cursor.continue();
@@ -236,15 +233,14 @@
 		};
 	    };
 
-	    var indexCursor = function searchIndex(index, t, s, k) {
-		var range = (t.substr(0,4) == 'next') ? IDBKeyRange.lowerBound(s, true) : IDBKeyRange.upperBound(s, true);
+	    var indexCursor = function searchIndex(index, t, s) {
+		var range = (t.substr(0,4) == 'next') ? IDBKeyRange.lowerBound(s) : IDBKeyRange.upperBound(s);
 		var j = (t.substr(0,4) == 'next') ? -1 : 0;
-		index.openCursor( range, t ).onsuccess = browsing(j, k);
+		index.openCursor( range, t ).onsuccess = browsing(j);
 	    }
 
 	    var searchByDesc = function searchByDesc(s) {
 		console.log('Searching by description:' + s);
-		sstr = s;
 		var index = readDB( DATA ).index( DATA.INDEX );
 		indexCursor(index, 'next', s);
 	    };
@@ -264,7 +260,6 @@
 		clearTable( ans );
 		searchByClave(e.target.value.toUpperCase());
 		e.target.value = ""; // clean input field
-		arrows.focus();
 	    };
 
 	    var toggleBag = function toggleBag() {
@@ -309,25 +304,10 @@
 
 	    ferre.retrieve = function retrieve(t) {
 		var s = (t == 'prev') ? ans.firstChild.querySelector('.desc').textContent : ans.lastChild.querySelector('.desc').textContent;
-//		clearTable( ans );
-		if (t == 'prev') { ans.removeChild( ans.lastChild ); } else { ans.removeChild( ans.firstChild ); }
+		clearTable( ans );
 		var index = readDB( DATA ).index( DATA.INDEX );
-		indexCursor(index, t, s, 1);
+		indexCursor(index, t, s);
 	    };
-
-	    ferre.move = function move(e) {
-		switch (e.key) {
-		    case 'ArrowUp':
-		    case 'Up':
-			ferre.retrieve('prev');
-			break;
-		    case 'ArrowDown':
-		    case 'Down':
-			ferre.retrieve('next');
-			break;
-		    default: break;
-		}
-	    }
 
 	    ferre.add2bag = function add2bag(e) {
 		var clave = asnum( e.target.parentElement.dataset.clave );
