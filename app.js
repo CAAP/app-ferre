@@ -164,15 +164,15 @@
 
 	    ferre.printTICKET = function printTICKET(sURL) {
 		var a = ['qty', 'desc', 'rea'];
-		var ret = '<html><link href="/path/to/print.css" media="print" rel="stylesheet" />';
-		ret += '<body><h1>FERRETERIA AGUILAR</h1><table><thead><tr><th>Cantidad</th><th>Descripci&oacute;n</th><th>Descuento</th><th>Precio</th><th>Total</th></tr></thead><tbody>';
+		var ret = '<html><link href="ticket.css" media="print" rel="stylesheet" />';
+		ret += '<body><h1>FERRETERIA AGUILAR</h1><table><thead><tr><th>CNT</th><th>DSC</th><th>PRC</th><th>TOTAL</th></tr></thead><tbody>';
 		var total = 0;
 		readDB( TICKET ).openCursor().onsuccess = function(e) {
 		    var cursor = e.target.result;
 		    if (cursor) {
 			var q = cursor.value;
 			total += q.totalCents;
-			ret += '<tr>';
+			ret += '<tr><td colspan=4>'+q.desc+'&emsp;'+q['u'+q.precio[6]]+'</td></tr><tr>';
 			a.map( function(k) { ret += '<td>'+ q[k] +'</td>'; } );
 			ret += '<td>'+q[q.precio].toFixed(2)+'</td><td>'+tocents(q.totalCents)+'</td></tr>';
 			cursor.continue();
@@ -185,6 +185,7 @@
 			doc.write(ret);
 			doc.close()
 			iframe.contentWindow.onafterprint = function () { myticket.removeChild(iframe); };
+			iframe.contentWindow.onbeforeunload = function () { myticket.removeChild(iframe); };
 			iframe.contentWindow.focus();
 			iframe.contentWindow.print();
 		    }
@@ -264,7 +265,6 @@
 		clearTable( ans );
 		searchByClave(e.target.value.toUpperCase());
 		e.target.value = ""; // clean input field
-		arrows.focus();
 	    };
 
 	    var toggleBag = function toggleBag() {
