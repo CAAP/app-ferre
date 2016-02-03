@@ -107,8 +107,30 @@
 		};
 	    };
 
+	    var incdec = function incdec(e) {
+		switch (e.key || e.which) {
+		    case '+':
+		    case 'Add':
+		    case 187:
+			e.target.value++;
+			e.preventDefault();
+			ferre.updateItem(e);
+			break;
+		    case '-':
+		    case 'Subtract':
+		    case 189:
+			if (e.target.value == 1) { e.preventDefault(); break; }
+			e.target.value--;
+			e.preventDefault();
+			ferre.updateItem(e);
+			break;
+		    default: break;
+		}
+	    }
+
 	   var inputE = function inputE( a ) {
 		var ret = document.createElement('input');
+		ret.addEventListener('keydown', incdec);
 		a.map( function(o) { ret[o.k] = o.v;});
 		return ret;
 	   };
@@ -193,6 +215,7 @@
 			iframe.contentWindow.onbeforeunload = function () { myticket.removeChild(iframe); };
 			iframe.contentWindow.focus();
 			iframe.contentWindow.print();
+			iframe.contentWindow.blur();
 		    }
 		};
 	    };
@@ -287,7 +310,7 @@
 
 	    ferre.header = function ferreTodate() {
 	        var note = document.getElementById('notifications');
-		var DATEFORMAT = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+		var DATEFORMAT = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true };
 		var today = TODAY.toLocaleDateString('es-MX', DATEFORMAT);
 		note.appendChild( document.createTextNode( today ) );
 	    }
@@ -297,15 +320,18 @@
 	    };
 
 	    ferre.keyPressed = function keyPressed(e) {
-		switch (e.key) {
+		switch (e.key || e.which) {
 		    case 'Escape':
 		    case 'Esc':
+		    case 27:
 			e.target.value = "";
 			break;
 		    case 'ArrowUp':
 		    case 'ArrowDown':
 		    case 'Up':
 		    case 'Down':
+		    case 38:
+		    case 40:
 			startSearch(e);
 			break;
 		    default: break;
@@ -319,20 +345,6 @@
 		var index = readDB( DATA ).index( DATA.INDEX );
 		indexCursor(index, t, s, 1);
 	    };
-
-	    ferre.incdec = function incdec(e) {
-		switch (e.key) {
-		    case '+':
-		    case 'Add':
-			e.target.value++;
-			break;
-		    case '-':
-		    case 'Subtract':
-			e.target.value--;
-			break;
-		    default: break;
-		}
-	    }
 
 	    ferre.scroll = function scroll(e) {
 		if (e.deltaY > 0)
