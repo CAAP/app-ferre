@@ -18,7 +18,7 @@
 	    const ttotal = document.getElementById('ticket-total');
 	    const myticket = document.getElementById('ticket');
 	    const arrows = document.getElementById('arrows');
-	    const N = 15;
+	    const N = 11;
 	    const TODAY = new Date();
 	    const TICKET = ferre.TICKET;
 	    const DATA = ferre.DATA;
@@ -163,7 +163,7 @@
 	    };
 
 	    ferre.printTICKET = function printTICKET(sURL) {
-		var a = ['qty', 'desc', 'rea'];
+		var a = ['qty', 'rea'];
 		var ret = '<html><link href="ticket.css" media="print" rel="stylesheet" />';
 		ret += '<body><h1>FERRETERIA AGUILAR</h1><table><thead><tr><th>CNT</th><th>DSC</th><th>PRC</th><th>TOTAL</th></tr></thead><tbody>';
 		var total = 0;
