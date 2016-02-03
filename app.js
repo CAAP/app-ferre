@@ -165,7 +165,12 @@
 	    ferre.printTICKET = function printTICKET(sURL) {
 		var a = ['qty', 'rea'];
 		var ret = '<html><link href="ticket.css" media="print" rel="stylesheet" />';
-		ret += '<body><h1>FERRETERIA AGUILAR</h1><table><thead><tr><th>CNT</th><th>DSC</th><th>PRC</th><th>TOTAL</th></tr></thead><tbody>';
+		ret += '<body><table><thead>';
+		ret += '<tr><th colspan=4>FERRETERIA AGUILAR</th></tr>';
+		ret += '<tr><th colspan=4>Benito Juarez No 1C  Ocotlan, Oaxaca</th></tr>';
+		ret += '<tr><th colspan=4>RFC AUMA50114XXX  Tel. 57-10076</th></tr>';
+		ret += '<tr><th>CNT</th><th>DSC</th><th>PRC</th><th>TOTAL</th></tr></thead><tbody>';
+
 		var total = 0;
 		readDB( TICKET ).openCursor().onsuccess = function(e) {
 		    var cursor = e.target.result;
@@ -180,7 +185,7 @@
 			var iframe = document.createElement('iframe');
 			myticket.appendChild(iframe);
 			var doc = iframe.contentWindow.document;
-			ret += '<tfoot><tr><th colspan=5 align="right">'+tocents(total)+'</th></tr></tfoot></tbody></table></body></html>'
+			ret += '<tfoot><tr><th colspan=4 align="right">'+tocents(total)+'</th></tr></tfoot></tbody></table></body></html>'
 			doc.open();
 			doc.write(ret);
 			doc.close()
