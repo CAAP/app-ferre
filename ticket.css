@@ -3,10 +3,7 @@ body {
     max-width: 76mm;
     height: 100%;
     max-height: 110mm;
-}
-
-td {
-    font: 100% arial;
+    font: 10px arial;
 }
 
 table {
