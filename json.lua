@@ -35,6 +35,6 @@ local function people()
     fs.dump('people.json', '[[' .. keys .. '], [' .. table.concat(items, ',') .. ']]')
 end
 
--- data()
+data()
 people()
 
