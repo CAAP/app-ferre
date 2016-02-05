@@ -22,7 +22,7 @@
             <caption></caption>
 	    <dt>
             <thead>
-                <tr><th> Fecha </th><th> Clave </th><th class="desc"> Descripci&oacute;n </th><th> Precio </th><th>U</th></tr>
+                <tr><th> Fecha </th><th> Clave </th><th> Descripci&oacute;n </th><th> Precio </th><th>U</th></tr>
             </thead>
 	    </dt>
 	    <tbody id="tabla-resultados" class="amarillo" onclick="ferre.add2bag(event)" onwheel="ferre.scroll(event)"></tbody>
@@ -37,7 +37,7 @@
             <thead>
                 <tr> <th> Cantidad </th><th class="desc"> Descripci&oacute;n </th><th> Precio </th><th> Descuento </th><th> Total </th> </tr> 
             </thead>
-	    <tfoot><tr><th colspan=5 align="right"><button onclick="ferre.emptyBag()">Cancelar</button>&emsp;<button>Guardar</button>&emsp;<button onclick="ferre.printDialog('ticket')">Imprimir</button>&emsp;<label id="ticket-total" class="total"></label></th></tr></tfoot>
+	    <tfoot><tr><th colspan=5 align="right"><button onclick="ferre.emptyBag()">Cancelar</button>&emsp;<button onclick="ferre.printDialog('presupuesto')">Presupuesto</button>&emsp;<button onclick="ferre.printDialog('ticket')">Imprimir</button>&emsp;<label id="ticket-total" class="total"></label></th></tr></tfoot>
 	    <tbody id="ticket-compra" class="amarillo" onchange="ferre.updateItem(event)" ondblclick="ferre.item2bin(event)"></tbody>
 	</table>
     </section>
