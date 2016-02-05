@@ -17,10 +17,16 @@ end
 
 local conn = sql.connect'ferre.db'
 
+--[[
 local datos = fs.dlmread('ferre.txt', '\t')
 
 conn.exec'CREATE TABLE IF NOT EXISTS datosALL (clave PRIMARY KEY, desc, costol NUMBER, impuesto NUMBER, descuento NUMBER, u1, p1 NUMBER, u2, p2 NUMBER, u3, p3 NUMBER, fecha)'
 
 fd.slice( 100, datos, fd.map( readIn ), st.status(#datos), sql.into'datosALL', conn )
+--]]
 
+conn.exec'CREATE TABLE IF NOT EXISTS empleados ( id INTEGER PRIMARY KEY, nombre )'
 
+local nombres = {'"Alberto"', '"Alfonso"', '"Adrian"', '"Carlos"', '"Ernesto"', '"Jorge"', '"Manuel"', '"Rafa"', '"Sergio"'}
+
+fd.slice( 50, nombres, fd.map(function(x,i) return {i, x} end), sql.into'empleados', conn )

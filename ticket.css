@@ -1,29 +1,29 @@
 body {
     width: 100%;
-    max-width: 76mm;
     height: 100%;
-    max-height: 110mm;
-    font-family: monospace;
 }
 
 table {
-    border-spacing: 6px 6px;
+    border-spacing: 2px 2px;
 }
 
-td {
-    font-size: 1;
+td, th {
+    font-family: monospace;
+    font-size: 11px;
 }
 
-th {
-    font-size: 5;
+.doble th {
+    border-bottom: 2px solid black;
+    border-top: 2px solid black;
 }
 
-.total {
-    font: bold 100% arial;
+.total th {
+    border-top: 2px solid black;
     text-align: right;
 }
 
 .pesos {
     text-align: right;
 }
+
 

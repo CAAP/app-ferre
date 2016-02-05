@@ -2,11 +2,10 @@
         "use strict";
 
 	var ferre = {
-	    DATA:  { VERSION: 2, DB: 'datos', STORE: 'datos-clave', INDEX: 'desc', KEY: 'clave', FILE: 'ferre.json' },
-	    BAG: { VERSION: 1, DB: 'tickets', STORE: 'tickets-uid', INDEX: 'fecha', KEY: 'uid' },
+	    DATA:  { VERSION: 2, DB: 'datos', STORE: 'datos-clave', KEY: 'clave', INDEX: 'desc', FILE: 'ferre.json' },
+	    BAG: { VERSION: 1, DB: 'tickets', STORE: 'tickets-uid',  KEY: 'uid', INDEX: 'fecha' },
 	    TICKET: { VERSION: 1, DB: 'ticket', STORE: 'ticket-clave', KEY: 'clave' },
-	    STRLEN: 5,
-	    ALPHA: "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnopqrstuvwxyz"
+	    PEOPLE: { VERSION: 1, DB: 'people', STORE: 'people-id', KEY: 'id', INDEX: 'nombre', FILE: 'people.json'},
 	};
 
 	ferre.addFuns = function addFuns() {
@@ -17,12 +16,12 @@
 	    const bag = document.getElementById('ticket-compra');
 	    const ttotal = document.getElementById('ticket-total');
 	    const myticket = document.getElementById('ticket');
-	    const arrows = document.getElementById('arrows');
+	    const persona = document.getElementById('persona');
 	    const N = 11;
-	    const TODAY = new Date();
 	    const TICKET = ferre.TICKET;
 	    const DATA = ferre.DATA;
-	    const DBs = [ DATA, TICKET];
+	    const PEOPLE = ferre.PEOPLE;
+	    const DBs = [ DATA, TICKET, PEOPLE ];
 
 	    var sstr = '';
 
@@ -30,7 +29,11 @@
 
 	    var tocents = function tocents(x) { return (x / 100).toFixed(2); };
 
+	    var topesos = function topesos(x) { return (x / 100).toLocaleString('es-MX', {style:'currency', currency:'MXN'}); };
+
 	    var totalCents = function(q) { return Math.round( 100 * q[q.precio] * q.qty * (1-q.rea/100) ); };
+
+	    var now = function(fmt) { return new Date().toLocaleDateString('es-MX', fmt) };
 
 	    var transaction = function transaction(t) {
 		return function initTransaction( k ) {
@@ -95,7 +98,7 @@
 	    var loadDB = function loadDB(k) {
 		var req = indexedDB.open(k.DB, k.VERSION);
 		req.onerror = function(e) {  console.log('Error loading database: ' + k.DB + ' | ' + e.target.errorCode); };
-	        req.onsuccess = function(e) { k.CONN = e.target.result; if (k.DB == 'ticket') { loadTICKET(); } };
+	        req.onsuccess = function(e) { k.CONN = e.target.result; if (k.load) { k.load(); }};//if (k.DB == 'ticket') { loadTICKET(); } };
 		req.onupgradeneeded = function(e) {
 		    console.log('Upgrade ongoing.');
 		    var objStore = e.target.result.createObjectStore(k.STORE, { keyPath: k.KEY });
@@ -165,7 +168,23 @@
 		total.classList.add('pesos'); total.classList.add('total'); total.appendChild( document.createTextNode( tocents(q.totalCents) ) );
 	    };
 
-	    var loadTICKET = function loadTICKET() {
+	    PEOPLE.load = function loadPEOPLE() {
+		var ol = document.createElement('ol');
+		persona.appendChild(ol);
+		var req = readDB( PEOPLE ).openCursor().onsuccess = function(e) {
+		    var cursor = e.target.result;
+		    if(cursor) {
+			ol.appendChild( document.createElement('li') ).textContent = cursor.value.nombre;
+			cursor.continue();
+		    } else {
+			var ie = inputE( [{k: 'type', v:'text'}, {k:'size', v:1}] );
+			ie.addEventListener('keydown', printing);
+			persona.appendChild( ie );
+		    }
+		};
+	    };
+
+	    TICKET.load = function loadTICKET() {
 		var objStore = readDB( TICKET );
 		var req = objStore.count();
 		req.onsuccess = function(e) {
@@ -184,14 +203,41 @@
 		};
 	    };
 
-	    ferre.printTICKET = function printTICKET(sURL) {
+// PRINTING //
+
+	    var NUMS = {};
+	    NUMS.C = {0: '', 1: 'CIENTO ', 2: 'DOSCIENTOS ', 3: 'TRESCIENTOS ', 4: 'CUATROCIENTOS ', 5: 'QUINIENTOS ', 6: 'SEISCIENTOS ', 7: 'SETECIENTOS ', 8: 'OCHOCIENTOS ', 9: 'NOVECIENTOS '};
+	    NUMS.D = {0: '', 11: 'ONCE ', 12: 'DOCE ', 13: 'TRECE ', 14: 'CATORCE ', 15: 'QUINCE ', 16: 'DIECISEIS ', 17: 'DIECISIETE ', 18: 'DIECIOCHO ', 19: 'DIECINUEVE ', 2: 'VEINTI ', 3: 'TREINTA Y ', 4: 'CUARENTA Y ', 5: 'CINCUENTA Y ', 6: 'SESENTA Y ', 7: 'SETENTA Y ', 8: 'OCHENTA Y ', 9: 'NOVENTA Y '}
+	    NUMS.I = {0: '', 1: 'UNO ', 2: 'DOS ', 3: 'TRES ', 4: 'CUATRO ', 5: 'CINCO ', 6: 'SEIS ', 7: 'SIETE ', 8: 'OCHO ', 9: 'NUEVE '};
+	    NUMS.M = {3: 'MIL ', 6: 'MILLON '};
+
+	    ferre.enpesos = function enpesos(x) {
+		var y = Math.floor( Math.log10(x) )
+		var z = x.toFixed(2);
+		var ret = '';
+		for (var i = 0; i<=y; i++) {
+		    var j = z[i];
+		    var k = y-i;
+		    switch(k) {
+		    case 5: case 2: ret += NUMS.C[j]; break;
+		    case 4: case 1: ret += (j=='1' ? NUMS.D[j+z[++i]] : NUMS.D[j]); break;
+		    case 3: case 6: ret += ((j=='1' ? 'UN ' : NUMS.I[j]) + NUMS.M[k]); break;
+		    case 0: ret += NUMS.I[j];
+		    }
+		}
+		ret += 'PESO(S) ' + z.substr(y+2) + '/100 M.N.'
+		return ret;
+	    };
+
+	    var printTICKET = function printTICKET(nombre, numero) {
 		var a = ['qty', 'rea'];
 		var ret = '<html><link href="ticket.css" media="print" rel="stylesheet" />';
 		ret += '<body><table><thead>';
 		ret += '<tr><th colspan=4>FERRETERIA AGUILAR</th></tr>';
+		ret += '<tr><th colspan=4>FERRETERIA Y REFACCIONES EN GENERAL</th></tr>';
 		ret += '<tr><th colspan=4>Benito Juarez No 1C  Ocotlan, Oaxaca</th></tr>';
-		ret += '<tr><th colspan=4>RFC AUMA50114XXX  Tel. 57-10076</th></tr>';
-		ret += '<tr><th>CNT</th><th>DSC</th><th>PRC</th><th>TOTAL</th></tr></thead><tbody>';
+		ret += '<tr><th colspan=4>'+(new Date().toLocaleString())+'&emsp; Tel. 57-10076</th></tr>';
+		ret += '<tr class="doble"><th>CNT</th><th>DSC</th><th>PRECIO</th><th>TOTAL</th></tr></thead><tbody>';
 
 		var total = 0;
 		readDB( TICKET ).openCursor().onsuccess = function(e) {
@@ -200,41 +246,58 @@
 			var q = cursor.value;
 			total += q.totalCents;
 			ret += '<tr><td colspan=4>'+q.desc+'&emsp;'+q['u'+q.precio[6]]+'</td></tr><tr>';
-			a.map( function(k) { ret += '<td>'+ q[k] +'</td>'; } );
-			ret += '<td>'+q[q.precio].toFixed(2)+'</td><td>'+tocents(q.totalCents)+'</td></tr>';
+			a.map( function(k) { ret += '<td align="center">'+ q[k] +'</td>'; } );
+			ret += '<td class="pesos">'+q[q.precio].toFixed(2)+'</td><td class="pesos">'+tocents(q.totalCents)+'</td></tr>';
 			cursor.continue();
 		    } else {
+			ret += '<tfoot><tr class="total"><th colspan=4>Total de su compra: '+topesos(total)+'</th></tr>'
+			ret += '<tr><th colspan=4>'+enpesos(total/100)+'</th></tr>'
+			ret += '<tr><th colspan=2>'+nombre+'</th><th colspan=2 align="right">#'+numero+'</th></tr>';
+			ret += '<tr><th colspan=4>GRACIAS POR SU COMPRA</th></tr></tfoot></tbody></table></body></html>'
 			var iframe = document.createElement('iframe');
+			iframe.width = 400;
 			myticket.appendChild(iframe);
 			var doc = iframe.contentWindow.document;
-			ret += '<tfoot><tr><th colspan=4 align="right">'+tocents(total)+'</th></tr></tfoot></tbody></table></body></html>'
 			doc.open();
 			doc.write(ret);
 			doc.close()
-			iframe.contentWindow.onafterprint = function () { myticket.removeChild(iframe); };
-			iframe.contentWindow.onbeforeunload = function () { myticket.removeChild(iframe); };
-			iframe.contentWindow.focus();
+			iframe.contentWindow.onfocus = function (e) {  myticket.removeChild(myticket.lastChild); };
 			iframe.contentWindow.print();
-			iframe.contentWindow.blur();
+			iframe.contentWindow.focus();
 		    }
 		};
 	    };
-	
+
+	    var STRLEN = 5;
+	    var ALPHA = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnopqrstuvwxyz";
+
+	    var randString = function randString() {
+		var ret = "";
+		for (var i=0; i<STRLEN; i++) { ret += ALPHA.charAt(Math.floor( Math.random() * ALPHA.length )); }
+		return ret;
+	    };
+
+	    var printing = function printing(e) {
+		var k = e.key || (e.which-48);
+		persona.close(k);
+		e.target.textContent = '';
+		readDB( PEOPLE ).get( k ).onsuccess = function(e) { var q = e.target.result; if (q) { printTICKET(q.nombre, randString()); } };
+	    };
+
+	    ferre.printDialog = function printDialog(args) { persona.showModal(); } // args ADD ticket or budget
+
+// PRINTING //
+
+
 	    var newItem = function newItem(a, j) {
 		var row = ans.insertRow(j);
 		if (a.desc.includes(sstr)) { row.classList.add('encontrado'); };
 		row.dataset.clave = a.clave;
 		row.insertCell().appendChild( document.createTextNode( a.fecha ) );
 		row.insertCell().appendChild( document.createTextNode( a.clave ) );
-		var desc = row.insertCell();
-		desc.classList.add('desc'); desc.appendChild( document.createTextNode( a.desc ) );
-		for (var k=1; k<4; k++) {
-		    if (a['precio'+k] > 0) {
-			var node = row.insertCell();
-			node.appendChild( document.createTextNode(a['precio'+k]+' / '+a['u'+k]) );
-			node.classList.add('pesos');
-		    }
-		}
+		row.insertCell().appendChild( document.createTextNode( a.desc ) );
+		row.insertCell().appendChild( document.createTextNode( a.precio1.toFixed(2) ) );
+		row.insertCell().appendChild( document.createTextNode( a.u1 ) );
 	    };
 
 	    var item2ticket = function item2ticket(q) {
@@ -310,9 +373,8 @@
 
 	    ferre.header = function ferreTodate() {
 	        var note = document.getElementById('notifications');
-		var DATEFORMAT = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true };
-		var today = TODAY.toLocaleDateString('es-MX', DATEFORMAT);
-		note.appendChild( document.createTextNode( today ) );
+		var FORMAT = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+		note.appendChild( document.createTextNode( now(FORMAT) ) );
 	    }
 
 	    ferre.footer = function footer() {
@@ -340,7 +402,6 @@
 
 	    ferre.retrieve = function retrieve(t) {
 		var s = (t == 'prev') ? ans.firstChild.querySelector('.desc').textContent : ans.lastChild.querySelector('.desc').textContent;
-//		clearTable( ans );
 		if (t == 'prev') { ans.removeChild( ans.lastChild ); } else { ans.removeChild( ans.firstChild ); }
 		var index = readDB( DATA ).index( DATA.INDEX );
 		indexCursor(index, t, s, 1);
@@ -416,13 +477,6 @@
 	    if (ferre.indexedDB) { ferre.loadDBs(); }
 	    else { alert('IDBIndexed not available.'); }
 	};
-
- 	function randString(len) {
-	    var ret = "";
-	    for(var i=0; i<len; i++)
-		ret += ALPHA.charAt(Math.floor( Math.random() * ALPHA.length ));
-	    return ret;
-	}
 
 	function getUID() {
 	    if (!session.UID) {

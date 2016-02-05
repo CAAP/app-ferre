@@ -3,16 +3,27 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <link rel="stylesheet" href="ticket.css">
+    <link href="ticket.css" media="print" rel="stylesheet" />
+    <script type="text/javascript">
+	function now() {
+	     var FMT = { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true };
+	     return new Date().toLocaleDateString('es-MX', FMT)
+	}
+    </script>
 </head>
 
 <body lang="es-MX">
 
-    <header></header>
-
     <table>
-	<thead> <tr> <th> # </th><th class="desc"> Descripci&oacute;n </th><th> Precio </th><th> DESC </th><th> Total </th> </tr> </thead>
-	<tfoot><tr><th colspan=5 align="right"><label id="ticket-total" class="total"></label></th></tr></tfoot>
+	<thead> 
+	<tr><th colspan=4>FERRETERIA AGUILAR</th></tr>
+	<tr><th colspan=4>FERRETERIA Y REFACCIONES EN GENERAL</th></tr>
+	<tr><th colspan=4>Benito Juarez No 1C  Ocotlan, Oaxaca</th></tr>
+	<tr><th colspan=4>AUMA50114XXX &emsp; Tel. 57-10076</th></tr>
+	<tr><th colspan=4>now()</th></tr>
+	<tr> <th>CNT</th><th>DSC</th><th>PRC</th><th>TOTAL</th> </tr>
+	</thead>
+	<tfoot><tr><th colspan=4 align="right"><label id="ticket-total" class="total"></label></th></tr></tfoot>
 	<tbody id="ticket-table"></tbody>
     </table>
 
