@@ -8,8 +8,8 @@ table {
 }
 
 td, th {
-    font-family: monospace;
-    font-size: 11px;
+    font-family: Tahoma, Arial, Times, Georgia, sans-serif, monospace;
+    font-size: 10px;
 }
 
 .doble th {
@@ -25,5 +25,4 @@ td, th {
 .pesos {
     text-align: right;
 }
-
 
