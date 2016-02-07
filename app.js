@@ -141,7 +141,7 @@
 	   function inputE( a ) {
 		let ret = document.createElement('input');
 		ret.addEventListener('keydown', incdec);
-		a.map( o => ret[o[0]] = o[1]; ); //  function(o) { ret[o[0]] = o[1];});
+		a.map( o => ret[o[0]] = o[1] ); //  function(o) { ret[o[0]] = o[1];});
 		return ret;
 	   };
 
@@ -218,7 +218,7 @@
 
 		function printTicket(nombre, numero) {
 		    TKT += '<tr><th colspan=2>'+nombre+'</th><th colspan=2 align="left">#'+numero+'</th></tr>';
-		    TKT += '<tr><th colspan=4>GRACIAS POR SU COMPRA</th></tr></tfoot></tbody></table></body></html>'
+		    TKT += '<tr><th colspan=4 align="center">GRACIAS POR SU COMPRA</th></tr></tfoot></tbody></table></body></html>'
 		    let iframe = document.createElement('iframe');
 		    iframe.style.visibility = "hidden";
 		    iframe.width = 400;
@@ -249,7 +249,7 @@
 			    TKT += '<td class="pesos">'+q[q.precio].toFixed(2)+'</td><td class="pesos">'+tocents(q.totalCents)+'</td></tr>';
 			    cursor.continue();
 			}  else {
-			    TKT += '<tfoot><tr class="total"><th colspan=4>Total de su compra: '+topesos(total)+'</th></tr>'
+			    TKT += '<tfoot><tr><th colspan=4 class="total">Total de su compra: '+topesos(total)+'</th></tr>'
 			    TKT += '<tr><th colspan=4>'+enpesos(total/100)+'</th></tr>'
 			    persona.showModal();
 			}
@@ -274,11 +274,11 @@
 
 	    function newItem(a, j) {
 		let row = ans.insertRow(j);
-		if (a.desc.includes(sstr)) { row.classList.add('encontrado'); };
+		if (a.desc.startsWith(sstr)) { row.classList.add('encontrado'); };
 		row.dataset.clave = a.clave;
 		row.insertCell().appendChild( document.createTextNode( a.fecha ) );
 		row.insertCell().appendChild( document.createTextNode( a.clave ) );
-		let desc = row.insertCell(); // necessary for browsing
+		let desc = row.insertCell(); // class 'desc' necessary for browsing
 		desc.classList.add('desc'); desc.appendChild( document.createTextNode( a.desc ) );
 		row.insertCell().appendChild( document.createTextNode( a.precio1.toFixed(2) ) );
 		row.insertCell().appendChild( document.createTextNode( a.u1 ) );

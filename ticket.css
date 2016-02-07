@@ -9,7 +9,8 @@ table {
 
 td, th {
     font-family: Tahoma, Arial, Times, Georgia, sans-serif, monospace;
-    font-size: 10px;
+    font-size: 9px;
+    text-align: center;
 }
 
 .doble th {
@@ -17,12 +18,8 @@ td, th {
     border-top: 2px solid black;
 }
 
-.total th {
+.total {
     border-top: 2px solid black;
-    text-align: right;
-}
-
-.pesos {
-    text-align: center;
+    text-align: left;
 }
 
