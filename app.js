@@ -62,7 +62,7 @@
 
 	    function transaction(t) {
 		return function initTransaction( k ) {
-		    var trn = k.CONN.transaction(k.STORE, t);
+		    let trn = k.CONN.transaction(k.STORE, t);
 		    trn.oncomplete = function(e) { console.log(t +' transaction successfully done.'); };
 		    trn.onerror = function(e) { console.log( t + ' transaction error:' + e.target.errorCode); };
 		    return trn.objectStore(k.STORE);
@@ -74,7 +74,7 @@
 	    let readDB = transaction("readonly");
 
 	    function clearDB( k ) {
-		var req = write2DB( k ).clear();
+		let req = write2DB( k ).clear();
 		req.onsuccess = function() { console.log( 'Data cleared from DB; ' + k.DB ); };
 	    };
 
@@ -141,7 +141,7 @@
 	   function inputE( a ) {
 		let ret = document.createElement('input');
 		ret.addEventListener('keydown', incdec);
-		a.map( function(o) { ret[o[0]] = o[1];});
+		a.map( o => ret[o[0]] = o[1]; ); //  function(o) { ret[o[0]] = o[1];});
 		return ret;
 	   };
 
@@ -163,7 +163,7 @@
 
 // PRINTING //
 
-	    var printing = (function() {
+	    let printing = (function() {
 		let NUMS = {};
 		NUMS.C = {0: '', 1: 'CIENTO ', 2: 'DOSCIENTOS ', 3: 'TRESCIENTOS ', 4: 'CUATROCIENTOS ', 5: 'QUINIENTOS ', 6: 'SEISCIENTOS ', 7: 'SETECIENTOS ', 8: 'OCHOCIENTOS ', 9: 'NOVECIENTOS '};
 		NUMS.D = {0: '', 10: 'DIEZ ', 11: 'ONCE ', 12: 'DOCE ', 13: 'TRECE ', 14: 'CATORCE ', 15: 'QUINCE ', 16: 'DIECISEIS ', 17: 'DIECISIETE ', 18: 'DIECIOCHO ', 19: 'DIECINUEVE ', 3: 'TREINTA ', 4: 'CUARENTA ', 5: 'CINCUENTA ', 6: 'SESENTA ', 7: 'SETENTA ', 8: 'OCHENTA ', 9: 'NOVENTA '}
@@ -212,7 +212,7 @@
 		function header() {
 		    HEADER[3] = new Date().toLocaleString();
 		    let ret = '';
-		    HEADER.map( function(x) { ret += x; } );
+		    HEADER.map( x => ret += x); //function(x) { ret += x; } );
 		    return ret;
 		};
 
@@ -220,6 +220,7 @@
 		    TKT += '<tr><th colspan=2>'+nombre+'</th><th colspan=2 align="left">#'+numero+'</th></tr>';
 		    TKT += '<tr><th colspan=4>GRACIAS POR SU COMPRA</th></tr></tfoot></tbody></table></body></html>'
 		    let iframe = document.createElement('iframe');
+		    iframe.style.visibility = "hidden";
 		    iframe.width = 400;
 		    iframe.onload = function() {
 			let doc = this.contentWindow.document; doc.open(); doc.write(TKT); doc.close();
@@ -231,7 +232,7 @@
 			iframe.contentWindow.print();
 			iframe.contentWindow.focus();
 		    };
-		    window.setTimeout(printing, 250);
+		    window.setTimeout(printing, 500);
 		};
 
 		function setPrint() {
@@ -248,7 +249,7 @@
 			    TKT += '<td class="pesos">'+q[q.precio].toFixed(2)+'</td><td class="pesos">'+tocents(q.totalCents)+'</td></tr>';
 			    cursor.continue();
 			}  else {
-			    TKT += '<tfoot><tr class="total"><th colspan=4 align="left">Total de su compra: '+topesos(total)+'</th></tr>'
+			    TKT += '<tfoot><tr class="total"><th colspan=4>Total de su compra: '+topesos(total)+'</th></tr>'
 			    TKT += '<tr><th colspan=4>'+enpesos(total/100)+'</th></tr>'
 			    persona.showModal();
 			}
