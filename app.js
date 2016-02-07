@@ -39,7 +39,7 @@
 
 	    function topesos(x) { return (x / 100).toLocaleString('es-MX', {style:'currency', currency:'MXN'}); };
 
-	    function(fmt) { return new Date().toLocaleDateString('es-MX', fmt) };
+	    function now(fmt) { return new Date().toLocaleDateString('es-MX', fmt) };
 
  	    ferre.indexedDB = indexedDB;
 
@@ -121,14 +121,14 @@
 		switch (e.key || e.which) {
 		    case '+':
 		    case 'Add':
-		    case 187:
+		    case 187: case 107:
 			e.target.value++;
 			e.preventDefault();
 			ferre.updateItem(e);
 			break;
 		    case '-':
 		    case 'Subtract':
-		    case 189:
+		    case 189: case 109:
 			if (e.target.value == 1) { e.preventDefault(); break; }
 			e.target.value--;
 			e.preventDefault();
@@ -217,7 +217,7 @@
 		};
 
 		function printTicket(nombre, numero) {
-		    TKT += '<tr><th colspan=2>'+nombre+'</th><th colspan=2 align="right">#'+numero+'</th></tr>';
+		    TKT += '<tr><th colspan=2>'+nombre+'</th><th colspan=2 align="left">#'+numero+'</th></tr>';
 		    TKT += '<tr><th colspan=4>GRACIAS POR SU COMPRA</th></tr></tfoot></tbody></table></body></html>'
 		    let iframe = document.createElement('iframe');
 		    iframe.width = 400;
@@ -248,7 +248,7 @@
 			    TKT += '<td class="pesos">'+q[q.precio].toFixed(2)+'</td><td class="pesos">'+tocents(q.totalCents)+'</td></tr>';
 			    cursor.continue();
 			}  else {
-			    TKT += '<tfoot><tr class="total"><th colspan=4>Total de su compra: '+topesos(total)+'</th></tr>'
+			    TKT += '<tfoot><tr class="total"><th colspan=4 align="left">Total de su compra: '+topesos(total)+'</th></tr>'
 			    TKT += '<tr><th colspan=4>'+enpesos(total/100)+'</th></tr>'
 			    persona.showModal();
 			}
@@ -258,7 +258,7 @@
 		ferre.printDialog = function printDialog(args) { HEADER[1] = (args=='ticket' ? '' : '<tr><th colspan=4>PRESUPUESTO</th></tr>'); setPrint(); };
 
 		return function printing(e) {
-		    let k = e.key || (e.which-48);
+		    let k = e.key || ((e.which > 90) ? e.which-96 : e.which-48);
 		    persona.close(k);
 		    e.target.textContent = '';
 		    readDB( PEOPLE ).get( k ).onsuccess = function(e) { let q = e.target.result; if (q) { printTicket(q.nombre, randString()); } };
@@ -306,7 +306,7 @@
 		console.log('Searching by description:' + s);
 		sstr = s;
 		let index = readDB( DATA ).index( DATA.INDEX );
-		indexCursor(index, 'next', s);
+		searchIndex(index, 'next', s);
 	    };
 
 	    function searchByClave(s) {
@@ -330,7 +330,7 @@
 		let s = (t == 'prev') ? ans.firstChild.querySelector('.desc').textContent : ans.lastChild.querySelector('.desc').textContent;
 		if (t == 'prev') { ans.removeChild( ans.lastChild ); } else { ans.removeChild( ans.firstChild ); }
 		let index = readDB( DATA ).index( DATA.INDEX );
-		indexCursor(index, t, s, 1);
+		searchIndex(index, t, s, 1);
 	    };
 
  	    ferre.startSearch = startSearch;

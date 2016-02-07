@@ -9,7 +9,7 @@ table {
 
 td, th {
     font-family: Tahoma, Arial, Times, Georgia, sans-serif, monospace;
-    font-size: 10px;
+    font-size: 9px;
 }
 
 .doble th {
@@ -23,6 +23,6 @@ td, th {
 }
 
 .pesos {
-    text-align: right;
+    text-align: center;
 }
 
