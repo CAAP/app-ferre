@@ -95,7 +95,7 @@
 			let datos = mydata[1];
 			let ks = mydata[0];
 			let objStore = write2DB( k );
-			for (let i in datos) { objStore.add( asobj(datos[i], ks) ); }
+			datos.map( x => objStore.add(asobj(x, ks)) ); // for (let i in datos) { objStore.add( asobj(datos[i], ks) ); }
 			console.log( 'Data loaded to DB: ' + k.DB );
 		    }
                 };
