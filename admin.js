@@ -8,6 +8,7 @@
 	window.onload = function addFuns() {
 	    const PEOPLE = admin.PEOPLE;
 	    const DBs = [ PEOPLE ];
+
 	    PEOPLE.load = function() {
 		let tb = document.getElementById('tabla-entradas');
 		let row = nombre => tb.insertRow().appendChild(document.createTextNode(nombre));
@@ -16,9 +17,7 @@
 
 	    function now(fmt) { return new Date().toLocaleDateString('es-MX', fmt); };
 
-	    function loadDBs() { DBs.map( db => IDB.loadDB(db) ); };
-
- 	    if (IDB.indexedDB) { loadDBs(); } else { alert("IDBIndexed not available."); }
+ 	    if (IDB.indexedDB) { DBs.forEach( IDB.loadDB ); } else { alert("IDBIndexed not available."); }
 	    
 	    (function() {
 	        let note = document.getElementById('notifications');

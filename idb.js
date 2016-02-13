@@ -5,7 +5,7 @@
 	    indexedDB: (window.indexedDB || window.mozIndexedDB || window.webkitIndexedDB || window.msIndexedDB),
 
 	    loadDB: function(k) {
-		let req = this.indexedDB.open(k.DB, k.VERSION);
+		let req = IDB.indexedDB.open(k.DB, k.VERSION);
 		req.onerror = e => console.log('Error loading database: ' + k.DB + ' | ' + e.target.errorCode);
 	        req.onsuccess = function(e) { k.CONN = e.target.result; if (k.load) { k.load(); }};
 		req.onupgradeneeded = function(e) {
@@ -30,9 +30,7 @@
 		    let ks = objsto[0], datos = objsto[1];
 		    let os = IDB.write2DB(k);
 		    return datos.map( dato => os.add(asobj(dato)) )
-			.reduce( (seq, p) => {
-			    return seq.then( () => p ).catch(e)( e => console.log(e) )
-			 }, Promise.resolve() );
+			.reduce( (seq, p) => seq.then( () => p ), Promise.resolve() );
 		}
 		XHR.getJSON( k.FILE ).then( store ).then( () => console.log("Datos loaded to DB " + k.DB) );
 	    },
@@ -41,7 +39,8 @@
 	};
 
 	(function() {
-	    function ObjStore(objStore) {
+
+	    function ObjStore(objStore, k) {
 		let os = objStore;
 		this.count = function() { return new Promise( (resolve, reject) => {
 		    let request = os.count();
@@ -55,13 +54,17 @@
 		    let request = os.openCursor();
 		    request.onsuccess = () => resolve( f(request.result) );
 		    request.onerror = () => reject( request.errorCode ); })};
+		this.index = function(range, type, f) { return new Promise( (resolve, reject) => {
+		    let request = os.index( k.INDEX ).openCursor(range, type);
+		    request.onsuccess = () => resolve( f(request.result) );
+		    request.onerror = () => reject( request.errorCode ); })};
 	    }
 
-	    IDB.readDB = function( k ) { return new ObjStore(k.CONN.transaction(k.STORE, "readonly").objectStore(k.STORE)); };
+	    IDB.readDB = function( k ) { return new ObjStore(k.CONN.transaction(k.STORE, "readonly").objectStore(k.STORE), k); };
 
 	    IDB.write2DB = function( k ) {
 		let objSto = k.CONN.transaction(k.STORE, "readwrite").objectStore(k.STORE);
-		let os = new ObjStore( objSto );
+		let os = new ObjStore( objSto, k );
 		os.clear = function() { return new Promise( (resolve, reject) => {
 		    let request = objStore.clear();
 		    request.onsuccess = function() { resolve( os ); };
@@ -69,12 +72,12 @@
 		})};
 		os.add = function(q) { return new Promise( (resolve, reject) => {
 		    let request = objStore.add(q);
-		    request.onsuccess = function() { resolve( os ) };
+		    request.onsuccess = resolve;
 		    request.onerror = reject(event.target.errorCode);
 		})};
 		os.put = function(q) { return new Promise( (resolve, reject) => {
 		    let request = objStore.put(q);
-		    request.onsuccess = function() { resolve( os ) };
+		    request.onsuccess = resolve;
 		    request.onerror = reject(event.target.errorCode);
 		})};
 		return os;

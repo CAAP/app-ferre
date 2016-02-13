@@ -3,8 +3,6 @@
 
 	window.onload = function() {
 	    ferre.addFuns();
-	    ferre.header();
-	    ferre.footer();
 	    if (ferre.indexedDB) { ferre.loadDBs(); }
 	    else { alert('IDBIndexed not available.'); }
 	};
@@ -19,19 +17,29 @@
 	ferre.addFuns = function addFuns() {
 	    const IDBKeyRange =  window.IDBKeyRange || window.webkitIDBKeyRange || window.msIDBKeyRange;
 	    const indexedDB = window.indexedDB || window.mozIndexedDB || window.webkitIndexedDB || window.msIndexedDB;
-	    const res = document.getElementById('resultados');
-            const ans = document.getElementById('tabla-resultados');
 	    const bag = document.getElementById('ticket-compra');
 	    const ttotal = document.getElementById('ticket-total');
 	    const myticket = document.getElementById('ticket');
 	    const persona = document.getElementById('persona');
-	    const N = 11;
 	    const TICKET = ferre.TICKET;
 	    const DATA = ferre.DATA;
 	    const PEOPLE = ferre.PEOPLE;
 	    const DBs = [ DATA, TICKET, PEOPLE ];
 
-	    let sstr = '';
+	    PEOPLE.load = function loadPEOPLE() {
+		let ol = document.createElement('ol');
+		persona.appendChild(ol);
+		IDB.readDB( PEOPLE ).openCursor( cursor => {
+		    if(cursor) {
+			ol.appendChild( document.createElement('li') ).textContent = cursor.value.nombre;
+			cursor.continue();
+		    } else {
+			let ie = inputE( [['type', 'text'], ['size', 1]] );
+			ie.addEventListener('keydown', printing);
+			persona.appendChild( ie );
+		    }
+		})
+	    };
 
 	    function asnum(s) { let n = Number(s); return Number.isNaN(n) ? s : n; };
 
@@ -41,80 +49,21 @@
 
 	    function now(fmt) { return new Date().toLocaleDateString('es-MX', fmt) };
 
- 	    ferre.indexedDB = indexedDB;
+	    function clearTable(tb) { while (tb.firstChild) { tb.removeChild( tb.firstChild ); } };
 
-	    ferre.loadDBs = function loadDBs() { DBs.forEach( loadDB ); };
+ 	    if (IDB.indexedDB) { DBs.forEach( IDB.loadDB ); } else { alert("IDBIndexed not available."); }
 
-	    ferre.header = function ferreTodate() {
+	    (function() {
 	        let note = document.getElementById('notifications');
 		let FORMAT = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
 		note.appendChild( document.createTextNode( now(FORMAT) ) );
-	    }
+	    })();
 
-	    ferre.footer = function footer() {
-		document.getElementById('copyright').innerHTML = 'versi&oacute;n ' + 1.0 + ' | cArLoS&trade; &copy;&reg;';
-	    };
+	    (function() { document.getElementById('copyright').innerHTML = 'versi&oacute;n ' + 1.0 + ' | cArLoS&trade; &copy;&reg;'; })();
 
 	    ferre.reloadDB = function reloadDB() {
 		clearDB( DATA );
 		populateDB( DATA );
-	    };
-
-	    function transaction(t) {
-		return function initTransaction( k ) {
-		    let trn = k.CONN.transaction(k.STORE, t);
-		    trn.oncomplete = function(e) { console.log(t +' transaction successfully done.'); };
-		    trn.onerror = function(e) { console.log( t + ' transaction error:' + e.target.errorCode); };
-		    return trn.objectStore(k.STORE);
-		};
-	    };
-
-	    let write2DB = transaction("readwrite");
-
-	    let readDB = transaction("readonly");
-
-	    function clearDB( k ) {
-		let req = write2DB( k ).clear();
-		req.onsuccess = function() { console.log( 'Data cleared from DB; ' + k.DB ); };
-	    };
-
-	    function clearTable(tb) { while (tb.firstChild) { tb.removeChild( tb.firstChild ); } };
-
-	    function asobj(a, ks) {
-		let ret = {};
-		for (let i in ks) { ret[ks[i]] = a[i]; }
-		return ret;
-	    };
-
-	    function populateDB( k ) {
-		let xhttp = new XMLHttpRequest();
-		xhttp.open('GET', k.FILE);
-        	xhttp.onreadystatechange = function() {
-		    if (xhttp.readyState == 4) {
-			let mydata = eval( '(' +  xhttp.responseText + ')' );
-			let datos = mydata[1];
-			let ks = mydata[0];
-			let objStore = write2DB( k );
-			datos.map( x => objStore.add(asobj(x, ks)) ); // for (let i in datos) { objStore.add( asobj(datos[i], ks) ); }
-			console.log( 'Data loaded to DB: ' + k.DB );
-		    }
-                };
-		xhttp.send(null);
-	    };
-
-	    function loadDB(k) {
-		let req = indexedDB.open(k.DB, k.VERSION);
-		req.onerror = function(e) {  console.log('Error loading database: ' + k.DB + ' | ' + e.target.errorCode); };
-	        req.onsuccess = function(e) { k.CONN = e.target.result; if (k.load) { k.load(); }};
-		req.onupgradeneeded = function(e) {
-		    console.log('Upgrade ongoing.');
-		    let objStore = e.target.result.createObjectStore(k.STORE, { keyPath: k.KEY });
-		    if (k.INDEX) { objStore.createIndex(k.INDEX, k.INDEX, { unique: false } ) }
-		    objStore.transaction.oncomplete = function(ev) {
-			console.log('ObjectStore ' + k.STORE + ' created successfully.');
-			if (k.FILE) { populateDB( k ); }
-		    };
-		};
 	    };
 
 	    function incdec(e) {
@@ -144,22 +93,6 @@
 		a.map( o => ret[o[0]] = o[1] ); //  function(o) { ret[o[0]] = o[1];});
 		return ret;
 	   };
-
-	    PEOPLE.load = function loadPEOPLE() {
-		let ol = document.createElement('ol');
-		persona.appendChild(ol);
-		let req = readDB( PEOPLE ).openCursor().onsuccess = function(e) {
-		    let cursor = e.target.result;
-		    if(cursor) {
-			ol.appendChild( document.createElement('li') ).textContent = cursor.value.nombre;
-			cursor.continue();
-		    } else {
-			let ie = inputE( [['type', 'text'], ['size', 1]] );
-			ie.addEventListener('keydown', printing);
-			persona.appendChild( ie );
-		    }
-		};
-	    };
 
 // PRINTING //
 
@@ -239,8 +172,7 @@
 		    let a = ['qty', 'rea'];
 		    TKT = header();
 		    let total = 0;
-		    readDB( TICKET ).openCursor().onsuccess = function(e) {
-			let cursor = e.target.result;
+		    IDB.readDB( TICKET ).openCursor( cursor => {
 			if (cursor) {
 			    let q = cursor.value;
 			    total += q.totalCents;
@@ -253,7 +185,7 @@
 			    TKT += '<tr><th colspan=4>'+enpesos(total/100)+'</th></tr>'
 			    persona.showModal();
 			}
-		    };
+		    });
 		};
 
 		ferre.printDialog = function printDialog(args) { HEADER[1] = (args=='ticket' ? '' : '<tr><th colspan=4>PRESUPUESTO</th></tr>'); setPrint(); };
@@ -262,7 +194,7 @@
 		    let k = e.key || ((e.which > 90) ? e.which-96 : e.which-48);
 		    persona.close(k);
 		    e.target.textContent = '';
-		    readDB( PEOPLE ).get( k ).onsuccess = function(e) { let q = e.target.result; if (q) { printTicket(q.nombre, randString()); } };
+//		    readDB( PEOPLE ).get( k ).onsuccess = function(e) { let q = e.target.result; if (q) { printTicket(q.nombre, randString()); } };
 		}
 
 	    })();
@@ -272,67 +204,61 @@
 
 	    (function() {
 
+	    let sstr = '';
+	    const res = document.getElementById('resultados');
+            const ans = document.getElementById('tabla-resultados');
+	    const N = 11;
+
 	    function newItem(a, j) {
 		let row = ans.insertRow(j);
 		if (a.desc.startsWith(sstr)) { row.classList.add('encontrado'); };
 		row.dataset.clave = a.clave;
 		row.insertCell().appendChild( document.createTextNode( a.fecha ) );
 		row.insertCell().appendChild( document.createTextNode( a.clave ) );
-		let desc = row.insertCell(); // class 'desc' necessary for browsing
+		let desc = row.insertCell(); // class 'desc' necessary for scrolling
 		desc.classList.add('desc'); desc.appendChild( document.createTextNode( a.desc ) );
 		row.insertCell().appendChild( document.createTextNode( a.precio1.toFixed(2) ) );
 		row.insertCell().appendChild( document.createTextNode( a.u1 ) );
-	    };
+	    }
 
 	    function browsing(j, M) {
 		let k = 0;
-		return function(e) {
-		    let cursor = e.target.result;
-		    if (cursor && k < M) {
-			newItem(cursor.value, j);
-			k++;
-			cursor.continue();
-		    }
+		return function(cursor) {
+		    if (k == M || !cursor) { return }
+		    newItem(cursor.value, j);
+		    k++; cursor.continue();
 		};
-	    };
+	    }
 
-	    function searchIndex(index, t, s, M) {
+	    function searchIndex(k, type, s, M) {
 		let NN = M || N;
-		let range = (t.substr(0,4) == 'next') ? IDBKeyRange.lowerBound(s, NN<N) : IDBKeyRange.upperBound(s, NN<N);
-		let j = (t.substr(0,4) == 'next') ? -1 : 0;
-		index.openCursor( range, t ).onsuccess = browsing(j, NN);
+		let t = type.substr(0,4) == 'next';
+		let range = t ? IDBKeyRange.lowerBound(s, NN<N) : IDBKeyRange.upperBound(s, NN<N);
+		let j = t ? -1 : 0;
+		return IDB.readDB( k ).index( range, type, browsing(j, NN) );
 	    }
 
 	    function searchByDesc(s) {
-		console.log('Searching by description:' + s);
-		sstr = s;
-		let index = readDB( DATA ).index( DATA.INDEX );
-		searchIndex(index, 'next', s);
-	    };
+		console.log('Searching by description:' + s); sstr = s;
+		return searchIndex(DATA, 'next', s);
+	    }
 
 	    function searchByClave(s) {
 		console.log('Searching by clave:' + s);
-		let req = readDB( DATA ).get( asnum(s) );
-		req.onerror =  function(e) { console.log('Error searching by clave.'); };
-		req.onsuccess = function(e) {
-		    if (e.target.result) { let ss = e.target.result.desc; searchByDesc(ss) }
-		    else { searchByDesc(s); }
-		};
-	    };
+		return IDB.readDB( DATA ).get( asnum(s) ).then(result => searchByDesc(result ? result.desc : s), e => console.log("Error searching by clave: " + e));
+	    }
 
 	    function startSearch(e) {
-		document.getElementById('resultados').style.visibility='visible';
+		res.style.visibility='visible';
 		clearTable( ans );
 		searchByClave(e.target.value.toUpperCase());
 		e.target.value = ""; // clean input field
-	    };
+	    }
 
 	    function retrieve(t) {
-		let s = (t == 'prev') ? ans.firstChild.querySelector('.desc').textContent : ans.lastChild.querySelector('.desc').textContent;
-		if (t == 'prev') { ans.removeChild( ans.lastChild ); } else { ans.removeChild( ans.firstChild ); }
-		let index = readDB( DATA ).index( DATA.INDEX );
-		searchIndex(index, t, s, 1);
-	    };
+		let s = ans[(t == 'prev') ? 'firstChild' : 'lastChild'].querySelector('.desc').textContent;
+		searchIndex(DATA, t, s, 1).then( () => ans.removeChild((t == 'prev') ? ans.lastChild : ans.firstChild ));
+	    }
 
  	    ferre.startSearch = startSearch;
 
@@ -361,22 +287,18 @@
 	    (function() {
 
 	    TICKET.load = function loadTICKET() {
-		let objStore = readDB( TICKET );
-		let req = objStore.count();
-		req.onsuccess = function(e) {
-		    if (req.result > 0) {
-			toggleTicket();
-			let total = 0;
-			objStore.openCursor().onsuccess = function(ev) {
-			    let cursor = ev.target.result;
-			    if (cursor) {
-				total += cursor.value.totalCents;
-			        displayItem( cursor.value );
-		    	        cursor.continue();
-			    } else { ttotal.textContent = tocents( total ); }
-			};
-		    }
-		};
+		let objStore = IDB.readDB( TICKET );
+		objStore.count().then( result => result>0 ).then( () => {
+		    toggleTicket();
+		    let total = 0;
+		    return objStore.openCursor( cursor => {
+			if (cursor) {
+			    total += cursor.value.totalCents;
+			    displayItem( cursor.value );
+		    	    cursor.continue();
+			} else { ttotal.textContent = tocents( total ); }
+		    });
+		});
 	    };
 
 	    function uptoCents(q) { return Math.round( 100 * q[q.precio] * q.qty * (1-q.rea/100) ); };
@@ -386,18 +308,18 @@
 		    myticket.style.visibility = 'visible';
 		else
 		    myticket.style.visibility = 'hidden';
-	    };
+	    }
 
+// input: objStore | avoid need transaction
 	    function bagTotal() {
 		let total = 0;
-		readDB( TICKET ).openCursor().onsuccess = function(e) {
-		    let cursor = e.target.result;
+		IDB.readDB( TICKET ).openCursor( cursor => {
 		    if (cursor) {
 			total += cursor.value.totalCents;
 			cursor.continue();
 		    } else { ttotal.textContent = tocents( total ); }
-		};
-	    };
+		});
+	    }
 
 	    function precios(q) {
 		if ((q.precio2 == 0) && (q.precio3 == 0)) { return document.createTextNode( q.precio1.toFixed(2) ); }
@@ -430,18 +352,12 @@
 	    };
 
 	    function item2ticket(q) {
-		let objStore = write2DB( TICKET )
-		let req = objStore.get( q.clave );
-		req.onerror =  function(e) { console.log('Error searching item in ticket.'); };
-		req.onsuccess = function(e) {
-		    if (e.target.result) { console.log('Item is already in the bag.'); }
-		    else {
-			q.qty =  1; q.precio = 'precio1'; q.rea = 0; q.version = 1; q.totalCents = uptoCents(q);
-			let reqUpdate = objStore.put( q );
-			reqUpdate.onerror = function(e) { console.log('Error adding item to ticket.'); };
-			reqUpdate.onsuccess = function(e) { displayItem(q); bagTotal(); };
-		    }
-		};
+		let objStore = IDB.write2DB( TICKET )
+		objStore.get( q.clave ).then( result => {
+		    if (result) { console.log('Item is already in the bag.'); return; }
+		    q.qty =  1; q.precio = 'precio1'; q.rea = 0; q.version = 1; q.totalCents = uptoCents(q);
+		    return objStore.put( q ).then( () => { displayItem(q); bagTotal(); });
+		});
 	    };
 
 	    ferre.add2bag = function add2bag(e) {
