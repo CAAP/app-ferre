@@ -144,8 +144,7 @@
 			let iframe = document.createElement('iframe');
 			iframe.style.visibility = "hidden";
 			iframe.width = 400;
-			myticket.appendChild( iframe );
-			iframe.onload = resolve(iframe.contentWindow);
+			iframe.onload = resolve(iframe);
 		    });
 		}
 
@@ -154,7 +153,8 @@
 		    TKT += '<tr><th colspan=2>'+nombre+'</th><th colspan=2 align="left">#'+numero+'</th></tr>';
 		    TKT += '<tr><th colspan=4 align="center">GRACIAS POR SU COMPRA</th></tr></tfoot></tbody></table></body></html>'
 		    return iframe()
-			.then( win => { let doc = win.document; doc.open(); doc.write(TKT); doc.close(); return win })
+			.then( iframe => { let doc = iframe.contentWindow.document; doc.open(); doc.write(TKT); doc.close(); return iframe } )
+			.then( iframe => { myticket.appendChild( iframe ); return iframe.contentWindow })
 			.then( win => win.print() )
 			.then( () => myticket.removeChild(myticket.lastChild) );
 		};
