@@ -15,75 +15,69 @@
 		    objStore.transaction.oncomplete = function(ev) {
 			console.log('ObjectStore ' + k.STORE + ' created successfully.');
 			if (k.FILE) { IDB.populateDB( k ); }
+			if (k.load) { k.load(); };
 		    };
 		};
 	    },
 
-	    clearDB: function(k) {
-		let req = this.write2DB(k).clear();
-		req.onsuccess = function() { console.log( 'Data cleared from DB; ' + k.DB ); };
+	    populateDB: function(k) {
+		function asobj(a, ks) {
+		    let ret = {};
+		    for (let i in ks) { ret[ks[i]] = a[i]; }
+		    return ret;
+		}
+		function store(objsto) {
+		    let ks = objsto[0], datos = objsto[1];
+		    let os = IDB.write2DB(k);
+		    return datos.map( dato => os.add(asobj(dato)) )
+			.reduce( (seq, p) => {
+			    return seq.then( () => return p ).catch(e)( console.log(e) )
+			 }, Promise.resolve() );
+		}
+		XHR.getJSON( k.FILE ).then( store ).then( () => console.log("Datos loaded to DB " + k.DB) );
 	    },
+
+	    clearDB: k => IDB.write2DB(k).clear()
 	};
 
 	(function() {
-
-	function Request(url, options) {
-	    return new Promise((resolve, reject) => {
-	        let xhr = new XMLHttpRequest;
-	        xhr.onload = event => resolve(event.target);
-	        xhr.onerror = reject;
-
-	        let defaultMethod = options.data ? "POST" : "GET";
-
-	        if (options.mimeType)
-	            xhr.overrideMimeType(params.options);
-
-	        xhr.open(options.method || defaultMethod, url);
-
-	        if (options.responseType)
-	            xhr.responseType = options.responseType;
-
-	        for (let header of Object.keys(options.headers || {}))
-	            xhr.setRequestHeader(header, options.headers[header]);
-
-	        let data = options.data;
-	        if (data && Object.getPrototypeOf(data).constructor.name == "Object") {
-	            options.data = new FormData;
-	            for (let key of Object.keys(data))
-	                options.data.append(data[key]);
-	        }
-
-	        xhr.send(options.data);
-	    });
-	}
-
-	    function asobj(a, ks) {
-		let ret = {};
-		for (let i in ks) { ret[ks[i]] = a[i]; }
-		return ret;
+	    function ObjStore(objStore) {
+		let os = objStore;
+		this.count = function() { return new Promise( (resolve, reject) => {
+		    let request = os.count();
+		    request.onsuccess = function() { resolve( request.result ); };
+		    request.onerror = () => reject( request.errorCode ); })};
+		this.get = function(k) { return new Promise( (resolve, reject) => {
+		    let request = os.get(k);
+		    request.onsuccess = function() { resolve( request.result ); };
+		    request.onerror = () => reject( request.errorCode ); })};
+		this.openCursor = function(f) { return new Promise( (resolve, reject) => {
+		    let request = os.openCursor();
+		    request.onsuccess = () => resolve( f(request.result) );
+		    request.onerror = () => reject( request.errorCode ); })};
 	    }
 
-	    IDB.populateDB = function(k) {
-		new Request(k.FILE, { responseType: 'json' })
-		    .then(response => {
-			let data = JSON.parse( response.responseText );
-			let ks = data[0], datos = data[1];
-			let objStore = IDB.write2DB( k );
-			datos.map( x => objStore.add(asobj(x, ks)) );
-			console.log('Data loaded to DB: '+k.DB);});
+	    IDB.readDB = function( k ) { return new ObjStore(k.CONN.transaction(k.STORE, "readonly").objectStore(k.STORE)); };
+
+	    IDB.write2DB = function( k ) {
+		let objSto = k.CONN.transaction(k.STORE, "readwrite").objectStore(k.STORE);
+		let os = new ObjStore( objSto );
+		os.clear = function() { return new Promise( (resolve, reject) => {
+		    let request = objStore.clear();
+		    request.onsuccess = function() { resolve( os ); };
+		    request.onerror = reject(event.target.errorCode);
+		})};
+		os.add = function(q) { return new Promise( (resolve, reject) => {
+		    let request = objStore.add(q);
+		    request.onsuccess = function() { resolve( os ) };
+		    request.onerror = reject(event.target.errorCode);
+		})};
+		os.put = function(q) { return new Promise( (resolve, reject) => {
+		    let request = objStore.put(q);
+		    request.onsuccess = function() { resolve( os ) };
+		    request.onerror = reject(event.target.errorCode);
+		})};
+		return os;
 	    };
-
-	    function transaction(t) {
-		return function initTransaction( k ) {
-		    let trn = k.CONN.transaction(k.STORE, t);
-		    trn.oncomplete = function(e) { console.log(t +' transaction successfully done.'); };
-		    trn.onerror = function(e) { console.log( t + ' transaction error:' + e.target.errorCode); };
-		    return trn.objectStore(k.STORE);
-		};
-	    };
-
-	    IDB.write2DB = transaction("readwrite");
-
-	    IDB.readDB = transaction("readonly");
 
 	})();

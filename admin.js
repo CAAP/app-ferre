@@ -14,7 +14,6 @@
 	};
 
 	admin.addFuns = function addFuns() {
-	    const IDBKeyRange =  window.IDBKeyRange || window.webkitIDBKeyRange || window.msIDBKeyRange;
 	    const PEOPLE = admin.PEOPLE;
 	    const DBs = [ PEOPLE ];
 
@@ -36,16 +35,9 @@
 
 	    PEOPLE.load = function() {
 		let tb = document.getElementById('tabla-entradas');
-		let req = IDB.readDB( PEOPLE ).openCursor().onsuccess = function(e) {
-		    let cursor = e.target.result;
-		    if(cursor) {
-			tb.insertRow().appendChild( document.createTextNode( cursor.value.nombre ) );
-			cursor.continue();
-		    } else {
-		    }
-		};
+		let row = nombre => tb.insertRow().appendChild(document.createTextNode(nombre));
+		IDB.readDB( PEOPLE ).openCursor( cursor => { if(!cursor){ return } row(cursor.value.nombre); cursor.continue(); } );
 	    };
-
 
 	};
 
