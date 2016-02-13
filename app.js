@@ -52,8 +52,7 @@
 	    (function() { document.getElementById('copyright').innerHTML = 'versi&oacute;n ' + 1.0 + ' | cArLoS&trade; &copy;&reg;'; })();
 
 	    ferre.reloadDB = function reloadDB() {
-		clearDB( DATA );
-		populateDB( DATA );
+		return IDB.clearDB(DATA).then( () => IDB.populateDB( DATA ) );
 	    };
 
 	    function incdec(e) {
@@ -144,7 +143,8 @@
 			let iframe = document.createElement('iframe');
 			iframe.style.visibility = "hidden";
 			iframe.width = 400;
-			iframe.onload = resolve(iframe);
+			myticket.appendChild( iframe );
+			iframe.onload = resolve(iframe.contentWindow);
 		    });
 		}
 
@@ -153,8 +153,7 @@
 		    TKT += '<tr><th colspan=2>'+nombre+'</th><th colspan=2 align="left">#'+numero+'</th></tr>';
 		    TKT += '<tr><th colspan=4 align="center">GRACIAS POR SU COMPRA</th></tr></tfoot></tbody></table></body></html>'
 		    return newiframe()
-			.then( iframe => { let doc = iframe.contentWindow.document; doc.open(); doc.write(TKT); doc.close(); return iframe } )
-			.then( iframe => { myticket.appendChild( iframe ); return iframe.contentWindow } )
+			.then( win => { let doc = win.document; doc.open(); doc.write(TKT); doc.close(); return win} )
 			.then( win => win.print() )
 			.then( () => myticket.removeChild(myticket.lastChild) );
 		};
@@ -281,9 +280,10 @@
 	    const bag = document.getElementById('ticket-compra');
 	    const ttotal = document.getElementById('ticket-total');
 
-	    TICKET.load = function loadTICKET() {
+	    TICKET.load = function() {
 		let objStore = IDB.readDB( TICKET );
-		objStore.count().then( result => result>0 ).then( () => {
+		objStore.count().then( result => {
+		    if (!(result>0)) { return; }
 		    toggleTicket();
 		    let total = 0;
 		    return objStore.openCursor( cursor => {

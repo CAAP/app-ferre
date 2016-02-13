@@ -7,7 +7,7 @@
 	function request(url, options) {
 	    return new Promise((resolve, reject) => {
 	        let xhr = new XMLHttpRequest;
-	        xhr.onload = event => resolve( event.target.responseText );
+	        xhr.onload = event => resolve( event.target.response );
 	        xhr.onerror = reject;
 
 	        let defaultMethod = options.data ? "POST" : "GET";
@@ -34,7 +34,7 @@
 	    });
 	}
 
-	XHR.getJSON = function(url) { return request(url, { responseType: 'json' }).then( JSON.parse ); }
-	});
+	XHR.getJSON = function(url) { return request(url, { responseType: 'text' }).then( JSON.parse ); }
+	})();
 
 

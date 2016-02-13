@@ -26,16 +26,18 @@
 		    for (let i in ks) { ret[ks[i]] = a[i]; }
 		    return ret;
 		}
+
 		function store(objsto) {
 		    let ks = objsto[0], datos = objsto[1];
 		    let os = IDB.write2DB(k);
-		    return datos.map( dato => os.add(asobj(dato)) )
+		    return datos.map( dato => os.add(asobj(dato, ks)) )
 			.reduce( (seq, p) => seq.then( () => p ), Promise.resolve() );
 		}
-		XHR.getJSON( k.FILE ).then( store ).then( () => console.log("Datos loaded to DB " + k.DB) );
+
+		return XHR.getJSON( k.FILE ).then( store ).then( () => console.log("Datos loaded to DB " + k.DB) );
 	    },
 
-	    clearDB: k => IDB.write2DB(k).clear()
+	    clearDB: k => IDB.write2DB(k).clear(),
 	};
 
 	(function() {
