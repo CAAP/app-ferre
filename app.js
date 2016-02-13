@@ -3,8 +3,6 @@
 
 	window.onload = function() {
 	    ferre.addFuns();
-	    if (ferre.indexedDB) { ferre.loadDBs(); }
-	    else { alert('IDBIndexed not available.'); }
 	};
 
 	var ferre = {
@@ -311,9 +309,9 @@
 	    }
 
 // input: objStore | avoid need transaction
-	    function bagTotal() {
+	    function bagTotal(objStore) {
 		let total = 0;
-		IDB.readDB( TICKET ).openCursor( cursor => {
+		return objStore.openCursor( cursor => {
 		    if (cursor) {
 			total += cursor.value.totalCents;
 			cursor.continue();
@@ -351,23 +349,15 @@
 		total.classList.add('pesos'); total.classList.add('total'); total.appendChild( document.createTextNode( tocents(q.totalCents) ) );
 	    };
 
-	    function item2ticket(q) {
-		let objStore = IDB.write2DB( TICKET )
-		objStore.get( q.clave ).then( result => {
-		    if (result) { console.log('Item is already in the bag.'); return; }
-		    q.qty =  1; q.precio = 'precio1'; q.rea = 0; q.version = 1; q.totalCents = uptoCents(q);
-		    return objStore.put( q ).then( () => { displayItem(q); bagTotal(); });
-		});
-	    };
-
 	    ferre.add2bag = function add2bag(e) {
 		let clave = asnum( e.target.parentElement.dataset.clave );
 		(myticket.classList.contains('visible') || toggleTicket());
-		let req = readDB( DATA ).get( clave );
-		req.onsuccess = function(e) {
-		    let q = e.target.result;
-		    item2ticket(q);
-		};
+		let objStore = IDB.write2DB( TICKET );
+		return objStore.get( clave ).then( q => {
+		    if (q) { console.log("Item is already in the bag."); return; }
+		    q.qty = 1; q.precio = 'precio1'; q.rea = 0; q.totalCents = uptoCents(q);
+		    return objStore.put( q ).then( displayItem ).then( () => bagTotal(objStore) );
+		});
 	    };
 
 	    ferre.updateItem = function updateItem(e) {

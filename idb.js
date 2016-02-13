@@ -72,12 +72,12 @@
 		})};
 		os.add = function(q) { return new Promise( (resolve, reject) => {
 		    let request = objStore.add(q);
-		    request.onsuccess = resolve;
+		    request.onsuccess = resolve(q);
 		    request.onerror = reject(event.target.errorCode);
 		})};
 		os.put = function(q) { return new Promise( (resolve, reject) => {
 		    let request = objStore.put(q);
-		    request.onsuccess = resolve;
+		    request.onsuccess = resolve(q);
 		    request.onerror = reject(event.target.errorCode);
 		})};
 		return os;
