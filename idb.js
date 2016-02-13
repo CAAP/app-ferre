@@ -31,7 +31,7 @@
 		    let os = IDB.write2DB(k);
 		    return datos.map( dato => os.add(asobj(dato)) )
 			.reduce( (seq, p) => {
-			    return seq.then( () => return p ).catch(e)( console.log(e) )
+			    return seq.then( () => p ).catch(e)( e => console.log(e) )
 			 }, Promise.resolve() );
 		}
 		XHR.getJSON( k.FILE ).then( store ).then( () => console.log("Datos loaded to DB " + k.DB) );
