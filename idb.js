@@ -63,11 +63,16 @@
 	    IDB.readDB = function( k ) { return new ObjStore(k.CONN.transaction(k.STORE, "readonly").objectStore(k.STORE), k); };
 
 	    IDB.write2DB = function( k ) {
-		let objSto = k.CONN.transaction(k.STORE, "readwrite").objectStore(k.STORE);
-		let os = new ObjStore( objSto, k );
+		let objStore = k.CONN.transaction(k.STORE, "readwrite").objectStore(k.STORE);
+		let os = new ObjStore( objStore, k );
 		os.clear = function() { return new Promise( (resolve, reject) => {
 		    let request = objStore.clear();
-		    request.onsuccess = function() { resolve( os ); };
+		    request.onsuccess = resolve(true);
+		    request.onerror = reject(event.target.errorCode);
+		})};
+		os.delete = function(w) { return new Promise( (resolve, reject) => {
+		    let request = objStore.delete(w);
+		    request.onsuccess = resolve(true);
 		    request.onerror = reject(event.target.errorCode);
 		})};
 		os.add = function(q) { return new Promise( (resolve, reject) => {

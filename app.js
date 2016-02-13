@@ -1,10 +1,6 @@
 
         "use strict";
 
-	window.onload = function() {
-	    ferre.addFuns();
-	};
-
 	var ferre = {
 	    DATA:  { VERSION: 2, DB: 'datos', STORE: 'datos-clave', KEY: 'clave', INDEX: 'desc', FILE: 'ferre.json' },
 	    BAG: { VERSION: 1, DB: 'tickets', STORE: 'tickets-uid',  KEY: 'uid', INDEX: 'fecha' },
@@ -12,13 +8,9 @@
 	    PEOPLE: { VERSION: 1, DB: 'people', STORE: 'people-id', KEY: 'id', INDEX: 'nombre', FILE: 'people.json'},
 	};
 
-	ferre.addFuns = function addFuns() {
-	    const IDBKeyRange =  window.IDBKeyRange || window.webkitIDBKeyRange || window.msIDBKeyRange;
-	    const indexedDB = window.indexedDB || window.mozIndexedDB || window.webkitIndexedDB || window.msIndexedDB;
-	    const bag = document.getElementById('ticket-compra');
-	    const ttotal = document.getElementById('ticket-total');
-	    const myticket = document.getElementById('ticket');
+	window.onload = function() {
 	    const persona = document.getElementById('persona');
+	    const myticket = document.getElementById('ticket');
 	    const TICKET = ferre.TICKET;
 	    const DATA = ferre.DATA;
 	    const PEOPLE = ferre.PEOPLE;
@@ -147,23 +139,24 @@
 		    return ret;
 		};
 
-		function printTicket(nombre, numero) {
+		function iframe() {
+		    return new Promise( (resolve, reject) => {
+			let iframe = document.createElement('iframe');
+			iframe.style.visibility = "hidden";
+			iframe.width = 400;
+			myticket.appendChild( iframe );
+			iframe.onload = resolve(iframe.contentWindow);
+		    });
+		}
+
+		function printTicket( q ) {
+		    let nombre = q.nombre, numero = randString();
 		    TKT += '<tr><th colspan=2>'+nombre+'</th><th colspan=2 align="left">#'+numero+'</th></tr>';
 		    TKT += '<tr><th colspan=4 align="center">GRACIAS POR SU COMPRA</th></tr></tfoot></tbody></table></body></html>'
-		    let iframe = document.createElement('iframe');
-		    iframe.style.visibility = "hidden";
-		    iframe.width = 400;
-		    iframe.onload = function() {
-			let doc = this.contentWindow.document; doc.open(); doc.write(TKT); doc.close();
-			this.contentWindow.__container__ = this;
-			this.contentWindow.onfocus = function () { myticket.removeChild(myticket.lastChild); };
-		    };
-		    myticket.appendChild( iframe );
-		    let printing = function printing() {
-			iframe.contentWindow.print();
-			iframe.contentWindow.focus();
-		    };
-		    window.setTimeout(printing, 500);
+		    return iframe()
+			.then( win => { let doc = win.document; doc.open(); doc.write(TKT); doc.close(); return win })
+			.then( win => win.print() )
+			.then( () => myticket.removeChild(myticket.lastChild) );
 		};
 
 		function setPrint() {
@@ -192,7 +185,7 @@
 		    let k = e.key || ((e.which > 90) ? e.which-96 : e.which-48);
 		    persona.close(k);
 		    e.target.textContent = '';
-//		    readDB( PEOPLE ).get( k ).onsuccess = function(e) { let q = e.target.result; if (q) { printTicket(q.nombre, randString()); } };
+		    return IDB.readDB( PEOPLE ).get( k ).then( printTicket );
 		}
 
 	    })();
@@ -203,6 +196,7 @@
 	    (function() {
 
 	    let sstr = '';
+	    const IDBKeyRange =  window.IDBKeyRange || window.webkitIDBKeyRange || window.msIDBKeyRange;
 	    const res = document.getElementById('resultados');
             const ans = document.getElementById('tabla-resultados');
 	    const N = 11;
@@ -222,7 +216,7 @@
 	    function browsing(j, M) {
 		let k = 0;
 		return function(cursor) {
-		    if (k == M || !cursor) { return }
+		    if (k == M || !cursor) { return true; }
 		    newItem(cursor.value, j);
 		    k++; cursor.continue();
 		};
@@ -284,6 +278,9 @@
 
 	    (function() {
 
+	    const bag = document.getElementById('ticket-compra');
+	    const ttotal = document.getElementById('ticket-total');
+
 	    TICKET.load = function loadTICKET() {
 		let objStore = IDB.readDB( TICKET );
 		objStore.count().then( result => result>0 ).then( () => {
@@ -308,7 +305,6 @@
 		    myticket.style.visibility = 'hidden';
 	    }
 
-// input: objStore | avoid need transaction
 	    function bagTotal(objStore) {
 		let total = 0;
 		return objStore.openCursor( cursor => {
@@ -349,18 +345,19 @@
 		total.classList.add('pesos'); total.classList.add('total'); total.appendChild( document.createTextNode( tocents(q.totalCents) ) );
 	    };
 
-	    ferre.add2bag = function add2bag(e) {
+	    ferre.add2bag = function(e) {
 		let clave = asnum( e.target.parentElement.dataset.clave );
 		(myticket.classList.contains('visible') || toggleTicket());
-		let objStore = IDB.write2DB( TICKET );
-		return objStore.get( clave ).then( q => {
+		return IDB.readDB( TICKET ).get( clave ).then( q => {
 		    if (q) { console.log("Item is already in the bag."); return; }
-		    q.qty = 1; q.precio = 'precio1'; q.rea = 0; q.totalCents = uptoCents(q);
-		    return objStore.put( q ).then( displayItem ).then( () => bagTotal(objStore) );
-		});
+		    return IDB.readDB( DATA ).get( clave )
+			.then( w => { w.qty = 1; w.precio = 'precio1'; w.rea = 0; w.totalCents = uptoCents(w); return w })
+			.then( q => IDB.write2DB( TICKET ).put(q) )
+			.then( displayItem )
+			.then( () => bagTotal(IDB.readDB( TICKET )) ) });
 	    };
 
-	    ferre.updateItem = function updateItem(e) {
+	    ferre.updateItem = function(e) {
 		let tr = e.target.parentElement.parentElement;
 		let lbl = tr.querySelector('.total');
 		let clave = asnum( tr.dataset.clave );
@@ -369,36 +366,27 @@
 
 		console.log( clave + ' - ' + k + ': ' + v);
 
-		let objStore = write2DB( TICKET )
-		let req = objStore.get( clave );
-		req.onerror =  function(e) { console.log('Error searching item in ticket.'); };
-		req.onsuccess = function(ev) {
-		    let q = this.result;
-		    q[k] = asnum( v ); // FORCE cast to NUMBER
-		    q.totalCents = uptoCents(q); // UPDATE partial TOTAL
-		    let reqUpdate = objStore.put( q );
-		    reqUpdate.onerror = function(eve) { console.log( 'Error updating item in ticket.' ); };
-		    reqUpdate.onsuccess = function(eve) { lbl.textContent = tocents( q.totalCents ); bagTotal(); };
-		};
+		let objStore = IDB.write2DB( TICKET )
+		return objStore.get( clave ).then( q => {
+			q[k] = asnum(v); // cast to NUMBER
+			q.totalCents = uptoCents(q); // partial total
+			return q;
+		    }, e => console.log("Error searching item in ticket: " + e) ).then( objStore.put ).then( q => {
+			lbl.textContent = tocents(q.totalCents); return true;
+		    }, e => console.log("Error updating item in ticket: " + e) ).then( () => bagTotal(objStore) );
 	    };
 
-	    ferre.item2bin = function item2bin(e) {
+	    ferre.item2bin = function(e) {
 		let clave = asnum( e.target.parentElement.dataset.clave );
 		let tr = e.target.parentElement;
-		let req = write2DB( TICKET ).delete( clave );
-		req.onsuccess = function(ev) {
+		let objStore = IDB.write2DB( TICKET )
+		return objStore.delete( clave ).then( () => {
 		    bag.removeChild( tr );
-		    if (!bag.hasChildNodes()) { toggleTicket(); } else { bagTotal(); }
-		};
+		    if (!bag.hasChildNodes()) { toggleTicket(); } else { bagTotal(objStore); }
+		});
 	    };
 
-	    ferre.emptyBag = function emptyBag(e) {
-		let req = write2DB( TICKET ).clear()
-		req.onsuccess = function(ev) {
-		    clearTable( bag );
-		    toggleTicket();
-		};
-	    };
+	    ferre.emptyBag = function(e) { return IDB.write2DB( TICKET ).clear().then( () => { clearTable( bag ); toggleTicket(); }); };
 
 	    })();
 
