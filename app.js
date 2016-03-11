@@ -240,6 +240,7 @@
 	    }
 
 	    function startSearch(e) {
+		if (e.target.value.length == 0) { console.log('Empty search: nothing to be done.'); }
 		res.style.visibility='visible';
 		clearTable( ans );
 		searchByClave(e.target.value.toUpperCase());
@@ -387,6 +388,23 @@
 	    };
 
 	    ferre.emptyBag = function(e) { return IDB.write2DB( TICKET ).clear().then( () => { clearTable( bag ); toggleTicket(); }); };
+
+	    ferre.send = function(args) {
+		let o = {name: 'Carlos', lastname: 'Aguilar', email: 'caap@kth.se', args: args};
+		XHR.post('test.lua', o);
+	    };
+
+	    function() {
+		let datos = [];
+		IDB.readDB( TICKET ).openCursor( cursor =>
+		    if (cursor) {
+			let q = cursor.value;
+			let o = new Object({ q.clave, q.qty, q.precio, q.rea });
+			XHR.post('test.lua', o)
+			cursor.continue();
+		    } else { XHR.post('test.lua', datos); }
+		);
+	    };
 
 	    })();
 

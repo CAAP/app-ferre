@@ -40,7 +40,7 @@
                 <tr> <th> Cantidad </th><th class="desc"> Descripci&oacute;n </th><th> Precio </th><th> Descuento </th><th> Total </th> </tr> 
             </thead>
 	    </dt>
-	    <tfoot><tr><th colspan=5 align="right"><button onclick="ferre.emptyBag()">Cancelar</button>&emsp;<button onclick="ferre.printDialog('presupuesto')">Presupuesto</button>&emsp;<button onclick="ferre.printDialog('ticket')">Imprimir</button>&emsp;<label id="ticket-total" class="total"></label></th></tr></tfoot>
+	    <tfoot><tr><th colspan=5 align="right"><button onclick="ferre.emptyBag()">Cancelar</button>&emsp;<button onclick="ferre.printDialog('presupuesto')">Presupuesto</button>&emsp;<button onclick="ferre.send('ticket')">Imprimir</button>&emsp;<label id="ticket-total" class="total"></label></th></tr></tfoot>
 	    <tbody id="ticket-compra" class="amarillo" onchange="ferre.updateItem(event)" ondblclick="ferre.item2bin(event)"></tbody>
 	</table>
     </section>

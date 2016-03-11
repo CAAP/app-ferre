@@ -34,6 +34,8 @@
 	    });
 	}
 
+	XHR.post = function(url, data) { return request(url, { responseType: 'text', data: data }).then( console.log('Successful POST!') ); }
+
 	XHR.getJSON = function(url) { return request(url, { responseType: 'text' }).then( JSON.parse ); }
 	})();
 
