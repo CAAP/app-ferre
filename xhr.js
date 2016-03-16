@@ -27,7 +27,7 @@
 	        if (data && Object.getPrototypeOf(data).constructor.name == "Object") {
 	            options.data = new FormData;
 	            for (let key of Object.keys(data))
-	                options.data.append(data[key]);
+	                options.data.append(key, data[key]);
 	        }
 
 	        xhr.send(options.data);

@@ -51,6 +51,8 @@
 
 	    (function() { document.getElementById('copyright').innerHTML = 'versi&oacute;n ' + 1.0 + ' | cArLoS&trade; &copy;&reg;'; })();
 
+	    (function() { })();
+
 	    ferre.reloadDB = function reloadDB() {
 		return IDB.clearDB(DATA).then( () => IDB.populateDB( DATA ) );
 	    };
@@ -390,20 +392,14 @@
 	    ferre.emptyBag = function(e) { return IDB.write2DB( TICKET ).clear().then( () => { clearTable( bag ); toggleTicket(); }); };
 
 	    ferre.send = function(args) {
-		let o = {name: 'Carlos', lastname: 'Aguilar', email: 'caap@kth.se', args: args};
-		XHR.post('test.lua', o);
-	    };
-
-	    function() {
-		let datos = [];
-		IDB.readDB( TICKET ).openCursor( cursor =>
+		let datos = "";
+		IDB.readDB( TICKET ).openCursor( cursor => {
 		    if (cursor) {
 			let q = cursor.value;
-			let o = new Object({ q.clave, q.qty, q.precio, q.rea });
-			XHR.post('test.lua', o)
+			datos += q.clave+'\t'+q.qty+'\t'+q.precio+'\t'+q.rea+'\n';
 			cursor.continue();
-		    } else { XHR.post('test.lua', datos); }
-		);
+		    } else { XHR.post('test.lua', {datos: datos, args: args}); }
+		});
 	    };
 
 	    })();
