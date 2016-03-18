@@ -6,6 +6,7 @@
 	    const ttotal = document.getElementById('ticket-total');
 	    const myticket = document.getElementById('ticket');
 	    const TICKET = ferre.TICKET;
+	    const DATA = ferre.DATA;
 	    const STRLEN = 5;
 	    const ALPHA = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789abcdefghijkmnopqrstuvwxyz";
 
