@@ -36,7 +36,10 @@
 
 	XHR.post = function(url, data) { return request(url, { responseType: 'text', data: data }).then( console.log('Successful POST!') ); }
 
+	XHR.get = function(url) { return request(url, { responseType: 'text' }).then( console.log('Successful GET!') ); }
+
 	XHR.getJSON = function(url) { return request(url, { responseType: 'text' }).then( JSON.parse ); }
+
 	})();
 
 
