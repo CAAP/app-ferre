@@ -8,11 +8,12 @@
     <script type="text/javascript" src="xhr.js"></script>
     <script type="text/javascript" src="idb.js"></script>
     <script type="text/javascript" src="app.js"></script>
+    <script type="text/javascript" src="ticket.js"></script>
 </head>
 
 <body lang="es-MX">
 
-    <header> <label id="notifications"></label> <label id="ticker"></label> </header>
+    <header> <label id="notifications"></label> </header>
 
     <div id="main">
 
@@ -40,14 +41,14 @@
                 <tr> <th> Cantidad </th><th class="desc"> Descripci&oacute;n </th><th> Precio </th><th> Descuento </th><th> Total </th> </tr> 
             </thead>
 	    </dt>
-	    <tfoot><tr><th colspan=5 align="right"><button onclick="ferre.emptyBag()">Cancelar</button>&emsp;<button onclick="ferre.printDialog('presupuesto')">Presupuesto</button>&emsp;<button onclick="ferre.send('ticket')">Imprimir</button>&emsp;<label id="ticket-total" class="total"></label></th></tr></tfoot>
+	    <tfoot><tr><th colspan=5 align="right"><button onclick="ferre.emptyBag()">Cancelar</button>&emsp;<button onclick="ferre.send('presupuesto')">Presupuesto</button>&emsp;<button onclick="ferre.print()">Imprimir</button>&emsp;<label id="ticket-total" class="total"></label></th></tr></tfoot>
 	    <tbody id="ticket-compra" class="amarillo" onchange="ferre.updateItem(event)" ondblclick="ferre.item2bin(event)"></tbody>
 	</table>
     </section>
 
     </div>
     
-    <section><dialog id="persona"><a>Qui&eacute;n realiza la venta?</a></dialog></section>
+    <section><dialog id="dialogo-persona"><a>Qui&eacute;n realiza la venta?</a></dialog></section>
 
     <footer> <label id="copyright"></label> </footer>
     
