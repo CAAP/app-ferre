@@ -117,7 +117,7 @@
 		total.classList.add('pesos'); total.classList.add('total'); total.appendChild( document.createTextNode( tocents(q.totalCents) ) );
 	    }
 
-	    ferre.add2bag = function(e) {
+	    TICKET.add = function(e) {
 		let clave = asnum( e.target.parentElement.dataset.clave );
 		(myticket.classList.contains('visible') || toggleTicket());
 		return IDB.readDB( TICKET ).get( clave ).then( q => {
@@ -126,10 +126,12 @@
 			.then( w => { w.qty = 1; w.precio = 'precio1'; w.rea = 0; w.totalCents = uptoCents(w); return w })
 			.then( q => IDB.write2DB( TICKET ).put(q) )
 			.then( displayItem )
-			.then( () => bagTotal(IDB.readDB( TICKET )) ) });
+			.then( () => bagTotal(IDB.readDB( TICKET )) )
+			.then( () => { return clave } )
+		});
 	    };
 
-	    ferre.updateItem = function(e) {
+	    TICKET.update = function(e) {
 		let tr = e.target.parentElement.parentElement;
 		let lbl = tr.querySelector('.total');
 		let clave = asnum( tr.dataset.clave );
@@ -143,22 +145,24 @@
 			q[k] = asnum(v); // cast to NUMBER
 			q.totalCents = uptoCents(q); // partial total
 			return q;
-		    }, e => console.log("Error searching item in ticket: " + e) ).then( objStore.put ).then( q => {
-			lbl.textContent = tocents(q.totalCents); return true;
-		    }, e => console.log("Error updating item in ticket: " + e) ).then( () => bagTotal(objStore) );
+		    }, e => console.log("Error searching item in ticket: " + e) )
+		.then( objStore.put )
+		.then( q => { lbl.textContent = tocents(q.totalCents); return q; }, e => console.log("Error updating item in ticket: " + e) )
+		.then( q => bagTotal(objStore).then( () => { return { clave: clave, key: k, value: v } } ) )
 	    };
 
-	    ferre.item2bin = function(e) {
+	    TICKET.remove = function(e) {
 		let clave = asnum( e.target.parentElement.dataset.clave );
 		let tr = e.target.parentElement;
 		let objStore = IDB.write2DB( TICKET )
 		return objStore.delete( clave ).then( () => {
 		    bag.removeChild( tr );
 		    if (!bag.hasChildNodes()) { toggleTicket(); } else { bagTotal(objStore); }
+		    return clave;
 		});
 	    };
 
-	    ferre.emptyBag = function(e) { return IDB.write2DB( TICKET ).clear().then( () => { clearTable( bag ); toggleTicket(); }); };
+	    TICKET.empty = function(e) { return IDB.write2DB( TICKET ).clear().then( () => { clearTable( bag ); toggleTicket(); }); };
 
 	    })();
 

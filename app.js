@@ -17,10 +17,26 @@
 
 	    ferre.reloadDB = function reloadDB() { return IDB.clearDB(DATA).then( () => IDB.populateDB( DATA ) ); };
 
+	    // SQL
+
+	    SQL.DB = 'ticket';
+
+	    // TICKET
+
 	    ferre.print = function print() {
 		METHOD = 'print.lua?id=' + TICKET.ID;
 		document.getElementById('dialogo-persona').showModal();
 	    };
+
+	    ferre.add2bag = e => { TICKET.add(e).then( clave => SQL.add(clave) ) }
+
+	    ferre.updateItem = e => { TICKET.update(e).then( w => SQL.update(w) ) }
+
+	    ferre.item2bin = e => { TICKET.remove(e).then( clave => SQL.remove(clave) ) }
+
+	    ferre.emptyBag = TICKET.empty
+
+	    //
 
 	    PEOPLE.load = function loadPEOPLE() {
 		const dialog = document.getElementById('dialogo-persona');
