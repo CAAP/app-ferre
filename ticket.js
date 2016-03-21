@@ -136,7 +136,7 @@
 		    }, e => console.log("Error searching item in ticket: " + e) )
 		.then( objStore.put )
 		.then( q => { lbl.textContent = tocents(q.totalCents); return q; }, e => console.log("Error updating item in ticket: " + e) )
-		.then( q => bagTotal(objStore).then( () => { return { clave: clave, key: k, value: v } } ) )
+		.then( q => bagTotal(objStore).then( () => { return { id: TICKET.ID, clave: clave, key: k, value: v } } ) )
 	    };
 
 	    TICKET.update = updateItem;
@@ -151,7 +151,7 @@
 			.then( q => IDB.write2DB( TICKET ).put(q) )
 			.then( displayItem )
 			.then( () => bagTotal(IDB.readDB( TICKET )) )
-			.then( () => { return {clave: clave} } )
+			.then( () => { return { id: TICKET.ID, clave: clave } } )
 		});
 	    };
 
@@ -162,7 +162,7 @@
 		return objStore.delete( clave ).then( () => {
 		    bag.removeChild( tr );
 		    if (!bag.hasChildNodes()) { toggleTicket(); } else { bagTotal(objStore); }
-		    return { clave: clave }
+		    return { id: TICKET.ID, clave: clave }
 		});
 	    };
 
