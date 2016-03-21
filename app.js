@@ -23,6 +23,10 @@
 
 	    // TICKET
 
+	    TICKET.bag = document.getElementById('ticket-compra');
+	    TICKET.ttotal = document.getElementById('ticket-total');
+	    TICKET.myticket = document.getElementById('ticket');
+
 	    ferre.print = function print() {
 		METHOD = 'print.lua?id=' + TICKET.ID;
 		document.getElementById('dialogo-persona').showModal();

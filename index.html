@@ -8,7 +8,8 @@
     <script type="text/javascript" src="xhr.js"></script>
     <script type="text/javascript" src="idb.js"></script>
     <script type="text/javascript" src="sql.js"></script>
-   <script type="text/javascript" src="app.js"></script>
+    <script type="text/javascript" src="app.js"></script>
+    <script type="text/javascript" src="ticket.js"></script>
 </head>
 
 <body lang="es-MX">
@@ -41,7 +42,7 @@
                 <tr> <th> Cantidad </th><th class="desc"> Descripci&oacute;n </th><th> Precio </th><th> Descuento </th><th> Total </th> </tr> 
             </thead>
 	    </dt>
-	    <tfoot><tr><th colspan=5 align="right"><button onclick="ferre.emptyBag()">Cancelar</button>&emsp;<button onclick="ferre.send('presupuesto')">Presupuesto</button>&emsp;<button onclick="ferre.print()">Imprimir</button>&emsp;<label id="ticket-total" class="total"></label></th></tr></tfoot>
+	    <tfoot><tr><th colspan=5 align="right"><button onclick="ferre.emptyBag()">Cancelar</button>&emsp;<button onclick="ferre.presupuesto()">Presupuesto</button>&emsp;<button onclick="ferre.print()">Imprimir</button>&emsp;<label id="ticket-total" class="total"></label></th></tr></tfoot>
 	    <tbody id="ticket-compra" class="amarillo" onchange="ferre.updateItem(event)" ondblclick="ferre.item2bin(event)"></tbody>
 	</table>
     </section>
@@ -50,7 +51,7 @@
     
     <section><dialog id="dialogo-persona"><a>Qui&eacute;n realiza la venta?</a></dialog></section>
 
-    <footer> <label id="copyright"></label> <script type="text/javascript" src="ticket.js"></script> </footer>
+    <footer> <label id="copyright"></label> </footer>
     
 </body>
 </html>
