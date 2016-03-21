@@ -145,7 +145,7 @@
 		let clave = asnum( e.target.parentElement.dataset.clave );
 		(myticket.classList.contains('visible') || toggleTicket());
 		return IDB.readDB( TICKET ).get( clave ).then( q => {
-		    if (q) { console.log("Item is already in the bag."); return; }
+		    if (q) { console.log("Item is already in the bag."); return Promise.reject('Item is already in the bag.'); }
 		    return IDB.readDB( DATA ).get( clave )
 			.then( w => { w.qty = 1; w.precio = 'precio1'; w.rea = 0; w.totalCents = uptoCents(w); return w })
 			.then( q => IDB.write2DB( TICKET ).put(q) )
