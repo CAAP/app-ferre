@@ -4,15 +4,14 @@
 
 	    const DATA = ferre.DATA;
 	    const TICKET = ferre.TICKET;
-	    const bag = TICKET.bag
-	    const ttotal = TICKET.ttotal
-	    const myticket = TICKET.myticket
+	    const bag = document.getElementById(TICKET.bagID);
+	    const ttotal = document.getElementById(TICKET.ttotalID);
+	    const myticket = document.getElementById(TICKET.myticketID);
 
 	    const STRLEN = 5;
 	    const ALPHA = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789abcdefghijkmnopqrstuvwxyz";
 
 	    TICKET.load = function() {
-		TICKET.ID = '';
 		let objStore = IDB.readDB( TICKET );
 		objStore.count().then( result => {
 		    if (!(result>0)) { return; }

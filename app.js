@@ -5,7 +5,7 @@
 	    DATA:  { VERSION: 2, DB: 'datos', STORE: 'datos-clave', KEY: 'clave', INDEX: 'desc', FILE: 'ferre.json' },
 	    PEOPLE: { VERSION: 1, DB: 'people', STORE: 'people-id', KEY: 'id', INDEX: 'nombre', FILE: 'people.json'},
 	    BAG: { VERSION: 1, DB: 'tickets', STORE: 'tickets-uid',  KEY: 'uid', INDEX: 'fecha' },
-	    TICKET: { VERSION: 1, DB: 'ticket', STORE: 'ticket-clave', KEY: 'clave', ID: '' },
+	    TICKET: { VERSION: 1, DB: 'ticket', STORE: 'ticket-clave', KEY: 'clave', ID: '', bagID: 'ticket-compra', ttotalID: 'ticket-total', myticketID: 'ticket' },
 	};
 
 	window.onload = function() {
@@ -22,10 +22,6 @@
 	    SQL.DB = 'ticket';
 
 	    // TICKET
-
-	    TICKET.bag = document.getElementById('ticket-compra');
-	    TICKET.ttotal = document.getElementById('ticket-total');
-	    TICKET.myticket = document.getElementById('ticket');
 
 	    ferre.print = function print() {
 		METHOD = 'print.lua?id=' + TICKET.ID;
