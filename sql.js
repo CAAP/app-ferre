@@ -4,7 +4,7 @@
 
 	(function () {
 
-	    function xget( q, o ) { return XHR.get( 'cgi-bin/' + SQL.DB + '/db-' + q + '?' + asstr(o) ) }
+	    function xget( q, o ) { return XHR.get( SQL.DB + '/' + q + '.lua?' + asstr(o) ) }
 
 	    function asstr( obj ) {
 		let props = [];
