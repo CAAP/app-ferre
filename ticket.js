@@ -12,6 +12,7 @@
 	    const ALPHA = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789abcdefghijkmnopqrstuvwxyz";
 
 	    TICKET.load = function() {
+		TICKET.ID = '';
 		let objStore = IDB.readDB( TICKET );
 		objStore.count().then( result => {
 		    if (!(result>0)) { return; }
@@ -70,7 +71,7 @@
 	    }
 
 	    function toggleTicket() {
-		const ID = TICKET.ID || ''
+		let ID = TICKET.ID
 		if (ID.length == 0)
 		    ID = randString();
 		if (myticket.classList.toggle('visible'))
