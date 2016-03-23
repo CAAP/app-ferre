@@ -48,7 +48,7 @@
 		    case 187: case 107:
 			e.target.value++;
 			e.preventDefault();
-			updateItem(e);
+			ferre.updateItem(e);
 			break;
 		    case '-':
 		    case 'Subtract':
@@ -56,7 +56,7 @@
 			if (e.target.value == 1) { e.preventDefault(); break; }
 			e.target.value--;
 			e.preventDefault();
-			updateItem(e);
+			ferre.updateItem(e);
 			break;
 		    default: break;
 		}
@@ -118,18 +118,18 @@
 		total.classList.add('pesos'); total.classList.add('total'); total.appendChild( document.createTextNode( tocents(q.totalCents) ) );
 	    }
 
-	    function updateItem(e) {
+	    TICKET.update = function(e) {
 		let tr = e.target.parentElement.parentElement;
 		let lbl = tr.querySelector('.total');
 		let clave = asnum( tr.dataset.clave );
 		let k = e.target.name;
-		let v = e.target.value;
+		let v = asnum( e.target.value );
 
 		console.log( clave + ' - ' + k + ': ' + v);
 
 		let objStore = IDB.write2DB( TICKET )
 		return objStore.get( clave ).then( q => {
-			q[k] = asnum(v); // cast to NUMBER
+			q[k] = v;
 			q.totalCents = uptoCents(q); // partial total
 			return q;
 		    }, e => console.log("Error searching item in ticket: " + e) )
@@ -138,8 +138,6 @@
 		.then( () => bagTotal(objStore) )
 		.then( () => { return { id: TICKET.ID, clave: clave, key: k, value: v } } )
 	    };
-
-	    TICKET.update = updateItem;
 
 	    TICKET.add = function(e) {
 		let clave = asnum( e.target.parentElement.dataset.clave );
