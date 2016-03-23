@@ -70,13 +70,12 @@
 	    }
 
 	    function toggleTicket() {
-		let ID = TICKET.ID
-		if (ID.length == 0)
-		    ID = randString();
+		if (TICKET.ID.length == 0)
+		    TICKET.ID = randString();
 		if (myticket.classList.toggle('visible'))
 		    myticket.style.visibility = 'visible';
 		else
-		    { myticket.style.visibility = 'hidden'; ID = ''; }
+		    { myticket.style.visibility = 'hidden'; TICKET.ID = ''; }
 	    }
 
 	    function bagTotal(objStore) {
@@ -136,7 +135,8 @@
 		    }, e => console.log("Error searching item in ticket: " + e) )
 		.then( objStore.put )
 		.then( q => { lbl.textContent = tocents(q.totalCents); return q; }, e => console.log("Error updating item in ticket: " + e) )
-		.then( q => bagTotal(objStore).then( () => { return { id: TICKET.ID, clave: clave, key: k, value: v } } ) )
+		.then( () => bagTotal(objStore) )
+		.then( () => { return { id: TICKET.ID, clave: clave, key: k, value: v } } ) )
 	    };
 
 	    TICKET.update = updateItem;
@@ -148,10 +148,10 @@
 		    if (q) { console.log("Item is already in the bag."); return Promise.reject('Item is already in the bag.'); }
 		    return IDB.readDB( DATA ).get( clave )
 			.then( w => { w.qty = 1; w.precio = 'precio1'; w.rea = 0; w.totalCents = uptoCents(w); return w })
-			.then( q => IDB.write2DB( TICKET ).put(q) )
+			.then( w => IDB.write2DB( TICKET ).put(w) )
 			.then( displayItem )
 			.then( () => bagTotal(IDB.readDB( TICKET )) )
-			.then( () => { return { id: TICKET.ID, clave: clave } } )
+			.then( () => { return { id: TICKET.ID, clave: clave, qty: 1, precio: 'precio1', rea: 0 } } )
 		});
 	    };
 
