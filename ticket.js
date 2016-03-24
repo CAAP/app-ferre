@@ -136,7 +136,7 @@
 		.then( objStore.put )
 		.then( q => { lbl.textContent = tocents(q.totalCents); return q; }, e => console.log("Error updating item in ticket: " + e) )
 		.then( () => bagTotal(objStore) )
-		.then( () => { return { id: TICKET.ID, clave: clave, key: k, value: v } } ) )
+		.then( () => { return { id: TICKET.ID, clave: clave, key: k, value: v } } )
 	    };
 
 	    TICKET.update = updateItem;
@@ -144,15 +144,13 @@
 	    TICKET.add = function(e) {
 		let clave = asnum( e.target.parentElement.dataset.clave );
 		(myticket.classList.contains('visible') || toggleTicket());
-		return IDB.readDB( TICKET ).get( clave ).then( q => {
-		    if (q) { console.log("Item is already in the bag."); return Promise.reject('Item is already in the bag.'); }
-		    return IDB.readDB( DATA ).get( clave )
-			.then( w => { w.qty = 1; w.precio = 'precio1'; w.rea = 0; w.totalCents = uptoCents(w); return w })
-			.then( w => IDB.write2DB( TICKET ).put(w) )
-			.then( displayItem )
-			.then( () => bagTotal(IDB.readDB( TICKET )) )
-			.then( () => { return { id: TICKET.ID, clave: clave, qty: 1, precio: 'precio1', rea: 0 } } )
-		});
+		return IDB.readDB( TICKET ).get( clave ).then( q => { if (q) { console.log("Item is already in the bag."); return Promise.reject('Item is already in the bag.'); } } )
+		.then( () => IDB.readDB( DATA ).get( clave ) )
+		.then( w => { w.qty = 1; w.precio = 'precio1'; w.rea = 0; w.totalCents = uptoCents(w); return w } )
+		.then( w => IDB.write2DB( TICKET ).put(w) )
+		.then( displayItem )
+		.then( () => bagTotal(IDB.readDB( TICKET )) )
+		.then( () => { return { id: TICKET.ID, clave: clave, qty: 1, precio: 'precio1', rea: 0 } } )
 	    };
 
 	    TICKET.remove = function(e) {
