@@ -13,7 +13,6 @@
 	    const DATA = ferre.DATA;
 	    const PEOPLE = ferre.PEOPLE;
 	    const DBs = [ DATA, TICKET, PEOPLE ];
-	    let METHOD = '';
 
 	    ferre.reloadDB = function reloadDB() { return IDB.clearDB(DATA).then( () => IDB.populateDB( DATA ) ); };
 
@@ -23,20 +22,17 @@
 
 	    // TICKET
 
-	    ferre.print = function print() {
-		METHOD = 'print.lua?id=' + TICKET.ID;
-		document.getElementById('dialogo-persona').showModal();
-	    };
+	    ferre.add2bag = e => TICKET.add(e).then( clave => SQL.add(clave) );
 
-	    ferre.add2bag = e => { TICKET.add(e).then( clave => SQL.add(clave) ) }
+	    ferre.updateItem = e => TICKET.update(e).then( w => SQL.update(w) );
 
-	    ferre.updateItem = e => { TICKET.update(e).then( w => SQL.update(w) ) }
-
-	    ferre.item2bin = e => { TICKET.remove(e).then( clave => SQL.remove(clave) ) }
+	    ferre.item2bin = e => TICKET.remove(e).then( clave => SQL.remove(clave) );
 
 	    ferre.emptyBag = TICKET.empty
 
-	    //
+	    ferre.print = () => document.getElementById('dialogo-persona').showModal();
+
+	    // SET Person Dialog
 
 	    PEOPLE.load = function loadPEOPLE() {
 		const dialog = document.getElementById('dialogo-persona');
@@ -47,7 +43,8 @@
 		    let k = e.key || ((e.which > 90) ? e.which-96 : e.which-48);
 		    dialog.close(); //
 		    e.target.textContent = '';
-		    return IDB.readDB( PEOPLE ).get( k ).then( q => { METHOD += '&nombre=' + q.nombre; XHR.get( METHOD ); } );
+		    let query = 'print.lua?id=' + TICKET.ID + '&nombre=';
+		    return IDB.readDB( PEOPLE ).get( k ).then( w => { XHR.get( query + w.nombre ); } );
 		}
 
 		IDB.readDB( PEOPLE ).openCursor( cursor => {
@@ -63,9 +60,10 @@
 		})
 	    };
 
+	    // LOAD DBs
  	    if (IDB.indexedDB) { DBs.forEach( IDB.loadDB ); } else { alert("IDBIndexed not available."); }
 
-	    // HEADER
+	    // SET HEADER
 	    (function() {
 	        let note = document.getElementById('notifications');
 		let FORMAT = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
@@ -73,7 +71,7 @@
 		note.appendChild( document.createTextNode( now(FORMAT) ) );
 	    })();
 
-	    // FOOTER
+	    // SET FOOTER
 	    (function() { document.getElementById('copyright').innerHTML = 'versi&oacute;n ' + 1.0 + ' | cArLoS&trade; &copy;&reg;'; })();
 
 

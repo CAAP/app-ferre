@@ -11,7 +11,7 @@
 
 	    PEOPLE.load = function() {
 		let tb = document.getElementById('tabla-entradas');
-		let row = nombre => tb.insertRow().appendChild(document.createTextNode(nombre));
+		function row(nombre) { tb.insertRow().appendChild(document.createTextNode(nombre)) }
 		IDB.readDB( PEOPLE ).openCursor( cursor => { if(!cursor){ return } row(cursor.value.nombre); cursor.continue(); } );
 	    };
 
@@ -26,6 +26,11 @@
 	    })();
 
 	    (function() { document.getElementById('copyright').innerHTML = 'versi&oacute;n ' + 1.0 + ' | cArLoS&trade; &copy;&reg;'; })();
+
+	    (function() {
+		const cajita = document.getElementById('tabla-caja');
+	    })();
+
 	};
 
 
