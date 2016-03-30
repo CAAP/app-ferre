@@ -11,7 +11,7 @@
 
 	    PEOPLE.load = function() {
 		const tb = document.getElementById('tabla-entradas');
-		PEOPLE.all = {};
+		PEOPLE.all = [];
 		function add2row(nombre) { tb.insertRow().appendChild(document.createTextNode(nombre)) }
 		IDB.readDB( PEOPLE ).openCursor( cursor => {
 		    if(!cursor){ return }
@@ -34,28 +34,37 @@
 
 	    (function() { document.getElementById('copyright').innerHTML = 'versi&oacute;n ' + 1.0 + ' | cArLoS&trade; &copy;&reg;'; })();
 
+	// ping CAJA
 	    (function() {
 		const cajita = document.getElementById('tabla-caja');
+
+	 	function asnum(s) { let n = Number(s); return Number.isNaN(n) ? s : n; };
 
 		function add2caja(w) {
 		    let row = cajita.insertRow();
 		    row.dataset.daytime = w.daytime; row.dataset.id_ticket = w.id_ticket;
-		    w.nombre = PEOPLE.all[w.id_person] || 'NaN'; w.time = w.daytime.substring(3);
-		    for (let k of ['time', 'nombre', 'id_ticket', 'count']) { row.appendChild( document.createTextNode(w[k]) ); }
-		}
+		    w.nombre = PEOPLE.all[asnum(w.id_person)] || 'NaN'; w.time = w.daytime.substring(3);
+		    for (let k of ['time', 'nombre', 'id_ticket', 'count']) { row.insertCell().appendChild( document.createTextNode(w[k]) ); }
+		};
 
-		admin.loadTickets = function (objs) { objs.forEach( add2caja ); }
-
+		XHR.getJSON('caja/ping.lua').then( objs => objs.map( add2caja ) );
 	    })();
 
+/*
 	// SERVER-SIDE EVENT SOURCE
 	    (function() {
-		let esource = new EventSource("/ticket/ping.lua");
-		esource.onerror = function(e) { alert("Error while running GET: /ticket/ping.lua"); };
+		let esource = new EventSource("caja/ping.lua");
+		esource.onerror = function(e) { alert("Error while running GET: caja/ping.lua"); };
 		esource.addEventListener("feed", function(e) {
-		    admin.loadTickets( JSON.parse(e.data) );
+		    admin.add2caja( JSON.parse(e.data) );
 		}, false);
+
+		esource.addEventListener("close", function(e) {
+		    esource.close();
+		}, false);
+
 	    })();
+*/
 
 	};
 

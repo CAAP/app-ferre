@@ -1,6 +1,10 @@
-
-.amarillo tr:hover {
-    background-color: #ffff99;
+td {
+    font: 100% arial;
 }
+
+table {
+    border-spacing: 6px 6px;
+}
+
 
 

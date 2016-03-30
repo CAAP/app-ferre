@@ -22,6 +22,8 @@
 
 	    // TICKET
 
+	    let tag = '';
+
 	    ferre.add2bag = e => TICKET.add(e).then( clave => SQL.add(clave) );
 
 	    ferre.updateItem = e => TICKET.update(e).then( w => SQL.update(w) );
@@ -30,7 +32,10 @@
 
 	    ferre.emptyBag = TICKET.empty
 
-	    ferre.print = () => document.getElementById('dialogo-persona').showModal();
+	    ferre.print = function(a) {
+		tag = a;
+		document.getElementById('dialogo-persona').showModal();
+	    };
 
 	    // SET Person Dialog
 
@@ -43,8 +48,8 @@
 		    let k = e.key || ((e.which > 90) ? e.which-96 : e.which-48);
 		    dialog.close(); //
 		    e.target.textContent = '';
-		    let query = 'print.lua?id=' + TICKET.ID + '&nombre=';
-		    return IDB.readDB( PEOPLE ).get( k ).then( w => { XHR.get( query + w.nombre ); } );
+		    let query = 'ticket/print.lua?id_ticket=' + TICKET.ID + '&tag=' + tag + '&id_person=' + k + '&count=';
+		    return IDB.readDB( TICKET ).count().then(q => { query += q; }).then(() => XHR.get(query)).then(() => ferre.emptyBag());
 		}
 
 		IDB.readDB( PEOPLE ).openCursor( cursor => {
