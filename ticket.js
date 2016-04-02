@@ -4,9 +4,13 @@
 	var TICKET = { VERSION: 1, DB: 'ticket', STORE: 'ticket-clave', KEY: 'clave', bagID: 'ticket-compra', ttotalID: 'ticket-total', myticketID: 'ticket' };
 
 	(function() {
-	    const STRLEN = 5;
-	    const ALPHA = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789abcdefghijkmnopqrstuvwxyz";
+//	    const STRLEN = 5;
+//	    const ALPHA = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789abcdefghijkmnopqrstuvwxyz";
 	    const VARS = ['clave', 'precio', 'rea', 'qty', 'totalCents'];
+	    const TAGS = {none: 'x', presupuesto: 'a', imprimir: 'b', facturar: 'c', impreso: 'I', pagado: 'P', facturado: 'F'};
+	    TAGS.ID = {x: 'none', a: 'presupuesto', b: 'imprimir', c: 'facturar'};
+
+	    TICKET.TAGS = TAGS;
 
 	    TICKET.load = function() {
 		let objStore = IDB.readDB( TICKET );
@@ -69,13 +73,11 @@
 	    }
 
 	    function toggleTicket() {
-//		if (TICKET.ID.length == 0)
-//		    TICKET.ID = randString();
 		let myticket = TICKET.myticket;
 		if (myticket.classList.toggle('visible'))
 		    myticket.style.visibility = 'visible';
 		else
-		    { myticket.style.visibility = 'hidden'; }// TICKET.ID = ''; }
+		    myticket.style.visibility = 'hidden';
 	    }
 
 	    function bagTotal(objStore) {
@@ -138,19 +140,13 @@
 		.then( objStore.put )
 		.then( q => { lbl.textContent = tocents(q.totalCents); return q; }, e => console.log("Error updating item in ticket: " + e) )
 		.then( () => bagTotal(objStore) );
-//		.then( () => { return { id: TICKET.ID, clave: clave, key: k, value: v } } )
 	    };
 
-	    TICKET.add = function(clave) {
+	    TICKET.add = function(w) {
 		(TICKET.myticket.classList.contains('visible') || toggleTicket());
-		return IDB.readDB( TICKET ).get( clave )
-			.then( q => { if (q) { console.log("Item is already in the bag."); return Promise.reject('Item is already in the bag.'); } } )
-			.then( () => TICKET.getData( clave ) )
-			.then( w => { w.qty = 1; w.precio = 'precio1'; w.rea = 0; w.totalCents = uptoCents(w); return w; } )
-			.then( w => IDB.write2DB( TICKET ).put(w) )
+		return IDB.write2DB( TICKET ).put( w )
 			.then( displayItem )
 			.then( () => bagTotal(IDB.readDB( TICKET )) );
-//			.then( () => { return { id: TICKET.ID, clave: clave, qty: 1, precio: 'precio1', rea: 0 } } );
 	    };
 
 	    TICKET.remove = function(e) {
@@ -160,7 +156,6 @@
 		return objStore.delete( clave ).then( () => {
 		    TICKET.bag.removeChild( tr );
 		    if (!TICKET.bag.hasChildNodes()) { toggleTicket(); } else { bagTotal(objStore); }
-//		    return { id: TICKET.ID, clave: clave }
 		});
 	    };
 

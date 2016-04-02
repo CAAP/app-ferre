@@ -19,7 +19,7 @@
 
 	    let ids = [];
 
-	    admin.add2bag = e => SQL.get( e.target.parentElement.dataset ).then( JSON.parse ).then( objs => objs.map(TICKET.add) );
+	    admin.add2bag = e => SQL.get( e.target.parentElement.dataset ).then( JSON.parse ).then( objs => objs.map(TICKET.addItem) );
 
 //	    ferre.updateItem = e => TICKET.update(e).then( w => SQL.update(w) );
 
@@ -36,13 +36,13 @@
 
 	    PEOPLE.load = function() {
 		const tb = document.getElementById('tabla-entradas');
-		PEOPLE.all = [];
+		PEOPLE.id = [];
 		function add2row(nombre) { tb.insertRow().appendChild(document.createTextNode(nombre)) }
 		IDB.readDB( PEOPLE ).openCursor( cursor => {
 		    if(!cursor){ return }
 		    let nombre = cursor.value.nombre;
 		    add2row(nombre);
-		    PEOPLE.all[cursor.value.id] = nombre;
+		    PEOPLE.id[cursor.value.id] = nombre;
 		    cursor.continue();
 		});
 	    };
@@ -62,15 +62,18 @@
 
 	// ping CAJA
 	    (function() {
+
 		const cajita = document.getElementById('tabla-caja');
 
 	 	function asnum(s) { let n = Number(s); return Number.isNaN(n) ? s : n; };
 
 		function add2caja(w) {
 		    let row = cajita.insertRow();
-		    row.dataset.daytime = w.daytime; row.dataset.id_ticket = w.id_ticket;
-		    w.nombre = PEOPLE.all[asnum(w.id_person)] || 'NaN'; w.time = w.daytime.substring(3);
-		    for (let k of ['time', 'nombre', 'id_ticket', 'count']) { row.insertCell().appendChild( document.createTextNode(w[k]) ); }
+		    row.dataset.uid = w.uid;
+		    w.nombre = PEOPLE.id[asnum(w.uid.substring(20))] || 'NaN';
+		    w.time = w.uid.substr(11,8);
+		    w.tag = TICKET.TAGS.ID[w.id_tag];
+		    for (let k of ['time', 'nombre', 'count', 'tag']) { row.insertCell().appendChild( document.createTextNode(w[k]) ); }
 		};
 
 		XHR.getJSON('caja/ping.lua').then( objs => objs.map( add2caja ) );

@@ -8,7 +8,6 @@
 	};
 
 	window.onload = function() {
-//	    const TICKET = ferre.TICKET;
 	    const DATA = ferre.DATA;
 	    const PEOPLE = ferre.PEOPLE;
 	    const DBs = [ DATA, TICKET, PEOPLE ];
@@ -27,20 +26,24 @@
 	    TICKET.ttotal = document.getElementById( TICKET.ttotalID );
 	    TICKET.myticket = document.getElementById( TICKET.myticketID );
 
-	    TICKET.getData = clave => IDB.readDB( DATA ).get( clave );
+	    let id_tag = TICKET.TAGS.none;
 
-	    let tag = ''; // DO I NEED THIS???
+	    ferre.add2bag = function( e ) {
+		let clave = asnum(e.target.parentElement.dataset.clave);
+		return IDB.readDB( TICKET ).get( clave )
+		    .then( q => { if (q) { return Promise.reject('Item is already in the bag.'); } else { return IDB.readDB( DATA ).get(clave); } )
+		    .then( w => { w.qty = 1; w.precio = 'precio1'; w.rea = 0; w.totalCents = uptoCents(w); return w; } )
+		    .then( TICKET.add );
+	    };
 
-	    ferre.add2bag = e => TICKET.add(asnum(e.target.parentElement.dataset.clave)); //.then( SQL.add );
+	    ferre.updateItem = TICKET.update;
 
-	    ferre.updateItem = TICKET.update; // .then( SQL.update );
-
-	    ferre.item2bin = TICKET.remove; //e => TICKET.remove(e).then( SQL.remove );
+	    ferre.item2bin = TICKET.remove;
 
 	    ferre.emptyBag = TICKET.empty;
 
 	    ferre.print = function(a) {
-		tag = a;
+		id_tag = TICKET.TAGS[a] || TICKET.TAGS.none;
 		document.getElementById('dialogo-persona').showModal();
 	    };
 
@@ -53,22 +56,19 @@
 
 		function sending(e) {
 		    let k = e.key || ((e.which > 90) ? e.which-96 : e.which-48);
-		    let id = 'NaN';
-		    dialog.close(); //
+		    dialog.close();
 		    e.target.textContent = '';
-//		    let promises = [];
 		    return IDB.readDB( TICKET ).count()
-			.then(q => { return {tag: tag, id_person: k, count: q} } )
+			.then(q => { return {id_tag: id_tag, id_person: k, count: q} } )
 			.then( SQL.print )
 			.then( JSON.parse )
 			.then( w => IDB.readDB( TICKET ).openCursor( cursor => {
 			    if (cursor) {
 				let o = TICKET.obj(cursor.value);
-				o.datetime = w.datetime;
+				o.uid = w.uid; // datetime + id_person
 				SQL.add( o );
-//				promises.push( o );
 				cursor.continue();
-			    } } ) ) // else { promises.map( SQL.add ).reduce( (seq, p) => seq.then( () => p ), Promise.resolve() ) } } ) )
+			    } } ) )
 			.then( ferre.emptyBag );
 		}
 
