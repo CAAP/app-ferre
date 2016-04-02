@@ -4,17 +4,16 @@
 	var ferre = {
 	    DATA:  { VERSION: 2, DB: 'datos', STORE: 'datos-clave', KEY: 'clave', INDEX: 'desc', FILE: 'ferre.json' },
 	    PEOPLE: { VERSION: 1, DB: 'people', STORE: 'people-id', KEY: 'id', INDEX: 'nombre', FILE: 'people.json'},
-	    BAG: { VERSION: 1, DB: 'tickets', STORE: 'tickets-uid',  KEY: 'uid', INDEX: 'fecha' },
-	    TICKET: { VERSION: 1, DB: 'ticket', STORE: 'ticket-clave', KEY: 'clave', ID: '', bagID: 'ticket-compra', ttotalID: 'ticket-total', myticketID: 'ticket' },
+	    BAG: { VERSION: 1, DB: 'tickets', STORE: 'tickets-uid',  KEY: 'uid', INDEX: 'fecha' }
 	};
 
 	window.onload = function() {
-	    const TICKET = ferre.TICKET;
+//	    const TICKET = ferre.TICKET;
 	    const DATA = ferre.DATA;
 	    const PEOPLE = ferre.PEOPLE;
 	    const DBs = [ DATA, TICKET, PEOPLE ];
 
-	    ferre.reloadDB = function reloadDB() { return IDB.clearDB(DATA).then( () => IDB.populateDB( DATA ) ); };
+//	    ferre.reloadDB = function reloadDB() { return IDB.clearDB(DATA).then( () => IDB.populateDB( DATA ) ); };
 
 	    // SQL
 
@@ -22,22 +21,30 @@
 
 	    // TICKET
 
-	    let tag = '';
+	    function asnum(s) { let n = Number(s); return Number.isNaN(n) ? s : n; };
 
-	    ferre.add2bag = e => TICKET.add(e).then( clave => SQL.add(clave) );
+	    TICKET.bag = document.getElementById( TICKET.bagID );
+	    TICKET.ttotal = document.getElementById( TICKET.ttotalID );
+	    TICKET.myticket = document.getElementById( TICKET.myticketID );
 
-	    ferre.updateItem = e => TICKET.update(e).then( w => SQL.update(w) );
+	    TICKET.getData = clave => IDB.readDB( DATA ).get( clave );
 
-	    ferre.item2bin = e => TICKET.remove(e).then( clave => SQL.remove(clave) );
+	    let tag = ''; // DO I NEED THIS???
 
-	    ferre.emptyBag = TICKET.empty
+	    ferre.add2bag = e => TICKET.add(asnum(e.target.parentElement.dataset.clave)); //.then( SQL.add );
+
+	    ferre.updateItem = TICKET.update; // .then( SQL.update );
+
+	    ferre.item2bin = TICKET.remove; //e => TICKET.remove(e).then( SQL.remove );
+
+	    ferre.emptyBag = TICKET.empty;
 
 	    ferre.print = function(a) {
 		tag = a;
 		document.getElementById('dialogo-persona').showModal();
 	    };
 
-	    // SET Person Dialog
+	    // PEOPLE | SET Person Dialog
 
 	    PEOPLE.load = function loadPEOPLE() {
 		const dialog = document.getElementById('dialogo-persona');
@@ -46,10 +53,23 @@
 
 		function sending(e) {
 		    let k = e.key || ((e.which > 90) ? e.which-96 : e.which-48);
+		    let id = 'NaN';
 		    dialog.close(); //
 		    e.target.textContent = '';
-		    let query = 'ticket/print.lua?id_ticket=' + TICKET.ID + '&tag=' + tag + '&id_person=' + k + '&count=';
-		    return IDB.readDB( TICKET ).count().then(q => { query += q; }).then(() => XHR.get(query)).then(() => ferre.emptyBag());
+//		    let promises = [];
+		    return IDB.readDB( TICKET ).count()
+			.then(q => { return {tag: tag, id_person: k, count: q} } )
+			.then( SQL.print )
+			.then( JSON.parse )
+			.then( w => IDB.readDB( TICKET ).openCursor( cursor => {
+			    if (cursor) {
+				let o = TICKET.obj(cursor.value);
+				o.datetime = w.datetime;
+				SQL.add( o );
+//				promises.push( o );
+				cursor.continue();
+			    } } ) ) // else { promises.map( SQL.add ).reduce( (seq, p) => seq.then( () => p ), Promise.resolve() ) } } ) )
+			.then( ferre.emptyBag );
 		}
 
 		IDB.readDB( PEOPLE ).openCursor( cursor => {

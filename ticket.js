@@ -1,15 +1,12 @@
-// ==== TICKET ==== //
 
-	    (function() {
+	"use strict";
 
-	    const DATA = ferre.DATA;
-	    const TICKET = ferre.TICKET;
-	    const bag = document.getElementById(TICKET.bagID);
-	    const ttotal = document.getElementById(TICKET.ttotalID);
-	    const myticket = document.getElementById(TICKET.myticketID);
+	var TICKET = { VERSION: 1, DB: 'ticket', STORE: 'ticket-clave', KEY: 'clave', bagID: 'ticket-compra', ttotalID: 'ticket-total', myticketID: 'ticket' };
 
+	(function() {
 	    const STRLEN = 5;
 	    const ALPHA = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789abcdefghijkmnopqrstuvwxyz";
+	    const VARS = ['clave', 'precio', 'rea', 'qty', 'totalCents'];
 
 	    TICKET.load = function() {
 		let objStore = IDB.readDB( TICKET );
@@ -22,7 +19,7 @@
 			    total += cursor.value.totalCents;
 			    displayItem( cursor.value );
 		    	    cursor.continue();
-			} else { ttotal.textContent = tocents( total ); }
+			} else { TICKET.ttotal.textContent = tocents( total ); }
 		    });
 		});
 	    };
@@ -35,11 +32,13 @@
 
 	    function clearTable(tb) { while (tb.firstChild) { tb.removeChild( tb.firstChild ); } };
 
+/*
 	    function randString() {
 		    let ret = "";
 		    for (let i=0; i<STRLEN; i++) { ret += ALPHA.charAt(Math.floor( Math.random() * ALPHA.length )); }
 		    return ret;
 	    }
+*/
 
 	    function incdec(e) {
 		switch (e.key || e.which) {
@@ -65,17 +64,18 @@
 	    function inputE( a ) {
 		let ret = document.createElement('input');
 		ret.addEventListener('keydown', incdec);
-		a.map( o => ret[o[0]] = o[1] ); //  function(o) { ret[o[0]] = o[1];});
+		a.map( o => ret[o[0]] = o[1] );
 		return ret;
 	    }
 
 	    function toggleTicket() {
-		if (TICKET.ID.length == 0)
-		    TICKET.ID = randString();
+//		if (TICKET.ID.length == 0)
+//		    TICKET.ID = randString();
+		let myticket = TICKET.myticket;
 		if (myticket.classList.toggle('visible'))
 		    myticket.style.visibility = 'visible';
 		else
-		    { myticket.style.visibility = 'hidden'; TICKET.ID = ''; }
+		    { myticket.style.visibility = 'hidden'; }// TICKET.ID = ''; }
 	    }
 
 	    function bagTotal(objStore) {
@@ -84,7 +84,7 @@
 		    if (cursor) {
 			total += cursor.value.totalCents;
 			cursor.continue();
-		    } else { ttotal.textContent = tocents( total ); }
+		    } else { TICKET.ttotal.textContent = tocents( total ); }
 		});
 	    }
 
@@ -105,7 +105,7 @@
 	    }
 
 	    function displayItem(q) {
-		let row = bag.insertRow();
+		let row = TICKET.bag.insertRow();
 		row.dataset.clave = q.clave;
 		let qty = row.insertCell().appendChild( inputE( [['type', 'text'], ['size', 2], ['name', 'qty'], ['value', q.qty]] ) );
 		let desc = row.insertCell();
@@ -117,6 +117,8 @@
 		let total = row.insertCell();
 		total.classList.add('pesos'); total.classList.add('total'); total.appendChild( document.createTextNode( tocents(q.totalCents) ) );
 	    }
+
+	    TICKET.obj = x => VARS.reduce( (o,v) => { o[v] = x[v]; return o; }, {} );
 
 	    TICKET.update = function(e) {
 		let tr = e.target.parentElement.parentElement;
@@ -135,20 +137,20 @@
 		    }, e => console.log("Error searching item in ticket: " + e) )
 		.then( objStore.put )
 		.then( q => { lbl.textContent = tocents(q.totalCents); return q; }, e => console.log("Error updating item in ticket: " + e) )
-		.then( () => bagTotal(objStore) )
-		.then( () => { return { id: TICKET.ID, clave: clave, key: k, value: v } } )
+		.then( () => bagTotal(objStore) );
+//		.then( () => { return { id: TICKET.ID, clave: clave, key: k, value: v } } )
 	    };
 
-	    TICKET.add = function(e) {
-		let clave = asnum( e.target.parentElement.dataset.clave );
-		(myticket.classList.contains('visible') || toggleTicket());
-		return IDB.readDB( TICKET ).get( clave ).then( q => { if (q) { console.log("Item is already in the bag."); return Promise.reject('Item is already in the bag.'); } } )
-		.then( () => IDB.readDB( DATA ).get( clave ) )
-		.then( w => { w.qty = 1; w.precio = 'precio1'; w.rea = 0; w.totalCents = uptoCents(w); return w } )
-		.then( w => IDB.write2DB( TICKET ).put(w) )
-		.then( displayItem )
-		.then( () => bagTotal(IDB.readDB( TICKET )) )
-		.then( () => { return { id: TICKET.ID, clave: clave, qty: 1, precio: 'precio1', rea: 0 } } )
+	    TICKET.add = function(clave) {
+		(TICKET.myticket.classList.contains('visible') || toggleTicket());
+		return IDB.readDB( TICKET ).get( clave )
+			.then( q => { if (q) { console.log("Item is already in the bag."); return Promise.reject('Item is already in the bag.'); } } )
+			.then( () => TICKET.getData( clave ) )
+			.then( w => { w.qty = 1; w.precio = 'precio1'; w.rea = 0; w.totalCents = uptoCents(w); return w; } )
+			.then( w => IDB.write2DB( TICKET ).put(w) )
+			.then( displayItem )
+			.then( () => bagTotal(IDB.readDB( TICKET )) );
+//			.then( () => { return { id: TICKET.ID, clave: clave, qty: 1, precio: 'precio1', rea: 0 } } );
 	    };
 
 	    TICKET.remove = function(e) {
@@ -156,13 +158,13 @@
 		let tr = e.target.parentElement;
 		let objStore = IDB.write2DB( TICKET )
 		return objStore.delete( clave ).then( () => {
-		    bag.removeChild( tr );
-		    if (!bag.hasChildNodes()) { toggleTicket(); } else { bagTotal(objStore); }
-		    return { id: TICKET.ID, clave: clave }
+		    TICKET.bag.removeChild( tr );
+		    if (!TICKET.bag.hasChildNodes()) { toggleTicket(); } else { bagTotal(objStore); }
+//		    return { id: TICKET.ID, clave: clave }
 		});
 	    };
 
-	    TICKET.empty = function(e) { return IDB.write2DB( TICKET ).clear().then( () => { clearTable( bag ); toggleTicket(); }); };
+	    TICKET.empty = function(e) { return IDB.write2DB( TICKET ).clear().then( () => { clearTable( TICKET.bag ); toggleTicket(); }); };
 
 	    })();
 

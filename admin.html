@@ -6,6 +6,7 @@
     <title> ADMIN </title>
     <link rel="stylesheet" href="admin.css">
     <script type="text/javascript" src="xhr.js"></script>
+    <script type="text/javascript" src="sql.js"></script>
     <script type="text/javascript" src="idb.js"></script>
     <script type="text/javascript" src="admin.js"></script>
 </head>
@@ -13,6 +14,10 @@
 <body lang="es-MX">
 
     <header> <label id="notifications"></label> </header>
+
+    <div id="main">
+
+    <div id="comandos">
 
     <section id="entradas" class="tablas">
         <table>
@@ -22,11 +27,11 @@
                 <tr><th> NOMBRE </th></tr>
             </thead>
 	    </dt>
-	    <tbody id="tabla-entradas" class="amarillo" onclick="ferre.add2bag(event)"></tbody>
+	    <tbody id="tabla-entradas" onclick="ferre.add2bag(event)"></tbody>
 	</table>
     </section>
 
-    <section id="caja" class="tablas">
+    <section id="caja">
 	<table>
 	    <caption>CAJA</caption>
 	    <dt><thead>
@@ -36,7 +41,27 @@
 	</table>
     </section>
 
+    </div>
+
+    <section id="ticket" class="tablas">
+	<table>
+
+           <caption> TICKET </caption>
+	    <dt>
+            <thead>
+                <tr> <th> Cantidad </th><th class="desc"> Descripci&oacute;n </th><th> Precio </th><th> Descuento </th><th> Total </th> </tr> 
+            </thead>
+	    </dt>
+	    <tbody id="ticket-compra" class="amarillo" onchange="ferre.updateItem(event)" ondblclick="ferre.item2bin(event)"></tbody>
+
+	    <tfoot><tr><th colspan=5 align="right"><button onclick="ferre.emptyBag()">Cancelar</button>&emsp;<button onclick="ferre.print('budget')">Presupuesto</button>&emsp;<button onclick="ferre.print('print')">Imprimir</button>&emsp;<label id="ticket-total" class="total"></label></th></tr></tfoot>
+
+	</table>
+    </section>
+
+    </div>
+
     <footer> <label id="copyright"></label> </footer>
-    
+
 </body>
 </html>

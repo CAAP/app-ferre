@@ -2,12 +2,37 @@
         "use strict";
 
 	var admin = {
-	    PEOPLE: { VERSION: 1, DB: 'people', STORE: 'people-id', KEY: 'id', INDEX: 'nombre', FILE: 'people.json'},
+	    DATA:  { VERSION: 1, DB: 'datos', STORE: 'datos-clave', KEY: 'clave', INDEX: 'desc', FILE: 'ferre.json' },
+	    PEOPLE: { VERSION: 1, DB: 'people', STORE: 'people-id', KEY: 'id', INDEX: 'nombre', FILE: 'people.json'}
 	};
 
 	window.onload = function addFuns() {
+	    const DATA = admin.DATA;
 	    const PEOPLE = admin.PEOPLE;
-	    const DBs = [ PEOPLE ];
+	    const DBs = [ DATA, PEOPLE ];
+
+	    // SQL
+
+	    SQL.DB = 'caja';
+
+	    // TICKET
+
+	    let ids = [];
+
+	    admin.add2bag = e => SQL.get( e.target.parentElement.dataset ).then( JSON.parse ).then( objs => objs.map(TICKET.add) );
+
+//	    ferre.updateItem = e => TICKET.update(e).then( w => SQL.update(w) );
+
+//	    admin.item2bin = e => TICKET.remove(e).then( clave => SQL.remove(clave) );
+
+//	    admin.emptyBag = TICKET.empty
+
+	    admin.print = function(a) {
+		tag = a;
+		document.getElementById('dialogo-persona').showModal();
+	    };
+
+	    // PEOPLE
 
 	    PEOPLE.load = function() {
 		const tb = document.getElementById('tabla-entradas');
@@ -24,6 +49,7 @@
 
 	    function now(fmt) { return new Date().toLocaleDateString('es-MX', fmt); };
 
+	    // LOAD DBs
  	    if (IDB.indexedDB) { DBs.forEach( IDB.loadDB ); } else { alert("IDBIndexed not available."); }
 	    
 	    (function() {
