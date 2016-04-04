@@ -31,7 +31,7 @@
 	    ferre.add2bag = function( e ) {
 		let clave = asnum(e.target.parentElement.dataset.clave);
 		return IDB.readDB( TICKET ).get( clave )
-		    .then( q => { if (q) { return Promise.reject('Item is already in the bag.'); } else { return IDB.readDB( DATA ).get(clave); } )
+		    .then( q => { if (q) { return Promise.reject('Item is already in the bag.'); } else { return IDB.readDB( DATA ).get(clave); } } )
 		    .then( w => { w.qty = 1; w.precio = 'precio1'; w.rea = 0; w.totalCents = uptoCents(w); return w; } )
 		    .then( TICKET.add );
 	    };
