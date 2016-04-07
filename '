@@ -55,10 +55,10 @@
 		let ol = document.createElement('ol');
 		dialog.appendChild(ol);
 
-		function plain(obj) {
+		function objs(obj, j) {
 		    let ret = [];
 		    for (let k in obj) { ret.push(k, obj[k]); }
-		    return ('args=' + ret.join('+'));
+		    return ((j+1) + '=' + ret.join('+'));
 		}
 
 		function sending(e) {
@@ -74,10 +74,10 @@
 			    if (cursor) {
 				let o = TICKET.obj(cursor.value);
 				o.uid = w.uid;
-				objs.push( plain(o) );
+				objs.push( o );
 				cursor.continue();
-			    } else { SQL.add( objs ) } } ) )
-//			    } else { promises.reduce( (seq, p) => seq.then( () => p ) ) } } ) )
+			    } else { objs.map( obj2str ).join('&')
+			    } else { promises.reduce( (seq, p) => seq.then( () => p ) ) } } ) )
 			.then( ferre.emptyBag );
 		}
 

@@ -20,7 +20,7 @@
 		    let total = 0;
 		    return objStore.openCursor( cursor => {
 			if (cursor) {
-			    total += cursor.value.totalCents;
+			    total += asnum(cursor.value.totalCents);
 			    displayItem( cursor.value );
 		    	    cursor.continue();
 			} else { TICKET.ttotal.textContent = tocents( total ); }
@@ -35,14 +35,6 @@
 	    function asnum(s) { let n = Number(s); return Number.isNaN(n) ? s : n; };
 
 	    function clearTable(tb) { while (tb.firstChild) { tb.removeChild( tb.firstChild ); } };
-
-/*
-	    function randString() {
-		    let ret = "";
-		    for (let i=0; i<STRLEN; i++) { ret += ALPHA.charAt(Math.floor( Math.random() * ALPHA.length )); }
-		    return ret;
-	    }
-*/
 
 	    function incdec(e) {
 		switch (e.key || e.which) {
@@ -84,7 +76,7 @@
 		let total = 0;
 		return objStore.openCursor( cursor => {
 		    if (cursor) {
-			total += cursor.value.totalCents;
+			total += asnum(cursor.value.totalCents);
 			cursor.continue();
 		    } else { TICKET.ttotal.textContent = tocents( total ); }
 		});
