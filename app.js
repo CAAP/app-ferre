@@ -61,24 +61,26 @@
 		    return ('args=' + ret.join('+'));
 		}
 
+//CHECK IT'S STILL O.K.
 		function sending(e) {
 		    let k = e.key || ((e.which > 90) ? e.which-96 : e.which-48);
 		    dialog.close();
 		    e.target.textContent = '';
-		    let objs = [];
-		    return IDB.readDB( TICKET ).count()
-			.then(q => { return {id_tag: id_tag, id_person: k, count: q} } )
-			.then( SQL.print )
-			.then( JSON.parse )
+		    let objs = ['id_tag=' + id_tag, 'id_person=' + k];
+		    IDB.readDB( TICKET ).count( q => { objs.count = q } );
+//		    return IDB.readDB( TICKET ).count()
+//			.then(q => { return {id_tag: id_tag, id_person: k, count: q} } )
+//			.then( SQL.print )
+//			.then( JSON.parse )
 			.then( w => IDB.readDB( TICKET ).openCursor( cursor => {
-			    if (cursor) {
-				let o = TICKET.obj(cursor.value);
-				o.uid = w.uid;
-				objs.push( plain(o) );
-				cursor.continue();
-			    } else { SQL.add( objs ) } } ) )
-//			    } else { promises.reduce( (seq, p) => seq.then( () => p ) ) } } ) )
-			.then( ferre.emptyBag );
+		    return IDB.readDB( TICKET ).openCursor( cursor => {
+			if (cursor) {
+			    let o = TICKET.obj(cursor.value);
+			    o.uid = w.uid;
+			    objs.push( plain(o) );
+			    cursor.continue();
+			} else { SQL.add( objs ) } } )
+		    	.then( ferre.emptyBag );
 		}
 
 		IDB.readDB( PEOPLE ).openCursor( cursor => {

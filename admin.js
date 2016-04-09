@@ -74,7 +74,7 @@
 		let add2bag = uid => SQL.get( { uid: uid } ).then( JSON.parse ).then( objs => objs.forEach( merge ) );
 
 		function add2caja(w) {
-		    let row = cajita.insertRow();
+		    let row = cajita.insertRow(0);
 		
 		    let ie = document.createElement('input');
 		    ie.type = 'checkbox'; ie.value = w.uid;

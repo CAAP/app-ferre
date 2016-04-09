@@ -4,8 +4,6 @@
 	var TICKET = { VERSION: 1, DB: 'ticket', STORE: 'ticket-clave', KEY: 'clave', bagID: 'ticket-compra', ttotalID: 'ticket-total', myticketID: 'ticket' };
 
 	(function() {
-//	    const STRLEN = 5;
-//	    const ALPHA = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789abcdefghijkmnopqrstuvwxyz";
 	    const VARS = ['clave', 'precio', 'rea', 'qty', 'totalCents'];
 	    const TAGS = {none: 'x', presupuesto: 'a', imprimir: 'b', facturar: 'c', impreso: 'I', pagado: 'P', facturado: 'F'};
 	    TAGS.ID = {x: 'none', a: 'presupuesto', b: 'imprimir', c: 'facturar'};
