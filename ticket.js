@@ -139,9 +139,8 @@
 			.then( () => bagTotal(IDB.readDB( TICKET )) );
 	    };
 
-	    TICKET.remove = function(e) {
-		let clave = asnum( e.target.parentElement.dataset.clave );
-		let tr = e.target.parentElement;
+	    TICKET.remove = function(tr) {
+		let clave = asnum( tr.dataset.clave );
 		let objStore = IDB.write2DB( TICKET )
 		return objStore.delete( clave ).then( () => {
 		    TICKET.bag.removeChild( tr );

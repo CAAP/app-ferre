@@ -39,7 +39,7 @@
 
 	    ferre.updateItem = TICKET.update;
 
-	    ferre.item2bin = TICKET.remove;
+	    ferre.clickItem = e => TICKET.remove( e.target.parentElement );
 
 	    ferre.emptyBag = TICKET.empty;
 
@@ -61,25 +61,19 @@
 		    return ('args=' + ret.join('+'));
 		}
 
-//CHECK IT'S STILL O.K.
 		function sending(e) {
 		    let k = e.key || ((e.which > 90) ? e.which-96 : e.which-48);
 		    dialog.close();
 		    e.target.textContent = '';
-		    let objs = ['id_tag=' + id_tag, 'id_person=' + k];
-		    IDB.readDB( TICKET ).count( q => { objs.count = q } );
-//		    return IDB.readDB( TICKET ).count()
-//			.then(q => { return {id_tag: id_tag, id_person: k, count: q} } )
-//			.then( SQL.print )
-//			.then( JSON.parse )
-			.then( w => IDB.readDB( TICKET ).openCursor( cursor => {
-		    return IDB.readDB( TICKET ).openCursor( cursor => {
-			if (cursor) {
-			    let o = TICKET.obj(cursor.value);
-			    o.uid = w.uid;
-			    objs.push( plain(o) );
-			    cursor.continue();
-			} else { SQL.add( objs ) } } )
+		    let objs = ['id_tag='+id_tag, 'id_person='+k];
+		    return IDB.readDB( TICKET ).count()
+			.then( q => objs.push( 'count='+q ) )
+			.then( () => IDB.readDB( TICKET ).openCursor( cursor => {
+			    if (cursor) {
+				let o = TICKET.obj(cursor.value);
+				objs.push( plain(o) );
+				cursor.continue();
+			    } else { SQL.print( objs ) } } ) )
 		    	.then( ferre.emptyBag );
 		}
 

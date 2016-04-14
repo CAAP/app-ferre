@@ -7,7 +7,7 @@
 	function request(url, options) {
 	    return new Promise((resolve, reject) => {
 	        let xhr = new XMLHttpRequest;
-	        xhr.onload = event => resolve( event.target.response );
+	        xhr.onload = event => { if (event.target.status == 200) {resolve( event.target.response )} else {reject(event.target.status)} };
 	        xhr.onerror = reject;
 
 	        let defaultMethod = options.data ? "POST" : "GET";

@@ -1,75 +1,144 @@
-local socket = require("socket")
+#!/bin/ferre/lua
 
-local host = "*"
-local port = 8080
-local server = assert(socket.bind(host, port))
-server:settimeout(1) -- make sure we don't block in accept
+local socket = require"socket"
 
-io.write("Servers bound\n")
+local fd = require'carlos.fold'
+local hd = require'ferre.header'
+local sql = require'carlos.sqlite'
 
--- simple set implementation
--- the select function doesn't care about what is passed to it as long as
--- it behaves like a table
--- creates a new set data structure
-local function newset()
-    local reverse = {}
-    local set = {}
-    return setmetatable(set, {__index = {
-        insert = function(set, value)
-            if not reverse[value] then
-                table.insert(set, value)
-                reverse[value] = #set
-            end
-        end,
-        remove = function(set, value)
-            local index = reverse[value]
-            if index then
-                reverse[value] = nil
-                local top = table.remove(set)
-                if top ~= value then
-                    reverse[top] = index
-                    set[index] = top
-                end
-            end
-        end
-    }})
+local tbname = os.date'W%U'
+
+local MM = {caja={}, tickets={}, recording={}, streaming={}}
+
+local function asJSON( w )
+    local ret = {}
+    for k,v in pairs(w) do
+	ret[#ret+1] = string.format('%q: %q', k, math.tointeger(v) or v)
+    end
+    return string.format('data: {%s}', table.concat(ret, ', '))
 end
 
-local function getHeader()
-    'GET /XXX HTTP/1.1'
-    'Host:'
-    'Accept:'
-    'Last-Event-ID:'
+local function sse( data )
+    local ret = {'event: feed', 'data: ['}
+    ret[#ret+1] = data
+    ret[#ret+1] = 'data: ]'
+    ret[#ret+1] = '\n'
+    return table.concat( ret, '\n')
 end
--- Authorization: BASIC usr:pwd
--- Host: host:port
--- 500 Internal Server Error
+
+local function caja()
+    local dbname = '/db/caja.sql'
+    local schema = 'uid PRIMARY KEY, count INTEGER, id_tag'
+
+    local conn = sql.connect( dbname )
+    conn.exec( string.format(sql.newTable, tbname, schema) )
+    print('Connected to DB', dbname, '\n')
+
+    local clause = 'WHERE id_tag NOT LIKE "%Z"'
+    local query = string.format('SELECT * FROM %q %s', tbname, clause )
+
+    function MM.caja.sse()
+	if conn.count( tbname, clause ) == 0 then return ':empty\n\n'
+	else return sse( table.concat( fd.reduce(conn.query(query), fd.map(asJSON), fd.into, {} ), ',\n') ) end
+    end
+
+    function MM.caja.add( w )
+	local uid = os.date'%FT%TP' .. w.id_person
+	local vals = string.format('%q, %d, %q', uid, w.count, w.id_tag)
+	local qry = string.format('INSERT INTO %q VALUES(%s)', tbname, vals)
+	print( conn.exec( qry ) )
+	w.uid = uid
+	return w
+    end
+end
+
+local function tickets()
+    local dbname = '/db/tickets.sql'
+    local schema = 'uid, clave, precio, qty INTEGER, rea INTEGER, totalCents INTEGER'
+    local keys = {uid=1, clave=2, precio=2, qty=3, rea=4, totalCents=5}
+
+    local conn = sql.connect( dbname )
+    conn.exec( string.format(sql.newTable, tbname, schema) )
+    print('Connected to DB', dbname, '\n')
+
+    local function collect( q )
+	local t = { }
+	for k,v in q:gmatch'([^%s]+)%s([^%s]+)' do if keys[k] then t[keys[k]] = v end end
+	return t
+    end
+
+    local function append( uid ) return fd.map( function(x) x[1] = uid; return x end ) end
+
+    function MM.tickets.add( w )
+	fd.reduce( w.args, fd.map( collect ), append( w.uid ), sql.into( tbname ), conn )
+	return w
+    end
+end
 
 local function streaming()
-    local header = {'HTTP/1.1 200 OK',
-		'Content-Type: text/event-stream',
-		'Connection: keep-alive',
-		'Cache-Control: no-cache',
-		'Transfer-Encoding: chunked',
-		'Allow: GET',
-		''}
+    local srv = assert( socket.bind('*', 8080) )
+    srv:settimeout(1)
+    print'Listening on port 8080\n'
+
+    local cts = {}
+
+    function MM.streaming.accept()
+	local c = srv:accept()
+	if c then
+	    c:settimeout(1)
+	    local ip = c:getpeername():match'%g+'
+	    local response = hd.response({content='stream', ip=ip, body='retry: 60'}).asstr()
+	    if c:send( response ) and c:send( MM.caja.sse() ) then cts[#cts+1] = c
+	    else c:close() end
+	    print('Connected to:', ip)
+	end
+    end
+
+    function MM.broadcast( w )
+	if #cts > 0 then
+	    local msg = sse( asJSON( w ) )
+	    cts = fd.reduce( cts, fd.filter( function(c) return c:send(msg) or (c:close() and nil) end ), fd.into, {} )
+	end
+    end
 end
 
-local set = newset()
+local function recording()
+    local srv = assert( socket.bind('*', 8081) )
+    srv:settimeout(1)
+    print'Listening on port 8081\n'
+
+    local function add( q )
+	local w =  hd.parse( q )
+	if not w.args then return {msg='Empty Query'} end
+	MM.tickets.add( MM.caja.add( w ) )
+	w.msg = 'OK'
+	w.args = nil
+	return w
+    end
+
+    function MM.recording.accept()
+	local c = srv:accept()
+	if c then
+	    local ip = c:getpeername():match'%g+'
+	    local head, e = c:receive()
+	    if not e then
+		local url, qry = head:match'/(%g+)%?(%g+)'
+		local w = add( qry )
+		c:send( hd.response({ip=ip, body=w.msg}).asstr() )
+		if w.msg == 'OK' then MM.broadcast( w ) end
+	    end
+	    c:close()
+	end
+    end
+end
+
+caja()
+tickets()
+streaming()
+recording()
 
 while 1 do
-            local new = server:accept()
-            if new then
-                new:settimeout(1)
-		io.write("New client.\n")
-		local line, error = new:receive()
-		if not error then
-		    io.write("Receiving: ", line, "\n")
-		    header[#header+1] = 'OK'
-		    header[#header+1] = '\n'
-		    new:send( table.concat(header, '\n') )
-		end
-		new:close()
-            end
+    MM.streaming.accept()
+    MM.recording.accept()
+    socket.sleep(2)
 end
-

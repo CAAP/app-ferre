@@ -66,19 +66,22 @@
 	    (function() {
 
 		const cajita = document.getElementById('tabla-caja');
+		const mybag = TICKET.bag;
 
-	 	function asnum(s) { let n = Number(s); return Number.isNaN(n) ? s : n; };
+	 	function asnum(s) { let n = Number(s); return Number.isNaN(n) ? s : n; }
 
-		function merge( o ) { IDB.readDB( DATA ).get( asnum(o.clave) ).then( w => Object.assign( o, w ) ).then( TICKET.add ) }
+		function merge( o ) { return IDB.readDB( DATA ).get( asnum(o.clave) ).then( w => Object.assign( o, w ) ).then( TICKET.add ).then( () => { mybag.lastChild.dataset.uid = o.uid } ) }
 
-		let add2bag = uid => SQL.get( { uid: uid } ).then( JSON.parse ).then( objs => objs.forEach( merge ) );
+		let add2bag = uid => SQL.get( { uid: uid } ).then( JSON.parse ).then( objs => objs.reduce( (seq, o) => seq.then( () => merge(o) ), Promise.resolve() ) );
+
+		let removeItem = uid => Array.from(mybag.children).filter( row => (row.dataset.uid == uid) ).reduce( (seq, tr) => seq.then( () => TICKET.remove(tr) ), Promise.resolve() );
 
 		function add2caja(w) {
 		    let row = cajita.insertRow(0);
 		
 		    let ie = document.createElement('input');
 		    ie.type = 'checkbox'; ie.value = w.uid;
-		    ie.addEventListener('change', e => { if (e.target.checked) add2bag(e.target.value) } );
+		    ie.addEventListener('change', e => { if (e.target.checked) add2bag(e.target.value); else removeItem(e.target.value); } );
 		    row.insertCell().appendChild(ie);
 
 		    w.nombre = PEOPLE.id[asnum(w.uid.substring(20))] || 'NaN';
@@ -87,18 +90,19 @@
 		    for (let k of ['time', 'nombre', 'count', 'tag']) { row.insertCell().appendChild( document.createTextNode(w[k]) ); }
 		}
 
-		XHR.getJSON('caja/ping.lua').then( objs => objs.map( add2caja ) );
+//		XHR.getJSON('caja/ping.lua').then( objs => objs.forEach( add2caja ) );
 
-/*
 	// SERVER-SIDE EVENT SOURCE
 	    (function() {
-		let esource = new EventSource("caja/stream.lua");
-		esource.onerror = function(e) { alert("Error while running GET: caja/ping.lua"); };
+		let esource = new EventSource("http://192.168.1.14:8080");
+//		esource.onerror = function(e) { console.log(e.target); };
+//		esource.onopen = function(e) { console.log('Opening...'); };
+		esource.onmessage = e => console.log( 'id: ' + e.lastEventId );
 		esource.addEventListener("feed", function(e) {
-		    JSON.parse(e.data).then( objs => objs.map( add2caja );
+		    console.log('FEED message received\n');
+		    JSON.parse( e.data ).forEach( add2caja );
 		}, false);
 	    })();
-*/
 
 	    })();
 
