@@ -46,8 +46,8 @@ local function caja()
 	local uid = os.date'%FT%TP' .. w.id_person
 	local vals = string.format('%q, %d, %q', uid, w.count, w.id_tag)
 	local qry = string.format('INSERT INTO %q VALUES(%s)', tbname, vals)
-	print( conn.exec( qry ) )
 	w.uid = uid
+	conn.exec( qry )
 	return w
     end
 end
@@ -55,7 +55,7 @@ end
 local function tickets()
     local dbname = '/db/tickets.sql'
     local schema = 'uid, clave, precio, qty INTEGER, rea INTEGER, totalCents INTEGER'
-    local keys = {uid=1, clave=2, precio=2, qty=3, rea=4, totalCents=5}
+    local keys = {uid=1, clave=2, precio=3, qty=4, rea=5, totalCents=6}
 
     local conn = sql.connect( dbname )
     conn.exec( string.format(sql.newTable, tbname, schema) )
@@ -87,10 +87,10 @@ local function streaming()
 	if c then
 	    c:settimeout(1)
 	    local ip = c:getpeername():match'%g+'
-	    local response = hd.response({content='stream', ip=ip, body='retry: 60'}).asstr()
+	    local response = hd.response({content='stream', body='retry: 60'}).asstr()
 	    if c:send( response ) and c:send( MM.caja.sse() ) then cts[#cts+1] = c
 	    else c:close() end
-	    print('Connected to:', ip)
+	    print('Connected on port 8080 to:', ip)
 	end
     end
 
@@ -140,5 +140,4 @@ recording()
 while 1 do
     MM.streaming.accept()
     MM.recording.accept()
-    socket.sleep(2)
 end

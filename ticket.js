@@ -41,7 +41,7 @@
 		    case 187: case 107:
 			e.target.value++;
 			e.preventDefault();
-			ferre.updateItem(e);
+			TICKET.update(e); //ferre.updateItem(e);
 			break;
 		    case '-':
 		    case 'Subtract':
@@ -49,7 +49,7 @@
 			if (e.target.value == 1) { e.preventDefault(); break; }
 			e.target.value--;
 			e.preventDefault();
-			ferre.updateItem(e);
+			TICKET.update(e); //ferre.updateItem(e);
 			break;
 		    default: break;
 		}

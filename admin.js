@@ -23,9 +23,9 @@
 	    TICKET.ttotal = document.getElementById( TICKET.ttotalID );
 	    TICKET.myticket = document.getElementById( TICKET.myticketID );
 
-//	    ferre.updateItem = e => TICKET.update(e).then( w => SQL.update(w) );
+	    admin.updateItem = TICKET.update;
 
-//	    admin.item2bin = e => TICKET.remove(e).then( clave => SQL.remove(clave) );
+	    admin.clickItem = e => TICKET.remove( e.target.parentElement );
 
 	    admin.emptyBag = TICKET.empty
 
