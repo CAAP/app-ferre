@@ -4,8 +4,6 @@
 	var TICKET = { VERSION: 1, DB: 'ticket', STORE: 'ticket-clave', KEY: 'clave', bagID: 'ticket-compra', ttotalID: 'ticket-total', myticketID: 'ticket' };
 
 	(function() {
-//	    const STRLEN = 5;
-//	    const ALPHA = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789abcdefghijkmnopqrstuvwxyz";
 	    const VARS = ['clave', 'precio', 'rea', 'qty', 'totalCents'];
 	    const TAGS = {none: 'x', presupuesto: 'a', imprimir: 'b', facturar: 'c', impreso: 'I', pagado: 'P', facturado: 'F'};
 	    TAGS.ID = {x: 'none', a: 'presupuesto', b: 'imprimir', c: 'facturar'};
@@ -20,7 +18,7 @@
 		    let total = 0;
 		    return objStore.openCursor( cursor => {
 			if (cursor) {
-			    total += cursor.value.totalCents;
+			    total += asnum(cursor.value.totalCents);
 			    displayItem( cursor.value );
 		    	    cursor.continue();
 			} else { TICKET.ttotal.textContent = tocents( total ); }
@@ -35,14 +33,6 @@
 	    function asnum(s) { let n = Number(s); return Number.isNaN(n) ? s : n; };
 
 	    function clearTable(tb) { while (tb.firstChild) { tb.removeChild( tb.firstChild ); } };
-
-/*
-	    function randString() {
-		    let ret = "";
-		    for (let i=0; i<STRLEN; i++) { ret += ALPHA.charAt(Math.floor( Math.random() * ALPHA.length )); }
-		    return ret;
-	    }
-*/
 
 	    function incdec(e) {
 		switch (e.key || e.which) {
@@ -84,7 +74,7 @@
 		let total = 0;
 		return objStore.openCursor( cursor => {
 		    if (cursor) {
-			total += cursor.value.totalCents;
+			total += asnum(cursor.value.totalCents);
 			cursor.continue();
 		    } else { TICKET.ttotal.textContent = tocents( total ); }
 		});

@@ -8,6 +8,7 @@
     <script type="text/javascript" src="xhr.js"></script>
     <script type="text/javascript" src="sql.js"></script>
     <script type="text/javascript" src="idb.js"></script>
+    <script type="text/javascript" src="ticket.js"></script>
     <script type="text/javascript" src="admin.js"></script>
 </head>
 
@@ -19,6 +20,16 @@
 
     <div id="comandos">
 
+    <section id="caja">
+	<table>
+	    <caption>CAJA</caption>
+	    <dt><thead>
+		<tr><th> </th><th> Hora </th><th> Nombre </th><th> Art&iacute;culos </th><th> </th></tr>
+	    </dt></thead>
+	    <tbody id="tabla-caja"></tbody>
+	</table>
+    </section>
+
     <section id="entradas" class="tablas">
         <table>
             <caption></caption>
@@ -28,16 +39,6 @@
             </thead>
 	    </dt>
 	    <tbody id="tabla-entradas" onclick="ferre.add2bag(event)"></tbody>
-	</table>
-    </section>
-
-    <section id="caja">
-	<table>
-	    <caption>CAJA</caption>
-	    <dt><thead>
-		<tr><th> Hora </th><th> Nombre </th><th> Art&iacute;culos </th><th> </th></tr>
-	    </dt></thead>
-	    <tbody id="tabla-caja"></tbody>
 	</table>
     </section>
 
@@ -52,9 +53,10 @@
                 <tr> <th> Cantidad </th><th class="desc"> Descripci&oacute;n </th><th> Precio </th><th> Descuento </th><th> Total </th> </tr> 
             </thead>
 	    </dt>
-	    <tbody id="ticket-compra" class="amarillo" onchange="ferre.updateItem(event)" ondblclick="ferre.item2bin(event)"></tbody>
+	    <tbody id="ticket-compra" class="amarillo" onchange="ferre.updateItem(event)" ondblclick="ferre.item2bin(event)">
+	    </tbody>
 
-	    <tfoot><tr><th colspan=5 align="right"><button onclick="ferre.emptyBag()">Cancelar</button>&emsp;<button onclick="ferre.print('budget')">Presupuesto</button>&emsp;<button onclick="ferre.print('print')">Imprimir</button>&emsp;<label id="ticket-total" class="total"></label></th></tr></tfoot>
+	    <tfoot><tr><th colspan=5 align="right"><button onclick="admin.emptyBag()">Cancelar</button>&emsp;<button onclick="ferre.print('budget')">Presupuesto</button>&emsp;<button onclick="ferre.print('print')">Imprimir</button>&emsp;<label id="ticket-total" class="total"></label></th></tr></tfoot>
 
 	</table>
     </section>

@@ -6,6 +6,8 @@
 	(function () {
 
 	    function asstr( obj ) {
+		if (Array.isArray(obj))
+		    return obj.join('&');
 		let props = [];
 		for (var prop in obj) { props.push( prop + '=' + obj[prop] ) }
 		return props.join('&');
