@@ -4,13 +4,12 @@
 <head>
     <meta charset="UTF-8">
     <title> ADMIN </title>
-    <link rel="stylesheet" href="admin.css">
+    <link rel="stylesheet" href="caja.css">
     <script type="text/javascript" src="xhr.js"></script>
     <script type="text/javascript" src="sql.js"></script>
     <script type="text/javascript" src="idb.js"></script>
     <script type="text/javascript" src="ticket.js"></script>
-    <script type="text/javascript" src="browse.js"></script>
-    <script type="text/javascript" src="admin.js"></script>
+    <script type="text/javascript" src="caja.js"></script>
 </head>
 
 <body lang="es-MX">
@@ -19,32 +18,39 @@
 
     <div id="main">
 
-	<section id="buscar">
+    <div id="comandos">
 
-        <div align="right"> <input type="search" size=40 placeholder="Art&iacute;culo o Clave" onchange="admin.startSearch(event)" onkeydown="admin.keyPressed(event)"> <button>Buscar</button> </div>
+    <section id="caja">
+	<table>
+	    <caption>CAJA</caption>
+	    <dt><thead>
+		<tr><th> </th><th> Hora </th><th> Nombre </th><th> Art&iacute;culos </th><th> </th></tr>
+	    </dt></thead>
+	    <tbody id="tabla-caja"></tbody>
+	</table>
+    </section>
 
-	<section id="resultados" class="tablas">
+    <section id="entradas" class="tablas">
         <table>
+            <caption></caption>
 	    <dt>
             <thead>
-                <tr><th> Fecha </th><th> Clave </th><th> Descripci&oacute;n </th><th> Precio </th><th>U</th></tr>
+                <tr><th> NOMBRE </th></tr>
             </thead>
 	    </dt>
-	    <tbody id="tabla-resultados" class="amarillo" onclick="ferre.add2bag(event)" onwheel="admin.scroll(event)"></tbody>
+	    <tbody id="tabla-entradas" onclick="ferre.add2bag(event)"></tbody>
 	</table>
-	</section>
+    </section>
 
-	</section>
+    </div>
 
-	</div>
-
-	<section id="ticket" class="tablas">
+    <section id="ticket" class="tablas">
 	<table>
 
            <caption> TICKET </caption>
 	    <dt>
             <thead>
-                <tr> <th> Clave </th><th class="desc"> Descripci&oacute;n </th><th> Costo </th><th> Descuento </th><th> Impuesto </th> </tr> 
+                <tr> <th> Cantidad </th><th class="desc"> Descripci&oacute;n </th><th> Precio </th><th> Descuento </th><th> Total </th> </tr> 
             </thead>
 	    </dt>
 	    <tbody id="ticket-compra" class="amarillo" onchange="caja.updateItem(event)" ondblclick="caja.clickItem(event)">
@@ -53,11 +59,9 @@
 	    <tfoot><tr><th colspan=5 align="right"><button onclick="caja.emptyBag()">Cancelar</button>&emsp;<button onclick="ferre.print('budget')">Presupuesto</button>&emsp;<button onclick="ferre.print('print')">Imprimir</button>&emsp;<label id="ticket-total" class="total"></label></th></tr></tfoot>
 
 	</table>
-	</section>
+    </section>
 
     </div>
-
-    <section><dialog id="dialogo-cambios"></dialog></section>
 
     <footer> <label id="copyright"></label> </footer>
 

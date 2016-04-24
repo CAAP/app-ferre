@@ -3,109 +3,79 @@
 
 	var admin = {
 	    DATA:  { VERSION: 2, DB: 'datos', STORE: 'datos-clave', KEY: 'clave', INDEX: 'desc', FILE: 'ferre.json' },
-	    PEOPLE: { VERSION: 1, DB: 'people', STORE: 'people-id', KEY: 'id', INDEX: 'nombre', FILE: 'people.json'}
+	    BAG: { VERSION: 1, DB: 'tickets', STORE: 'tickets-uid',  KEY: 'uid', INDEX: 'fecha' }
 	};
 
-	window.onload = function addFuns() {
+	window.onload = function() {
 	    const DATA = admin.DATA;
-	    const PEOPLE = admin.PEOPLE;
-	    const DBs = [ DATA, PEOPLE, TICKET ];
+	    const DBs = [ DATA, TICKET ];
+
+//	    ferre.reloadDB = function reloadDB() { return IDB.clearDB(DATA).then( () => IDB.populateDB( DATA ) ); };
+
+	    // BROWSE
+
+	    BROWSE.tab = document.getElementById('resultados');
+	    BROWSE.lis = document.getElementById('tabla-resultados');
+
+	    BROWSE.DBget = s => IDB.readDB( DATA ).get( s );
+
+	    BROWSE.DBindex = (a, b, f) => IDB.readDB( DATA ).index( a, b, f );
+
+	    admin.startSearch = BROWSE.startSearch;
+
+	    admin.keyPressed = BROWSE.keyPressed;
+
+	    admin.scroll = BROWSE.scroll;
+
+	    // UPDATES
+
+	    const diag = document.getElementById('dialogo-cambios');
+
+	    function displayRecord( k, v ) {
+		let p = document.createElement('p');
+		p.appendChild( document.createTextNode(k) );
+		let ie = document.createElement('input');
+		ie.type = 'text'; ie.size = 5;
+		p.appendChild( ie );
+		diag.appendChild( p );
+	    }
+
+	    function getRecord( clave ) {
+		return SQL.get( {clave: clave} )
+		.then( JSON.parse )
+		.then( a => a[0] )
+		.then( q => { for (var k in q) { displayRecord(k, q[k]); } } );
+	    }
 
 	    // SQL
 
-	    SQL.DB = 'caja';
+	    SQL.DB = 'ferre';
 
 	    // TICKET
-
-	    let ids = [];
 
 	    TICKET.bag = document.getElementById( TICKET.bagID );
 	    TICKET.ttotal = document.getElementById( TICKET.ttotalID );
 	    TICKET.myticket = document.getElementById( TICKET.myticketID );
 
-	    admin.updateItem = TICKET.update;
+	    let id_tag = TICKET.TAGS.none;
 
 	    admin.clickItem = e => TICKET.remove( e.target.parentElement );
 
-	    admin.emptyBag = TICKET.empty
-
-	    admin.print = function(a) {
-		tag = a;
-		document.getElementById('dialogo-persona').showModal();
-	    };
-
-	    // PEOPLE
-
-	    PEOPLE.load = function() {
-		const tb = document.getElementById('tabla-entradas');
-		PEOPLE.id = [];
-		function add2row(nombre) { tb.insertRow().appendChild(document.createTextNode(nombre)) }
-		IDB.readDB( PEOPLE ).openCursor( cursor => {
-		    if(!cursor){ return }
-		    let nombre = cursor.value.nombre;
-		    add2row(nombre);
-		    PEOPLE.id[cursor.value.id] = nombre;
-		    cursor.continue();
-		});
-	    };
-
-	    function now(fmt) { return new Date().toLocaleDateString('es-MX', fmt); };
+	    admin.emptyBag = TICKET.empty;
 
 	    // LOAD DBs
  	    if (IDB.indexedDB) { DBs.forEach( IDB.loadDB ); } else { alert("IDBIndexed not available."); }
-	    
+
+	    // SET HEADER
 	    (function() {
-	        const note = document.getElementById('notifications');
-		const FORMAT = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+	        let note = document.getElementById('notifications');
+		let FORMAT = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+		function now(fmt) { return new Date().toLocaleDateString('es-MX', fmt) }
 		note.appendChild( document.createTextNode( now(FORMAT) ) );
 	    })();
 
+	    // SET FOOTER
 	    (function() { document.getElementById('copyright').innerHTML = 'versi&oacute;n ' + 1.0 + ' | cArLoS&trade; &copy;&reg;'; })();
 
-	// ping CAJA
-	    (function() {
-
-		const cajita = document.getElementById('tabla-caja');
-		const mybag = TICKET.bag;
-
-	 	function asnum(s) { let n = Number(s); return Number.isNaN(n) ? s : n; }
-
-		function merge( o ) { return IDB.readDB( DATA ).get( asnum(o.clave) ).then( w => Object.assign( o, w ) ).then( TICKET.add ).then( () => { mybag.lastChild.dataset.uid = o.uid } ) }
-
-		let add2bag = uid => SQL.get( { uid: uid } ).then( JSON.parse ).then( objs => objs.reduce( (seq, o) => seq.then( () => merge(o) ), Promise.resolve() ) );
-
-		let removeItem = uid => Array.from(mybag.children).filter( row => (row.dataset.uid == uid) ).reduce( (seq, tr) => seq.then( () => TICKET.remove(tr) ), Promise.resolve() );
-
-		function add2caja(w) {
-		    let row = cajita.insertRow(0);
-		
-		    let ie = document.createElement('input');
-		    ie.type = 'checkbox'; ie.value = w.uid;
-		    ie.addEventListener('change', e => { if (e.target.checked) add2bag(e.target.value); else removeItem(e.target.value); } );
-		    row.insertCell().appendChild(ie);
-
-		    w.nombre = PEOPLE.id[asnum(w.uid.substring(20))] || 'NaN';
-		    w.time = w.uid.substr(11, 8);
-		    w.tag = TICKET.TAGS.ID[w.id_tag];
-		    for (let k of ['time', 'nombre', 'count', 'tag']) { row.insertCell().appendChild( document.createTextNode(w[k]) ); }
-		}
-
-//		XHR.getJSON('caja/ping.lua').then( objs => objs.forEach( add2caja ) );
-
-	// SERVER-SIDE EVENT SOURCE
-	    (function() {
-		let esource = new EventSource("http://192.168.1.14:8080");
-//		esource.onerror = function(e) { console.log(e.target); };
-//		esource.onopen = function(e) { console.log('Opening...'); };
-		esource.onmessage = e => console.log( 'id: ' + e.lastEventId );
-		esource.addEventListener("feed", function(e) {
-		    console.log('FEED message received\n');
-		    JSON.parse( e.data ).forEach( add2caja );
-		}, false);
-	    })();
-
-	    })();
-
 	};
-
 

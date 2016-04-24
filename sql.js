@@ -17,11 +17,11 @@
 
 	    function nget( q, o ) { return XHR.get( 'http://192.168.1.14:8081/' + q + '.lua?' + asstr(o) ) }
 
-	    SQL.add = o => { return xget( 'add', o ) };
+//	    SQL.add = o => { return xget( 'add', o ) };
 
-	    SQL.update = o => { return xget( 'update', o ) };
+//	    SQL.update = o => { return xget( 'update', o ) };
 
-	    SQL.remove = o => { return xget( 'remove', o ) };
+//	    SQL.remove = o => { return xget( 'remove', o ) };
 
 	    SQL.get = o => { return xget( 'get', o ) };
 

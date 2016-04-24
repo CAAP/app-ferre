@@ -14,6 +14,21 @@
 
 //	    ferre.reloadDB = function reloadDB() { return IDB.clearDB(DATA).then( () => IDB.populateDB( DATA ) ); };
 
+	    // BROWSE
+
+	    BROWSE.tab = document.getElementById('resultados');
+	    BROWSE.lis = document.getElementById('tabla-resultados');
+
+	    BROWSE.DBget = s => IDB.readDB( DATA ).get( s );
+
+	    BROWSE.DBindex = (a, b, f) => IDB.readDB( DATA ).index( a, b, f );
+
+	    ferre.startSearch = BROWSE.startSearch;
+
+	    ferre.keyPressed = BROWSE.keyPressed;
+
+	    ferre.scroll = BROWSE.scroll;
+
 	    // SQL
 
 	    SQL.DB = 'ticket';
@@ -103,95 +118,6 @@
 
 	    // SET FOOTER
 	    (function() { document.getElementById('copyright').innerHTML = 'versi&oacute;n ' + 1.0 + ' | cArLoS&trade; &copy;&reg;'; })();
-
-
-// ==== BROWSING ==== //
-
-	    (function() {
-
-	    let sstr = '';
-	    const IDBKeyRange =  window.IDBKeyRange || window.webkitIDBKeyRange || window.msIDBKeyRange;
-	    const res = document.getElementById('resultados');
-            const ans = document.getElementById('tabla-resultados');
-	    const N = 11;
-
-	    function asnum(s) { let n = Number(s); return Number.isNaN(n) ? s : n; };
-
-	    function clearTable(tb) { while (tb.firstChild) { tb.removeChild( tb.firstChild ); } };
-
-	    function newItem(a, j) {
-		let row = ans.insertRow(j);
-		if (a.desc.startsWith(sstr)) { row.classList.add('encontrado'); };
-		row.dataset.clave = a.clave;
-		row.insertCell().appendChild( document.createTextNode( a.fecha ) );
-		row.insertCell().appendChild( document.createTextNode( a.clave ) );
-		let desc = row.insertCell(); // class 'desc' necessary for scrolling
-		desc.classList.add('desc'); desc.appendChild( document.createTextNode( a.desc ) );
-		row.insertCell().appendChild( document.createTextNode( a.precio1.toFixed(2) ) );
-		row.insertCell().appendChild( document.createTextNode( a.u1 ) );
-	    }
-
-	    function browsing(j, M) {
-		let k = 0;
-		return function(cursor) {
-		    if (k == M || !cursor) { return true; }
-		    newItem(cursor.value, j);
-		    k++; cursor.continue();
-		};
-	    }
-
-	    function searchIndex(k, type, s, M) {
-		let NN = M || N;
-		let t = type.substr(0,4) == 'next';
-		let range = t ? IDBKeyRange.lowerBound(s, NN<N) : IDBKeyRange.upperBound(s, NN<N);
-		let j = t ? -1 : 0;
-		return IDB.readDB( k ).index( range, type, browsing(j, NN) );
-	    }
-
-	    function searchByDesc(s) {
-		console.log('Searching by description:' + s); sstr = s;
-		return searchIndex(DATA, 'next', s);
-	    }
-
-	    function searchByClave(s) {
-		console.log('Searching by clave:' + s);
-		return IDB.readDB( DATA ).get( asnum(s) ).then(result => searchByDesc(result ? result.desc : s), e => console.log("Error searching by clave: " + e));
-	    }
-
-	    function startSearch(e) {
-		if (e.target.value.length == 0) { console.log('Empty search: nothing to be done.'); }
-		res.style.visibility='visible';
-		clearTable( ans );
-		searchByClave(e.target.value.toUpperCase());
-		e.target.value = ""; // clean input field
-	    }
-
-	    function retrieve(t) {
-		let s = ans[(t == 'prev') ? 'firstChild' : 'lastChild'].querySelector('.desc').textContent;
-		searchIndex(DATA, t, s, 1).then( () => ans.removeChild((t == 'prev') ? ans.lastChild : ans.firstChild ));
-	    }
-
- 	    ferre.startSearch = startSearch;
-
-	    ferre.keyPressed = function keyPressed(e) {
-		switch (e.key || e.which) {
-		    case 'Escape':
-		    case 'Esc':
-		    case 27:
-			e.target.value = "";
-			break;
-		    default: break;
-		}
-	    };
-
-	    ferre.scroll = function scroll(e) {
-		if (e.deltaY > 0)
-		    retrieve('next');
-		else
-		    retrieve('prev');
-	    };
-
-	    })();
 
 	};
 
