@@ -8,8 +8,9 @@
     <script type="text/javascript" src="xhr.js"></script>
     <script type="text/javascript" src="sql.js"></script>
     <script type="text/javascript" src="idb.js"></script>
-    <script type="text/javascript" src="ticket.js"></script>
     <script type="text/javascript" src="browse.js"></script>
+    <script type="text/javascript" src="ticket.js"></script>
+    <script type="text/javascript" src="update.js"></script>
     <script type="text/javascript" src="admin.js"></script>
 </head>
 
@@ -30,34 +31,32 @@
                 <tr><th> Fecha </th><th> Clave </th><th> Descripci&oacute;n </th><th> Precio </th><th>U</th></tr>
             </thead>
 	    </dt>
-	    <tbody id="tabla-resultados" class="amarillo" onclick="ferre.add2bag(event)" onwheel="admin.scroll(event)"></tbody>
+	    <tbody id="tabla-resultados" class="amarillo" onclick="admin.getRecord(event)" onwheel="admin.scroll(event)"></tbody>
 	</table>
 	</section>
 
 	</section>
 
-	</div>
-
-	<section id="ticket" class="tablas">
+	<section id="update" class="tablas">
 	<table>
 
-           <caption> TICKET </caption>
+           <caption> CAMBIOS </caption>
 	    <dt>
             <thead>
-                <tr> <th> Clave </th><th class="desc"> Descripci&oacute;n </th><th> Costo </th><th> Descuento </th><th> Impuesto </th> </tr> 
+                <tr> <th> Clave </th> <th class="desc"> Descripci&oacute;n  </th> <th class="desc"> Detalles </th> </tr> 
             </thead>
 	    </dt>
-	    <tbody id="ticket-compra" class="amarillo" onchange="caja.updateItem(event)" ondblclick="caja.clickItem(event)">
+	    <tbody id="tabla-update" class="amarillo" ondblclick="admin.clickItem(event)">
 	    </tbody>
 
-	    <tfoot><tr><th colspan=5 align="right"><button onclick="caja.emptyBag()">Cancelar</button>&emsp;<button onclick="ferre.print('budget')">Presupuesto</button>&emsp;<button onclick="ferre.print('print')">Imprimir</button>&emsp;<label id="ticket-total" class="total"></label></th></tr></tfoot>
+	    <tfoot><tr><th colspan=3 align="right"><button onclick="admin.emptyBag()">Cancelar</button>&emsp;</th></tr></tfoot>
 
 	</table>
 	</section>
 
     </div>
 
-    <section><dialog id="dialogo-cambios"></dialog></section>
+    <section><dialog id="dialogo-cambios"><table><thead><th></th><th></th></thead><tbody id="tabla-cambios" onchange="admin.anUpdate(event)"></tbody></table></dialog></section>
 
     <footer> <label id="copyright"></label> </footer>
 

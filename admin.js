@@ -2,13 +2,12 @@
         "use strict";
 
 	var admin = {
-	    DATA:  { VERSION: 2, DB: 'datos', STORE: 'datos-clave', KEY: 'clave', INDEX: 'desc', FILE: 'ferre.json' },
-	    BAG: { VERSION: 1, DB: 'tickets', STORE: 'tickets-uid',  KEY: 'uid', INDEX: 'fecha' }
+	    DATA:  { VERSION: 1, DB: 'datos', STORE: 'datos-clave', KEY: 'clave', INDEX: 'desc', FILE: 'ferre.json' }
 	};
 
 	window.onload = function() {
 	    const DATA = admin.DATA;
-	    const DBs = [ DATA, TICKET ];
+	    const DBs = [ DATA, UPDATES ];
 
 //	    ferre.reloadDB = function reloadDB() { return IDB.clearDB(DATA).then( () => IDB.populateDB( DATA ) ); };
 
@@ -17,7 +16,7 @@
 	    BROWSE.tab = document.getElementById('resultados');
 	    BROWSE.lis = document.getElementById('tabla-resultados');
 
-	    BROWSE.DBget = s => IDB.readDB( DATA ).get( s );
+	    BROWSE.DBget = clave => IDB.readDB( DATA ).get( clave );
 
 	    BROWSE.DBindex = (a, b, f) => IDB.readDB( DATA ).index( a, b, f );
 
@@ -29,39 +28,35 @@
 
 	    // UPDATES
 
-	    const diag = document.getElementById('dialogo-cambios');
+	    UPDATES.diag = document.getElementById('dialogo-cambios');
+	    UPDATES.tabla = document.getElementById('tabla-cambios');
+	    UPDATES.ups = document.getElementById('update');
+	    UPDATES.lista = document.getElementById('tabla-update');
 
-	    function displayRecord( k, v ) {
-		let p = document.createElement('p');
-		p.appendChild( document.createTextNode(k) );
+	    function makeDisplay( k ) {
+		let row = UPDATES.tabla.insertRow();
+		row.insertCell().appendChild( document.createTextNode(k) );
 		let ie = document.createElement('input');
-		ie.type = 'text'; ie.size = 5;
-		p.appendChild( ie );
-		diag.appendChild( p );
+		ie.type = 'text'; ie.size = 5; ie.name = k;
+		if (k=='desc') { ie.size = 40; }
+		row.insertCell().appendChild( ie );
 	    }
 
-	    function getRecord( clave ) {
-		return SQL.get( {clave: clave} )
-		.then( JSON.parse )
-		.then( a => a[0] )
-		.then( q => { for (var k in q) { displayRecord(k, q[k]); } } );
-	    }
+	    UPDATES.lista.style.cursor = 'pointer';
+
+	    XHR.getJSON('/ferre/header.lua').then( a => a.forEach( makeDisplay ) );
+
+	    admin.anUpdate = e => UPDATES.anUpdate( e.target.name, e.target.value );
+
+	    admin.getRecord = e => UPDATES.getRecord( e.target.parentElement.dataset.clave );
+
+	    admin.clickItem = e => UPDATES.remove( e.target.parentElement );
+
+	    admin.emptyBag = UPDATES.emptyBag;
 
 	    // SQL
 
 	    SQL.DB = 'ferre';
-
-	    // TICKET
-
-	    TICKET.bag = document.getElementById( TICKET.bagID );
-	    TICKET.ttotal = document.getElementById( TICKET.ttotalID );
-	    TICKET.myticket = document.getElementById( TICKET.myticketID );
-
-	    let id_tag = TICKET.TAGS.none;
-
-	    admin.clickItem = e => TICKET.remove( e.target.parentElement );
-
-	    admin.emptyBag = TICKET.empty;
 
 	    // LOAD DBs
  	    if (IDB.indexedDB) { DBs.forEach( IDB.loadDB ); } else { alert("IDBIndexed not available."); }

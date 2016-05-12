@@ -99,7 +99,7 @@
 		    } else {
 			let ie = document.createElement('input');
 			ie.type = 'text'; ie.size = 1;
-			ie.addEventListener('keydown', sending); // print | send | else
+			ie.addEventListener('keydown', sending); //keydown // print | send | else
 			dialog.appendChild( ie );
 		    }
 		})

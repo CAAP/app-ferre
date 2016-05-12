@@ -44,20 +44,12 @@ iframe {
     background-color: #ffff99;
 }
 
-.encontrado {
-    background-color: #aaeedd;
-}
-
 .basura {
     cursor: url(bin-icon.png), default;
 }
 
 #resultados td {
     cursor: copy;
-}
-
-#keys-resultados {
-    visibility: hidden;
 }
 
 #main {
@@ -67,7 +59,7 @@ iframe {
     flex-flow: row;
 }
 
-#main.ticket {
+#main.update {
     margin: 4px;
     padding: 5px;
     order: 2;
@@ -81,6 +73,6 @@ iframe {
 
 #dialogo-cambios label {
     display: inline-block;
-    width = 5;
+    width: 5;
     text-align: right;
 }
