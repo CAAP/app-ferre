@@ -25,6 +25,8 @@ table {
     order: 1;
 }
 
+#ticket-compra.pagado > td { contenteditable: false; }
+
 .tablas {
     visibility: hidden;
     cursor: default;
@@ -34,3 +36,13 @@ table {
     border-bottom: 2px solid black;
     border-top: 2px solid black;
 }
+
+.total {
+    font: bold italic 100% arial;
+    text-align: right;
+}
+
+.pesos {
+    text-align: right;
+}
+

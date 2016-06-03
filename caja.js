@@ -2,7 +2,7 @@
         "use strict";
 
 	var caja = {
-	    DATA:  { VERSION: 2, DB: 'datos', STORE: 'datos-clave', KEY: 'clave', INDEX: 'desc', FILE: 'ferre.json' },
+	    DATA:  { VERSION: 1, DB: 'datos', STORE: 'datos-clave', KEY: 'clave', INDEX: 'desc', FILE: 'ferre.json' },
 	    PEOPLE: { VERSION: 1, DB: 'people', STORE: 'people-id', KEY: 'id', INDEX: 'nombre', FILE: 'people.json'}
 	};
 
@@ -15,22 +15,90 @@
 
 	    SQL.DB = 'caja';
 
+	    // FACTURAR
+
+	    (function (){
+		let diag = document.getElementById( 'dialogo-rfc' );
+		let tabla = document.getElementById( 'tabla-rfc' );
+		let ancho = new Set(['ciudad', 'correo', 'calle']);
+
+		function makeDisplay( k ) {
+		    let row = tabla.insertRow();
+		    row.insertCell().appendChild( document.createTextNode(k.replace(/([A-Z])/g,' $1')) );
+		    let ie = document.createElement('input');
+		    ie.type = 'text'; ie.size = 12; ie.name = k; ie.disabled = true;
+		    if (ancho.has(k)) { ie.size = 25; }
+		    if (k == 'razonSocial') { ie.size = 40; }
+		    row.insertCell().appendChild( ie );
+		}
+
+		function fillVal( k, v ) {
+		    let ie = tabla.querySelector('input[name='+k+']');
+		    if (ie) { ie.value = v; }
+		}
+
+		XHR.getJSON('/ferre/factura.lua').then( a => a.forEach( makeDisplay ) );
+
+		caja.timbrar = function() {
+		    let rfc = TICKET.bagRFC;
+		    XHR.getJSON('/ferre/rfc.lua?rfc=' + rfc)
+			.then( a => {
+			    if (a.length==1) {
+				let q = a[0];
+				for (let k in q) { fillVal(k, q[k]); }
+				diag.showModal();
+			    }
+			});
+		};
+
+	    })();
+
 	    // TICKET
 
-	    let ids = [];
-
 	    TICKET.bag = document.getElementById( TICKET.bagID );
-	    TICKET.ttotal = document.getElementById( TICKET.ttotalID );
 	    TICKET.myticket = document.getElementById( TICKET.myticketID );
+	    TICKET.timbre = TICKET.myticket.querySelector('button[name="timbrar"]');
+	    TICKET.bagRFC = false;
+
+	    (function() {
+		const BRUTO = 1.16;
+		const IVA = 7.25;
+		const tiva = document.getElementById( TICKET.tivaID );
+		const tbruto = document.getElementById( TICKET.tbrutoID );
+		const ttotal = document.getElementById( TICKET.ttotalID );
+
+		function tocents(x) { return (x / 100).toFixed(2); };
+
+		TICKET.total = function(amount) {
+		    tiva.textContent = tocents( amount / IVA );
+		    tbruto.textContent = tocents( amount / BRUTO );
+		    ttotal.textContent = tocents( amount );
+		};
+
+		const paga = document.getElementById( "dialogo-pagar" );
+		const mytotal = paga.querySelector('input[name="cuenta"]');
+		const mydebt =  paga.querySelector('output');
+
+		caja.validar = function(e) {
+		    if ( parseFloat(mydebt.value) >= 0 )
+			paga.close();
+		};
+
+		caja.pagar = function() {
+		    mytotal.value = ttotal.textContent;
+		    paga.showModal();
+		};
+
+	    })();
 
 	    caja.updateItem = TICKET.update;
 
 	    caja.clickItem = e => TICKET.remove( e.target.parentElement );
 
-	    caja.emptyBag = TICKET.empty
+	    caja.emptyBag = () => { TICKET.empty(); TICKET.bagRFC = false; TICKET.timbre.disabled = true; caja.cleanCaja(); }
 
 	    caja.print = function(a) {
-		tag = a;
+//		tag = a;
 		document.getElementById('dialogo-persona').showModal();
 	    };
 
@@ -70,18 +138,25 @@
 
 	 	function asnum(s) { let n = Number(s); return Number.isNaN(n) ? s : n; }
 
-		function merge( o ) { return IDB.readDB( DATA ).get( asnum(o.clave) ).then( w => Object.assign( o, w ) ).then( TICKET.add ).then( () => { mybag.lastChild.dataset.uid = o.uid } ) }
+		function data( o ) { return IDB.readDB( DATA ).get( asnum(o.clave) ).then( w => Object.assign( o, w ) ).then( TICKET.add ).then( () => { mybag.lastChild.dataset.uid = o.uid } ) }
 
-		let add2bag = uid => SQL.get( { uid: uid } ).then( JSON.parse ).then( objs => objs.reduce( (seq, o) => seq.then( () => merge(o) ), Promise.resolve() ) );
+		function add2bag( uid, rfc ) {
+//			console.log("RFC: " + rfc + "\t" + (rfc == "undefined"));
+		    if (!TICKET.bagRFC && (rfc != "undefined") && (rfc.length > 0) ) { TICKET.bagRFC = rfc; TICKET.timbre.disabled = false; }
+		    SQL.get( { uid: uid } )
+			.then( JSON.parse )
+			.then( objs => objs.reduce( (seq, o) => seq.then( () => data(o) ), Promise.resolve() ) );
+		}
 
-		let removeItem = uid => Array.from(mybag.children).filter( row => (row.dataset.uid == uid) ).reduce( (seq, tr) => seq.then( () => TICKET.remove(tr) ), Promise.resolve() );
+//query selector look for property 'uid'
+		let removeItem = uid => Array.from(mybag.querySelectorAll('tr[data-uid="' + uid + '"]')).reduce( (seq, tr) => seq.then( () => TICKET.remove(tr) ), Promise.resolve() );
 
 		function add2caja(w) {
 		    let row = cajita.insertRow(0);
-		
+
 		    let ie = document.createElement('input');
-		    ie.type = 'checkbox'; ie.value = w.uid;
-		    ie.addEventListener('change', e => { if (e.target.checked) add2bag(e.target.value); else removeItem(e.target.value); } );
+		    ie.type = 'checkbox'; ie.value = w.uid; ie.name = w.rfc;
+		    ie.addEventListener('change', e => { if (e.target.checked) add2bag(e.target.value, e.target.name); else removeItem(e.target.value); } );
 		    row.insertCell().appendChild(ie);
 
 		    w.nombre = PEOPLE.id[asnum(w.uid.substring(20))] || 'NaN';
@@ -90,22 +165,20 @@
 		    for (let k of ['time', 'nombre', 'count', 'tag']) { row.insertCell().appendChild( document.createTextNode(w[k]) ); }
 		}
 
-//		XHR.getJSON('caja/ping.lua').then( objs => objs.forEach( add2caja ) );
-
 	// SERVER-SIDE EVENT SOURCE
-	    (function() {
-		let esource = new EventSource("http://192.168.1.14:8080");
-//		esource.onerror = function(e) { console.log(e.target); };
-//		esource.onopen = function(e) { console.log('Opening...'); };
-		esource.onmessage = e => console.log( 'id: ' + e.lastEventId );
-		esource.addEventListener("feed", function(e) {
-		    console.log('FEED message received\n');
-		    JSON.parse( e.data ).forEach( add2caja );
-		}, false);
-	    })();
+		(function() {
+		    let esource = new EventSource(document.location.origin + ":8080");
+		    esource.onmessage = e => console.log( 'id: ' + e.lastEventId );
+		    esource.addEventListener("feed", function(e) {
+			console.log('FEED message received\n');
+			JSON.parse( e.data ).forEach( add2caja );
+		    }, false);
+		})();
+
+		caja.cleanCaja = function() {
+		    Array.from(cajita.querySelectorAll("input:checked")).reduce( (_, ic) => { ic.checked = false; }, {} );
+		};
 
 	    })();
 
 	};
-
-

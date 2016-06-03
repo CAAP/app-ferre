@@ -2,9 +2,9 @@
         "use strict";
 
 	var ferre = {
-	    DATA:  { VERSION: 2, DB: 'datos', STORE: 'datos-clave', KEY: 'clave', INDEX: 'desc', FILE: 'ferre.json' },
+	    DATA:  { VERSION: 1, DB: 'datos', STORE: 'datos-clave', KEY: 'clave', INDEX: 'desc', FILE: 'ferre.json' },
 	    PEOPLE: { VERSION: 1, DB: 'people', STORE: 'people-id', KEY: 'id', INDEX: 'nombre', FILE: 'people.json'},
-	    BAG: { VERSION: 1, DB: 'tickets', STORE: 'tickets-uid',  KEY: 'uid', INDEX: 'fecha' }
+//	    BAG: { VERSION: 1, DB: 'tickets', STORE: 'tickets-uid',  KEY: 'uid', INDEX: 'fecha' }
 	};
 
 	window.onload = function() {
@@ -29,9 +29,59 @@
 
 	    ferre.scroll = BROWSE.scroll;
 
-	    // SQL
+	    // FACTURAR
 
-	    SQL.DB = 'ticket';
+	    (function() {
+
+		let diagF = document.getElementById( 'dialogo-factura' );
+		let diagR = document.getElementById( 'dialogo-rfc' );
+		let tabla = document.getElementById( 'tabla-rfc' );
+
+		let ancho = new Set(['ciudad', 'correo', 'calle']);
+
+		// Create a table with 2 cols, a field/label and a value/input-text
+		function makeDisplay( k ) {
+		    let row = tabla.insertRow();
+		    row.insertCell().appendChild( document.createTextNode(k.replace(/([A-Z])/g,' $1')) );
+		    let ie = document.createElement('input');
+		    ie.type = 'text'; ie.size = 12; ie.name = k;
+		    if (ancho.has(k)) { ie.size = 25; }
+		    if (k == 'razonSocial') { ie.size = 40; }
+		    row.insertCell().appendChild( ie );
+		}
+
+		function fillVal( k, v ) {
+		    let ie = tabla.querySelector('input[name='+k+']');
+		    if (ie) { ie.value = v; }
+		}
+
+		function clearVals() { Array.from(tabla.querySelectorAll('input')).forEach( item => { item.value = ''; } ); }
+
+		function displayRFC() {
+		    let rfc = diagF.querySelector('input');
+		    if (rfc.value.length>10 & rfc.validity.valid)
+			XHR.getJSON('/ferre/rfc.lua?rfc=' + rfc.value)
+			    .then( a => {
+				if (a.length==1) {
+				    let q = a[0];
+				    for (let k in q) { fillVal(k, q[k]); }
+				    diagF.close();
+				    rfc.value = ''; // clear input
+				    diagR.showModal();
+				}
+			    });
+		}
+
+		// FIll-in the fields of 'tabla-rfc' inside 'dialogo-rfc'
+		XHR.getJSON('/ferre/factura.lua').then( a => a.forEach( makeDisplay ) );
+
+		diagF.querySelector('input').addEventListener("keyup", displayRFC, false);
+
+		ferre.facturar = () => diagF.showModal();
+
+		ferre.enviarF = () => { diagR.close(); ferre.print('facturar', tabla.querySelector('input[name=rfc]').value); clearVals(); };
+
+	    })();
 
 	    // TICKET
 
@@ -39,10 +89,10 @@
 	    function uptoCents(q) { return Math.round( 100 * q[q.precio] * q.qty * (1-q.rea/100) ); };
 
 	    TICKET.bag = document.getElementById( TICKET.bagID );
-	    TICKET.ttotal = document.getElementById( TICKET.ttotalID );
 	    TICKET.myticket = document.getElementById( TICKET.myticketID );
 
 	    let id_tag = TICKET.TAGS.none;
+	    let rfc = '';
 
 	    ferre.add2bag = function( e ) {
 		let clave = asnum(e.target.parentElement.dataset.clave);
@@ -58,14 +108,26 @@
 
 	    ferre.emptyBag = TICKET.empty;
 
-	    ferre.print = function(a) {
+	    ferre.print = function(a, arg1) {
 		id_tag = TICKET.TAGS[a] || TICKET.TAGS.none;
+		if (a == 'facturar') { rfc = arg1; } else { rfc = ''; };
 		document.getElementById('dialogo-persona').showModal();
 	    };
 
+	    (function() {
+		const ttotal = document.getElementById( TICKET.ttotalID );
+		TICKET.total = function(amount) {
+		    ttotal.textContent = (amount / 100).toFixed(2);
+		};
+	    })();
+
+	    // SQL
+
+	    SQL.DB = document.location.origin + ':8081';
+
 	    // PEOPLE | SET Person Dialog
 
-	    PEOPLE.load = function loadPEOPLE() {
+	    PEOPLE.load = function() {
 		const dialog = document.getElementById('dialogo-persona');
 		let ol = document.createElement('ol');
 		dialog.appendChild(ol);
@@ -79,8 +141,8 @@
 		function sending(e) {
 		    let k = e.key || ((e.which > 90) ? e.which-96 : e.which-48);
 		    dialog.close();
-		    e.target.textContent = '';
-		    let objs = ['id_tag='+id_tag, 'id_person='+k];
+		    e.target.value = '';
+		    let objs = ['id_tag='+id_tag, 'id_person='+k, 'rfc='+rfc];
 		    return IDB.readDB( TICKET ).count()
 			.then( q => objs.push( 'count='+q ) )
 			.then( () => IDB.readDB( TICKET ).openCursor( cursor => {
@@ -88,8 +150,7 @@
 				let o = TICKET.obj(cursor.value);
 				objs.push( plain(o) );
 				cursor.continue();
-			    } else { SQL.print( objs ) } } ) )
-		    	.then( ferre.emptyBag );
+			    } else { SQL.print( objs ).then( ferre.emptyBag ); } } ) );
 		}
 
 		IDB.readDB( PEOPLE ).openCursor( cursor => {
@@ -99,7 +160,7 @@
 		    } else {
 			let ie = document.createElement('input');
 			ie.type = 'text'; ie.size = 1;
-			ie.addEventListener('keydown', sending); //keydown // print | send | else
+			ie.addEventListener('keyup', sending); // print | send | else
 			dialog.appendChild( ie );
 		    }
 		})

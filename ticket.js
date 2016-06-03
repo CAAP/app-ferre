@@ -1,7 +1,7 @@
 
 	"use strict";
 
-	var TICKET = { VERSION: 1, DB: 'ticket', STORE: 'ticket-clave', KEY: 'clave', bagID: 'ticket-compra', ttotalID: 'ticket-total', myticketID: 'ticket' };
+	var TICKET = { VERSION: 1, DB: 'ticket', STORE: 'ticket-clave', KEY: 'clave', bagID: 'ticket-compra', ttotalID: 'ticket-total', myticketID: 'ticket', tivaID: 'ticket-iva', tbrutoID: 'ticket-bruto' };
 
 	(function() {
 	    const VARS = ['clave', 'precio', 'rea', 'qty', 'totalCents'];
@@ -21,7 +21,7 @@
 			    total += asnum(cursor.value.totalCents);
 			    displayItem( cursor.value );
 		    	    cursor.continue();
-			} else { TICKET.ttotal.textContent = tocents( total ); }
+			} else { TICKET.total( total ); } // TICKET.ttotal.textContent = tocents( total );
 		    });
 		});
 	    };
@@ -76,7 +76,7 @@
 		    if (cursor) {
 			total += asnum(cursor.value.totalCents);
 			cursor.continue();
-		    } else { TICKET.ttotal.textContent = tocents( total ); }
+		    } else { TICKET.total( total ); } // TICKET.ttotal.textContent = tocents( total );
 		});
 	    }
 

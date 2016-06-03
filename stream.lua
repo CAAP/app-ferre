@@ -28,7 +28,7 @@ end
 
 local function caja()
     local dbname = '/db/caja.sql'
-    local schema = 'uid PRIMARY KEY, count INTEGER, id_tag'
+    local schema = 'uid PRIMARY KEY, count INTEGER, id_tag, rfc'
 
     local conn = sql.connect( dbname )
     conn.exec( string.format(sql.newTable, tbname, schema) )
@@ -44,7 +44,7 @@ local function caja()
 
     function MM.caja.add( w )
 	local uid = os.date'%FT%TP' .. w.id_person
-	local vals = string.format('%q, %d, %q', uid, w.count, w.id_tag)
+	local vals = string.format('%q, %d, %q, %q', uid, w.count, w.id_tag, w.rfc or '')
 	local qry = string.format('INSERT INTO %q VALUES(%s)', tbname, vals)
 	w.uid = uid
 	conn.exec( qry )
@@ -124,6 +124,8 @@ local function recording()
 	    if not e then
 		local url, qry = head:match'/(%g+)%?(%g+)'
 		local w = add( qry )
+		repeat head = c:receive() until head:match'^Origin:'
+		ip = head:match'^Origin: (%g+)'
 		c:send( hd.response({ip=ip, body=w.msg}).asstr() )
 		if w.msg == 'OK' then MM.broadcast( w ) end
 	    end
