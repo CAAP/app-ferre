@@ -20,6 +20,7 @@
 	        if (options.responseType)
 	            xhr.responseType = options.responseType;
 
+		// is it possible to use MERGE instead
 	        for (let header of Object.keys(options.headers || {}))
 	            xhr.setRequestHeader(header, options.headers[header]);
 

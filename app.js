@@ -1,16 +1,15 @@
-
         "use strict";
 
 	var ferre = {
 	    DATA:  { VERSION: 1, DB: 'datos', STORE: 'datos-clave', KEY: 'clave', INDEX: 'desc', FILE: 'ferre.json' },
-	    PEOPLE: { VERSION: 1, DB: 'people', STORE: 'people-id', KEY: 'id', INDEX: 'nombre', FILE: 'people.json'},
+//	    PEOPLE: { VERSION: 1, DB: 'people', STORE: 'people-id', KEY: 'id', INDEX: 'nombre', FILE: 'people.json'},
 //	    BAG: { VERSION: 1, DB: 'tickets', STORE: 'tickets-uid',  KEY: 'uid', INDEX: 'fecha' }
 	};
 
 	window.onload = function() {
 	    const DATA = ferre.DATA;
-	    const PEOPLE = ferre.PEOPLE;
-	    const DBs = [ DATA, TICKET, PEOPLE ];
+//	    const  PEOPLE = ferre.PEOPLE;
+	    const DBs = [ DATA, TICKET ]; //, PEOPLE ];
 
 //	    ferre.reloadDB = function reloadDB() { return IDB.clearDB(DATA).then( () => IDB.populateDB( DATA ) ); };
 
@@ -33,11 +32,9 @@
 
 	    (function() {
 
-		let diagF = document.getElementById( 'dialogo-factura' );
 		let diagR = document.getElementById( 'dialogo-rfc' );
+		let diagF = document.getElementById( 'dialogo-factura' );
 		let tabla = document.getElementById( 'tabla-rfc' );
-
-		let ancho = new Set(['ciudad', 'correo', 'calle']);
 
 		// Create a table with 2 cols, a field/label and a value/input-text
 		function makeDisplay( k ) {
@@ -45,8 +42,9 @@
 		    row.insertCell().appendChild( document.createTextNode(k.replace(/([A-Z])/g,' $1')) );
 		    let ie = document.createElement('input');
 		    ie.type = 'text'; ie.size = 12; ie.name = k;
-		    if (ancho.has(k)) { ie.size = 25; }
+		    if (k == 'cp') { ie.type = 'search'; ie.placeholder = '00000'; ie.pattern = '\d+'; }
 		    if (k == 'razonSocial') { ie.size = 40; }
+		    if (k == 'rfc') { ie.type = 'search'; ie.placeholder = 'XAXX010101000'; ie.pattern = '^\w{3,4}\d{6}\w{3}$'; }
 		    row.insertCell().appendChild( ie );
 		}
 
@@ -58,28 +56,45 @@
 		function clearVals() { Array.from(tabla.querySelectorAll('input')).forEach( item => { item.value = ''; } ); }
 
 		function displayRFC() {
-		    let rfc = diagF.querySelector('input');
-		    if (rfc.value.length>10 & rfc.validity.valid)
-			XHR.getJSON('/ferre/rfc.lua?rfc=' + rfc.value)
+		    let rfc = diagR.querySelector('input');
+		    if ((rfc.value.length>10) && (rfc.validity.valid))
+			    XHR.getJSON('/ferre/rfc.lua?rfc=' + rfc.value)
 			    .then( a => {
 				if (a.length==1) {
 				    let q = a[0];
 				    for (let k in q) { fillVal(k, q[k]); }
-				    diagF.close();
-				    rfc.value = ''; // clear input
-				    diagR.showModal();
+				    ferre.factura();
 				}
 			    });
 		}
 
+		function correos() {
+		    XHR.get('http://www.correosdemexico.gob.mx/lservicios/servicios/descarga.aspx')
+			.then( data => console.log(data) );
+		}
+
+		function sepomex(e) {
+		    let cp = e.target.value;
+		    if (e.target.validity.valid) {
+		    }
+		}
+
 		// FIll-in the fields of 'tabla-rfc' inside 'dialogo-rfc'
-		XHR.getJSON('/ferre/factura.lua').then( a => a.forEach( makeDisplay ) );
+		XHR.getJSON('/ferre/factura.lua')
+		    .then( a => a.forEach( makeDisplay ) )
+		    .then( () => {
+			['colonia', 'ciudad', 'estado'].forEach( x => { tabla.querySelector('input[name="'+x+'"').disabled = true; } );
+			['ciudad', 'correo', 'calle'].forEach( x => { tabla.querySelector('input[name="'+x+'"').size = 25; } );
+			tabla.querySelector('input[name="cp"]').addEventListener('change', correos, false);
+		    });
 
-		diagF.querySelector('input').addEventListener("keyup", displayRFC, false);
+		diagR.querySelector('input').addEventListener("keyup", displayRFC, false);
 
-		ferre.facturar = () => diagF.showModal();
+		ferre.rfc = () => diagR.showModal();
 
-		ferre.enviarF = () => { diagR.close(); ferre.print('facturar', tabla.querySelector('input[name=rfc]').value); clearVals(); };
+		ferre.factura = () => { diagR.close(); diagR.querySelector('input').value = ''; diagF.showModal(); };
+
+		ferre.enviarF = () => { diagF.close(); ferre.print('facturar', tabla.querySelector('input[name=rfc]').value); clearVals(); };
 
 	    })();
 
@@ -125,12 +140,14 @@
 
 	    SQL.DB = document.location.origin + ':8081';
 
-	    // PEOPLE | SET Person Dialog
-
-	    PEOPLE.load = function() {
+	    // PEOPLE | SET Person Dialog | Send to CAJA
+	    (function() {
 		const dialog = document.getElementById('dialogo-persona');
 		let ol = document.createElement('ol');
+		let N = -1;
 		dialog.appendChild(ol);
+
+		let addOne = o => { ol.appendChild( document.createElement('li') ).textContent = o.nombre };
 
 		function plain(obj) {
 		    let ret = [];
@@ -140,6 +157,7 @@
 
 		function sending(e) {
 		    let k = e.key || ((e.which > 90) ? e.which-96 : e.which-48);
+		    if (k < 1 || k > N) { e.target.value = ''; return false; }
 		    dialog.close();
 		    e.target.value = '';
 		    let objs = ['id_tag='+id_tag, 'id_person='+k, 'rfc='+rfc];
@@ -153,18 +171,15 @@
 			    } else { SQL.print( objs ).then( ferre.emptyBag ); } } ) );
 		}
 
-		IDB.readDB( PEOPLE ).openCursor( cursor => {
-		    if(cursor) {
-			ol.appendChild( document.createElement('li') ).textContent = cursor.value.nombre;
-			cursor.continue();
-		    } else {
-			let ie = document.createElement('input');
-			ie.type = 'text'; ie.size = 1;
-			ie.addEventListener('keyup', sending); // print | send | else
-			dialog.appendChild( ie );
-		    }
-		})
-	    };
+		XHR.getJSON( '/ferre/empleados.lua' ).then( a => {
+		    N = a.length;
+		    a.forEach( addOne );
+		    let ie = document.createElement('input');
+		    ie.type = 'text'; ie.size = 1;
+		    ie.addEventListener('keyup', sending);
+		    dialog.appendChild( ie );
+		});
+	    })();
 
 	    // LOAD DBs
  	    if (IDB.indexedDB) { DBs.forEach( IDB.loadDB ); } else { alert("IDBIndexed not available."); }

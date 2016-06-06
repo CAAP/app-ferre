@@ -44,7 +44,7 @@
                 <tr> <th> Cantidad </th><th class="desc"> Descripci&oacute;n </th><th> Precio </th><th> Descuento </th><th> Total </th> </tr> 
             </thead>
 	    </dt>
-	    <tfoot><tr><th colspan=5 align="right"><button onclick="ferre.emptyBag()">Cancelar</button>&emsp;<button onclick="ferre.facturar()">Facturar</button>&emsp;<button onclick="ferre.print('presupuesto')">Presupuesto</button>&emsp;<button onclick="ferre.print('imprimir')">Imprimir</button>&emsp;<label id="ticket-total" class="total"></label></th></tr></tfoot>
+	    <tfoot><tr><th colspan=5 align="right"><button onclick="ferre.emptyBag()">Cancelar</button>&emsp;<button onclick="ferre.rfc()">Facturar</button>&emsp;<button onclick="ferre.print('presupuesto')">Presupuesto</button>&emsp;<button onclick="ferre.print('imprimir')">Imprimir</button>&emsp;<label id="ticket-total" class="total"></label></th></tr></tfoot>
 
 	    <tbody id="ticket-compra" class="amarillo" onchange="ferre.updateItem(event)" ondblclick="ferre.clickItem(event)"></tbody>
 	</table>
@@ -54,9 +54,9 @@
     
     <section><dialog id="dialogo-persona"><a>Qui&eacute;n realiza la venta?</a></dialog></section>
 
-    <section><dialog id="dialogo-factura"><a><label>RFC: </label><input type="search" placeholder="XAXX010101000" pattern="^\w{3,4}\d{6}\w{3}$" /></a></dialog></section>
+    <SECTION><dialog id="dialogo-rfc"><a><label>RFC: </label><input type="search" placeholder="XAXX010101000" pattern="^\w{3,4}\d{6}\w{3}$" /></a><br><button onclick="ferre.factura()">Cliente nuevo</button></dialog></section>
 
-    <section><dialog id="dialogo-rfc"><table><caption>DATOS DE LA FACTURA</caption><thead><th></th><th></th></thead><tbody id="tabla-rfc" onchange="admin.anUpdate(event)"></tbody><tfoot><tr><th colspan=2 align="right"><button onclick="ferre.enviarF()">FACTURAR</button></th></tr></tfoot></table></dialog></section>
+    <section><dialog id="dialogo-factura"><table><caption>DATOS DE LA FACTURA</caption><tbody id="tabla-rfc" onchange="admin.anUpdate(event)"></tbody><tfoot><tr><th colspan=2 align="right"><button onclick="ferre.enviarF()">FACTURAR</button></th></tr></tfoot></table><table><tbody id="tabla-cp"></tbody></table></dialog></section>
 
     <footer> <label id="copyright"></label> </footer>
 
