@@ -1,5 +1,7 @@
 // ==== BROWSING ==== //
 
+	"use strict";
+
 	var BROWSE = {};
 
 	(function() {
