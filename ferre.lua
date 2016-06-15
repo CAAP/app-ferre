@@ -1,4 +1,4 @@
-#!/bin/ferre/lua
+#!/usr/local/bin/lua
 
 local fs = require'carlos.files'
 local fd = require'carlos.fold'

@@ -1,4 +1,4 @@
-#!/bin/ferre/lua
+#!/usr/local/bin/lua
 
 local socket = require"socket"
 
