@@ -7,7 +7,6 @@
 	(function() {
 
 	    let sstr = '';
-	    const DATA = BROWSE.DATA;
 	    const IDBKeyRange =  window.IDBKeyRange || window.webkitIDBKeyRange || window.msIDBKeyRange;
 	    const N = 11;
 
