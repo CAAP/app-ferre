@@ -102,13 +102,10 @@
 
 	    // PEOPLE
 	    (function() {
+		PEOPLE.id = [];
 		XHR.getJSON( '/ferre/empleados.lua' ).then( a => {
 		    N = a.length;
-		    a.forEach( addOne );
-		    let ie = document.createElement('input');
-		    ie.type = 'text'; ie.size = 1;
-		    ie.addEventListener('keyup', sending);
-		    dialog.appendChild( ie );
+		    a.forEach( o => { PEOPLE.id[o.id] = o.nombre; } );
 		});
 	    })();
 	
