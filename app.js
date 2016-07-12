@@ -2,14 +2,12 @@
 
 	var ferre = {
 	    DATA:  { VERSION: 1, DB: 'datos', STORE: 'datos-clave', KEY: 'clave', INDEX: 'desc', FILE: 'ferre.json' },
-//	    PEOPLE: { VERSION: 1, DB: 'people', STORE: 'people-id', KEY: 'id', INDEX: 'nombre', FILE: 'people.json'},
 //	    BAG: { VERSION: 1, DB: 'tickets', STORE: 'tickets-uid',  KEY: 'uid', INDEX: 'fecha' }
 	};
 
 	window.onload = function() {
 	    const DATA = ferre.DATA;
-//	    const  PEOPLE = ferre.PEOPLE;
-	    const DBs = [ DATA, TICKET ]; //, PEOPLE ];
+	    const DBs = [ DATA, TICKET ];
 
 //	    ferre.reloadDB = function reloadDB() { return IDB.clearDB(DATA).then( () => IDB.populateDB( DATA ) ); };
 
@@ -83,9 +81,9 @@
 		XHR.getJSON('/ferre/factura.lua')
 		    .then( a => a.forEach( makeDisplay ) )
 		    .then( () => {
-			['colonia', 'ciudad', 'estado'].forEach( x => { tabla.querySelector('input[name="'+x+'"').disabled = true; } );
+//			['colonia', 'ciudad', 'estado'].forEach( x => { tabla.querySelector('input[name="'+x+'"').disabled = true; } );
 			['ciudad', 'correo', 'calle'].forEach( x => { tabla.querySelector('input[name="'+x+'"').size = 25; } );
-			tabla.querySelector('input[name="cp"]').addEventListener('change', correos, false);
+//			tabla.querySelector('input[name="cp"]').addEventListener('change', correos, false);
 		    });
 
 		diagR.querySelector('input').addEventListener("keyup", displayRFC, false);

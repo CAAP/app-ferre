@@ -2,14 +2,12 @@
         "use strict";
 
 	var caja = {
-	    DATA:  { VERSION: 1, DB: 'datos', STORE: 'datos-clave', KEY: 'clave', INDEX: 'desc', FILE: 'ferre.json' },
-	    PEOPLE: { VERSION: 1, DB: 'people', STORE: 'people-id', KEY: 'id', INDEX: 'nombre', FILE: 'people.json'}
+	    DATA:  { VERSION: 1, DB: 'datos', STORE: 'datos-clave', KEY: 'clave', INDEX: 'desc', FILE: 'ferre.json' }
 	};
 
 	window.onload = function addFuns() {
 	    const DATA = caja.DATA;
-	    const PEOPLE = caja.PEOPLE;
-	    const DBs = [ DATA, PEOPLE, TICKET ];
+	    const DBs = [ DATA, TICKET ];
 
 	    // SQL
 
@@ -103,6 +101,17 @@
 	    };
 
 	    // PEOPLE
+	    (function() {
+		XHR.getJSON( '/ferre/empleados.lua' ).then( a => {
+		    N = a.length;
+		    a.forEach( addOne );
+		    let ie = document.createElement('input');
+		    ie.type = 'text'; ie.size = 1;
+		    ie.addEventListener('keyup', sending);
+		    dialog.appendChild( ie );
+		});
+	    })();
+	
 
 	    PEOPLE.load = function() {
 		const tb = document.getElementById('tabla-entradas');
