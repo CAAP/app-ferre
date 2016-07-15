@@ -2,7 +2,8 @@
         "use strict";
 
 	var caja = {
-	    DATA:  { VERSION: 1, DB: 'datos', STORE: 'datos-clave', KEY: 'clave', INDEX: 'desc', FILE: 'ferre.json' }
+	    DATA: { VERSION: 1, DB: 'datos', STORE: 'datos-clave', KEY: 'clave', INDEX: 'desc', FILE: 'ferre.json' },
+	    PEOPLE: {}
 	};
 
 	window.onload = function addFuns() {
@@ -109,20 +110,6 @@
 		});
 	    })();
 	
-
-	    PEOPLE.load = function() {
-		const tb = document.getElementById('tabla-entradas');
-		PEOPLE.id = [];
-		function add2row(nombre) { tb.insertRow().appendChild(document.createTextNode(nombre)) }
-		IDB.readDB( PEOPLE ).openCursor( cursor => {
-		    if(!cursor){ return }
-		    let nombre = cursor.value.nombre;
-		    add2row(nombre);
-		    PEOPLE.id[cursor.value.id] = nombre;
-		    cursor.continue();
-		});
-	    };
-
 	    function now(fmt) { return new Date().toLocaleDateString('es-MX', fmt); };
 
 	    // LOAD DBs
