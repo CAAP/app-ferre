@@ -145,7 +145,11 @@
 		let N = -1;
 		dialog.appendChild(ol);
 
-		let addOne = o => { ol.appendChild( document.createElement('li') ).textContent = o.nombre };
+		//
+		const lista = document.getElementById('lista-persona');
+		//
+
+		let addOne = o => { ol.appendChild( document.createElement('li') ).textContent = o.nombre; lista.appendChild( document.createElement('option') ).textContent = o.nombre; };
 
 		function plain(obj) {
 		    let ret = [];
