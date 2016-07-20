@@ -97,7 +97,6 @@
 	    caja.emptyBag = () => { TICKET.empty(); TICKET.bagRFC = false; TICKET.timbre.disabled = true; caja.cleanCaja(); }
 
 	    caja.print = function(a) {
-//		tag = a;
 		document.getElementById('dialogo-persona').showModal();
 	    };
 
@@ -105,7 +104,6 @@
 	    (function() {
 		PEOPLE.id = [];
 		XHR.getJSON( '/ferre/empleados.lua' ).then( a => {
-		    N = a.length;
 		    a.forEach( o => { PEOPLE.id[o.id] = o.nombre; } );
 		});
 	    })();
@@ -134,7 +132,6 @@
 		function data( o ) { return IDB.readDB( DATA ).get( asnum(o.clave) ).then( w => Object.assign( o, w ) ).then( TICKET.add ).then( () => { mybag.lastChild.dataset.uid = o.uid } ) }
 
 		function add2bag( uid, rfc ) {
-//			console.log("RFC: " + rfc + "\t" + (rfc == "undefined"));
 		    if (!TICKET.bagRFC && (rfc != "undefined") && (rfc.length > 0) ) { TICKET.bagRFC = rfc; TICKET.timbre.disabled = false; }
 		    SQL.get( { uid: uid } )
 			.then( JSON.parse )

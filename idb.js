@@ -15,7 +15,7 @@
 		    objStore.transaction.oncomplete = function(ev) {
 			console.log('ObjectStore ' + k.STORE + ' created successfully.');
 			if (k.FILE) { IDB.populateDB( k ); }
-			if (k.load) { k.load(); };
+//			if (k.load) { k.load(); };
 		    };
 		};
 	    },

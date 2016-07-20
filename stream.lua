@@ -18,8 +18,8 @@ local function asJSON( w )
     return string.format('data: {%s}', table.concat(ret, ', '))
 end
 
-local function sse( data )
-    local ret = {'event: feed', 'data: ['}
+local function sse( data, event )
+    local ret = {'event: ' .. (event or 'feed'), 'data: ['}
     ret[#ret+1] = data
     ret[#ret+1] = 'data: ]'
     ret[#ret+1] = '\n'
@@ -82,7 +82,7 @@ local function streaming()
 
     local cts = {}
 
-    function MM.streaming.accept()
+    function MM.streaming.connect()
 	local c = srv:accept()
 	if c then
 	    c:settimeout(1)
@@ -96,7 +96,7 @@ local function streaming()
 
     function MM.broadcast( w )
 	if #cts > 0 then
-	    local msg = sse( asJSON( w ) )
+	    local msg = sse( asJSON( w ), w.args and 'save' or 'feed' )
 	    cts = fd.reduce( cts, fd.filter( function(c) return c:send(msg) or (c:close() and nil) end ), fd.into, {} )
 	end
     end
@@ -110,13 +110,14 @@ local function recording()
     local function add( q )
 	local w =  hd.parse( q )
 	if not w.args then return {msg='Empty Query'} end
-	MM.tickets.add( MM.caja.add( w ) )
+	if w.id_tag == 'g' then w.args = q
+	else MM.tickets.add( MM.caja.add( w ) ); w.args = nil end
 	w.msg = 'OK'
-	w.args = nil
 	return w
     end
 
-    function MM.recording.accept()
+    -- Hear for incoming msgs & broadcast them afterwards
+    function MM.recording.talk()
 	local c = srv:accept()
 	if c then
 	    local ip = c:getpeername():match'%g+'
@@ -140,6 +141,6 @@ streaming()
 recording()
 
 while 1 do
-    MM.streaming.accept()
-    MM.recording.accept()
+    MM.streaming.connect()
+    MM.recording.talk()
 end

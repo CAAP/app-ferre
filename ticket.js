@@ -1,12 +1,11 @@
-
 	"use strict";
 
 	var TICKET = { VERSION: 1, DB: 'ticket', STORE: 'ticket-clave', KEY: 'clave', bagID: 'ticket-compra', ttotalID: 'ticket-total', myticketID: 'ticket', tivaID: 'ticket-iva', tbrutoID: 'ticket-bruto' };
 
 	(function() {
 	    const VARS = ['clave', 'precio', 'rea', 'qty', 'totalCents'];
-	    const TAGS = {none: 'x', presupuesto: 'a', imprimir: 'b', facturar: 'c', impreso: 'I', pagado: 'P', facturado: 'F'};
-	    TAGS.ID = {x: 'none', a: 'presupuesto', b: 'imprimir', c: 'facturar'};
+	    const TAGS = {none: 'x', presupuesto: 'a', imprimir: 'b', facturar: 'c', guardar: 'g', impreso: 'I', pagado: 'P', facturado: 'F'};
+	    TAGS.ID = {x: 'none', a: 'presupuesto', b: 'imprimir', c: 'facturar', g: 'guardar'};
 
 	    TICKET.TAGS = TAGS;
 
@@ -21,7 +20,7 @@
 			    total += asnum(cursor.value.totalCents);
 			    displayItem( cursor.value );
 		    	    cursor.continue();
-			} else { TICKET.total( total ); } // TICKET.ttotal.textContent = tocents( total );
+			} else { TICKET.total( total ); }
 		    });
 		});
 	    };
