@@ -96,7 +96,7 @@ local function streaming()
 
     function MM.broadcast( w )
 	if #cts > 0 then
-	    local msg = sse( asJSON( w ), w.args and 'save' or 'feed' )
+	    local msg = sse( asJSON( w ), w.query and 'save' or 'feed' )
 	    cts = fd.reduce( cts, fd.filter( function(c) return c:send(msg) or (c:close() and nil) end ), fd.into, {} )
 	end
     end
@@ -110,8 +110,9 @@ local function recording()
     local function add( q )
 	local w =  hd.parse( q )
 	if not w.args then return {msg='Empty Query'} end
-	if w.id_tag == 'g' then w.args = q
-	else MM.tickets.add( MM.caja.add( w ) ); w.args = nil end
+	if w.id_tag == 'g' then w.query = q
+	else MM.tickets.add( MM.caja.add( w ) ) end
+	w.args = nil
 	w.msg = 'OK'
 	return w
     end

@@ -115,14 +115,23 @@
 		let rfc = ''; if (a == 'facturar') { rfc = arg1; };
 		const pid = document.getElementById('persona').dataset.id;
 		let objs = ['id_tag='+id_tag, 'id_person='+pid, 'rfc='+rfc];
+		let plain = obj => {
+		    let ret = [];
+		    for (let k in obj) { ret.push(k, obj[k]); }
+		    return ('args=' + ret.join('+'));
+		};
+		function sendTicket() {
+		    return IDB.readDB( TICKET ).openCursor( cursor => {
+		    if (cursor) {
+			let o = TICKET.obj(cursor.value);
+			objs.push( plain(o) );
+			cursor.continue();
+		    } else { SQL.print( objs ).then( ferre.emptyBag ); } } );
+ 		}
+
 		return IDB.readDB( TICKET ).count()
 		    .then( q => objs.push('count='+q) )
-		    .then( () => IDB.readDB( TICKET ).openCursor( cursor => {
-			if (cursor) {
-			    let o = TICKET.obj(cursor.value);
-			    objs.push( plain(o) );
-			    cursor.continue();
-			} else { SQL.print( objs ).then( ferre.emptyBag ); } } );
+		    .then( sendTicket );
 	    };
 
 	    (function() {
@@ -177,8 +186,10 @@
 		    let esource = new EventSource(document.location.origin + ":8080");
 		    esource.onmessage = e => console.log( 'id: ' + e.lastEventId );
 		    esource.addEventListener("save", function(e) {
-			console.log('FEED message received\n');
-			JSON.parse( e.data ).forEach( add2caja );
+			let q = JSON.parse(e.data)[0].query
+			let data = q.substr(q.search('args')+5)
+			console.log('Message received:'+data);
+//			JSON.parse( e.data ).forEach( add2caja );
 		    }, false);
 		})();
 
