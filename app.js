@@ -115,7 +115,7 @@
 		let rfc = ''; if (a == 'facturar') { rfc = arg1; };
 		const pid = document.getElementById('persona').dataset.id;
 		let objs = ['id_tag='+id_tag, 'id_person='+pid, 'rfc='+rfc];
-		let plain = obj => {
+		function plain(obj) {
 		    let ret = [];
 		    for (let k in obj) { ret.push(k, obj[k]); }
 		    return ('args=' + ret.join('+'));
@@ -146,21 +146,30 @@
 	    // PEOPLE
 	    (function() {
 		const p = document.getElementById('persona');
-		const N = PEOPLE.id.count;
+		const N = PEOPLE.id.length;
+
+function data( o ) { return IDB.readDB( DATA ).get( Number(o.clave) ).then( w => Object.assign( o, w ) ).then( TICKET.add ); }
+
+function a2obj( a ) { const M = a.length/2; let o = {}; for (let i=0; i<M; i++) { o[a[i*2]] = a[i*2+1]; } return o; }
+
+		function recreate(q) { return q.split('&args=').reduce( (p, s) => p.then( () => data(a2obj(s.split('+'))) ), Promise.resolve() ); }
 
 		document.addEventListener('keydown', e => {
 		    const ky = e.key;
-		    if (ky == 'Control') { return false; }
+		    if (!Number(ky)) { return false; }
 		    if (e.ctrlKey) {
 			const k = ky || ((e.which > 90) ? e.which-96 : e.which-48);
-			if (k < 1 || k > N) { return false; }
-			p.textContent = ' | ' + PEOPLE.id[k];
-			p.dataset.id = k;
+			console.log('k: ' + k);
+//			if (k < 1 || k > N || k == p.dataset.id) { console.log('Error:' + k); return false; }
 		// if ticket-bag is not empty then send info to server for broadcasting
 			IDB.readDB( TICKET ).count()
-			   .then( q => { if (q > 0) ferre.print('guardar'); } );
+			   .then( q => { if (q > 0) ferre.print('guardar'); } )
+			   .then(() => { p.textContent = PEOPLE.id[k]; p.dataset.id = k; } )
+			   .then( () => { if (PEOPLE.tabs.has(k)) recreate( PEOPLE.tabs.get(k).query ); } ); // XXX TICKET.add( recreate(w) )
 		    }
 		}, false);
+
+		PEOPLE.tabs = new Map();
 	    })();
 
 	    // LOAD DBs
@@ -174,22 +183,23 @@
 		function now(fmt) { return new Date().toLocaleDateString('es-MX', fmt) }
 		note.appendChild( document.createTextNode( now(FORMAT) ) );
 
-		p.appendChild( document.createTextNode(' | Alberto') );
-		p.dataset.id = 0;
+		p.appendChild( document.createTextNode('Alberto') );
+		p.dataset.id = 1;
 	    })();
 
 	    // SET FOOTER
-	    (function() { document.getElementById('copyright').innerHTML = 'versi&oacute;n ' + 1.0 + ' | cArLoS&trade; &copy;&reg;' })();
+	    (function() { document.getElementById('copyright').innerHTML = 'versi&oacute;n ' + 2.0 + ' | cArLoS&trade; &copy;&reg;' })();
+
+// STILL needs to remove tabs
 
 	// SERVER-SIDE EVENT SOURCE
 		(function() {
 		    let esource = new EventSource(document.location.origin + ":8080");
 		    esource.onmessage = e => console.log( 'id: ' + e.lastEventId );
 		    esource.addEventListener("save", function(e) {
-			let q = JSON.parse(e.data)[0].query
-			let data = q.substr(q.search('args')+5)
-			console.log('Message received:'+data);
-//			JSON.parse( e.data ).forEach( add2caja );
+			const o = JSON.parse( e.data )[0];
+			o.query = o.query.substr(o.query.search('args') + 5);
+			PEOPLE.tabs.set(o.id_person, o);
 		    }, false);
 		})();
 

@@ -12,6 +12,12 @@ iframe {
     bottom: 0;
 }
 
+#persona {
+    font: bold 100% arial;
+    color: white;
+    background-color: black;
+}
+
 .total {
     font: bold italic 100% arial;
     text-align: right;
