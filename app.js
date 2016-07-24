@@ -6,7 +6,7 @@
 
 	window.onload = function() {
 	    const DATA = ferre.DATA;
-	    const DBs = [ DATA, TICKET ];
+	    const DBs = [ DATA ]; // , TICKET
 
 //	    ferre.reloadDB = function reloadDB() { return IDB.clearDB(DATA).then( () => IDB.populateDB( DATA ) ); };
 
@@ -97,8 +97,8 @@
 		function uptoCents(q) { return Math.round( 100 * q[q.precio] * q.qty * (1-q.rea/100) ); };
 		ferre.add2bag = function( e ) {
 		    let clave = asnum(e.target.parentElement.dataset.clave);
-		    return IDB.readDB( TICKET ).get( clave )
-			.then( q => { if (q) { return Promise.reject('Item is already in the bag.'); } else { return IDB.readDB( DATA ).get(clave); } } )
+		    if (TICKET.items.has( clave )) { console.log('Item is already in the bag.'); return false; }
+		    return IDB.readDB( DATA ).get( clave )
 			.then( w => { w.qty=1; w.precio='precio1'; w.rea=0; w.totalCents=uptoCents(w); return w; } )
 			.then( TICKET.add );
 		};
@@ -114,24 +114,17 @@
 		const id_tag = TICKET.TAGS[a] || TICKET.TAGS.none;
 		let rfc = ''; if (a == 'facturar') { rfc = arg1; };
 		const pid = document.getElementById('persona').dataset.id;
-		let objs = ['id_tag='+id_tag, 'id_person='+pid, 'rfc='+rfc];
+		let objs = ['id_tag='+id_tag, 'id_person='+pid, 'rfc='+rfc, 'count='+TICKET.items.size ];
+
 		function plain(obj) {
 		    let ret = [];
 		    for (let k in obj) { ret.push(k, obj[k]); }
 		    return ('args=' + ret.join('+'));
 		};
-		function sendTicket() {
-		    return IDB.readDB( TICKET ).openCursor( cursor => {
-		    if (cursor) {
-			let o = TICKET.obj(cursor.value);
-			objs.push( plain(o) );
-			cursor.continue();
-		    } else { SQL.print( objs ).then( ferre.emptyBag ); } } );
- 		}
 
-		return IDB.readDB( TICKET ).count()
-		    .then( q => objs.push('count='+q) )
-		    .then( sendTicket );
+		TICKET.items.forEach( item => objs.push( plain( TICKET.obj(item) ) ) );
+
+		return SQL.print( objs ).then( ferre.emptyBag );
 	    };
 
 	    (function() {
@@ -148,24 +141,25 @@
 		const p = document.getElementById('persona');
 		const N = PEOPLE.id.length;
 
-function data( o ) { return IDB.readDB( DATA ).get( Number(o.clave) ).then( w => Object.assign( o, w ) ).then( TICKET.add ); }
-
-function a2obj( a ) { const M = a.length/2; let o = {}; for (let i=0; i<M; i++) { o[a[i*2]] = a[i*2+1]; } return o; }
-
+		function asnum(s) { let n = Number(s); return Number.isNaN(n) ? s : n; };
+		function data( o ) { return IDB.readDB( DATA ).get( asnum(o.clave) ).then( w => Object.assign( o, w ) ).then( TICKET.add ); }
+		function a2obj( a ) { const M = a.length/2; let o = {}; for (let i=0; i<M; i++) { o[a[i*2]] = a[i*2+1]; } return o; }
 		function recreate(q) { return q.split('&args=').reduce( (p, s) => p.then( () => data(a2obj(s.split('+'))) ), Promise.resolve() ); }
+		function tabs(k) {
+		    if (PEOPLE.tabs.has(k)) { recreate(PEOPLE.tabs.get(k).query); }
+		    p.textContent = PEOPLE.id[k]; p.dataset.id = k;
+		}
 
 		document.addEventListener('keydown', e => {
-		    const ky = e.key;
-		    if (!Number(ky)) { return false; }
-		    if (e.ctrlKey) {
-			const k = ky || ((e.which > 90) ? e.which-96 : e.which-48);
-			console.log('k: ' + k);
-//			if (k < 1 || k > N || k == p.dataset.id) { console.log('Error:' + k); return false; }
+		    const k = Number(e.key || ((e.which > 90) ? e.which-96 : e.which-48));
+		    if (!k || (k < 0)) { return false; }
+		    if (e.ctrlKey) { // altKey
+			const pid = p.dataset.id; // DEBUG: only used once
+			console.log('k & pid: ' + k + '\t' + pid);
+			if (k == pid) { return false; } // k < 1 || k > N || 
 		// if ticket-bag is not empty then send info to server for broadcasting
-			IDB.readDB( TICKET ).count()
-			   .then( q => { if (q > 0) ferre.print('guardar'); } )
-			   .then(() => { p.textContent = PEOPLE.id[k]; p.dataset.id = k; } )
-			   .then( () => { if (PEOPLE.tabs.has(k)) recreate( PEOPLE.tabs.get(k).query ); } ); // XXX TICKET.add( recreate(w) )
+			if (TICKET.items.size > 0) { ferre.print('guardar').then( () => tabs(k) ); }
+			else { tabs(k); }
 		    }
 		}, false);
 
@@ -199,7 +193,13 @@ function a2obj( a ) { const M = a.length/2; let o = {}; for (let i=0; i<M; i++) 
 		    esource.addEventListener("save", function(e) {
 			const o = JSON.parse( e.data )[0];
 			o.query = o.query.substr(o.query.search('args') + 5);
-			PEOPLE.tabs.set(o.id_person, o);
+			PEOPLE.tabs.set(Number(o.id_person), o);
+			console.log('Message for: ' + PEOPLE.id[o.id_person]);
+		    }, false);
+		    esource.addEventListener("delete", function(e) [
+			const pid = Number(e.data);
+			PEOPLE.tabs.delete(id_person);
+			console.log('Remove ticket for: ' + PEOPLE.id[o.id_person]);
 		    }, false);
 		})();
 

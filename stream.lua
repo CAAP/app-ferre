@@ -18,11 +18,12 @@ local function asJSON( w )
     return string.format('data: {%s}', table.concat(ret, ', '))
 end
 
-local function sse( data, event )
-    local ret = {'event: ' .. (event or 'feed'), 'data: ['}
+local function sse( data, event, pid )
+    local ret = {'event: ' .. event, 'data: ['}
     ret[#ret+1] = data
     ret[#ret+1] = 'data: ]'
     ret[#ret+1] = '\n'
+    if pid then ret[#ret+1] = 'event: delete\ndata: '.. pid ..'\n\n' end
     return table.concat( ret, '\n')
 end
 
@@ -39,7 +40,7 @@ local function caja()
 
     function MM.caja.sse()
 	if conn.count( tbname, clause ) == 0 then return ':empty\n\n'
-	else return sse( table.concat( fd.reduce(conn.query(query), fd.map(asJSON), fd.into, {} ), ',\n') ) end
+	else return sse( table.concat( fd.reduce(conn.query(query), fd.map(asJSON), fd.into, {} ), ',\n'), 'feed' ) end
     end
 
     function MM.caja.add( w )
@@ -96,7 +97,7 @@ local function streaming()
 
     function MM.broadcast( w )
 	if #cts > 0 then
-	    local msg = sse( asJSON( w ), w.query and 'save' or 'feed' )
+	    local msg = sse( asJSON( w ), w.query and 'save' or 'feed', w.id_person )
 	    cts = fd.reduce( cts, fd.filter( function(c) return c:send(msg) or (c:close() and nil) end ), fd.into, {} )
 	end
     end

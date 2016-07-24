@@ -1,6 +1,6 @@
 	"use strict";
 
-	var TICKET = { bagID: 'ticket-compra', ttotalID: 'ticket-total', myticketID: 'ticket', tivaID: 'ticket-iva', tbrutoID: 'ticket-bruto' };
+	var TICKET = { VERSION: 1, DB: 'ticket', STORE: 'ticket-clave', KEY: 'clave', bagID: 'ticket-compra', ttotalID: 'ticket-total', myticketID: 'ticket', tivaID: 'ticket-iva', tbrutoID: 'ticket-bruto' };
 
 	(function() {
 	    const VARS = ['clave', 'precio', 'rea', 'qty', 'totalCents'];
@@ -9,21 +9,20 @@
 
 	    TICKET.TAGS = TAGS;
 
-	    TICKET.DATA = [];
-
-	    TICKET.items = new Map();
-
 	    TICKET.load = function() {
-		let items = TICKET.items;
-		if (items.size > 0) {
+		let objStore = IDB.readDB( TICKET );
+		objStore.count().then( result => {
+		    if (!(result>0)) { return; }
 		    toggleTicket();
 		    let total = 0;
-		    items.forEach( item => {
-			total += asnum(item.totalCents);
-			displayItem( item );
-		    } );
-		    TICKET.total( total );
-		}
+		    return objStore.openCursor( cursor => {
+			if (cursor) {
+			    total += asnum(cursor.value.totalCents);
+			    displayItem( cursor.value );
+		    	    cursor.continue();
+			} else { TICKET.total( total ); }
+		    });
+		});
 	    };
 
 	    function tocents(x) { return (x / 100).toFixed(2); };
@@ -32,7 +31,7 @@
 
 	    function asnum(s) { let n = Number(s); return Number.isNaN(n) ? s : n; };
 
-	    function clearTable(tb) { while (tb.firstChild) { tb.removeChild( tb.firstChild ); } }; //recycle?
+	    function clearTable(tb) { while (tb.firstChild) { tb.removeChild( tb.firstChild ); } };
 
 	    function incdec(e) {
 		switch (e.key || e.which) {
@@ -70,10 +69,14 @@
 		    myticket.style.visibility = 'hidden';
 	    }
 
-	    function bagTotal() {
+	    function bagTotal(objStore) {
 		let total = 0;
-		TICKET.items.forEach( item => { total += asnum(item.totalCents); } );
-		TICKET.total( total );
+		return objStore.openCursor( cursor => {
+		    if (cursor) {
+			total += asnum(cursor.value.totalCents);
+			cursor.continue();
+		    } else { TICKET.total( total ); } // TICKET.ttotal.textContent = tocents( total );
+		});
 	    }
 
 	    function precios(q) {
@@ -114,35 +117,37 @@
 		let clave = asnum( tr.dataset.clave );
 		let k = e.target.name;
 		let v = asnum( e.target.value );
-		let items = TICKET.items;
 
 		console.log( clave + ' - ' + k + ': ' + v);
 
-		if (items.has( clave )) {
-		    let q = items.get( clave );
-		    q[k] = v;
-		    q.totalCents = uptoCents(q); // partial total
-		    items.set( clave, q );
-		    lbl.textContent = tocents(q.totalCents);
-		    bagTotal();
-		}
+		let objStore = IDB.write2DB( TICKET )
+		return objStore.get( clave ).then( q => {
+			q[k] = v;
+			q.totalCents = uptoCents(q); // partial total
+			return q;
+		    }, e => console.log("Error searching item in ticket: " + e) )
+		.then( objStore.put )
+		.then( q => { lbl.textContent = tocents(q.totalCents); return q; }, e => console.log("Error updating item in ticket: " + e) )
+		.then( () => bagTotal(objStore) );
 	    };
 
 	    TICKET.add = function(w) {
 		(TICKET.myticket.classList.contains('visible') || toggleTicket());
-		TICKET.items.set( w.clave, w );
-		displayItem( w );
-		bagTotal();
+		return IDB.write2DB( TICKET ).put( w )
+			.then( displayItem )
+			.then( () => bagTotal(IDB.readDB( TICKET )) );
 	    };
 
 	    TICKET.remove = function(tr) {
 		let clave = asnum( tr.dataset.clave );
-		TICKET.items.delete( clave );
-		TICKET.bag.removeChild( tr );
-		if (!TICKET.bag.hasChildNodes()) { toggleTicket(); } else { bagTotal(); }
+		let objStore = IDB.write2DB( TICKET )
+		return objStore.delete( clave ).then( () => {
+		    TICKET.bag.removeChild( tr );
+		    if (!TICKET.bag.hasChildNodes()) { toggleTicket(); } else { bagTotal(objStore); }
+		});
 	    };
 
-	    TICKET.empty = function(e) { TICKET.items = new Map(); clearTable( TICKET.bag ); toggleTicket(); };
+	    TICKET.empty = function(e) { return IDB.write2DB( TICKET ).clear().then( () => { clearTable( TICKET.bag ); toggleTicket(); }); };
 
 	    })();
 
