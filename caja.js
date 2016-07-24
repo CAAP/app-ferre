@@ -3,12 +3,11 @@
 
 	var caja = {
 	    DATA: { VERSION: 1, DB: 'datos', STORE: 'datos-clave', KEY: 'clave', INDEX: 'desc', FILE: 'ferre.json' },
-	    PEOPLE: {}
 	};
 
 	window.onload = function addFuns() {
 	    const DATA = caja.DATA;
-	    const DBs = [ DATA, TICKET ];
+	    const DBs = [ DATA ];
 
 	    // SQL
 
@@ -83,6 +82,7 @@
 			paga.close();
 		};
 
+//		PAGADO can be added to ticket, it's a map
 		caja.pagar = function() {
 		    mytotal.value = ttotal.textContent;
 		    paga.showModal();
@@ -100,14 +100,6 @@
 		document.getElementById('dialogo-persona').showModal();
 	    };
 
-	    // PEOPLE
-	    (function() {
-		PEOPLE.id = [];
-		XHR.getJSON( '/ferre/empleados.lua' ).then( a => {
-		    a.forEach( o => { PEOPLE.id[o.id] = o.nombre; } );
-		});
-	    })();
-	
 	    function now(fmt) { return new Date().toLocaleDateString('es-MX', fmt); };
 
 	    // LOAD DBs
@@ -149,7 +141,7 @@
 		    ie.addEventListener('change', e => { if (e.target.checked) add2bag(e.target.value, e.target.name); else removeItem(e.target.value); } );
 		    row.insertCell().appendChild(ie);
 
-		    w.nombre = PEOPLE.id[asnum(w.uid.substring(20))] || 'NaN';
+		    w.nombre = PEOPLE.id[asnum(w.uid.substring(20))] || 'NaP';
 		    w.time = w.uid.substr(11, 8);
 		    w.tag = TICKET.TAGS.ID[w.id_tag];
 		    for (let k of ['time', 'nombre', 'count', 'tag']) { row.insertCell().appendChild( document.createTextNode(w[k]) ); }

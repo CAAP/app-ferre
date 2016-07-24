@@ -63,7 +63,7 @@
 		if (e.target.value.length == 0) { console.log('Empty search: nothing to be done.'); }
 		BROWSE.tab.style.visibility='visible';
 		clearTable( BROWSE.lis );
-	// IF string.contains('*') : searchSQL
+	// IF string.contains('*') : searchSQL === SQL.get( {desc: e.target.value.toUpperCase()} )
 		searchByClave(e.target.value.toUpperCase());
 		e.target.value = ""; // clean input field
 	    };
