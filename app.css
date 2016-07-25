@@ -1,10 +1,6 @@
-td {
-    font: 100% arial;
-}
+td { font: 100% arial; }
 
-table {
-    border-spacing: 6px 6px;
-}
+table { border-spacing: 6px 6px; }
 
 iframe {
     position: relative;
@@ -16,6 +12,7 @@ iframe {
     font: bold 100% arial;
     color: white;
     background-color: black;
+    padding: 3px;
 }
 
 .total {
@@ -23,13 +20,11 @@ iframe {
     text-align: right;
 }
 
-.desc th {
-    width: 400px;
-}
+.desc th { width: 400px; }
 
-.pesos {
-    text-align: right;
-}
+.desc.faltante { text-decoration: line-through; }
+
+.pesos { text-align: right; }
 
 .scrollable {
     max-height: 500px;
@@ -46,31 +41,22 @@ iframe {
     border-top: 2px solid black;
 }
 
-.amarillo tr:hover {
-    background-color: #ffff99;
-}
+.amarillo tr:hover { background-color: #ffff99; }
 
-.encontrado {
-    background-color: #aaeedd;
-}
+.encontrado { background-color: #aaeedd; }
 
-.basura {
-    cursor: url(bin-icon.png), default;
-}
+.basura { cursor: url(bin-icon.png), default; }
 
-#resultados td {
-    cursor: copy;
-}
+#resultados td { cursor: copy; }
 
-#keys-resultados {
-    visibility: hidden;
-}
+#keys-resultados { visibility: hidden; }
 
 #main {
     -webkit-display: flex;
     display: flex;
     -webkit-flex-flow: row;
     flex-flow: row;
+    padding: 5px;
 }
 
 #main.ticket {
@@ -83,12 +69,5 @@ iframe {
     margin: 4px;
     padding: 5px;
     order: 1;
-}
-
-
-.dropdown {
-    position: relative;
-    display: inline-block;
-    left: 10%;
 }
 

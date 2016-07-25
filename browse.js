@@ -16,6 +16,7 @@
 
 	    function newItem(a, j) {
 		let row = BROWSE.lis.insertRow(j);
+		row.title = a.desc.substr(0,3); // TRYING OUT 
 		if (a.desc.startsWith(sstr)) { row.classList.add('encontrado'); };
 		row.dataset.clave = a.clave;
 		row.insertCell().appendChild( document.createTextNode( a.fecha ) );
@@ -59,12 +60,15 @@
 		searchIndex(t, s, 1).then( () => ans.removeChild((t == 'prev') ? ans.lastChild : ans.firstChild ));
 	    }
 
+// XXX NEEDS work to take care of results not found!
  	    BROWSE.startSearch = function startSearch(e) {
-		if (e.target.value.length == 0) { console.log('Empty search: nothing to be done.'); }
+		const ss = e.target.value.toUpperCase();
+		if (ss.length == 0) { console.log('Empty search: nothing to be done.'); }
 		BROWSE.tab.style.visibility='visible';
 		clearTable( BROWSE.lis );
-	// IF string.contains('*') : searchSQL === SQL.get( {desc: e.target.value.toUpperCase()} )
-		searchByClave(e.target.value.toUpperCase());
+	// IF string.contains('*') : searchSQL
+		if (ss.includes('*')) { XHR.getJSON('/ferre/query.lua?desc='+encodeURI(ss)).then( a => {if (a[0]) { searchByDesc(a[0].desc); } else { BROWSE.tab.style.visibility='hidden'; } } ); }
+		else { searchByClave(ss); }
 		e.target.value = ""; // clean input field
 	    };
 

@@ -196,10 +196,10 @@
 			PEOPLE.tabs.set(Number(o.id_person), o);
 			console.log('Message for: ' + PEOPLE.id[o.id_person]);
 		    }, false);
-		    esource.addEventListener("delete", function(e) [
+		    esource.addEventListener("delete", function(e) {
 			const pid = Number(e.data);
-			PEOPLE.tabs.delete(id_person);
-			console.log('Remove ticket for: ' + PEOPLE.id[o.id_person]);
+			PEOPLE.tabs.delete(pid);
+			console.log('Remove ticket for: ' + PEOPLE.id[pid]);
 		    }, false);
 		})();
 

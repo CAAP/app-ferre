@@ -23,7 +23,7 @@ local function sse( data, event, pid )
     ret[#ret+1] = data
     ret[#ret+1] = 'data: ]'
     ret[#ret+1] = '\n'
-    if pid then ret[#ret+1] = 'event: delete\ndata: '.. pid ..'\n\n' end
+    if pid and (pid ~= '0') then ret[#ret+1] = 'event: delete\ndata: '.. pid ..'\n\n' end
     return table.concat( ret, '\n')
 end
 
@@ -76,6 +76,11 @@ local function tickets()
     end
 end
 
+
+local function admin()
+    local dbname = '/db/ferre.sql'
+end
+
 local function streaming()
     local srv = assert( socket.bind('*', 8080) )
     srv:settimeout(1)
@@ -97,7 +102,7 @@ local function streaming()
 
     function MM.broadcast( w )
 	if #cts > 0 then
-	    local msg = sse( asJSON( w ), w.query and 'save' or 'feed', w.id_person )
+	    local msg = sse( asJSON( w ), w.query and 'save' or 'feed', w.query and '0' or w.id_person )
 	    cts = fd.reduce( cts, fd.filter( function(c) return c:send(msg) or (c:close() and nil) end ), fd.into, {} )
 	end
     end

@@ -94,6 +94,7 @@
 
 	    function displayItem(q) {
 		let row = TICKET.bag.insertRow();
+		row.title = q.desc.substr(0,3); // TRYING OUT
 		row.dataset.clave = q.clave;
 		let qty = row.insertCell().appendChild( inputE( [['type', 'text'], ['size', 2], ['name', 'qty'], ['value', q.qty]] ) );
 		let desc = row.insertCell();
