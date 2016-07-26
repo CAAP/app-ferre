@@ -70,12 +70,10 @@
 		if (ss.includes('*')) {
 		    XHR.getJSON('/ferre/query.lua?desc='+encodeURI(ss))
 			.then( a => {
-			    if (a[0]) {
-				return searchByDesc(a[0].desc.match(ss.replace('*','.+'))[0]).then( () => {BROWSE.tab.style.visibility='visible';} );
-			    }
+			    if (a[0])
+				searchByDesc(a[0].desc.match(ss.replace('*','.+'))[0]).then( () => {BROWSE.tab.style.visibility='visible';} );
 			} );
-		}
-		searchByClave(ss).then( () => {BROWSE.tab.style.visibility='visible';} );
+		} else { searchByClave(ss).then( () => {BROWSE.tab.style.visibility='visible';} ); }
 	    };
 
 	    BROWSE.keyPressed = function keyPressed(e) {
