@@ -60,23 +60,22 @@
 		searchIndex(t, s, 1).then( () => ans.removeChild((t == 'prev') ? ans.lastChild : ans.firstChild ));
 	    }
 
-//XXX THINK order of events TWUICE
-
  	    BROWSE.startSearch = function startSearch(e) {
 		const ss = e.target.value.toUpperCase();
 		if (ss.length == 0) { console.log('Empty search: nothing to be done.'); }
-		BROWSE.tab.style.visibility='visible';
+		BROWSE.tab.style.visibility='hidden';
 		clearTable( BROWSE.lis );
+		e.target.value = "";
 	// IF string.contains('*') : searchSQL
 		if (ss.includes('*')) {
 		    XHR.getJSON('/ferre/query.lua?desc='+encodeURI(ss))
 			.then( a => {
 			    if (a[0]) {
-				const k = a[0].desc.search(/\*[^\*]+$/); //XXX
-				searchByDesc(a[0].desc.substr(0, k)).then( () => {e.target.value = "";} );
-			    } else { BROWSE.tab.style.visibility='hidden'; e.target.value = ""; }
+				return searchByDesc(a[0].desc.match(ss.replace('*','.+'))[0]).then( () => {BROWSE.tab.style.visibility='visible';} );
+			    }
 			} );
-		} else { searchByClave(ss).then( () => {e.target.value = "";} ); }
+		}
+		searchByClave(ss).then( () => {BROWSE.tab.style.visibility='visible';} );
 	    };
 
 	    BROWSE.keyPressed = function keyPressed(e) {
