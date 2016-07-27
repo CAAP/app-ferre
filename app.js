@@ -113,7 +113,7 @@
 	    ferre.print = function(a, arg1) {
 		const id_tag = TICKET.TAGS[a] || TICKET.TAGS.none;
 		let rfc = ''; if (a == 'facturar') { rfc = arg1; };
-		const pid = document.getElementById('persona').dataset.id;
+		const pid = document.getElementById('personas').dataset.id;
 		let objs = ['id_tag='+id_tag, 'id_person='+pid, 'rfc='+rfc, 'count='+TICKET.items.size ];
 
 		function plain(obj) {
@@ -137,54 +137,42 @@
 	    SQL.DB = document.location.origin + ':8081';
 
 	    // PEOPLE
+
 	    (function() {
-		const p = document.getElementById('persona');
-		const N = PEOPLE.id.length;
+		const p = document.getElementById('personas');
 
 		function asnum(s) { let n = Number(s); return Number.isNaN(n) ? s : n; };
 		function data( o ) { return IDB.readDB( DATA ).get( asnum(o.clave) ).then( w => Object.assign( o, w ) ).then( TICKET.add ); }
 		function a2obj( a ) { const M = a.length/2; let o = {}; for (let i=0; i<M; i++) { o[a[i*2]] = a[i*2+1]; } return o; }
 		function recreate(q) { return q.split('&args=').reduce( (p, s) => p.then( () => data(a2obj(s.split('+'))) ), Promise.resolve() ); }
-		function tabs(k) {
-		    if (PEOPLE.tabs.has(k)) { recreate(PEOPLE.tabs.get(k).query); }
-		    p.textContent = PEOPLE.id[k]; p.dataset.id = k;
-		}
+		function tabs(k) { p.dataset.id = k; if (PEOPLE.tabs.has(k)) { recreate(PEOPLE.tabs.get(k).query); } }
 
-		document.addEventListener('keydown', e => {
-		    const k = Number(e.key || ((e.which > 90) ? e.which-96 : e.which-48));
-		    if (!k || (k < 0)) { return false; }
-		    if (e.ctrlKey) { // altKey
-			const pid = p.dataset.id; // DEBUG: only used once
-			console.log('k & pid: ' + k + '\t' + pid);
-			if (k == pid) { return false; } // k < 1 || k > N || 
-		// if ticket-bag is not empty then send info to server for broadcasting
-			if (TICKET.items.size > 0) { ferre.print('guardar').then( () => tabs(k) ); }
-			else { tabs(k); }
-		    }
-		}, false);
-
-		PEOPLE.tabs = new Map();
+		ferre.tab = e => {
+		    if (e.target.classList.contains('activo')) { return false; }
+		    e.target.parentElement.querySelector('.activo').classList.toggle('activo');
+		    e.target.classList.toggle('activo');
+		    const pid = Number(PEOPLE.nombre(e.target.textContent));
+	// if ticket-bag is not empty then send info to server for broadcasting
+		    if (TICKET.items.size > 0) { ferre.print('guardar').then( () => tabs(pid) ); }
+		    else { tabs(pid); }
+		};
 	    })();
 
 	    // LOAD DBs
  	    if (IDB.indexedDB) { DBs.forEach( IDB.loadDB ); } else { alert("IDBIndexed not available."); }
 
+	    PEOPLE.load( document.getElementById('personas') );
+
 	    // SET HEADER
 	    (function() {
 	        const note = document.getElementById('notifications');
-		const p = document.getElementById('persona');
 		let FORMAT = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
 		function now(fmt) { return new Date().toLocaleDateString('es-MX', fmt) }
 		note.appendChild( document.createTextNode( now(FORMAT) ) );
-
-		p.appendChild( document.createTextNode('Alberto') );
-		p.dataset.id = 1;
 	    })();
 
 	    // SET FOOTER
 	    (function() { document.getElementById('copyright').innerHTML = 'versi&oacute;n ' + 2.0 + ' | cArLoS&trade; &copy;&reg;' })();
-
-// STILL needs to remove tabs
 
 	// SERVER-SIDE EVENT SOURCE
 		(function() {

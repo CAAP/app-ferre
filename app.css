@@ -8,11 +8,16 @@ iframe {
     bottom: 0;
 }
 
-#persona {
+.activo {
     font: bold 100% arial;
     color: white;
     background-color: black;
     padding: 3px;
+}
+
+.azul {
+    background-color: 'azul';
+    cursor: default ;
 }
 
 .total {
