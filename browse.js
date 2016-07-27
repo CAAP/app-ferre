@@ -15,13 +15,12 @@
 	    function clearTable(tb) { while (tb.firstChild) { tb.removeChild( tb.firstChild ); } };
 
 	    function draggin(ev) {
-		ev.dataTransfer.setData('text/plain', ev.target.dataset.clave);
-		console.log('Dragging started');
+		console.log('Dragging: '+ ev.target.dataset.clave);
 	    }
 
 	    function droppin(ev) {
-		let clave = ev.dataTransfer.getData('text');
-		console.log('Clave: ' + clave);
+		const clave = ev.target.dataset.clave;
+		window.confirm('Agregar a FALTANTES clave: ' + clave);
 	    }
 
 	    function newItem(a, j) {
