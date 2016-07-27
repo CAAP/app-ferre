@@ -20,7 +20,8 @@
 
 	    function droppin(ev) {
 		const clave = ev.target.dataset.clave;
-		window.confirm('Agregar a FALTANTES clave: ' + clave);
+		const fal = window.confirm('Agregar a FALTANTES clave: ' + clave);
+		ev.target.classList.toggle('faltante');
 	    }
 
 	    function newItem(a, j) {

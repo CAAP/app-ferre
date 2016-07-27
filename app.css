@@ -15,11 +15,6 @@ iframe {
     padding: 3px;
 }
 
-#personas td:hover {
-    background-color: azul;
-    cursor: default;
-}
-
 .total {
     font: bold italic 100% arial;
     text-align: right;
