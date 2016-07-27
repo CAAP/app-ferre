@@ -15,9 +15,9 @@ iframe {
     padding: 3px;
 }
 
-.azul td::hover {
-    background-color: 'azul';
-    cursor: default ;
+#personas td:hover {
+    background-color: azul;
+    cursor: default;
 }
 
 .total {

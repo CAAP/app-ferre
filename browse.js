@@ -14,9 +14,16 @@
 
 	    function clearTable(tb) { while (tb.firstChild) { tb.removeChild( tb.firstChild ); } };
 
+	    function draggin(ev) {
+		ev.dataTransfer.setDragImage(new Image('bin-icon.png'), 15, 15);
+		ev.dataTransfer.setData('text/plain', ev.target.dataset.clave);
+	    }
+
 	    function newItem(a, j) {
 		let row = BROWSE.lis.insertRow(j);
-		row.title = a.desc.substr(0,3); // TRYING OUT 
+		row.title = a.desc.substr(0,3); // TRYING OUT LOCATION XXX
+		row.draggable = true; // TRYING OUT DRAG XXX
+		row.addEventListener('dragstart', draggin, false);
 		if (a.desc.startsWith(sstr)) { row.classList.add('encontrado'); };
 		row.dataset.clave = a.clave;
 		row.insertCell().appendChild( document.createTextNode( a.fecha ) );
