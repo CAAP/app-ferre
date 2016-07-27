@@ -22,7 +22,7 @@ iframe {
 
 .desc th { width: 400px; }
 
-.desc.faltante { text-decoration: line-through; }
+.faltante { text-decoration: line-through; }
 
 .pesos { text-align: right; }
 
@@ -46,6 +46,11 @@ iframe {
 .encontrado { background-color: #aaeedd; }
 
 .basura { cursor: url(bin-icon.png), default; }
+
+#personas td:hover {
+    cursor:default;
+    font: bold italic 100% arial;
+}
 
 #resultados td { cursor: copy; }
 

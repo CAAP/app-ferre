@@ -23,7 +23,7 @@
 		const desc = ev.target.querySelector('.desc');
 		if (desc.classList.contains('faltante')) { return false; }
 		const fal = window.confirm('Agregar: ' + desc.textContent + '['+ clave + ']');
-		if (fal) desc.classList.toggle('faltante');
+		if (fal) desc.classList.add('faltante');
 	    }
 
 	    function newItem(a, j) {
@@ -37,6 +37,7 @@
 		row.insertCell().appendChild( document.createTextNode( a.fecha ) );
 		row.insertCell().appendChild( document.createTextNode( a.clave ) );
 		let desc = row.insertCell(); // class 'desc' necessary for scrolling
+		if (a.faltante) { desc.classList.add('faltante'); }
 		desc.classList.add('desc'); desc.appendChild( document.createTextNode( a.desc ) );
 		row.insertCell().appendChild( document.createTextNode( a.precio1.toFixed(2) ) );
 		row.insertCell().appendChild( document.createTextNode( a.u1 ) );

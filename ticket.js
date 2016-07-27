@@ -98,6 +98,7 @@
 		row.dataset.clave = q.clave;
 		let qty = row.insertCell().appendChild( inputE( [['type', 'text'], ['size', 2], ['name', 'qty'], ['value', q.qty]] ) );
 		let desc = row.insertCell();
+		if (q.faltante) { desc.classList.add('faltante'); }
 		desc.classList.add('basura'); desc.appendChild( document.createTextNode( q.desc ) );
 		let pcs = row.insertCell();
 		pcs.classList.add('pesos'); pcs.appendChild( precios(q) );

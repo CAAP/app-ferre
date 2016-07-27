@@ -95,6 +95,7 @@
 	    (function() {
 		function asnum(s) { let n = Number(s); return Number.isNaN(n) ? s : n; };
 		function uptoCents(q) { return Math.round( 100 * q[q.precio] * q.qty * (1-q.rea/100) ); };
+
 		ferre.add2bag = function( e ) {
 		    let clave = asnum(e.target.parentElement.dataset.clave);
 		    if (TICKET.items.has( clave )) { console.log('Item is already in the bag.'); return false; }
