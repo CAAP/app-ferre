@@ -151,7 +151,7 @@
 		    if (e.target.classList.contains('activo')) { return false; }
 		    e.target.parentElement.querySelector('.activo').classList.toggle('activo');
 		    e.target.classList.toggle('activo');
-		    const pid = Number(PEOPLE.nombre(e.target.textContent));
+		    const pid = Number(PEOPLE.nombre[e.target.textContent]);
 	// if ticket-bag is not empty then send info to server for broadcasting
 		    if (TICKET.items.size > 0) { ferre.print('guardar').then( () => tabs(pid) ); }
 		    else { tabs(pid); }

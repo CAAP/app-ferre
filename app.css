@@ -15,7 +15,7 @@ iframe {
     padding: 3px;
 }
 
-.azul {
+.azul td::hover {
     background-color: 'azul';
     cursor: default ;
 }
