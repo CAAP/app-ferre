@@ -20,8 +20,10 @@
 
 	    function droppin(ev) {
 		const clave = ev.target.dataset.clave;
-		const fal = window.confirm('Agregar a FALTANTES clave: ' + clave);
-		ev.target.classList.toggle('faltante');
+		const desc = ev.target.querySelector('.desc');
+		if (desc.classList.contains('faltante')) { return false; }
+		const fal = window.confirm('Agregar: ' + desc.textContent + '['+ clave + ']');
+		if (fal) desc.classList.toggle('faltante');
 	    }
 
 	    function newItem(a, j) {
