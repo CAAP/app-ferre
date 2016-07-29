@@ -46,7 +46,8 @@
 	    function browsing(j, M) {
 		let k = 0;
 		return function(cursor) {
-		    if (k == M || !cursor) { return true; }
+		    if (!cursor) { return Promise.reject('Not suitable value found!'); }
+		    if (k == M) { return true; }
 		    newItem(cursor.value, j);
 		    k++; cursor.continue();
 		};
@@ -73,7 +74,7 @@
 	    function retrieve(t) {
 		let ans = BROWSE.lis;
 		let s = ans[(t == 'prev') ? 'firstChild' : 'lastChild'].querySelector('.desc').textContent;
-		searchIndex(t, s, 1).then( () => ans.removeChild((t == 'prev') ? ans.lastChild : ans.firstChild ));
+		searchIndex(t, s, 1).then( () => ans.removeChild((t == 'prev') ? ans.lastChild : ans.firstChild ), e => console.log('Error: ' + e));
 	    }
 
  	    BROWSE.startSearch = function startSearch(e) {

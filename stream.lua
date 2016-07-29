@@ -76,11 +76,6 @@ local function tickets()
     end
 end
 
-
-local function admin()
-    local dbname = '/db/ferre.sql'
-end
-
 local function streaming()
     local srv = assert( socket.bind('*', 8080) )
     srv:settimeout(1)
