@@ -22,7 +22,7 @@ iframe {
 
 .desc th { width: 400px; }
 
-.faltante { text-decoration: line-through; }
+.faltante { color: red; text-decoration: line-through; }
 
 .pesos { text-align: right; }
 
