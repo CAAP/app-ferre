@@ -2,7 +2,7 @@
 
 <html>
 <head>
-    <meta charset="ISO-8859-1">
+    <meta charset="UTF-8">
     <title> VENTAS </title>
     <link rel="stylesheet" href="app.css">
     <script type="text/javascript" src="xhr.js"></script>
@@ -31,6 +31,7 @@
             </thead>
 	    </dt>
 	    <tbody id="tabla-resultados" class="amarillo" onclick="ferre.add2bag(event)" onwheel="ferre.scroll(event)"></tbody>
+	    <tfoot><tr><th colspan=5><button onclick="ferre.scroll({deltaY:0})">&larr;</button> <label> | </label> <button onclick="ferre.scroll({deltaY:1})">&rarr;</button></th></tr></tfoot>
 	</table>
     </section>
 

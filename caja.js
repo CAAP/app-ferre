@@ -103,7 +103,11 @@
 
 	    // LOAD DBs
  	    if (IDB.indexedDB) { DBs.forEach( IDB.loadDB ); } else { alert("IDBIndexed not available."); }
-	    
+
+	    PEOPLE.load();
+
+	    // HEADER
+
 	    (function() {
 	        const note = document.getElementById('notifications');
 		const FORMAT = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };

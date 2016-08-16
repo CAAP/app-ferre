@@ -96,6 +96,7 @@
 		function asnum(s) { let n = Number(s); return Number.isNaN(n) ? s : n; };
 		function uptoCents(q) { return Math.round( 100 * q[q.precio] * q.qty * (1-q.rea/100) ); };
 
+		// Add: faltante XXX
 		ferre.add2bag = function( e ) {
 		    let clave = asnum(e.target.parentElement.dataset.clave);
 		    if (TICKET.items.has( clave )) { console.log('Item is already in the bag.'); return false; }
@@ -137,16 +138,16 @@
 
 	    SQL.DB = document.location.origin + ':8081';
 
-	    // PEOPLE
+	    // PEOPLE - Multi-User support
 
 	    (function() {
-		const p = document.getElementById('personas');
+		const tbp = document.getElementById('personas');
 
 		function asnum(s) { let n = Number(s); return Number.isNaN(n) ? s : n; };
 		function data( o ) { return IDB.readDB( DATA ).get( asnum(o.clave) ).then( w => Object.assign( o, w ) ).then( TICKET.add ); }
 		function a2obj( a ) { const M = a.length/2; let o = {}; for (let i=0; i<M; i++) { o[a[i*2]] = a[i*2+1]; } return o; }
 		function recreate(q) { return q.split('&args=').reduce( (p, s) => p.then( () => data(a2obj(s.split('+'))) ), Promise.resolve() ); }
-		function tabs(k) { p.dataset.id = k; if (PEOPLE.tabs.has(k)) { recreate(PEOPLE.tabs.get(k).query); } }
+		function tabs(k) { tbp.dataset.id = k; if (PEOPLE.tabs.has(k)) { recreate(PEOPLE.tabs.get(k).query); } }
 
 		ferre.tab = e => {
 		    if (e.target.classList.contains('activo')) { return false; }
@@ -157,14 +158,16 @@
 		    if (TICKET.items.size > 0) { ferre.print('guardar').then( () => tabs(pid) ); }
 		    else { tabs(pid); }
 		};
+
+		let row = tbp.insertRow();
+		PEOPLE.load().then( a => a.forEach( p => row.insertCell().appendChild( document.createTextNode( p.nombre ) ) ) ).then(() => { row.firstChild.classList.toggle('activo'); tbp.dataset.id=1; } );
+
 	    })();
 
 	    // LOAD DBs
  	    if (IDB.indexedDB) { DBs.forEach( IDB.loadDB ); } else { alert("IDBIndexed not available."); }
 
-	    PEOPLE.load( document.getElementById('personas') );
-
-	    // SET HEADER
+	    // HEADER
 	    (function() {
 	        const note = document.getElementById('notifications');
 		let FORMAT = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };

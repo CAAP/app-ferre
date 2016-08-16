@@ -18,6 +18,7 @@ local function asJSON( w )
     return string.format('data: {%s}', table.concat(ret, ', '))
 end
 
+-- maybe delete event should be added afterwards when needed
 local function sse( data, event, pid )
     local ret = {'event: ' .. event, 'data: ['}
     ret[#ret+1] = data
@@ -76,6 +77,12 @@ local function tickets()
     end
 end
 
+local function cashier()
+end
+
+local function timbres()
+end
+
 local function streaming()
     local srv = assert( socket.bind('*', 8080) )
     srv:settimeout(1)
@@ -95,6 +102,7 @@ local function streaming()
 	end
     end
 
+    -- a possible change in sse() might make necessary to add delete_sse() as an extra step
     function MM.broadcast( w )
 	if #cts > 0 then
 	    local msg = sse( asJSON( w ), w.query and 'save' or 'feed', w.query and '0' or w.id_person )
@@ -108,6 +116,7 @@ local function recording()
     srv:settimeout(1)
     print'Listening on port 8081\n'
 
+    -- maybe necessary to add id_tag: 'd' when delete events are broadcasted
     local function add( q )
 	local w =  hd.parse( q )
 	if not w.args then return {msg='Empty Query'} end
