@@ -5,6 +5,7 @@ local socket = require"socket"
 local fd = require'carlos.fold'
 local hd = require'ferre.header'
 local sql = require'carlos.sqlite'
+local bxl
 
 local tbname = os.date'W%U'
 
@@ -18,7 +19,7 @@ local function asJSON( w )
     return string.format('data: {%s}', table.concat(ret, ', '))
 end
 
--- maybe delete event should be added afterwards when needed
+-- maybe delete event should be added if needed
 local function sse( data, event, pid )
     local ret = {'event: ' .. event, 'data: ['}
     ret[#ret+1] = data
@@ -83,6 +84,10 @@ end
 local function timbres()
 end
 
+local function bixolon()
+
+end
+
 local function streaming()
     local srv = assert( socket.bind('*', 8080) )
     srv:settimeout(1)
@@ -104,6 +109,7 @@ local function streaming()
 
     -- a possible change in sse() might make necessary to add delete_sse() as an extra step
     function MM.broadcast( w )
+	w.args = nil -- sanitize w
 	if #cts > 0 then
 	    local msg = sse( asJSON( w ), w.query and 'save' or 'feed', w.query and '0' or w.id_person )
 	    cts = fd.reduce( cts, fd.filter( function(c) return c:send(msg) or (c:close() and nil) end ), fd.into, {} )
@@ -122,8 +128,9 @@ local function recording()
 	if not w.args then return {msg='Empty Query'} end
 	if w.id_tag == 'g' then w.query = q
 	else MM.tickets.add( MM.caja.add( w ) ) end
-	w.args = nil
 	w.msg = 'OK'
+--	w.msg = (w.id_tag == 'aZ') and 'None' or 'OK' -- do not broadcast if tag == aZ
+--	w.args =  nil
 	return w
     end
 
@@ -139,6 +146,7 @@ local function recording()
 		repeat head = c:receive() until head:match'^Origin:'
 		ip = head:match'^Origin: (%g+)'
 		c:send( hd.response({ip=ip, body=w.msg}).asstr() )
+		if w.id_tag == 'aZ' then w.msg = 'None'; bxl.lp(w) end
 		if w.msg == 'OK' then MM.broadcast( w ) end
 	    end
 	    c:close()

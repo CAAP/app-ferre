@@ -2,11 +2,12 @@ td { font: 100% arial; }
 
 table { border-spacing: 6px 6px; }
 
-iframe {
-    position: relative;
-    right: 0;
-    bottom: 0;
+input[type=number] {
+    text-align: right;
+    width: 50px;
 }
+
+dialog { font: 100% arial; }
 
 .activo {
     font: bold 100% arial;
@@ -76,3 +77,20 @@ iframe {
     order: 1;
 }
 
+header, footer {
+    display: block;
+    margin: 4px;
+    padding: 5px;
+    background: #ccffcc;
+}
+
+@media screen and (max-width: 900px) {
+    #main, #page {
+	-webkit-flex-direction: column;
+	flex-direction: column;
+    }
+
+    #main.ticket, #main.buscar {
+	order 0;
+    }
+}

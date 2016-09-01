@@ -4,8 +4,8 @@
 
 	(function() {
 	    const VARS = ['clave', 'precio', 'rea', 'qty', 'totalCents'];
-	    const TAGS = {none: 'x', presupuesto: 'a', imprimir: 'b', facturar: 'c', guardar: 'g', impreso: 'I', pagado: 'P', facturado: 'F'};
-	    TAGS.ID = {x: 'none', a: 'presupuesto', b: 'imprimir', c: 'facturar', g: 'guardar'};
+	    const TAGS = {none: 'x', presupuesto: 'aZ', imprimir: 'b', facturar: 'c', guardar: 'g', impreso: 'I', pagado: 'P', facturado: 'F'};
+	    TAGS.ID = {x: 'none', aZ: 'presupuesto', b: 'imprimir', c: 'facturar', g: 'guardar'};
 
 	    TICKET.TAGS = TAGS;
 
@@ -77,7 +77,7 @@
 	    }
 
 	    function precios(q) {
-		if ((q.precio2 == 0) && (q.precio3 == 0)) { return document.createTextNode( q.precio1.toFixed(2) ); }
+		if ((q.precio2 == 0) && (q.precio3 == 0)) { return document.createTextNode( q.precio1.toFixed(2) + ' / ' + q.u1 ); }
 		let ret = document.createElement('select');
 		ret.name = 'precio';
 		for(let i=1;i<4;i++) {
@@ -96,13 +96,13 @@
 		let row = TICKET.bag.insertRow();
 		row.title = q.desc.substr(0,3); // TRYING OUT LOCATION XXX
 		row.dataset.clave = q.clave;
-		let qty = row.insertCell().appendChild( inputE( [['type', 'text'], ['size', 2], ['name', 'qty'], ['value', q.qty]] ) );
+		row.insertCell().appendChild( inputE( [['type', 'number'], ['size', 2], ['name', 'qty'], ['value', q.qty]] ) ).focus();
 		let desc = row.insertCell();
 		if (q.faltante) { desc.classList.add('faltante'); }
 		desc.classList.add('basura'); desc.appendChild( document.createTextNode( q.desc ) );
 		let pcs = row.insertCell();
 		pcs.classList.add('pesos'); pcs.appendChild( precios(q) );
-		let rea = inputE( [['type', 'text'], ['size', 2], ['name', 'rea'], ['value', q.rea]] );
+		let rea = inputE( [['type', 'number'], ['size', 2], ['name', 'rea'], ['value', q.rea]] );
 		let td = row.insertCell(); td.appendChild(rea); td.appendChild( document.createTextNode('%'));
 		let total = row.insertCell();
 		total.classList.add('pesos'); total.classList.add('total'); total.appendChild( document.createTextNode( tocents(q.totalCents) ) );

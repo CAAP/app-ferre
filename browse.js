@@ -10,37 +10,34 @@
 	    const IDBKeyRange =  window.IDBKeyRange || window.webkitIDBKeyRange || window.msIDBKeyRange;
 	    const N = 11;
 
-	    function asnum(s) { let n = Number(s); return Number.isNaN(n) ? s : n; };
+	    function asnum(s) { let n = Number(s); return Number.isNaN(n) ? s : n; }
 
-	    function clearTable(tb) { while (tb.firstChild) { tb.removeChild( tb.firstChild ); } };
+	    function clearTable(tb) { while (tb.firstChild) { tb.removeChild( tb.firstChild ); } }
 
-	    function draggin(ev) {
-		console.log('Dragging: '+ ev.target.dataset.clave);
-	    }
 
-	    function droppin(ev) {
-		const clave = ev.target.dataset.clave;
-		const desc = ev.target.querySelector('.desc');
-		if (desc.classList.contains('faltante')) { return false; }
-		const fal = window.confirm('Agregar: ' + desc.textContent + '['+ clave + ']');
-		if (fal) desc.classList.add('faltante');
+// MOVE OUT like in SCROLL from MOUSE
+
+	    function addTouch(row) {
+		let touches = new Map();
+		row.addEventListener('touchstart', e => touches.add(e.identifier, e.clientY), false);
+		row.addEventListener('touchmove', e => {let delta = e.clientY - touches.get(e.identifier); touches.set(e.identifier, e.clientY);}, false);
 	    }
 
 	    function newItem(a, j) {
 		let row = BROWSE.lis.insertRow(j);
 		row.title = a.desc.substr(0,3); // TRYING OUT LOCATION XXX
-		row.draggable = true; // TRYING OUT DRAG XXX
-		row.addEventListener('dragstart', draggin, false);
-		row.addEventListener('dragend', droppin, false);
 		if (a.desc.startsWith(sstr)) { row.classList.add('encontrado'); };
 		row.dataset.clave = a.clave;
+		// insert rows
 		row.insertCell().appendChild( document.createTextNode( a.fecha ) );
-		row.insertCell().appendChild( document.createTextNode( a.clave ) );
+		let clave = row.insertCell();
+		clave.classList.add('pesos'); clave.appendChild( document.createTextNode( a.clave ) );
 		let desc = row.insertCell(); // class 'desc' necessary for scrolling
 		if (a.faltante) { desc.classList.add('faltante'); }
 		desc.classList.add('desc'); desc.appendChild( document.createTextNode( a.desc ) );
-		row.insertCell().appendChild( document.createTextNode( a.precio1.toFixed(2) ) );
-		row.insertCell().appendChild( document.createTextNode( a.u1 ) );
+		let pesos = row.insertCell();
+		pesos.classList.add('pesos'); pesos.appendChild( document.createTextNode( a.precio1.toFixed(2) + ' / ' + a.u1 ) );
+//		row.insertCell().appendChild( document.createTextNode( a.u1 ) );
 	    }
 
 	    function browsing(j, M) {
@@ -83,6 +80,7 @@
 		BROWSE.tab.style.visibility='hidden';
 		clearTable( BROWSE.lis );
 		e.target.value = "";
+		e.target.blur();
 	// IF string.contains('*') : searchSQL
 		if (ss.includes('*')) {
 		    XHR.getJSON('/ferre/query.lua?desc='+encodeURI(ss))

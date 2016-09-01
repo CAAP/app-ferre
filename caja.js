@@ -104,6 +104,8 @@
 	    // LOAD DBs
  	    if (IDB.indexedDB) { DBs.forEach( IDB.loadDB ); } else { alert("IDBIndexed not available."); }
 
+	    // PEOPLE
+
 	    PEOPLE.load();
 
 	    // HEADER
