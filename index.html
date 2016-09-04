@@ -20,7 +20,7 @@
     <header> <label id="notifications"></label> <select name="persona" id="personas" onchange="ferre.tab(event)"></select> </header>
 
     <section id="buscar">
-        <div align="right"> <input type="search" size=40 placeholder="Art&iacute;culo o Clave" onchange="ferre.startSearch(event)" onkeydown="ferre.keyPressed(event)"> <button>Buscar</button> </div>
+        <div align="right"> <input type="search" size=40 placeholder="Art&iacute;culo o Clave" onchange="ferre.startSearch(event)" onkeyup="ferre.keyPressed(event)"> <button>Buscar</button> </div>
 
     <section id="resultados" class="tablas">
         <table>
@@ -54,9 +54,9 @@
     </div>
     
     <section><dialog id="dialogo-rfc">
-	<input type="choice" /><br>
-	<a><label>RFC: </label><input type="search" placeholder="XAXX010101000" pattern="^\w{3,4}\d{6}\w{3}$" /></a><br>
-	<button onclick="ferre.cerrar(event)">Cancelar</button>
+	<label><input type="radio" name="buscar" value="rfc" checked="true" />RFC</label><label><input type="radio" name="buscar" value="razonSocial" />Razon social</label><br>
+	<input type="search" placeholder="XAXX010101000" pattern="^\w{3,4}\d{6}\w{3}$" /><br>
+	<button>Buscar</button><button onclick="ferre.cerrar(event)">Cancelar</button>
     </dialog></section>
 
     <section><dialog id="dialogo-factura"><table><caption>DATOS DE LA FACTURA</caption><tbody id="tabla-rfc" onchange="admin.anUpdate(event)"></tbody><tfoot><tr><th colspan=2 align="right"><button onclick="ferre.enviarF()">FACTURAR</button></th></tr></tfoot></table><table><tbody id="tabla-cp"></tbody></table></dialog></section>

@@ -4,8 +4,8 @@
 
 	(function() {
 	    const VARS = ['clave', 'precio', 'rea', 'qty', 'totalCents'];
-	    const TAGS = {none: 'x', presupuesto: 'aZ', imprimir: 'b', facturar: 'c', guardar: 'g', impreso: 'I', pagado: 'P', facturado: 'F'};
-	    TAGS.ID = {x: 'none', aZ: 'presupuesto', b: 'imprimir', c: 'facturar', g: 'guardar'};
+	    const TAGS = {none: 'x', presupuesto: 'a', imprimir: 'b', facturar: 'c', guardar: 'g', impreso: 'I', pagado: 'P', facturado: 'F'};
+	    TAGS.ID = {x: 'none', a: 'presupuesto', b: 'imprimir', c: 'facturar', g: 'guardar'};
 
 	    TICKET.TAGS = TAGS;
 
@@ -117,6 +117,8 @@
 		let k = e.target.name;
 		let v = asnum( e.target.value );
 		let items = TICKET.items;
+
+		e.target.value = v;
 
 		console.log( clave + ' - ' + k + ': ' + v);
 

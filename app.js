@@ -52,8 +52,8 @@
 
 		function clearVals() { Array.from(tabla.querySelectorAll('input')).forEach( item => { item.value = ''; } ); }
 
-		function displayRFC() {
-		    let rfc = diagR.querySelector('input');
+		function displayRFC(e) {
+		    let rfc = e.target;
 		    if ((rfc.value.length>10) && (rfc.validity.valid))
 			    XHR.getJSON('/ferre/rfc.lua?rfc=' + rfc.value)
 			    .then( a => {
@@ -79,7 +79,7 @@
 //			tabla.querySelector('input[name="cp"]').addEventListener('change', correos, false);
 		    });
 
-		diagR.querySelector('input').addEventListener("keyup", displayRFC, false);
+		diagR.querySelector('input[type=search]').addEventListener("keyup", displayRFC, false);
 
 		ferre.rfc = () => diagR.showModal();
 
@@ -100,6 +100,8 @@
 
 		function asnum(s) { let n = Number(s); return Number.isNaN(n) ? s : n; };
 		function uptoCents(q) { return Math.round( 100 * q[q.precio] * q.qty * (1-q.rea/100) ); };
+
+		ferre.asnum = e => { e.target.value = Number(e.target.textContent) };
 
 		ferre.menu = e => { clave = asnum(e.target.parentElement.dataset.clave); diagI.showModal(); };
 

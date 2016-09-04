@@ -146,10 +146,11 @@
 		    ie.addEventListener('change', e => { if (e.target.checked) add2bag(e.target.value, e.target.name); else removeItem(e.target.value); } );
 		    row.insertCell().appendChild(ie);
 
-		    w.nombre = PEOPLE.id[asnum(w.uid.substring(20))] || 'NaP';
-		    w.time = w.uid.substr(11, 8);
+		    w.nombre = PEOPLE.id[asnum(w.uid.substr(9))] || 'NaP';
+		    w.time = w.uid.substr(1, 7);
 		    w.tag = TICKET.TAGS.ID[w.id_tag];
-		    for (let k of ['time', 'nombre', 'count', 'tag']) { row.insertCell().appendChild( document.createTextNode(w[k]) ); }
+		    w.total = (w.totalCents / 100).toFixed(2);
+		    for (let k of ['time', 'nombre', 'count', 'total', 'tag']) { row.insertCell().appendChild( document.createTextNode(w[k]) ); }
 		}
 
 	// SERVER-SIDE EVENT SOURCE
