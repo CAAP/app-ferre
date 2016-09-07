@@ -4,15 +4,16 @@ local socket = require"socket"
 local fd = require'carlos.fold'
 local hd = require'ferre.header'
 local sql = require'carlos.sqlite'
-local mx = require'ferre.timezone'
+--local mx = require'ferre.timezone'
 
+local function mx() return os.time() - 18000 end
+
+local today = os.date('%F', mx())
 local week = os.date('W%U', mx())
 local dawk= string.format('event: week\ndata: %q\n\n', week)
-
---local tbname = os.date'W%U'
 local dbname = string.format('/db/%s.db', week)
 
-local MM = {caja={}, tickets={}, recording={}, streaming={}}
+local MM = {caja={}, tickets={}, entradas={}, recording={}, streaming={}}
 
 local function asJSON( w )
     local ret = {}
@@ -22,42 +23,70 @@ local function asJSON( w )
     return string.format('data: {%s}', table.concat(ret, ', '))
 end
 
--- maybe delete event should be added if needed
-local function sse( data, event, pid )
-    local ret = {'event: ' .. event, 'data: ['}
+local function sse( w )
+    local event = w.event
+    w.event = nil
+    local ret = w.ret or {}
+    w.ret = nil
+    local data = w.data or asJSON( w )
+    ret[#ret+1] = 'event: ' .. event
+    ret[#ret+1] = 'data: ['
     ret[#ret+1] = data
     ret[#ret+1] = 'data: ]'
     ret[#ret+1] = '\n'
-    if pid and (pid ~= '0') then ret[#ret+1] = 'event: delete\ndata: '.. pid ..'\n\n' end
     return table.concat( ret, '\n')
 end
 
-local function caja( )
-    function MM.caja.add( w )
-	local uid = os.date('%FT%TP', mx()) .. w.id_person
-	local vals = string.format('%q, %d, %q, %q', uid, w.count, w.id_tag, w.rfc or '')
-	local qry = string.format('INSERT INTO %q VALUES(%s)', tbname, vals)
-	w.uid = uid
-	conn.exec( qry )
-	return w
-    end
+---
+
+local function init( conn )
+    print('Connected to DB', dbname, '\n')
+    return conn
 end
 
-local function tickets()
+--
+local function people( conn )
+    local tbname = 'entradas'
+    local vwname = 'horas'
+    local schema = 'uid, tag'
+    local stmt = string.format('AS SELECT * FROM %q WHERE uid LIKE %q GROUP BY uid', tbname, today..'%')
+    local query = string.format('SELECT * FROM %q', vwname)
+
+    conn.exec( string.format(sql.newTable, tbname, schema) )
+    conn.exec( string.format('DROP VIEW IF EXISTS %q', vwname) )
+    conn.exec( string.format('CREATE VIEW IF NOT EXISTS %q %s', vwname, stmt ) )
+
+    local function reformat(w) return { pid=w.uid:match'%d+$', hora=w.uid:match'T(%d+:%d+)', tag=w.tag } end
+
+    function MM.entradas.add( w )
+	local uid = os.date('%FT%TP', mx()) .. w.id_person
+	w.uid = uid
+	conn.exec( string.format('INSERT INTO %q VALUES(%q, %q)', tbname, uid, w.tag) )
+	return reformat( w )
+    end
+
+    function MM.entradas.sse()
+	if conn.count( vwname ) == 0 then return ':empty\n\n'
+	else return sse{ data=table.concat( fd.reduce(conn.query(query), fd.map(reformat), fd.map(asJSON), fd.into, {} ), ',\n'), event='entradas' } end
+    end
+
+    return conn
+end
+
+--
+local function tickets( conn )
     local tbname = 'tickets'
     local vwname = 'caja'
     local schema = 'uid, id_tag, clave, precio, qty INTEGER, rea INTEGER, totalCents INTEGER'
-    local keys = {uid=1, id_tag=2, clave=3, precio=4, qty=5, rea=6, totalCents=7}
-    local stmt = 'AS SELECT uid, COUNT(uid) count, SUM(totalCents) totalCents, id_tag FROM '.. tbname ..' GROUP BY uid'
+    local keys = { uid=1, id_tag=2, clave=3, precio=4, qty=5, rea=6, totalCents=7 }
+    local stmt = string.format('AS SELECT uid, COUNT(uid) count, SUM(totalCents) totalCents, id_tag FROM %q WHERE uid LIKE %q GROUP BY uid', tbname, today..'%')
     local query = 'SELECT * FROM ' .. vwname
 
-    local conn = sql.connect( dbname )
     conn.exec( string.format(sql.newTable, tbname, schema) )
     conn.exec( string.format('CREATE VIEW IF NOT EXISTS %q %s', vwname, stmt) )
-    print('Connected to DB', dbname, '\n')
 
     local function collect( q )
-	local t = { '', '' } -- random uid & id_tag
+	local t = { '', '' } -- uid & id_tag
 	for k,v in q:gmatch'([^%s]+)%s([^%s]+)' do if keys[k] then t[keys[k]] = v end end
 	return t
     end
@@ -65,16 +94,19 @@ local function tickets()
     local function ids( uid, tag ) return fd.map( function(t) t[1] = uid; t[2] = tag; return t end ) end
 
     function MM.tickets.add( w )
-	local uid = os.date('%TP', mx()) .. w.id_person
+	local uid = os.date('%FT%TP', mx()) .. w.id_person
 	fd.reduce( w.args, fd.map( collect ), ids( uid, w.id_tag ), sql.into( tbname ), conn )
 	return w
     end
 
     function MM.tickets.sse()
 	if conn.count( vwname ) == 0 then return ':empty\n\n'
-	else return sse( table.concat( fd.reduce(conn.query(query), fd.map(asJSON), fd.into, {} ), ',\n'), 'feed' ) end
+	else return sse{ data=table.concat( fd.reduce(conn.query(query), fd.map(asJSON), fd.into, {} ), ',\n'), event='feed' } end
     end
+
+    return conn
 end
+
 
 -- Clients connect to port 8080 for SSE: caja & ventas
 local function streaming()
@@ -84,28 +116,41 @@ local function streaming()
 
     local cts = {}
 
+    local function init( c )
+	return c:send( dawk ) and c:send( MM.tickets.sse() )
+    end
+
     function MM.streaming.connect()
 	local c = srv:accept()
 	if c then
 	    c:settimeout(1)
 	    local ip = c:getpeername():match'%g+'
 	    local response = hd.response({content='stream', body='retry: 60'}).asstr()
-	    if c:send( response ) and c:send(dawk) and c:send( MM.tickets.sse() ) then cts[#cts+1] = c
+	    if c:send( response ) and c:send(dawk) and c:send( MM.tickets.sse() ) and c:send( MM.entradas.sse() or '' ) then cts[#cts+1] = c
 	    else c:close() end
 	    print('Connected on port 8080 to:', ip)
 	end
     end
 
-    -- a possible change in sse() might make necessary to add delete_sse() as an extra step
-
-    -- Messages are broadcastes using SSE with different event names.
+    -- Messages are broadcasted using SSE with different event names.
     function MM.broadcast( w )
 	w.args = nil -- sanitize w
 	if #cts > 0 then
-	    local msg = sse( asJSON( w ), w.query and 'save' or 'feed', w.query and '0' or w.id_person )
+	    local msg = sse( w )
 	    cts = fd.reduce( cts, fd.filter( function(c) return c:send(msg) or (c:close() and nil) end ), fd.into, {} )
 	end
     end
+
+    return true
+end
+
+local function classify( w, q )
+    local tag = w.id_tag
+    if tag == 'g' then w.query = q; w.event = 'save'; return w end
+    if tag == 'h' then  local m = MM.entradas.add( w ); m.event = 'entradas'; return m end
+    -- printing: 'a', 'b', 'c'
+    w.ret = { 'event: delete\ndata: '.. w.id_person ..'\n\n' }
+    MM.tickets.add( w ); w.event = 'feed'; return w
 end
 
 -- Clients communicate to server using port 8081. id_tag help to sort out data
@@ -114,12 +159,10 @@ local function recording()
     srv:settimeout(1)
     print'Listening on port 8081\n'
 
-    -- maybe necessary to add id_tag: 'd' when delete events are broadcasted
     local function add( q )
 	local w = hd.parse( q )
 	if not w.args then return {msg='Empty Query'} end
-	if w.id_tag == 'g' then w.query = q
-	else MM.tickets.add( w ) end
+	w = classify(w, q)
 	w.msg = 'OK'
 	return w
     end
@@ -141,11 +184,13 @@ local function recording()
 	    c:close()
 	end
     end
+
+    return true
 end
 
-tickets()
-streaming()
-recording()
+--
+
+fd.comp{ recording, streaming, tickets, people, init, sql.connect( dbname ) }
 
 while 1 do
     MM.streaming.connect()

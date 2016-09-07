@@ -9,6 +9,8 @@ input[type=number] {
 
 button[name=cerrar] { color: white; background-color: red ; }
 
+.entrada { color: white; background-color: blue;}
+
 dialog { font: 100% arial; }
 
 .activo {

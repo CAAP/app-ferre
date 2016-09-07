@@ -18,7 +18,7 @@
 
 <body lang="es-MX">
 
-    <header> <label id="notifications"></label> </header>
+    <header> <label id="notifications"></label> <select name="persona" id="personas" onchange="caja.tab()"></select> <label id="tag" onclick="caja.showD()"></label> </header>
 
     <section id="caja">
 	<table>
@@ -50,6 +50,8 @@
 
 	</table>
     </section>
+
+   <section><dialog id="dialogo-schedule"><p>Marcar</p><p><button name="action" onclick="caja.marcar(event)"></button></p><p></p><button name="cerrar" onclick="caja.cerrar(event)">Cerrar</button></dialog></section>
 
     <section><dialog id="dialogo-rfc"><table><caption>FACTURA</caption><thead><th></th><th></th></thead><tbody id="tabla-rfc" onchange="admin.anUpdate(event)"></tbody><tfoot><tr><th colspan=2 align="right"><button onclick="ferre.enviarF()">FACTURAR</button></th></tr></tfoot></table></dialog></section>
 
