@@ -127,13 +127,7 @@
 		const pid = document.getElementById('personas').dataset.id;
 		let objs = ['id_tag='+id_tag, 'id_person='+pid, 'rfc='+rfc, 'count='+TICKET.items.size ];
 
-		function plain(obj) {
-		    let ret = [];
-		    for (let k in obj) { ret.push(k, obj[k]); }
-		    return ('args=' + ret.join('+'));
-		};
-
-		TICKET.items.forEach( item => objs.push( plain( TICKET.obj(item) ) ) );
+		TICKET.items.forEach( item => objs.push( 'args=' + TICKET.plain(item) ) );
 
 		return SQL.print( objs ).then( ferre.emptyBag );
 	    };

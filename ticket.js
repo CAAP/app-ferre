@@ -4,8 +4,8 @@
 
 	(function() {
 	    const VARS = ['clave', 'precio', 'rea', 'qty', 'totalCents'];
-	    const TAGS = {none: 'x', presupuesto: 'a', imprimir: 'b', facturar: 'c', guardar: 'g', impreso: 'I', pagado: 'P', facturado: 'F'};
-	    TAGS.ID = {x: 'none', a: 'presupuesto', b: 'imprimir', c: 'facturar', g: 'guardar'};
+	    const TAGS = {none: 'x', presupuesto: 'a', pagar: 'b', facturar: 'c', guardar: 'g', impreso: 'I', pagado: 'P', facturado: 'F'};
+	    TAGS.ID = {x: 'none', a: 'presupuesto', b: 'pagar', c: 'facturar', g: 'guardar'};
 
 	    TICKET.TAGS = TAGS;
 
@@ -108,7 +108,9 @@
 		total.classList.add('pesos'); total.classList.add('total'); total.appendChild( document.createTextNode( tocents(q.totalCents) ) );
 	    }
 
-	    TICKET.obj = x => VARS.reduce( (o,v) => { o[v] = x[v]; return o; }, {} );
+	    TICKET.plain = o => {
+		return VARS.map( v => { return (v + '+' + o[v] || '') } ).join('+');
+	    };
 
 	    TICKET.update = function(e) {
 		let tr = e.target.parentElement.parentElement;

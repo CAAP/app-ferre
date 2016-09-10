@@ -10,6 +10,8 @@ local dbname = string.format('/db/%s.db', os.date'W%U')
 
 local MM = {caja={}, tickets={}, recording={}, streaming={}}
 
+local function nowMX() return os.time()-18000 end
+
 local function asJSON( w )
     local ret = {}
     for k,v in pairs(w) do
@@ -30,7 +32,7 @@ end
 
 local function caja( )
     function MM.caja.add( w )
-	local uid = os.date'%FT%TP' .. w.id_person
+	local uid = os.date('%FT%TP', nowMX()) .. w.id_person
 	local vals = string.format('%q, %d, %q, %q', uid, w.count, w.id_tag, w.rfc or '')
 	local qry = string.format('INSERT INTO %q VALUES(%s)', tbname, vals)
 	w.uid = uid
@@ -61,7 +63,7 @@ local function tickets()
     local function ids( uid, tag ) return fd.map( function(t) t[1] = uid; t[2] = tag; return t end ) end
 
     function MM.tickets.add( w )
-	local uid = os.date'%TP' .. w.id_person
+	local uid = os.date('%TP', nowMX()) .. w.id_person
 	fd.reduce( w.args, fd.map( collect ), ids( uid, w.id_tag ), sql.into( tbname ), conn )
 	return w
     end

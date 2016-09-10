@@ -50,12 +50,7 @@
 
 	    })();
 
-	    // TICKET
-
-	    TICKET.bag = document.getElementById( TICKET.bagID );
-	    TICKET.myticket = document.getElementById( TICKET.myticketID );
-	    TICKET.timbre = TICKET.myticket.querySelector('button[name="timbrar"]');
-	    TICKET.bagRFC = false;
+	    // PAGAR
 
 	    (function() {
 		const BRUTO = 1.16;
@@ -89,14 +84,24 @@
 
 	    })();
 
+	    // TICKET
+
+	    TICKET.bag = document.getElementById( TICKET.bagID );
+	    TICKET.myticket = document.getElementById( TICKET.myticketID );
+	    TICKET.timbre = TICKET.myticket.querySelector('button[name="timbrar"]');
+	    TICKET.bagRFC = false;
+
 	    caja.updateItem = TICKET.update;
 
 	    caja.clickItem = e => TICKET.remove( e.target.parentElement );
 
 	    caja.emptyBag = () => { TICKET.empty(); TICKET.bagRFC = false; TICKET.timbre.disabled = true; caja.cleanCaja(); }
 
-	    caja.print = function(a) {
-		document.getElementById('dialogo-persona').showModal();
+	    caja.print = function() {
+		let objs = [];
+		TICKET.items.forEach( item => objs.push( item.desc + '+' + TICKET.plain(item) ) );
+		return XHR.get(document.location.origin + ':4444/print?' + objs.join('&') );
+//		return SQL.print( objs ).then( caja.emptyBag );
 	    };
 
 	    function now(fmt) { return new Date().toLocaleDateString('es-MX', fmt); };
@@ -147,7 +152,7 @@
 		    row.insertCell().appendChild(ie);
 
 		    w.nombre = PEOPLE.id[asnum(w.uid.substr(9))] || 'NaP';
-		    w.time = w.uid.substr(1, 7);
+		    w.time = w.uid.substr(0, 8);
 		    w.tag = TICKET.TAGS.ID[w.id_tag];
 		    w.total = (w.totalCents / 100).toFixed(2);
 		    for (let k of ['time', 'nombre', 'count', 'total', 'tag']) { row.insertCell().appendChild( document.createTextNode(w[k]) ); }

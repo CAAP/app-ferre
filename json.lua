@@ -18,7 +18,7 @@ local function tovec(a)
     local costol = a.costo * (100 - a.descuento) * (100 + a.impuesto)
     local function precio(y) return string.format('%.2f', costol*y/1e4) end
     ret[1] = math.tointeger(ret[1]) or ret[1]
-    ret[2] = ret[2]:gsub('Ñ', '&#209;')
+--    ret[2] = ret[2]:gsub('Ñ', '&#209;')
     ret[4], ret[6], ret[8] = precio(a.p1), precio(a.p2), precio(a.p3)
     return '[' .. table.concat(ret, ', ') .. ']'
 end
@@ -28,7 +28,7 @@ local function data()
     local QRY = "SELECT * FROM datos ORDER BY desc"
     local items = fd.reduce( conn.query(QRY), fd.map( tovec ), st.status(N), fd.into, {} ) -- fd.map( ntilde ),  
     local keys = table.concat(fd.reduce(JSON, fd.map( quot ), fd.into, {}), ', ')
-    fs.dump('/cgi-bin/ferre/ferre/ferre.json', '[[' .. keys ..'], [' .. table.concat(items, ', ') .. ']]')
+    fs.dump('/htdocs/app-ferre/ferre.json', '[[' .. keys ..'], [' .. table.concat(items, ', ') .. ']]')
 end
 
 data()

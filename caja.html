@@ -3,8 +3,10 @@
 <html>
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title> ADMIN </title>
     <link rel="stylesheet" href="caja.css">
+    <link rel="stylesheet" href="app.css">
     <script type="text/javascript" src="xhr.js"></script>
     <script type="text/javascript" src="sql.js"></script>
     <script type="text/javascript" src="idb.js"></script>
@@ -17,9 +19,6 @@
 
     <header> <label id="notifications"></label> </header>
 
-    <div id="main">
-
-    <div id="comandos">
     <section id="caja">
 	<table>
 	    <caption>CAJA</caption>
@@ -29,7 +28,6 @@
 	    <tbody id="tabla-caja"></tbody>
 	</table>
     </section>
-    </div>
 
     <section id="ticket" class="tablas">
 	<table>
@@ -44,15 +42,13 @@
 	    </tbody>
 
 	    <tfoot>
-		<tr><th colspan=3><button onclick="caja.emptyBag()">Cancelar</button>&emsp;<button name="timbrar" disabled="true" onclick="caja.timbrar()">Timbrar</button>&emsp;<button onclick="ferre.print('print')">Imprimir</button>&emsp;<button onclick="caja.pagar()">Pagar</button></th><th align="right">TOTAL</th><th class="total"><label id="ticket-total"></label></th></tr>
+		<tr><th colspan=3><button name="cerrar" onclick="caja.emptyBag()">Cerrar</button>&emsp;<button name="timbrar" disabled="true" onclick="caja.timbrar()">Timbrar</button>&emsp;<button onclick="caja.print()">Imprimir</button>&emsp;<button onclick="caja.pagar()">Pagar</button></th><th align="right">TOTAL</th><th class="total"><label id="ticket-total"></label></th></tr>
 		<tr><td colspan=4 align="right">Sub Total</td><td class="pesos"><label id="ticket-bruto"></label></td></tr>
 		<tr><td colspan=4 align="right">I.V.A.</td><td class="pesos"><label id="ticket-iva"></label></td></tr>
 	    </tfoot>
 
 	</table>
     </section>
-
-    </div>
 
     <section><dialog id="dialogo-rfc"><table><caption>FACTURA</caption><thead><th></th><th></th></thead><tbody id="tabla-rfc" onchange="admin.anUpdate(event)"></tbody><tfoot><tr><th colspan=2 align="right"><button onclick="ferre.enviarF()">FACTURAR</button></th></tr></tfoot></table></dialog></section>
 

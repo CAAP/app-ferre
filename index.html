@@ -20,7 +20,7 @@
     <header> <label id="notifications"></label> <select name="persona" id="personas" onchange="ferre.tab(event)"></select> </header>
 
     <section id="buscar">
-        <div align="right"> <input type="search" size=40 placeholder="Art&iacute;culo o Clave" onchange="ferre.startSearch(event)" onkeyup="ferre.keyPressed(event)"> <button>Buscar</button> </div>
+        <div> <input type="search" size=40 placeholder="Art&iacute;culo o Clave" onchange="ferre.startSearch(event)" onkeyup="ferre.keyPressed(event)"> <button>Buscar</button> </div>
 
     <section id="resultados" class="tablas">
         <table>
@@ -44,19 +44,16 @@
                 <tr> <th> Cantidad </th><th class="desc"> Descripci&oacute;n </th><th> Precio </th><th> Descuento </th><th> Total </th> </tr> 
             </thead>
 	    </dt>
-	    <tfoot><tr><th colspan=5 align="right"><button onclick="ferre.emptyBag()">Cancelar</button>&emsp;<button onclick="ferre.rfc()">Facturar</button>&emsp;<button onclick="ferre.print('presupuesto')">Presupuesto</button>&emsp;<button onclick="ferre.print('imprimir')">Imprimir</button>&emsp;<label id="ticket-total" class="total"></label></th></tr></tfoot>
+	    <tfoot><tr><th colspan=5 align="right"><button name="cerrar" onclick="ferre.emptyBag()">Cerrar</button>&emsp;<button onclick="ferre.rfc()">Facturar</button>&emsp;<button onclick="ferre.print('presupuesto')">Presupuesto</button>&emsp;<button onclick="ferre.print('imprimir')">Imprimir</button>&emsp;<label id="ticket-total" class="total"></label></th></tr></tfoot>
 
 	    <tbody id="ticket-compra" class="amarillo" onchange="ferre.updateItem(event)" ondblclick="ferre.clickItem(event)"></tbody>
 	</table>
     </section>
 
-    <div id="main">
-    </div>
-    
     <section><dialog id="dialogo-rfc">
 	<label><input type="radio" name="buscar" value="rfc" checked="true" />RFC</label><label><input type="radio" name="buscar" value="razonSocial" />Razon social</label><br>
 	<input type="search" placeholder="XAXX010101000" pattern="^\w{3,4}\d{6}\w{3}$" /><br>
-	<button>Buscar</button><button onclick="ferre.cerrar(event)">Cancelar</button>
+	<button>Buscar</button><button name="cerrar" onclick="ferre.cerrar(event)">Cerrar</button>
     </dialog></section>
 
     <section><dialog id="dialogo-factura"><table><caption>DATOS DE LA FACTURA</caption><tbody id="tabla-rfc" onchange="admin.anUpdate(event)"></tbody><tfoot><tr><th colspan=2 align="right"><button onclick="ferre.enviarF()">FACTURAR</button></th></tr></tfoot></table><table><tbody id="tabla-cp"></tbody></table></dialog></section>
@@ -64,7 +61,7 @@
     <section><dialog id="dialogo-item"><table><tbody>
 	<tr><td><button onclick="ferre.add2bag()">Agregar</button></td></tr>
 	<tr><td><button onclick="ferre.cerrar(event)">Faltante</button></td></tr>
-	<tr><td><button onclick="ferre.cerrar(event)">Cancelar</button></tr></tr>
+	<tr><td><button name="cerrar" onclick="ferre.cerrar(event)">Cerrar</button></tr></tr>
     </tbody></table></dialog></section>
 
     <footer> <label id="copyright"></label> </footer>

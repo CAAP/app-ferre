@@ -29,7 +29,7 @@ fd.slice( 100, datos, fd.map(readIn), st.status(#datos), sql.into'datos', conn )
 
 conn.exec'CREATE TABLE IF NOT EXISTS empleados ( id INTEGER PRIMARY KEY, nombre )'
 
-local nombres = {'Alberto', 'Alfonso', 'Adrian', 'Arturo', 'Carlos', 'Ernesto', 'Manuel', 'Rafa', 'Sergio'}
+local nombres = {'Alberto', 'Alfonso', 'Adrian', 'Arturo', 'Carlos', 'Ernesto', 'Manuel', 'Rafa', 'Sergio', 'OTRO'}
 
 fd.slice( 10, nombres, fd.map(function(x,i) return {i, x} end), sql.into'empleados', conn )
 
