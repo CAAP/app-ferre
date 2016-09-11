@@ -36,7 +36,7 @@
 		if (a.faltante) { desc.classList.add('faltante'); }
 		desc.classList.add('desc'); desc.appendChild( document.createTextNode( a.desc ) );
 		let pesos = row.insertCell();
-		pesos.classList.add('pesos'); pesos.appendChild( document.createTextNode( a.precio1.toFixed(2) + ' / ' + a.u1 ) );
+		pesos.classList.add('pesos'); pesos.appendChild( document.createTextNode( a.precios.precio1 ) );
 //		row.insertCell().appendChild( document.createTextNode( a.u1 ) );
 	    }
 

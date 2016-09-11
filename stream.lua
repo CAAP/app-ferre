@@ -4,13 +4,15 @@ local socket = require"socket"
 local fd = require'carlos.fold'
 local hd = require'ferre.header'
 local sql = require'carlos.sqlite'
+local mx = require'ferre.timezone'
+
+local week = os.date('W%U', mx())
+local dawk= string.format('event: week\ndata: %q\n\n', week)
 
 --local tbname = os.date'W%U'
-local dbname = string.format('/db/%s.db', os.date'W%U')
+local dbname = string.format('/db/%s.db', week)
 
 local MM = {caja={}, tickets={}, recording={}, streaming={}}
-
-local function nowMX() return os.time()-18000 end
 
 local function asJSON( w )
     local ret = {}
@@ -32,7 +34,7 @@ end
 
 local function caja( )
     function MM.caja.add( w )
-	local uid = os.date('%FT%TP', nowMX()) .. w.id_person
+	local uid = os.date('%FT%TP', mx()) .. w.id_person
 	local vals = string.format('%q, %d, %q, %q', uid, w.count, w.id_tag, w.rfc or '')
 	local qry = string.format('INSERT INTO %q VALUES(%s)', tbname, vals)
 	w.uid = uid
@@ -63,7 +65,7 @@ local function tickets()
     local function ids( uid, tag ) return fd.map( function(t) t[1] = uid; t[2] = tag; return t end ) end
 
     function MM.tickets.add( w )
-	local uid = os.date('%TP', nowMX()) .. w.id_person
+	local uid = os.date('%TP', mx()) .. w.id_person
 	fd.reduce( w.args, fd.map( collect ), ids( uid, w.id_tag ), sql.into( tbname ), conn )
 	return w
     end
@@ -88,7 +90,7 @@ local function streaming()
 	    c:settimeout(1)
 	    local ip = c:getpeername():match'%g+'
 	    local response = hd.response({content='stream', body='retry: 60'}).asstr()
-	    if c:send( response ) and c:send( MM.tickets.sse() ) then cts[#cts+1] = c
+	    if c:send( response ) and c:send(dawk) and c:send( MM.tickets.sse() ) then cts[#cts+1] = c
 	    else c:close() end
 	    print('Connected on port 8080 to:', ip)
 	end

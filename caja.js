@@ -1,11 +1,8 @@
         "use strict";
 
-	var caja = {
-	    DATA: { VERSION: 1, DB: 'datos', STORE: 'datos-clave', KEY: 'clave', INDEX: 'desc', FILE: 'ferre.json' },
-	};
+	var caja = {};
 
 	window.onload = function addFuns() {
-	    const DATA = caja.DATA;
 	    const DBs = [ DATA ];
 
 	    // SQL
@@ -97,11 +94,18 @@
 
 	    caja.emptyBag = () => { TICKET.empty(); TICKET.bagRFC = false; TICKET.timbre.disabled = true; caja.cleanCaja(); }
 
-	    caja.print = function() {
-		let objs = [];
-		TICKET.items.forEach( item => objs.push( item.desc + '+' + TICKET.plain(item) ) );
-		return XHR.get(document.location.origin + ':4444/print?' + objs.join('&') );
-//		return SQL.print( objs ).then( caja.emptyBag );
+	    caja.print = function(a) {
+		const tag = a || 'ticket';
+		const week = document.getElementById('tabla-caja').dataset.week; // XXX cajita?
+		const total = document.getElementById( TICKET.ttotalID ).textContent;
+		const p = PEOPLE.id[Number(TICKET.bag.lastChild.dataset.uid.substr(9))];
+		let objs = ['tag='+tag, 'person='+p, 'total='+total]; // , 'rfc='+rfc
+
+		let fix = o => { o.week = week; o.prc = o.precios[o.precio]; o.total = (o.totalCents/100).toFixed(2); return o };
+		TICKET.items.forEach( item => objs.push( 'args=' + TICKET.plain(fix(item)) ) );
+
+		return XHR.get(document.location.origin+':5555/print?'+objs.join('&'));
+//		return SQL.print( objs ).then( ferre.emptyBag );
 	    };
 
 	    function now(fmt) { return new Date().toLocaleDateString('es-MX', fmt); };
@@ -125,7 +129,6 @@
 
 	// ping CAJA
 	    (function() {
-
 		const cajita = document.getElementById('tabla-caja');
 		const mybag = TICKET.bag;
 
@@ -135,7 +138,7 @@
 
 		function add2bag( uid, rfc ) {
 		    if (!TICKET.bagRFC && (rfc != "undefined") && (rfc.length > 0) ) { TICKET.bagRFC = rfc; TICKET.timbre.disabled = false; }
-		    SQL.get( { uid: uid } )
+		    SQL.get( { uid: uid, week: cajita.dataset.week } )
 			.then( JSON.parse )
 			.then( objs => objs.reduce( (seq, o) => seq.then( () => data(o) ), Promise.resolve() ) );
 		}
@@ -147,7 +150,7 @@
 		    let row = cajita.insertRow(0);
 
 		    let ie = document.createElement('input');
-		    ie.type = 'checkbox'; ie.value = w.uid; ie.name = w.rfc;
+		    ie.type = 'checkbox'; ie.value = w.uid; ie.name = '';// w.rfc;
 		    ie.addEventListener('change', e => { if (e.target.checked) add2bag(e.target.value, e.target.name); else removeItem(e.target.value); } );
 		    row.insertCell().appendChild(ie);
 
@@ -159,15 +162,19 @@
 		}
 
 	// SERVER-SIDE EVENT SOURCE
-		(function() {
+//		(function() {
 		    let esource = new EventSource(document.location.origin + ":8080");
 		    esource.onmessage = e => console.log( 'id: ' + e.lastEventId );
 		    esource.addEventListener("feed", function(e) {
 			console.log('FEED message received\n');
 			JSON.parse( e.data ).forEach( add2caja );
 		    }, false);
-		})();
-
+		    esource.addEventListener("week", function(e) {
+			let week = JSON.parse( e.data );
+			cajita.dataset.week = week;
+			console.log('WEEK: ' + week);
+		    }, false);
+//		})();
 		caja.cleanCaja = function() {
 		    Array.from(cajita.querySelectorAll("input:checked")).reduce( (_, ic) => { ic.checked = false; }, {} );
 		};

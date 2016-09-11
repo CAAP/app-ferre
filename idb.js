@@ -15,7 +15,6 @@
 		    objStore.transaction.oncomplete = function(ev) {
 			console.log('ObjectStore ' + k.STORE + ' created successfully.');
 			if (k.FILE) { IDB.populateDB( k ); }
-//			if (k.load) { k.load(); };
 		    };
 		};
 	    },
@@ -24,7 +23,7 @@
 		function asobj(a, ks) {
 		    let ret = {};
 		    for (let i in ks) { ret[ks[i]] = a[i]; }
-		    return ret;
+		    return (k.MAP ? k.MAP(ret) : ret);
 		}
 
 		function store(objsto) {

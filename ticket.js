@@ -4,8 +4,8 @@
 
 	(function() {
 	    const VARS = ['clave', 'precio', 'rea', 'qty', 'totalCents'];
-	    const TAGS = {none: 'x', presupuesto: 'a', pagar: 'b', facturar: 'c', guardar: 'g', impreso: 'I', pagado: 'P', facturado: 'F'};
-	    TAGS.ID = {x: 'none', a: 'presupuesto', b: 'pagar', c: 'facturar', g: 'guardar'};
+	    const TAGS = {none: 'x', presupuesto: 'a', ticket: 'b', facturar: 'c', guardar: 'g', impreso: 'I', pagado: 'P', facturado: 'F'};
+	    TAGS.ID = {x: 'none', a: 'presupuesto', b: 'ticket', c: 'facturar', g: 'guardar'};
 
 	    TICKET.TAGS = TAGS;
 
@@ -77,17 +77,14 @@
 	    }
 
 	    function precios(q) {
-		if ((q.precio2 == 0) && (q.precio3 == 0)) { return document.createTextNode( q.precio1.toFixed(2) + ' / ' + q.u1 ); }
+		if ((q.precio2 == 0) && (q.precio3 == 0)) { return document.createTextNode( q.precios.precio1 ); }
 		let ret = document.createElement('select');
 		ret.name = 'precio';
-		for(let i=1;i<4;i++) {
-		    let k = 'precio'+i;
-		    if (q[k] > 0) {
-			let opt = document.createElement('option');
-			opt.value = k; opt.selected = (q.precio == k);
-			opt.appendChild( document.createTextNode( q[k] + ' / ' + q['u'+i]) );
-			ret.appendChild(opt);
-		    }
+		for (let k in q.precios) {
+		    let opt = document.createElement('option');
+		    opt.value = k; opt.selected = (q.precio == k);
+		    opt.appendChild( document.createTextNode( q.precios[k] ) );
+		    ret.appendChild(opt);
 		}
 		return ret;
 	    }
