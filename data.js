@@ -23,6 +23,5 @@
 			    .then( DATA.MAP )
 			    .then( os.put )
 			) );
-DATA.MAP(o) ) ) )
 		}
 	 };

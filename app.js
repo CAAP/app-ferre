@@ -36,7 +36,12 @@
 		function asnum(s) { let n = Number(s); return Number.isNaN(n) ? s : n; };
 		function uptoCents(q) { return Math.round( 100 * q[q.precio] * q.qty * (1-q.rea/100) ); };
 
-		ferre.menu = e => { clave = asnum(e.target.parentElement.dataset.clave); diagI.showModal(); };
+		ferre.menu = e => {
+		    if (e.target.parentElement.querySelector('.faltante'))
+			return;
+		    clave = asnum(e.target.parentElement.dataset.clave);
+		    diagI.showModal();
+		};
 
 		// Add: faltante XXX
 		ferre.add2bag = function() {
@@ -49,8 +54,9 @@
 
 		ferre.faltante = function() {
 		    if (window.confirm('Enviar reporte de faltante?'))
-			SQL.update({clave: clave, tbname: 'faltantes', vwname: 'faltantes', id_tag: 'u'})
+			SQL.update({clave: clave, faltante: 1, tbname: 'faltantes', vwname: 'faltantes', id_tag: 'u'})
 			    .then( () => diagI.close() );
+
 		};
 	    })();
 
@@ -155,6 +161,11 @@
 		    esource.addEventListener("update", function(e) {
 			console.log("update event received.");
 			DATA.update( JSON.parse(e.data) );
+		    }, false);
+		    esource.addEventListener("faltante", function(e) {
+			console.log("faltante event received.");
+			DATA.update( JSON.parse(e.data) )
+			    .then( () => { let r = document.body.querySelector('tr[data-clave='+e.data[0].clave+']'); if (r) { r.classList.add('faltante'); } } );
 		    }, false);
 		    esource.addEventListener("delete", function(e) {
 			const pid = Number(e.data);

@@ -70,6 +70,7 @@ local function cambios()
 	qry = string.format('UPDATE cambios SET version = version + 1, fecha = %q %s', hoy, clause)
 	assert( conn.exec( qry ), 'Error executing: ' .. qry )
 
+	clause = string.format('WHERE cambios.clave = %q AND cambios.clave = %s.clave', clave, vwname)
 	qry = string.format('SELECT * FROM %q, cambios %s', vwname, clause)
 	return fd.first( conn.query( qry ), function(x) return x end )
     end
@@ -212,7 +213,7 @@ local function recording()
 
     local function classify( w, q )
 	local tag = w.id_tag
-	if tag == 'u' then local m = MM.cambios.add( w ); m.event = 'update'; return m end
+	if tag == 'u' then local m = MM.cambios.add( w ); m.event = m.faltante and 'faltante' or 'update'; return m end
 	if tag == 'g' then MM.tabs.add( w, q ); w.event = 'tabs'; return w end
 	if tag == 'h' then  local m = MM.entradas.add( w ); m.event = 'entradas'; return m end
     -- printing: 'a', 'b', 'c'

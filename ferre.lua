@@ -37,9 +37,13 @@ conn.exec'UPDATE datos SET costol = costo*(100+impuesto)*(100-descuento) WHERE c
 
 -- FALTANTES & more
 
-conn.exec'CREATE TABLE IF NOT EXISTS faltantes (clave PRIMARY KEY, fecha)'
+conn.exec'CREATE TABLE IF NOT EXISTS faltantes (clave PRIMARY KEY, faltante INTEGER, fecha)'
+
+conn.exec'INSERT INTO faltantes SELECT clave, 0, fecha FROM datos'
 
 conn.exec'CREATE TABLE IF NOT EXISTS ubicacion (clave PRIMARY KEY, gps)' -- localizacion
+
+conn.exec'INSERT INTO ubicacion SELECT clave, SUBSTR(desc, 1, 4) FROM datos'
 
 conn.exec'CREATE TABLE IF NOT EXISTS cambios (clave PRIMARY KEY, version INTEGER, fecha)'
 
