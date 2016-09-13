@@ -165,7 +165,7 @@
 		    esource.addEventListener("faltante", function(e) {
 			console.log("faltante event received.");
 			DATA.update( JSON.parse(e.data) )
-			    .then( () => { let r = document.body.querySelector('tr[data-clave='+e.data[0].clave+']'); if (r) { r.classList.add('faltante'); } } );
+			    .then( () => { let r = document.body.querySelector('tr[data-clave="'+JSON.parse(e.data)[0].clave+'"]'); if (r) { r.querySelector('.desc').classList.add('faltante'); } } );
 		    }, false);
 		    esource.addEventListener("delete", function(e) {
 			const pid = Number(e.data);
