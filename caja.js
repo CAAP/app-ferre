@@ -140,14 +140,12 @@
 		const tag = a || 'ticket';
 		const week = document.getElementById('tabla-caja').dataset.week; // XXX cajita?
 		const total = document.getElementById( TICKET.ttotalID ).textContent;
-		const p = PEOPLE.id[Number(TICKET.bag.lastChild.dataset.uid.substr(9))];
-		let objs = ['tag='+tag, 'person='+p, 'total='+total]; // , 'rfc='+rfc
-
-		let fix = o => { o.week = week; o.prc = o.precios[o.precio]; o.total = (o.totalCents/100).toFixed(2); return o };
-		TICKET.items.forEach( item => objs.push( 'args=' + TICKET.plain(fix(item)) ) );
-
-		return XHR.get(document.location.origin+':5555/print?'+objs.join('&'));
-//		return SQL.print( objs ).then( ferre.emptyBag );
+//		let fix = o => { o.week = week; o.prc = o.precios[o.precio]; o.total = (o.totalCents/100).toFixed(2); return o };
+//		TICKET.items.forEach( item => objs.push( 'args=' + TICKET.plain(fix(item)) ) );
+		let objs = ['tag='+tag, 'total='+total];
+		TICKET.items.forEach( item => objs.push( 'args=' + TICKET.eplain(item) ) );
+//		return XHR.get(document.location.origin+':5555/print?'+objs.join('&'));
+		return SQL.print( objs ).then( ferre.emptyBag );
 	    };
 
 	    function now(fmt) { return new Date().toLocaleDateString('es-MX', fmt); };
@@ -172,7 +170,7 @@
 
 	 	function asnum(s) { let n = Number(s); return Number.isNaN(n) ? s : n; }
 
-		function data( o ) { return IDB.readDB( DATA ).get( asnum(o.clave) ).then( w => Object.assign( o, w ) ).then( TICKET.add ).then( () => { mybag.lastChild.dataset.uid = o.uid } ) }
+		function data( o ) { return IDB.readDB( DATA ).get( asnum(o.clave) ).then( w => Object.assign( o, w ) ).then( TICKET.show ).then( () => { mybag.lastChild.dataset.uid = o.uid } ) }
 
 		function add2bag( uid, rfc ) {
 		    if (!TICKET.bagRFC && (rfc != "undefined") && (rfc.length > 0) ) { TICKET.bagRFC = rfc; TICKET.timbre.disabled = false; }

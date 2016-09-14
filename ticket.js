@@ -3,7 +3,8 @@
 	var TICKET = { bagID: 'ticket-compra', ttotalID: 'ticket-total', myticketID: 'ticket', tivaID: 'ticket-iva', tbrutoID: 'ticket-bruto' };
 
 	(function() {
-	    const VARS = ['clave', 'precio', 'rea', 'qty', 'totalCents'];
+	    const VARS = ['clave', 'qty', 'rea', 'precio', 'totalCents'];
+	    const EVARS = ['clave', 'qty', 'desc', 'rea', 'prc', 'subTotal' ];
 	    const TAGS = {none: 'x', presupuesto: 'a', ticket: 'b', facturar: 'c', guardar: 'g', impreso: 'I', pagado: 'P', facturado: 'F'};
 	    TAGS.ID = {x: 'none', a: 'presupuesto', b: 'ticket', c: 'facturar', g: 'guardar'};
 
@@ -105,9 +106,18 @@
 		total.classList.add('pesos'); total.classList.add('total'); total.appendChild( document.createTextNode( tocents(q.totalCents) ) );
 	    }
 
-	    TICKET.plain = o => {
-		return VARS.map( v => { return (v + '+' + o[v] || '') } ).join('+');
-	    };
+	    function showItem(q) {
+		let row = TICKET.bag.insertRow();
+		row.dataset.clave = q.clave;
+		q.subTotal = tocents(q.totalCents);
+		q.prc = q.precios[q.precio];
+		EVARS.forEach( v => row.insertCell().appendChild( document.createTextNode( q[v] ) ) );
+		row.lastChild.classList.add('pesos');
+	    }
+
+	    TICKET.plain = o => VARS.map( v => { return (v + '+' + o[v] || '') } ).join('+');
+
+	    TICKET.eplain = o => EVARS.map( v => { return (v + '+' + o[v] || '') } ).join('+');
 
 	    TICKET.update = function(e) {
 		let tr = e.target.parentElement.parentElement;
@@ -135,6 +145,13 @@
 		(TICKET.myticket.classList.contains('visible') || toggleTicket());
 		TICKET.items.set( w.clave, w );
 		displayItem( w );
+		bagTotal();
+	    };
+
+	    TICKET.show = function(w) {
+		(TICKET.myticket.classList.contains('visible') || toggleTicket());
+		TICKET.items.set( w.clave, w );
+		showItem( w );
 		bagTotal();
 	    };
 

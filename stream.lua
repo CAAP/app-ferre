@@ -4,9 +4,9 @@ local socket = require"socket"
 local fd = require'carlos.fold'
 local hd = require'ferre.header'
 local sql = require'carlos.sqlite'
---local mx = require'ferre.timezone'
+local mx = require'ferre.timezone'
 
-local function mx() return os.time() - 18000 end
+--local function mx() return os.time() - 18000 end
 
 local today = os.date('%F', mx())
 local week = os.date('W%U', mx())

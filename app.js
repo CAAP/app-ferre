@@ -60,7 +60,7 @@
 		const id_tag = TICKET.TAGS[a] || TICKET.TAGS.none;
 //		let rfc = ''; if (a == 'facturar') { rfc = arg1; };
 		const pid = document.getElementById('personas').dataset.id;
-		let objs = ['id_tag='+id_tag, 'id_person='+pid, 'count='+TICKET.items.size ]; // , 'rfc='+rfc
+		let objs = ['id_tag='+id_tag, 'id_person='+pid, 'count='+TICKET.items.size]; // , 'rfc='+rfc
 
 		TICKET.items.forEach( item => objs.push( 'args=' + TICKET.plain(item) ) );
 
