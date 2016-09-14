@@ -5,7 +5,7 @@ local sql = require'carlos.sqlite'
 local fs = require'carlos.files'
 local st = require'carlos.string'
 
-local conn = sql.connect'/db/ferre.sql'
+local conn = sql.connect'/db/ferre.db'
 
 local function quot(x) return tonumber(x) or string.format('%q',x) end
 

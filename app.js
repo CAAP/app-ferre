@@ -64,7 +64,18 @@
 
 		TICKET.items.forEach( item => objs.push( 'args=' + TICKET.plain(item) ) );
 
-		return SQL.print( objs ).then( ferre.emptyBag );
+		function tocents(x) { return (x / 100).toFixed(2); };
+
+		function doprint() {
+		    TICKET.items.forEach( item => {item.subTotal = tocents(item.totalCents); item.prc = item.precios[item.precio]} );
+		    const total = document.getElementById( TICKET.ttotalID ).textContent;
+		    const persona = PEOPLE.id[pid];
+		    let objs = ['tag='+a, 'total='+total, 'person='+persona];
+		    TICKET.items.forEach( item => objs.push( 'args=' + TICKET.eplain(item) ) );
+		    return XHR.get('/caja/print.lua?' + objs.join('&'));
+		}
+
+		return SQL.print( objs ).then( doprint ).then( ferre.emptyBag );
 	    };
 
 	    (function() {

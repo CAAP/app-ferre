@@ -13,11 +13,12 @@ local function encode( s ) return s:upper():gsub('%s+$',''):gsub('%.+$','') end
 local function quot( s ) return tonumber(s) and s or (s:len() == 0 and s or s:gsub('"','\"')) end
 
 -- line: _, _, desc, _, costo, impuesto, descuento, _, _, clave, u1, _, p1, u2, _, p2, u3, _, p3, fecha
+-- line: desc, costo, impuesto, descuento, _, _, clave, u1, _, p1, u2, _, p2, u3, _, p3, fecha
 local function readIn( a )
-    return { a[10], encode( escape(a[3]) ), a[5], a[6], a[7], quot(a[11]), a[13], quot(a[14]), a[16], quot(a[17]), a[19], a[23] }
+    return { a[10], encode( escape(a[1]) ), a[6], a[7], a[8], quot(a[11]), a[13], quot(a[14]), a[16], quot(a[17]), a[19], a[23] }
 end
 
-local conn = sql.connect'/db/ferre.sql'
+local conn = sql.connect'/db/ferre.db'
 
 ---[[
 

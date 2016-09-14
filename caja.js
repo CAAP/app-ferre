@@ -140,15 +140,12 @@
 		const tag = a || 'ticket';
 		const week = document.getElementById('tabla-caja').dataset.week; // XXX cajita?
 		const total = document.getElementById( TICKET.ttotalID ).textContent;
-//		let fix = o => { o.week = week; o.prc = o.precios[o.precio]; o.total = (o.totalCents/100).toFixed(2); return o };
-//		TICKET.items.forEach( item => objs.push( 'args=' + TICKET.plain(fix(item)) ) );
 		let objs = ['tag='+tag, 'total='+total];
 		TICKET.items.forEach( item => objs.push( 'args=' + TICKET.eplain(item) ) );
 //		return XHR.get(document.location.origin+':5555/print?'+objs.join('&'));
-		return SQL.print( objs ).then( ferre.emptyBag );
+		return SQL.print( objs ).then( caja.emptyBag );
 	    };
 
-	    function now(fmt) { return new Date().toLocaleDateString('es-MX', fmt); };
 
 	    // LOAD DBs
  	    if (IDB.indexedDB) { DBs.forEach( IDB.loadDB ); } else { alert("IDBIndexed not available."); }
@@ -158,7 +155,9 @@
 	    (function() {
 	        const note = document.getElementById('notifications');
 		const FORMAT = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-		note.appendChild( document.createTextNode( now(FORMAT) ) );
+	    	const now = new Date().toLocaleDateString('es-MX', FORMAT);
+
+		note.appendChild( document.createTextNode( now ) );
 	    })();
 
 	    (function() { document.getElementById('copyright').innerHTML = 'versi&oacute;n ' + 1.0 + ' | cArLoS&trade; &copy;&reg;'; })();

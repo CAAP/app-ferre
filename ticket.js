@@ -4,7 +4,7 @@
 
 	(function() {
 	    const VARS = ['clave', 'qty', 'rea', 'precio', 'totalCents'];
-	    const EVARS = ['clave', 'qty', 'desc', 'rea', 'prc', 'subTotal' ];
+	    const EVARS = ['clave', 'qty', 'desc', 'rea', 'prc', 'subTotal' ]; // 'desc', 
 	    const TAGS = {none: 'x', presupuesto: 'a', ticket: 'b', facturar: 'c', guardar: 'g', impreso: 'I', pagado: 'P', facturado: 'F'};
 	    TAGS.ID = {x: 'none', a: 'presupuesto', b: 'ticket', c: 'facturar', g: 'guardar'};
 

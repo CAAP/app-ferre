@@ -1,12 +1,9 @@
 
         "use strict";
 
-	var admin = {
-	    DATA:  { VERSION: 1, DB: 'datos', STORE: 'datos-clave', KEY: 'clave', INDEX: 'desc', FILE: 'ferre.json' }
-	};
+	var admin = {};
 
 	window.onload = function() {
-	    const DATA = admin.DATA;
 	    const DBs = [ DATA, UPDATES ];
 
 //	    ferre.reloadDB = function reloadDB() { return IDB.clearDB(DATA).then( () => IDB.populateDB( DATA ) ); };

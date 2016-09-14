@@ -87,7 +87,7 @@ local function tickets( conn )
 
     local function collect( q )
 	local t = { '', '' } -- uid & id_tag
-	for k,v in q:gmatch'([^%s]+)%s([^%s]+)' do if keys[k] then t[keys[k]] = v end end
+	for k,v in q:gmatch'(%S+)%s(%S+)' do if keys[k] then t[keys[k]] = v end end
 	return t
     end
 
@@ -150,7 +150,8 @@ local function classify( w, q )
     if tag == 'h' then  local m = MM.entradas.add( w ); m.event = 'entradas'; return m end
     -- printing: 'a', 'b', 'c'
     w.ret = { 'event: delete\ndata: '.. w.id_person ..'\n\n' }
-    MM.tickets.add( w ); w.event = 'feed'; return w
+    MM.tickets.add( w );
+    w.event = 'feed'; return w
 end
 
 -- Clients communicate to server using port 8081. id_tag help to sort out data
