@@ -54,6 +54,7 @@
 
 	    UPDATES.getRecord = function( clave ) {
 		return SQL.get( {clave: clave} )
+		    .then( s => { UPDATES.diag.returnValue = s; return s; } )
 		    .then( JSON.parse )
 		    .then( a => { let q = a[0]; for (let k in q) { fillVal(k, q[k]); }; return q; } )
 		    .then( q => { UPDATES.tabla.dataset.clave = q.clave; UPDATES.tabla.dataset.desc = q.desc.substr(0, 20) + ' ...'; } )

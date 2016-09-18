@@ -4,9 +4,11 @@
 	var admin = {};
 
 	window.onload = function() {
-	    const DBs = [ DATA, UPDATES ];
+	    const DBs = [ DATA ];
 
 //	    ferre.reloadDB = function reloadDB() { return IDB.clearDB(DATA).then( () => IDB.populateDB( DATA ) ); };
+
+	    admin.cerrar = e => e.target.closest('dialog').close(); // XXX unify
 
 	    // BROWSE
 
@@ -25,31 +27,94 @@
 
 	    // UPDATES
 
-	    UPDATES.diag = document.getElementById('dialogo-cambios');
-	    UPDATES.tabla = document.getElementById('tabla-cambios');
-	    UPDATES.ups = document.getElementById('update');
-	    UPDATES.lista = document.getElementById('tabla-update');
+	    // cambios dialog - lista de cambios
+	    (function() {
+		let tabla = document.getElementById('tabla-cambios'); // tabla inside dialog
+		let udiag = document.getElementById('dialogo-cambios');
+		let lista = document.getElementById('tabla-update');
+		let ups = document.getElementById('ticket');
 
-	    function makeDisplay( k ) {
-		let row = UPDATES.tabla.insertRow();
-		row.insertCell().appendChild( document.createTextNode(k) );
-		let ie = document.createElement('input');
-		ie.type = 'text'; ie.size = 5; ie.name = k;
-		if (k=='desc') { ie.size = 40; }
-		row.insertCell().appendChild( ie );
-	    }
+		let fields = new Set();
+		let cambios = new Map();
+		let records = new Map();
 
-	    UPDATES.lista.style.cursor = 'pointer';
+//		let add = document.location.origin + ':8081';
 
-	    XHR.getJSON('/ferre/header.lua').then( a => a.forEach( makeDisplay ) );
+		function addfield( k ) {
+		    let row = tabla.insertRow();
+		    // label
+		    row.insertCell().appendChild( document.createTextNode(k) );
+		    // input
+		    let ie = document.createElement('input');
+		    ie.type = 'text'; ie.size = 5; ie.name = k;
+		    if (k == 'desc') { ie.size = 40; }
+		    if (k == 'clave') { ie.disabled = true; }
+		    row.insertCell().appendChild( ie );
+		    fields.add( k );
+		}
 
-	    admin.anUpdate = e => UPDATES.anUpdate( e.target.name, e.target.value );
+		function addupdate( clave, upd ) {
+		    ups.style.visibility = 'visible';
+		    let row = lista.insertRow();
+		    row.dataset.clave = clave;
+		    row.insertCell().appendChild( document.createTextNode(clave) );
+		    row.insertCell().appendChild( document.createTextNode(upd) );
+		}
 
-	    admin.getRecord = e => UPDATES.getRecord( e.target.parentElement.dataset.clave );
+		function setfields( o ) {
+		    fields.forEach( k => {tabla.querySelector('input[name='+k+']').value = o[k] || '' } );
+		    udiag.returnValue = o.clave;
+		    udiag.showModal();
+		}
 
-	    admin.clickItem = e => UPDATES.remove( e.target.parentElement );
+		admin.getRecord = function(e) {
+		    let clave = e.target.parentElement.dataset.clave;
+		    if (records.has(clave))
+			setfields( cambios.has(clave) ? Object.assign({}, records.get(clave), cambios.get(clave)) : records.get(clave) );
+		    else {
+			SQL.get({clave: clave})
+			    .then( JSON.parse )
+			    .then( a => { records.set(clave, a[0]); setfields(a[0]); } );
+		    }
+		};
 
-	    admin.emptyBag = UPDATES.emptyBag;
+		function ppties(o) { return Object.keys(o).map( k => { return (k + '=' + o[k]); } ).join('&'); }
+
+		admin.anUpdate = function(e) {
+		    let clave = udiag.returnValue;
+		    if (cambios.has( clave )) {
+			let b = cambios.get( clave );
+			b[e.target.name] = e.target.value;
+			cambios.set( clave, b );
+			lista.querySelector('tr[data-clave="'+clave+'"]').lastChild.textContent = ppties(b); // XXX Unify
+		    } else {
+			let a = {}; a[e.target.name] = e.target.value;
+			cambios.set( clave, a );
+			addupdate(clave, e.target.name+'='+e.target.value)
+		    }
+		};
+
+		function clearTable(tb) { while (tb.firstChild) { tb.removeChild( tb.firstChild ); } }; // XXX unify
+
+		admin.emptyCambios = () => { cambios = new Map(); records = new Map(); clearTable(lista); ups.style.visibility = 'hidden'; };
+
+		function update(o) { return  XHR.get(document.location.origin + ':8081/update?' + ppties(o) ) }
+
+		admin.enviar = function() {
+		    if (window.confirm('Estas seguro de realizar los cambios?'))
+			Promise.all( Array.from(cambios.keys())
+			    .map( clave => Object.assign({clave: clave, tbname: 'datos', vwname: 'precios', id_tag: 'u'}, cambios.get(clave)) )
+			    .map( update ) )
+			.then( clave => console.log('clave: '+clave) );
+//			.then( clave => XHR.get(document.location.origin + ':8081/update?id_tag=u&tbname=precios&clave=' + clave) );
+			admin.emptyCambios();
+		};
+
+		XHR.getJSON('/ferre/header.lua').then( a => a.forEach( addfield ) );
+//		UPDATES.cambios = new Map();
+	    })();
+
+//	    UPDATES.lista.style.cursor = 'pointer';
 
 	    // SQL
 

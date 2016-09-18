@@ -36,17 +36,22 @@
 		function asnum(s) { let n = Number(s); return Number.isNaN(n) ? s : n; };
 		function uptoCents(q) { return Math.round( 100 * q[q.precio] * q.qty * (1-q.rea/100) ); };
 
-		ferre.asnum = e => { e.target.value = Number(e.target.textContent) };
+//		ferre.asnum = e => { e.target.value = Number(e.target.textContent) };
 
 		ferre.menu = e => { clave = asnum(e.target.parentElement.dataset.clave); diagI.showModal(); };
 
 		// Add: faltante XXX
 		ferre.add2bag = function() {
 		    diagI.close();
-		    if (TICKET.items.has( clave )) { console.log('Item is already in the bag.'); return false; } // MAYBE not needed by diagI XXX
+		    if (TICKET.items.has( clave )) { console.log('Item is already in the bag.'); return false; }
 		    return IDB.readDB( DATA ).get( clave )
-			.then( w => { w.qty=1; w.precio='precio1'; w.rea=0; w.totalCents=uptoCents(w); return w; } ) // MAYBE simplified by diagI XXX
+			.then( w => { w.qty=1; w.precio='precio1'; w.rea=0; w.totalCents=uptoCents(w); return w; } )
 			.then( TICKET.add );
+		};
+
+		ferre.faltante = function() {
+		    diagI.close();
+		    //XHR.get('/ferre/faltante.lua?clave='+clave):
 		};
 	    })();
 
@@ -60,7 +65,7 @@
 		const id_tag = TICKET.TAGS[a] || TICKET.TAGS.none;
 //		let rfc = ''; if (a == 'facturar') { rfc = arg1; };
 		const pid = document.getElementById('personas').dataset.id;
-		let objs = ['id_tag='+id_tag, 'id_person='+pid, 'count='+TICKET.items.size]; // , 'rfc='+rfc
+		let objs = ['id_tag='+id_tag, 'pid='+pid, 'count='+TICKET.items.size]; // , 'rfc='+rfc
 
 		TICKET.items.forEach( item => objs.push( 'args=' + TICKET.plain(item) ) );
 
@@ -97,7 +102,7 @@
 		function asnum(s) { let n = Number(s); return Number.isNaN(n) ? s : n; };
 		function data( o ) { return IDB.readDB( DATA ).get( asnum(o.clave) ).then( w => Object.assign( o, w ) ).then( TICKET.add ); }
 		function a2obj( a ) { const M = a.length/2; let o = {}; for (let i=0; i<M; i++) { o[a[i*2]] = a[i*2+1]; } return o; }
-		function recreate(q) { return q.split('&args=').reduce( (p, s) => p.then( () => data(a2obj(s.split('+'))) ), Promise.resolve() ); }
+		function recreate(q) { return q.split('&').reduce( (p, s) => p.then( () => data(a2obj(s.split('+'))) ), Promise.resolve() ); }
 		function tabs(k) { slc.dataset.id = k; if (PEOPLE.tabs.has(k)) { recreate(PEOPLE.tabs.get(k).query); } }
 
 		function msg_tag(pid) {
@@ -138,12 +143,13 @@
 	// SERVER-SIDE EVENT SOURCE
 		(function() {
 		    let esource = new EventSource(document.location.origin + ":8080");
-		    esource.onmessage = e => console.log( 'id: ' + e.lastEventId );
-		    esource.addEventListener("save", function(e) {
-			const o = JSON.parse( e.data )[0];
-			o.query = o.query.substr(o.query.search('args') + 5);
-			PEOPLE.tabs.set(Number(o.id_person), o);
-			console.log('Message for: ' + PEOPLE.id[o.id_person]);
+		    esource.addEventListener("tabs", function(e) {
+			console.log("tabs event received.");
+			JSON.parse( e.data ).forEach( o => PEOPLE.tabs.set(o.pid, o) );
+		    }, false);
+		    esource.addEventListener("update", function(e) {
+			console.log("update event received.");
+			DATA.update( JSON.parse(e.data) );
 		    }, false);
 		    esource.addEventListener("delete", function(e) {
 			const pid = Number(e.data);

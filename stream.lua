@@ -8,22 +8,18 @@ local mx = require'ferre.timezone'
 
 --local function mx() return os.time() - 18000 end
 
+local hoy = os.date('%d-%b-%y', mx())
 local today = os.date('%F', mx())
 local week = os.date('W%U', mx())
-local dawk= string.format('event: week\ndata: %q\n\n', week)
 local dbname = string.format('/db/%s.db', week)
+local fdbname = '/db/ferre.db'
 
-local MM = {caja={}, tickets={}, entradas={}, recording={}, streaming={}}
+local MM = {caja={}, tickets={}, tabs={}, entradas={}, cambios={}, recording={}, streaming={}}
 
-local function asJSON( w )
-    local ret = {}
-    for k,v in pairs(w) do
-	ret[#ret+1] = string.format('%q: %q', k, math.tointeger(v) or v)
-    end
-    return string.format('data: {%s}', table.concat(ret, ', '))
-end
+local function asJSON(w) return string.format('data: %s', hd.asJSON(w)) end
 
 local function sse( w )
+    if not(w) then return ':empty' end
     local event = w.event
     w.event = nil
     local ret = w.ret or {}
@@ -38,14 +34,45 @@ local function sse( w )
 end
 
 ---
-
 local function init( conn )
     print('Connected to DB', dbname, '\n')
     return conn
 end
 
---
-local function people( conn )
+local function cambios()
+    local conn = sql.connect( fdbname )
+    print('Connected to DB', fdbname, '\n')
+
+    local costol = 'UPDATE %q SET costol = costo*(100+impuesto)*(100-descuento) %s'
+
+    local function reformat(v, k)
+	local vv = (k == 'desc' or k == 'fecha' or k:match'^u') and string.format('%q', v) or (math.tointeger(v) or tonumber(v) or 0)
+	return k .. ' = ' .. vv
+    end
+
+    function MM.cambios.add( w )
+	local clave = w.clave
+	local tbname = w.tbname
+	local vwname = w.vwname
+	local clause = string.format('WHERE clave LIKE %q', clave)
+
+	w.id_tag = nil; w.args = nil; w.clave = nil; w.tbname = nil; w.vwname = nil; w.fecha = hoy 
+
+	local ret = fd.reduce( fd.keys(w), fd.map( reformat ), fd.into, {} )
+	local qry = string.format('UPDATE %q SET %s %s', tbname, table.concat(ret, ', '), clause)
+	assert( conn.exec( qry ), 'Error executing: ' .. qry )
+
+	if w.costo or w.impuesto or w.descuento then
+	    qry = string.format(costol, tbname, clause)
+	    assert( conn.exec( qry ), 'Error executing: ' .. qry )
+	end
+
+	qry = string.format('SELECT * FROM %q %s', vwname, clause)
+	return fd.first( conn.query( qry ), function(x) return x end )
+    end
+end
+
+local function entradas( conn )
     local tbname = 'entradas'
     local vwname = 'horas'
     local schema = 'uid, tag'
@@ -59,7 +86,7 @@ local function people( conn )
     local function reformat(w) return { pid=w.uid:match'%d+$', hora=w.uid:match'T(%d+:%d+)', tag=w.tag } end
 
     function MM.entradas.add( w )
-	local uid = os.date('%FT%TP', mx()) .. w.id_person
+	local uid = os.date('%FT%TP', mx()) .. w.pid
 	w.uid = uid
 	conn.exec( string.format('INSERT INTO %q VALUES(%q, %q)', tbname, uid, w.tag) )
 	return reformat( w )
@@ -79,29 +106,57 @@ local function tickets( conn )
     local vwname = 'caja'
     local schema = 'uid, id_tag, clave, precio, qty INTEGER, rea INTEGER, totalCents INTEGER'
     local keys = { uid=1, id_tag=2, clave=3, precio=4, qty=5, rea=6, totalCents=7 }
-    local stmt = string.format('AS SELECT uid, COUNT(uid) count, SUM(totalCents) totalCents, id_tag FROM %q WHERE uid LIKE %q GROUP BY uid', tbname, today..'%')
+    local stmt = string.format('AS SELECT uid, SUM(qty) count, SUM(totalCents) totalCents, id_tag FROM %q WHERE uid LIKE %q GROUP BY uid', tbname, today..'%')
     local query = 'SELECT * FROM ' .. vwname
 
     conn.exec( string.format(sql.newTable, tbname, schema) )
+    conn.exec( string.format('DROP VIEW IF EXISTS %q', vwname) )
     conn.exec( string.format('CREATE VIEW IF NOT EXISTS %q %s', vwname, stmt) )
 
     local function collect( q )
 	local t = { '', '' } -- uid & id_tag
-	for k,v in q:gmatch'(%S+)%s(%S+)' do if keys[k] then t[keys[k]] = v end end
+	for k,v in q:gmatch'([^|]+)|([^|]+)' do if keys[k] then t[keys[k]] = v end end
 	return t
     end
 
     local function ids( uid, tag ) return fd.map( function(t) t[1] = uid; t[2] = tag; return t end ) end
 
     function MM.tickets.add( w )
-	local uid = os.date('%FT%TP', mx()) .. w.id_person
+	local uid = os.date('%FT%TP', mx()) .. w.pid
 	fd.reduce( w.args, fd.map( collect ), ids( uid, w.id_tag ), sql.into( tbname ), conn )
+	local a = fd.first( conn.query(string.format('%s WHERE uid = %q ', query, uid)), function(x) return x end )
+	w.uid = uid; w.totalCents = a.totalCents; w.count = a.count
 	return w
     end
 
     function MM.tickets.sse()
 	if conn.count( vwname ) == 0 then return ':empty\n\n'
 	else return sse{ data=table.concat( fd.reduce(conn.query(query), fd.map(asJSON), fd.into, {} ), ',\n'), event='feed' } end
+    end
+
+    return conn
+end
+
+--
+local function tabs( conn )
+    local tbname = 'tabs'
+    local schema = 'pid INTEGER PRIMARY KEY, query' -- 'clave, precio, qty INTEGER, rea INTEGER, totalCents INTEGER'
+    local keys = { pid=1, query=2 } -- clave=2, precio=3, qty=4, rea=5, totalCents=6 }
+    local query = 'SELECT * FROM ' .. tbname
+
+    conn.exec( string.format(sql.newTable, tbname, schema) )
+
+    function MM.tabs.add( w, q )
+	local j = q:find'args'
+	w.query = q:sub(j):gsub('args=', '')
+	local vals = string.format('%d, %q', w.pid, w.query)
+	conn.exec( string.format("INSERT INTO %q VALUES( %s )", tbname, vals) )
+	return w
+    end
+
+    function MM.tabs.sse()
+	if conn.count( tbname ) == 0 then return ':empty\n\n'
+	else return sse{ data=table.concat( fd.reduce(conn.query(query), fd.map(asJSON), fd.into, {} ), ',\n'), event='tabs' } end
     end
 
     return conn
@@ -117,41 +172,33 @@ local function streaming()
     local cts = {}
 
     local function init( c )
-	return c:send( dawk ) and c:send( MM.tickets.sse() )
+	local ret = c:send(string.format('event: week\ndata: %q\n\n', week))
+	for _,feed in pairs(MM) do
+	    if ret and feed.sse then ret = ret and c:send( feed.sse() ) end
+	end
+	return ret
     end
 
     function MM.streaming.connect()
 	local c = srv:accept()
 	if c then
 	    c:settimeout(1)
-	    local ip = c:getpeername():match'%g+'
+	    local ip = c:getpeername():match'%g+' --XXX ip should be used
 	    local response = hd.response({content='stream', body='retry: 60'}).asstr()
-	    if c:send( response ) and c:send(dawk) and c:send( MM.tickets.sse() ) and c:send( MM.entradas.sse() or '' ) then cts[#cts+1] = c
+	    if c:send( response ) and init(c) then cts[#cts+1] = c
 	    else c:close() end
 	    print('Connected on port 8080 to:', ip)
 	end
     end
 
     -- Messages are broadcasted using SSE with different event names.
-    function MM.broadcast( w )
-	w.args = nil -- sanitize w
+    function MM.streaming.broadcast( msg )
 	if #cts > 0 then
-	    local msg = sse( w )
 	    cts = fd.reduce( cts, fd.filter( function(c) return c:send(msg) or (c:close() and nil) end ), fd.into, {} )
 	end
     end
 
     return true
-end
-
-local function classify( w, q )
-    local tag = w.id_tag
-    if tag == 'g' then w.query = q; w.event = 'save'; return w end
-    if tag == 'h' then  local m = MM.entradas.add( w ); m.event = 'entradas'; return m end
-    -- printing: 'a', 'b', 'c'
-    w.ret = { 'event: delete\ndata: '.. w.id_person ..'\n\n' }
-    MM.tickets.add( w );
-    w.event = 'feed'; return w
 end
 
 -- Clients communicate to server using port 8081. id_tag help to sort out data
@@ -160,11 +207,20 @@ local function recording()
     srv:settimeout(1)
     print'Listening on port 8081\n'
 
+    local function classify( w, q )
+	local tag = w.id_tag
+	if tag == 'u' then local m = MM.cambios.add( w ); m.event = 'update'; return m end
+	if tag == 'g' then MM.tabs.add( w, q ); w.event = 'tabs'; return w end
+	if tag == 'h' then  local m = MM.entradas.add( w ); m.event = 'entradas'; return m end
+    -- printing: 'a', 'b', 'c'
+	w.ret = { 'event: delete\ndata: '.. w.pid ..'\n\n' }
+	MM.tickets.add( w ); w.event = 'feed'; return w
+    end
+
     local function add( q )
 	local w = hd.parse( q )
-	if not w.args then return {msg='Empty Query'} end
 	w = classify(w, q)
-	w.msg = 'OK'
+	w.args = nil -- sanitize
 	return w
     end
 
@@ -176,11 +232,12 @@ local function recording()
 	    local head, e = c:receive()
 	    if not e then
 		local url, qry = head:match'/(%g+)%?(%g+)'
-		local w = add( qry ) -- data into DB
 		repeat head = c:receive() until head:match'^Origin:'
+		local msg = sse( add( qry ) )
 		ip = head:match'^Origin: (%g+)'
-		c:send( hd.response({ip=ip, body=w.msg}).asstr() )
-		if w.msg == 'OK' then MM.broadcast( w ) end
+		c:send( hd.response({ip=ip, body='OK'}).asstr() )
+--		local msg = (url == 'update') and sse( cambios() ) or sse( add( qry ) ) -- intoDB
+		MM.streaming.broadcast( msg )
 	    end
 	    c:close()
 	end
@@ -191,7 +248,7 @@ end
 
 --
 
-fd.comp{ recording, streaming, tickets, people, init, sql.connect( dbname ) }
+fd.comp{ cambios, recording, streaming, tickets, tabs, entradas, init, sql.connect( dbname ) }
 
 while 1 do
     MM.streaming.connect()

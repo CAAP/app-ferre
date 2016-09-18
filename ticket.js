@@ -10,8 +10,6 @@
 
 	    TICKET.TAGS = TAGS;
 
-	    TICKET.DATA = [];
-
 	    TICKET.items = new Map();
 
 	    TICKET.load = function() {

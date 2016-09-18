@@ -8,6 +8,7 @@
 	    function asstr( obj ) {
 		if (Array.isArray(obj))
 		    return obj.join('&');
+// 	    function ppties(o) { return Object.keys(o).map( k => { return (k + '=' + o[k]); } ).join(); }
 		let props = [];
 		for (var prop in obj) { props.push( prop + '=' + obj[prop] ) }
 		return props.join('&');
@@ -17,7 +18,7 @@
 
 //	    SQL.add = o => { return xget( 'add', o ) };
 
-//	    SQL.update = o => { return xget( 'update', o ) };
+	    SQL.update = o => { return xget( 'update', o ) };
 
 //	    SQL.remove = o => { return xget( 'remove', o ) };
 

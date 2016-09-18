@@ -14,5 +14,9 @@
 			    q.precios[k] = q[k].toFixed(2) + ' / ' + q['u'+i];
 		    }
 		    return q;
+		},
+		update: a => {
+		    let os = IDB.write2DB( DATA );
+		    return Promise.all( a.map( o => os.put( DATA.MAP(o) ) ) )
 		}
 	 };

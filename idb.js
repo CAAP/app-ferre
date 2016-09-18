@@ -29,8 +29,8 @@
 		function store(objsto) {
 		    let ks = objsto[0], datos = objsto[1];
 		    let os = IDB.write2DB(k);
-		    return datos.map( dato => os.add(asobj(dato, ks)) )
-			.reduce( (seq, p) => seq.then( () => p ), Promise.resolve() );
+		    return Promise.all( datos.map( dato => os.add(asobj(dato, ks)) ) );
+//			.reduce( (seq, p) => seq.then( () => p ), Promise.resolve() );
 		}
 
 		return XHR.getJSON( k.FILE ).then( store ).then( () => console.log("Datos loaded to DB " + k.DB) );

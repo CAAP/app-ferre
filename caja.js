@@ -27,7 +27,7 @@
 
 		caja.marcar = e => {
 		    const a = e.target.textContent;
-		    XHR.get( document.location.origin + ':8081/marcar?id_tag=h&tag=' + a + '&id_person=' + slc.value )
+		    XHR.get( document.location.origin + ':8081/marcar?id_tag=h&tag=' + a + '&pid=' + slc.value )
 			.then( () => schedule.close() );
 		};
 
@@ -199,7 +199,6 @@
 	// SERVER-SIDE EVENT SOURCE
 		(function() {
 		    let esource = new EventSource(document.location.origin + ":8080");
-		    esource.onmessage = e => console.log( 'id: ' + e.lastEventId );
 		    esource.addEventListener("feed", function(e) {
 			console.log('FEED message received\n');
 			JSON.parse( e.data ).forEach( add2caja );
