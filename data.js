@@ -17,6 +17,12 @@
 		},
 		update: a => {
 		    let os = IDB.write2DB( DATA );
-		    return Promise.all( a.map( o => os.put( DATA.MAP(o) ) ) )
+//		    return Promise.all( a.map( o => os.put( DATA.MAP(o) ) ) )
+		    return Promise.all( a.map( o => os.get( o.clave ).then( q => {
+			    if (q) { return Object.assign(q, o); } else { return o; } })
+			    .then( DATA.MAP )
+			    .then( os.put )
+			) );
+DATA.MAP(o) ) ) )
 		}
 	 };

@@ -9,14 +9,15 @@ local mx = require'ferre.timezone'
 local function escape( s ) return s:gsub('^"+',''):gsub('"+$',''):gsub('""', '"'):gsub('"', '\"') end
 
 local function encode( s ) return s:upper():gsub('%s+$',''):gsub('%.+$','') end
---:gsub('Ñ','&Ntilde;'):gsub('ñ','&Ntilde;') end
+
+local function asnum( x ) return math.tointeger(x) or x end
 
 local function quot( s ) return tonumber(s) and s or (s:len() == 0 and s or s:gsub('""','"'):gsub('"','\"')) end
 
 -- line: _, _, desc, _, costo, impuesto, descuento, _, _, clave, u1, _, p1, u2, _, p2, u3, _, p3, fecha
 -- line: desc, costo, impuesto, descuento, _, _, clave, u1, _, p1, u2, _, p2, u3, _, p3, fecha
 local function readIn( a )
-    return { a[10], encode( escape(a[1]) ), a[6], a[7], a[8], quot(a[11]), a[13], quot(a[14]), a[16], quot(a[17]), a[19], a[23], 0 }
+    return { a[10], encode( escape(a[1]) ), asnum(a[2]), asnum(a[7]), asnum(a[8]), quot(a[11]), asnum(a[13]), quot(a[14]), asnum(a[16]), quot(a[17]), asnum(a[19]), a[23], 0 }
 end
 
 local conn = sql.connect'/db/ferre.db'
@@ -26,7 +27,6 @@ local conn = sql.connect'/db/ferre.db'
 local datos = fs.dlmread('/cgi-bin/ferre/ferre/ferre.txt', '\t')
 
 conn.exec'CREATE TABLE IF NOT EXISTS datos (clave PRIMARY KEY, desc, costo NUMBER, impuesto NUMBER, descuento NUMBER, u1, prc1 NUMBER, u2, prc2 NUMBER, u3, prc3 NUMBER, fecha, costol NUMBER)'
-
 conn.exec'CREATE VIEW IF NOT EXISTS precios AS SELECT clave, desc, fecha, u1, ROUND(prc1*costol/1e4,2) precio1, u2, ROUND(prc2*costol/1e4,2) precio2, u3, ROUND(prc3*costol/1e4,2) precio3 FROM datos'
 
 conn.exec'CREATE INDEX IF NOT EXISTS busq_desc ON datos (desc ASC)'
@@ -35,18 +35,24 @@ fd.slice( 100, datos, fd.map(readIn), st.status(#datos), sql.into'datos', conn )
 
 conn.exec'UPDATE datos SET costol = costo*(100+impuesto)*(100-descuento) WHERE costo > 0'
 
---conn.exec'CREATE TABLE IF NOT EXISTS cambios (fecha, clave)'
+-- FALTANTES & more
 
---conn.exec'CREATE INDEX IF NOT EXISTS busq_date ON cambios (fecha DESC)'
+conn.exec'CREATE TABLE IF NOT EXISTS faltantes (clave PRIMARY KEY, fecha)'
+
+conn.exec'CREATE TABLE IF NOT EXISTS ubicacion (clave PRIMARY KEY, gps)' -- localizacion
+
+conn.exec'CREATE TABLE IF NOT EXISTS cambios (clave PRIMARY KEY, version INTEGER, fecha)'
+
+conn.exec'INSERT INTO cambios SELECT clave, 0, fecha FROM datos'
 
 print''
 
 
-conn.exec'CREATE TABLE IF NOT EXISTS empleados ( id INTEGER PRIMARY KEY, nombre )'
+conn.exec'CREATE TABLE IF NOT EXISTS empleados ( id INTEGER PRIMARY KEY, nombre, salario_hora )'
 
 local nombres = {'Alberto', 'Alfonso', 'Adrian', 'Arturo', 'Carlos', 'Ernesto', 'Manuel', 'Rafa', 'Sergio'}
 
-fd.slice( 10, nombres, fd.map(function(x,i) return {i, x} end), sql.into'empleados', conn )
+fd.slice( 10, nombres, fd.map(function(x,i) return {i, x, 23.15} end), sql.into'empleados', conn )
 
 print''
 

@@ -67,7 +67,10 @@ local function cambios()
 	    assert( conn.exec( qry ), 'Error executing: ' .. qry )
 	end
 
-	qry = string.format('SELECT * FROM %q %s', vwname, clause)
+	qry = string.format('UPDATE cambios SET version = version + 1, fecha = %q %s', hoy, clause)
+	assert( conn.exec( qry ), 'Error executing: ' .. qry )
+
+	qry = string.format('SELECT * FROM %q, cambios %s', vwname, clause)
 	return fd.first( conn.query( qry ), function(x) return x end )
     end
 end

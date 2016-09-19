@@ -36,8 +36,6 @@
 		function asnum(s) { let n = Number(s); return Number.isNaN(n) ? s : n; };
 		function uptoCents(q) { return Math.round( 100 * q[q.precio] * q.qty * (1-q.rea/100) ); };
 
-//		ferre.asnum = e => { e.target.value = Number(e.target.textContent) };
-
 		ferre.menu = e => { clave = asnum(e.target.parentElement.dataset.clave); diagI.showModal(); };
 
 		// Add: faltante XXX
@@ -50,8 +48,9 @@
 		};
 
 		ferre.faltante = function() {
-		    diagI.close();
-		    //XHR.get('/ferre/faltante.lua?clave='+clave):
+		    if (window.confirm('Enviar reporte de faltante?'))
+			SQL.update({clave: clave, tbname: 'faltantes', vwname: 'faltantes', id_tag: 'u'})
+			    .then( () => diagI.close() );
 		};
 	    })();
 
@@ -72,6 +71,7 @@
 		function tocents(x) { return (x / 100).toFixed(2); };
 
 		function doprint() {
+		    if (a == 'guardar') { return true; }
 		    TICKET.items.forEach( item => {item.subTotal = tocents(item.totalCents); item.prc = item.precios[item.precio]} );
 		    const total = document.getElementById( TICKET.ttotalID ).textContent;
 		    const persona = PEOPLE.id[pid];
@@ -111,11 +111,16 @@
 			    tag.classList.toggle('entrada');
 		}
 
-		ferre.tab = e => {
-		    const pid = Number(e.target.value);
-	// message tag
+		ferre.tag = () => {
+		    const pid = Number(slc.value);
 		    if (PEOPLE.horarios.has(pid)) { msg_tag( pid ); }
 		    else { tag.textContent = ''; }
+		};
+
+		ferre.tab = () => {
+		    const pid = Number(slc.value); // alt: slc.value
+	// message tag
+		    ferre.tag();
 	// if ticket-bag is not empty then send info to server for broadcasting
 		    if (TICKET.items.size > 0) { ferre.print('guardar').then( () => tabs(pid) ); }
 		    else { tabs(pid); }
@@ -158,6 +163,7 @@
 		    }, false);
 		    esource.addEventListener("entradas", function(e) {
 			JSON.parse( e.data ).forEach( p => PEOPLE.horarios.set( p.pid, p.tag + ' ' + p.hora ) );
+			ferre.tag();
 		    }, false);
 		})();
 
