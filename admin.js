@@ -134,5 +134,20 @@
 	    // SET FOOTER
 	    (function() { document.getElementById('copyright').innerHTML = 'versi&oacute;n ' + 1.0 + ' | cArLoS&trade; &copy;&reg;'; })();
 
+	// SERVER-SIDE EVENT SOURCE
+		(function() {
+		    let esource = new EventSource(document.location.origin + ":8080");
+		    esource.addEventListener("update", function(e) {
+			console.log("update event received.");
+			DATA.update( JSON.parse(e.data) );
+		    }, false);
+		    esource.addEventListener("faltante", function(e) {
+			console.log("faltante event received.");
+			DATA.update( JSON.parse(e.data) )
+			    .then( () => { let r = document.body.querySelector('tr[data-clave="'+JSON.parse(e.data)[0].clave+'"]'); if (r) { r.querySelector('.desc').classList.add('faltante'); } } );
+		    }, false);
+		})();
+
+
 	};
 

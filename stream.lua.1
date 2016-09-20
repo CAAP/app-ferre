@@ -51,16 +51,13 @@ local function cambios()
     local costol = 'UPDATE %q SET costol = costo*(100+impuesto)*(100-descuento) %s'
 
     local function reformat(v, k)
-	local vv = (k == 'desc' or k == 'fecha' or k:match'^u') and string.format("'%s'", v) or (math.tointeger(v) or tonumber(v) or 0)
+	local vv = (k == 'desc' or k == 'fecha' or k:match'^u') and string.format('%q', v) or (math.tointeger(v) or tonumber(v) or 0)
 	return k .. ' = ' .. vv
     end
 
-    function MM.tickets.addDescPrc( w )
-	local j = w.precio:sub(-1)
-	local qry = string.format('SELECT desc, precio%d ||"/"|| u%d prc FROM precios WHERE clave LIKE %q', j, j, w.clave)
-	local a = fd.first( conn.query(qry), function(x) return x end )
-	w.desc = a.desc; w.prc = a.prc;
-	return w
+    function MM.tickets.getDesc( clave )
+	local qry = string.format('SELECT desc FROM precios WHERE clave LIKE %q', clave)
+	return fd.first( conn.query(qry), function(x) return x end ).desc
     end
 
     function MM.cambios.add( w )
@@ -89,12 +86,12 @@ local function cambios()
     end
 
     function MM.cambios.sse( w )
-	local clause = 'WHERE version > 0 GROUP BY clave' -- XXX AND fecha LIKE %q', hoy)
+	local clause = 'WHERE version > 0 GROUP BY clave' -- AND fecha LIKE %q', hoy)
 	local qry = string.format('SELECT clave FROM cambios %s', clause)
 	local qry2 = string.format('SELECT * FROM faltantes, precios WHERE precios.clave = faltantes.clave AND precios.clave IN (%s)', qry)
 
-	if conn.count( 'cambios', clause ) == 0 then return ':empty\n\n'
-	else  return sse{ data=table.concat( fd.reduce(conn.query(qry2), fd.map(asJSON), fd.into, {} ), ',\n'), event='update' } end
+	if conn.count( tbname ) == 0 then return ':empty\n\n'
+	else  return sse{ data=table.concat( fd.reduce(conn.query(query), fd.map(asJSON), fd.into, {} ), ',\n'), event='updateA' } end
     end
 end
 
@@ -147,32 +144,11 @@ local function tickets( conn )
 
     local function ids( uid, tag ) return fd.map( function(t) t[1] = uid; t[2] = tag; return t end ) end
 
-    local function subTotal( w )
-	w.subTotal = string.format( '%.2f', w.totalCents / 100 )
-	return w
-    end
-    local function asTable( s )
-	local t = {}
-	for k,v in s:gmatch'([^|]+)|([^|]+)' do t[k] = v end
-	return t
-    end
-    local tkt = require'ferre.ticket'
-    local fs = require'carlos.files'
-    local function forPrinting( w )
-	w.total = string.format( '%.2f', w.totalCents / 100 )
-	w.fecha = w.uid:match'([^P]+)P'
-	w.datos = fd.reduce( w.args, fd.map( asTable ), fd.map( MM.tickets.addDescPrc ), fd.map( subTotal ), fd.into, {} )
-        fs.dump( '/htdocs/app-ferre/prueba.txt', tkt( w ) )
-	w.datos = nil
-    end
-
--- XXX input is not parsed to Number
     function MM.tickets.add( w )
 	local uid = os.date('%FT%TP', mx()) .. w.pid
 	fd.reduce( w.args, fd.map( collect ), ids( uid, w.id_tag ), sql.into( tbname ), conn )
 	local a = fd.first( conn.query(string.format('%s WHERE uid = %q ', query, uid)), function(x) return x end )
 	w.uid = uid; w.totalCents = a.totalCents; w.count = a.count
-	forPrinting( w )
 	return w
     end
 

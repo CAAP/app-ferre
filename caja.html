@@ -18,6 +18,9 @@
 
 <body lang="es-MX">
 
+    <div id='main'>
+    <section id="feed">
+
     <header> <label id="notifications"></label> <select name="persona" id="personas" onchange="caja.tab()"></select> <label id="tag" onclick="caja.showD()"></label> </header>
 
     <section id="caja">
@@ -28,6 +31,8 @@
 	    </dt></thead>
 	    <tbody id="tabla-caja"></tbody>
 	</table>
+    </section>
+
     </section>
 
     <section id="ticket" class="tablas">
@@ -50,6 +55,8 @@
 
 	</table>
     </section>
+
+   </div>
 
    <section><dialog id="dialogo-schedule"><p>Marcar</p><p><button name="action" onclick="caja.marcar(event)"></button></p><p></p><button name="cerrar" onclick="caja.cerrar(event)">Cerrar</button></dialog></section>
 

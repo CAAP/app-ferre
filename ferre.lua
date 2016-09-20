@@ -17,7 +17,7 @@ local function quot( s ) return tonumber(s) and s or (s:len() == 0 and s or s:gs
 -- line: _, _, desc, _, costo, impuesto, descuento, _, _, clave, u1, _, p1, u2, _, p2, u3, _, p3, fecha
 -- line: desc, costo, impuesto, descuento, _, _, clave, u1, _, p1, u2, _, p2, u3, _, p3, fecha
 local function readIn( a )
-    return { a[10], encode( escape(a[1]) ), asnum(a[2]), asnum(a[7]), asnum(a[8]), quot(a[11]), asnum(a[13]), quot(a[14]), asnum(a[16]), quot(a[17]), asnum(a[19]), a[23], 0 }
+    return { a[10], encode( escape(a[1]) ), asnum(a[6]), asnum(a[7]), asnum(a[8]), quot(a[11]), asnum(a[13]), quot(a[14]), asnum(a[16]), quot(a[17]), asnum(a[19]), a[23], 0 }
 end
 
 local conn = sql.connect'/db/ferre.db'

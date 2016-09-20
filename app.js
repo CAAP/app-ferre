@@ -37,8 +37,8 @@
 		function uptoCents(q) { return Math.round( 100 * q[q.precio] * q.qty * (1-q.rea/100) ); };
 
 		ferre.menu = e => {
-		    if (e.target.parentElement.querySelector('.faltante'))
-			return;
+//		    if (e.target.parentElement.querySelector('.faltante'))
+//			return;
 		    clave = asnum(e.target.parentElement.dataset.clave);
 		    diagI.showModal();
 		};
@@ -69,8 +69,9 @@
 	    ferre.print = function(a) {
 		const id_tag = TICKET.TAGS[a] || TICKET.TAGS.none;
 //		let rfc = ''; if (a == 'facturar') { rfc = arg1; };
-		const pid = document.getElementById('personas').dataset.id;
-		let objs = ['id_tag='+id_tag, 'pid='+pid, 'count='+TICKET.items.size]; // , 'rfc='+rfc
+		const pid = Number(document.getElementById('personas').dataset.id);
+
+		let objs = ['tag='+a, 'person='+PEOPLE.id[pid]||'NAP', 'id_tag='+id_tag, 'pid='+pid, 'count='+TICKET.items.size]; // , 'rfc='+rfc
 
 		TICKET.items.forEach( item => objs.push( 'args=' + TICKET.plain(item) ) );
 
@@ -78,15 +79,15 @@
 
 		function doprint() {
 		    if (a == 'guardar') { return true; }
-		    TICKET.items.forEach( item => {item.subTotal = tocents(item.totalCents); item.prc = item.precios[item.precio]} );
+		    TICKET.items.forEach( item => {item.subTotal = tocents(item.totalCents); item.prc = item.precios[item.precio]; } );
 		    const total = document.getElementById( TICKET.ttotalID ).textContent;
-		    const persona = PEOPLE.id[pid];
+		    const persona = PEOPLE.id[pid] || 'NAP';
 		    let objs = ['tag='+a, 'total='+total, 'person='+persona];
 		    TICKET.items.forEach( item => objs.push( 'args=' + TICKET.eplain(item) ) );
 		    return XHR.get('/caja/print.lua?' + objs.join('&'));
 		}
 
-		return SQL.print( objs ).then( doprint ).then( ferre.emptyBag );
+		return SQL.print( objs ).then( ferre.emptyBag ); //then( doprint ).then( ferre.emptyBag )
 	    };
 
 	    (function() {
