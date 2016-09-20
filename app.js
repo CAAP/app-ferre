@@ -89,7 +89,7 @@
 		    return XHR.get('/caja/print.lua?' + objs.join('&'));
 		}
 
-		return SQL.print( objs ).then( ferre.emptyBag ); //then( doprint ).then( ferre.emptyBag )
+		return SQL.print( objs ); //.then( ferre.emptyBag ); //then( doprint ).then( ferre.emptyBag )
 	    };
 
 	    (function() {
@@ -131,7 +131,7 @@
 	// message tag
 		    ferre.tag();
 	// if ticket-bag is not empty then send info to server for broadcasting
-		    if (TICKET.items.size > 0) { ferre.print('guardar').then( () => tabs(pid) ); }
+		    if (TICKET.items.size > 0) { ferre.print('guardar').then( ferre.emptyBag ).then( () => tabs(pid) ); }
 		    else { tabs(pid); }
 		};
 

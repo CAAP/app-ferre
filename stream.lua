@@ -132,7 +132,7 @@ local function tickets( conn )
     local vwname = 'caja'
     local schema = 'uid, id_tag, clave, precio, qty INTEGER, rea INTEGER, totalCents INTEGER'
     local keys = { uid=1, id_tag=2, clave=3, precio=4, qty=5, rea=6, totalCents=7 }
-    local stmt = string.format('AS SELECT uid, SUM(qty) count, SUM(totalCents) totalCents, id_tag FROM %q WHERE uid LIKE %q ORDER BY uid DESC GROUP BY uid', tbname, today..'%')
+    local stmt = string.format('AS SELECT uid, SUM(qty) count, SUM(totalCents) totalCents, id_tag FROM %q WHERE uid LIKE %q GROUP BY uid', tbname, today..'%')
     local query = 'SELECT * FROM ' .. vwname
 
     conn.exec( string.format(sql.newTable, tbname, schema) )

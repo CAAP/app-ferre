@@ -50,6 +50,7 @@
 		    if (k == 'desc') { ie.size = 40; }
 		    if (k == 'clave') { ie.disabled = true; }
 		    row.insertCell().appendChild( ie );
+//		    if (k.startsWith('prc') { row,insertCell().appendChild( document.createElement() ); }
 		    fields.add( k );
 		}
 
@@ -78,7 +79,9 @@
 		    }
 		};
 
-		function ppties(o) { return Object.keys(o).map( k => { return (k + '=' + encodeURIComponent(o[k])); } ).join('&'); }
+		function ppties(o) { return Object.keys(o).map( k => { return (k + '=' + o[k]); } ).join('&'); }
+
+		function encPpties(o) { return Object.keys(o).map( k => { return (k + '=' + encodeURIComponent(o[k])); } ).join('&'); }
 
 		admin.actualizar = function(event) {
 		    let ele = tabla.querySelector("input[name=costo]");
@@ -103,7 +106,7 @@
 
 		admin.emptyCambios = () => { cambios = new Map(); records = new Map(); clearTable(lista); ups.style.visibility = 'hidden'; };
 
-		function update(o) { return  XHR.get(document.location.origin + ':8081/update?' + ppties(o) ) }
+		function update(o) { return  XHR.get(document.location.origin + ':8081/update?' + encPpties(o) ) }
 
 		admin.enviar = function() {
 		    if (window.confirm('Estas seguro de realizar los cambios?'))
