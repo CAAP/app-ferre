@@ -115,7 +115,7 @@
 
 	    TICKET.plain = o => VARS.map( v => { return (v + '+' + o[v] || '') } ).join('+');
 
-	    TICKET.eplain = o => EVARS.map( v => { return (v + '+' + encodeURI(o[v] || '')) } );
+	    TICKET.eplain = o => EVARS.map( v => { return (v + '+' + (o[v] || 0)).replace('#', 'No').replace('=', ' ').replace('&', ' ').replace('%', 'CT') } ).join('&');
 
 //.replace('#', 'No').replace('=', ' ').replace('&', ' ').replace('%', 'CT') } ).join('+');
 

@@ -78,7 +78,12 @@
 		    }
 		};
 
-		function ppties(o) { return Object.keys(o).map( k => { return (k + '=' + o[k]); } ).join('&'); }
+		function ppties(o) { return Object.keys(o).map( k => { return (k + '=' + encodeURIComponent(o[k])); } ).join('&'); }
+
+		admin.actualizar = function(event) {
+		    let ele = tabla.querySelector("input[name=costo]");
+		    return admin.anUpdate({target: {name: 'costo', value: ele.value} });
+		};
 
 		admin.anUpdate = function(e) {
 		    let clave = udiag.returnValue;

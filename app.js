@@ -5,7 +5,7 @@
 	window.onload = function() {
 	    const DBs = [ DATA ]; // , TICKET
 
-//	    ferre.reloadDB = function reloadDB() { return IDB.clearDB(DATA).then( () => IDB.populateDB( DATA ) ); };
+	    ferre.reloadDB = function reloadDB() { return IDB.clearDB(DATA).then( () => IDB.populateDB( DATA ) ); };
 
 	    // BROWSE
 
@@ -67,11 +67,12 @@
 	    ferre.emptyBag = TICKET.empty;
 
 	    ferre.print = function(a) {
+		if (TICKET.items.size == 0) {return;}
 		const id_tag = TICKET.TAGS[a] || TICKET.TAGS.none;
 //		let rfc = ''; if (a == 'facturar') { rfc = arg1; };
 		const pid = Number(document.getElementById('personas').dataset.id);
 
-		let objs = ['tag='+a, 'person='+PEOPLE.id[pid]||'NAP', 'id_tag='+id_tag, 'pid='+pid, 'count='+TICKET.items.size]; // , 'rfc='+rfc
+		let objs = ['tag='+a, 'person='+(PEOPLE.id[pid] || 'NAP'),'id_tag='+id_tag, 'pid='+pid, 'count='+TICKET.items.size]; // , 'rfc='+rfc
 
 		TICKET.items.forEach( item => objs.push( 'args=' + TICKET.plain(item) ) );
 
@@ -84,6 +85,7 @@
 		    const persona = PEOPLE.id[pid] || 'NAP';
 		    let objs = ['tag='+a, 'total='+total, 'person='+persona];
 		    TICKET.items.forEach( item => objs.push( 'args=' + TICKET.eplain(item) ) );
+		    console.log(objs);
 		    return XHR.get('/caja/print.lua?' + objs.join('&'));
 		}
 

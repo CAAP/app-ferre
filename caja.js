@@ -138,10 +138,10 @@
 
 	    caja.print = function(a) {
 		const tag = a || 'ticket';
-		const week = document.getElementById('tabla-caja').dataset.week; // XXX cajita?
+//		const week = document.getElementById('tabla-caja').dataset.week; // XXX cajita?
 		const total = document.getElementById( TICKET.ttotalID ).textContent;
 		let objs = ['tag='+tag, 'total='+total];
-		TICKET.items.forEach( item => objs.push( 'args=' + TICKET.eplain(item) ) );
+		TICKET.items.forEach( item => objs.push( 'args=' + TICKET.plain(item) ) );
 //		return XHR.get(document.location.origin+':5555/print?'+objs.join('&'));
 		return SQL.print( objs ).then( caja.emptyBag );
 	    };

@@ -132,7 +132,7 @@ local function tickets( conn )
     local vwname = 'caja'
     local schema = 'uid, id_tag, clave, precio, qty INTEGER, rea INTEGER, totalCents INTEGER'
     local keys = { uid=1, id_tag=2, clave=3, precio=4, qty=5, rea=6, totalCents=7 }
-    local stmt = string.format('AS SELECT uid, SUM(qty) count, SUM(totalCents) totalCents, id_tag FROM %q WHERE uid LIKE %q ORDER BY uid DESC GROUP BY uid', tbname, today..'%')
+    local stmt = string.format('AS SELECT uid, SUM(qty) count, SUM(totalCents) totalCents, id_tag FROM %q WHERE uid LIKE %q GROUP BY uid', tbname, today..'%')
     local query = 'SELECT * FROM ' .. vwname
 
     conn.exec( string.format(sql.newTable, tbname, schema) )
@@ -157,8 +157,7 @@ local function tickets( conn )
 	return t
     end
     local tkt = require'ferre.ticket'
---    local lpr = require'ferre.lpr'
-    local lpr = require'ferre.bixolon'
+    local lpr = require'ferre.lpr'
     local fs = require'carlos.files'
     local function forPrinting( w )
 	w.total = string.format( '%.2f', w.totalCents / 100 )
@@ -174,7 +173,7 @@ local function tickets( conn )
 	fd.reduce( w.args, fd.map( collect ), ids( uid, w.id_tag ), sql.into( tbname ), conn )
 	local a = fd.first( conn.query(string.format('%s WHERE uid = %q ', query, uid)), function(x) return x end )
 	w.uid = uid; w.totalCents = a.totalCents; w.count = a.count
-	forPrinting( w )
+--	forPrinting( w )
 	return w
     end
 
