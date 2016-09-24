@@ -12,6 +12,7 @@
 
 	    TICKET.items = new Map();
 
+/*
 	    TICKET.load = function() {
 		let items = TICKET.items;
 		if (items.size > 0) {
@@ -24,6 +25,7 @@
 		    TICKET.total( total );
 		}
 	    };
+*/
 
 	    function tocents(x) { return (x / 100).toFixed(2); };
 
@@ -92,6 +94,7 @@
 		let row = TICKET.bag.insertRow();
 		row.title = q.desc.substr(0,3); // TRYING OUT LOCATION XXX
 		row.dataset.clave = q.clave;
+		row.insertCell().appendChild( document.createTextNode( q.clave ) );
 		row.insertCell().appendChild( inputE( [['type', 'number'], ['size', 2], ['min', 0], ['name', 'qty'], ['value', q.qty]] ) ).focus();
 		let desc = row.insertCell();
 		if (q.faltante) { desc.classList.add('faltante'); }
@@ -115,9 +118,7 @@
 
 	    TICKET.plain = o => VARS.map( v => { return (v + '+' + o[v] || '') } ).join('+');
 
-	    TICKET.eplain = o => EVARS.map( v => { return (v + '+' + (o[v] || 0)).replace('#', 'No').replace('=', ' ').replace('&', ' ').replace('%', 'CT') } ).join('&');
-
-//.replace('#', 'No').replace('=', ' ').replace('&', ' ').replace('%', 'CT') } ).join('+');
+//	    TICKET.eplain = o => EVARS.map( v => { return (v + '+' + (o[v] || 0)).replace('#', 'No').replace('=', ' ').replace('&', ' ').replace('%', 'CT') } ).join('+');
 
 	    TICKET.update = function(e) {
 		let tr = e.target.parentElement.parentElement;
@@ -129,7 +130,7 @@
 
 		e.target.value = v;
 
-		console.log( clave + ' - ' + k + ': ' + v);
+//		console.log( clave + ' - ' + k + ': ' + v);
 
 		if (items.has( clave )) {
 		    let q = items.get( clave );
@@ -142,14 +143,14 @@
 	    };
 
 	    TICKET.add = function(w) {
-		(TICKET.myticket.classList.contains('visible') || toggleTicket());
+		TICKET.myticket.style.visibility = 'visible';
 		TICKET.items.set( w.clave, w );
 		displayItem( w );
 		bagTotal();
 	    };
 
 	    TICKET.show = function(w) {
-		(TICKET.myticket.classList.contains('visible') || toggleTicket());
+		TICKET.myticket.style.visibility = 'visible';
 		TICKET.items.set( w.clave, w );
 		showItem( w );
 		bagTotal();
@@ -159,10 +160,11 @@
 		let clave = asnum( tr.dataset.clave );
 		TICKET.items.delete( clave );
 		TICKET.bag.removeChild( tr );
-		if (!TICKET.bag.hasChildNodes()) { toggleTicket(); } else { bagTotal(); }
+		if (!TICKET.bag.hasChildNodes()) { TICKET.empty(); } else { bagTotal(); } // TICKET.myticket.style.visibility = 'hidden';
 	    };
 
-	    TICKET.empty = function(e) { TICKET.items = new Map(); clearTable( TICKET.bag ); toggleTicket(); };
+	    TICKET.empty = function(e) { TICKET.items.clear(); clearTable( TICKET.bag ); TICKET.myticket.style.visibility = 'hidden'; };
+//	    TICKET.empty = function(e) { TICKET.items = new Map(); clearTable( TICKET.bag ); toggleTicket(); };
 
 	    })();
 

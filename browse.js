@@ -14,15 +14,6 @@
 
 	    function clearTable(tb) { while (tb.firstChild) { tb.removeChild( tb.firstChild ); } }
 
-
-// MOVE OUT like in SCROLL from MOUSE
-
-	    function addTouch(row) {
-		let touches = new Map();
-		row.addEventListener('touchstart', e => touches.add(e.identifier, e.clientY), false);
-		row.addEventListener('touchmove', e => {let delta = e.clientY - touches.get(e.identifier); touches.set(e.identifier, e.clientY);}, false);
-	    }
-
 	    function newItem(a, j) {
 		let row = BROWSE.lis.insertRow(j);
 		row.title = a.desc.substr(0,3); // TRYING OUT LOCATION XXX
@@ -35,9 +26,13 @@
 		let desc = row.insertCell(); // class 'desc' necessary for scrolling
 		if (a.faltante) { desc.classList.add('faltante'); }
 		desc.classList.add('desc'); desc.appendChild( document.createTextNode( a.desc ) );
+		let precios = a.precios;
+		Object.keys( precios ).forEach( k => {
 		let pesos = row.insertCell();
-		pesos.classList.add('pesos'); pesos.appendChild( document.createTextNode( a.precios.precio1 ) );
-//		row.insertCell().appendChild( document.createTextNode( a.u1 ) );
+		pesos.classList.add('total'); pesos.appendChild( document.createTextNode( precios[k] ) ); // a.precios.precio1
+		if (k == 'precio1') { pesos.classList.add(k); }
+		} );
+//		pesos.classList.add('pesos'); pesos.appendChild( document.createTextNode( Object.keys(precios).forEach() ) );
 	    }
 
 	    function browsing(j, M) {

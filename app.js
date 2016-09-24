@@ -37,6 +37,8 @@
 		function uptoCents(q) { return Math.round( 100 * q[q.precio] * q.qty * (1-q.rea/100) ); };
 
 		ferre.menu = e => {
+		    const slc = document.getElementById('personas');
+		    if (slc.value == 0) { return; }
 //		    if (e.target.parentElement.querySelector('.faltante'))
 //			return;
 		    clave = asnum(e.target.parentElement.dataset.clave);
@@ -76,19 +78,6 @@
 
 		TICKET.items.forEach( item => objs.push( 'args=' + TICKET.plain(item) ) );
 
-		function tocents(x) { return (x / 100).toFixed(2); };
-
-		function doprint() {
-		    if (a == 'guardar') { return true; }
-		    TICKET.items.forEach( item => {item.subTotal = tocents(item.totalCents); item.prc = item.precios[item.precio]; } );
-		    const total = document.getElementById( TICKET.ttotalID ).textContent;
-		    const persona = PEOPLE.id[pid] || 'NAP';
-		    let objs = ['tag='+a, 'total='+total, 'person='+persona];
-		    TICKET.items.forEach( item => objs.push( 'args=' + TICKET.eplain(item) ) );
-		    console.log(objs);
-		    return XHR.get('/caja/print.lua?' + objs.join('&'));
-		}
-
 		return SQL.print( objs ); //.then( ferre.emptyBag ); //then( doprint ).then( ferre.emptyBag )
 	    };
 
@@ -105,7 +94,7 @@
 
 	    (function() {
 		const slc = document.getElementById('personas');
-		slc.dataset.id = 1;
+		slc.dataset.id = 0;
 		const tag = document.getElementById('tag');
 
 		function asnum(s) { let n = Number(s); return Number.isNaN(n) ? s : n; };
@@ -134,6 +123,18 @@
 		    if (TICKET.items.size > 0) { ferre.print('guardar').then( ferre.emptyBag ).then( () => tabs(pid) ); }
 		    else { tabs(pid); }
 		};
+
+		(function nobody(){
+		    let opt = document.createElement('option');
+		    opt.value = 0;
+		    opt.label = '';
+		    opt.selected = true;
+		    slc.appendChild(opt);
+		})();
+
+	    (function saveme() {
+		document.addEventListener('keyup', e => {if (e.key ? (e.key == 116) : ('F5' ==  e.which)) { slc.value = 0; ferre.tab(); } } )
+	    })();
 
 		PEOPLE.load().then( a => a.forEach( p => { let opt = document.createElement('option'); opt.value = p.id; opt.appendChild(document.createTextNode(p.nombre)); slc.appendChild(opt); } ) );
 

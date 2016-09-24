@@ -15,7 +15,7 @@
 
 <body lang="es-MX">
 
-    <header> <label id="notifications"></label> </header>
+    <header> <label id="notifications"></label> <button onclick="admin.nuevo()">Nuevo</button> </header>
 
 	<section id="buscar">
 
@@ -51,7 +51,7 @@
 	</table>
 	</section>
 
-    <section><dialog id="dialogo-cambios"><table><caption>PRODUCTO</caption><thead><th></th><th></th><th></th></thead><tbody id="tabla-cambios" onchange="admin.anUpdate(event)"></tbody></table><button align="right" name="cerrar" onclick="admin.cerrar(event)">Cerrar</button>&emsp;&emsp;<button onclick="admin.actualizar(event)">Actualizar</button></dialog></section>
+    <section><dialog id="dialogo-cambios"><table><caption>PRODUCTO</caption><thead><th></th><th></th><th></th><th></th></thead><tbody id="tabla-cambios" onchange="admin.anUpdate(event)"></tbody></table><button align="right" name="cerrar" onclick="admin.cerrar(event)">Cerrar</button>&emsp;&emsp;<button onclick="admin.actualizar(event)">Actualizar</button></dialog></section>
 
     <footer> <label id="copyright"></label> </footer>
 

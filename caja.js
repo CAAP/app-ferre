@@ -120,7 +120,6 @@
 		    mytotal.value = ttotal.textContent;
 		    paga.showModal();
 		};
-
 	    })();
 
 	    // TICKET
@@ -129,23 +128,13 @@
 	    TICKET.myticket = document.getElementById( TICKET.myticketID );
 	    TICKET.timbre = TICKET.myticket.querySelector('button[name="timbrar"]');
 	    TICKET.bagRFC = false;
+	    TICKET.bagUID = new Set();
 
 	    caja.updateItem = TICKET.update;
 
-	    caja.clickItem = e => TICKET.remove( e.target.parentElement );
+//	    caja.clickItem = e => TICKET.remove( e.target.parentElement );
 
-	    caja.emptyBag = () => { TICKET.empty(); TICKET.bagRFC = false; TICKET.timbre.disabled = true; caja.cleanCaja(); }
-
-	    caja.print = function(a) {
-		const tag = a || 'ticket';
-//		const week = document.getElementById('tabla-caja').dataset.week; // XXX cajita?
-		const total = document.getElementById( TICKET.ttotalID ).textContent;
-		let objs = ['tag='+tag, 'total='+total];
-		TICKET.items.forEach( item => objs.push( 'args=' + TICKET.plain(item) ) );
-//		return XHR.get(document.location.origin+':5555/print?'+objs.join('&'));
-		return SQL.print( objs ).then( caja.emptyBag );
-	    };
-
+	    caja.emptyBag = () => { TICKET.empty(); TICKET.bagUID.clear(); TICKET.bagRFC = false; TICKET.timbre.disabled = true; caja.cleanCaja(); }
 
 	    // LOAD DBs
  	    if (IDB.indexedDB) { DBs.forEach( IDB.loadDB ); } else { alert("IDBIndexed not available."); }
@@ -172,20 +161,30 @@
 		function data( o ) { return IDB.readDB( DATA ).get( asnum(o.clave) ).then( w => Object.assign( o, w ) ).then( TICKET.show ).then( () => { mybag.lastChild.dataset.uid = o.uid } ) }
 
 		function add2bag( uid, rfc ) {
-		    if (!TICKET.bagRFC && (rfc != "undefined") && (rfc.length > 0) ) { TICKET.bagRFC = rfc; TICKET.timbre.disabled = false; }
+		    TICKET.bagUID.add( uid );
+//		    if (!TICKET.bagRFC && (rfc != "undefined") && (rfc.length > 0) ) { TICKET.bagRFC = rfc; TICKET.timbre.disabled = false; }
 		    SQL.get( { uid: uid, week: cajita.dataset.week } )
 			.then( JSON.parse )
-			.then( objs => objs.reduce( (seq, o) => seq.then( () => data(o) ), Promise.resolve() ) );
+			.then( objs => Promise.all( objs.map( data ) ) );
 		}
 
-//query selector look for property 'uid'
-		let removeItem = uid => Array.from(mybag.querySelectorAll('tr[data-uid="' + uid + '"]')).reduce( (seq, tr) => seq.then( () => TICKET.remove(tr) ), Promise.resolve() );
+		caja.faltantes = () => XHR.get('/caja/faltantes.lua')
+		    .then( JSON.parse )
+		    .then( objs => objs.map( o => Object.assign(o, {rea:0, qty:0, precio:'precio1', totalCents:o.costol}) ) )
+		    .then( objs => Promise.all( objs.map( data ) ) );
 
+		const ttotal = document.getElementById( TICKET.ttotalID );
+
+		caja.print = () => Promise.all(Array.from(TICKET.bagUID).map( encodeURIComponent ).map( k => SQL.print({week: cajita.dataset.week, total: ttotal.textContent, uid: k, tag: '', person: ''})));
+
+		let removeItem = uid => Promise.all( Array.from(mybag.querySelectorAll('tr[data-uid="' + uid + '"]')).map( TICKET.remove ) );
+
+// XXX check may be innecesary to look for pid & time since it comes from feed
 		function add2caja(w) {
 		    let row = cajita.insertRow(0);
 
 		    let ie = document.createElement('input');
-		    ie.type = 'checkbox'; ie.value = w.uid; ie.name = '';// w.rfc;
+		    ie.type = 'checkbox'; ie.value = w.uid; ie.name = w.rfc || '';
 		    ie.addEventListener('change', e => { if (e.target.checked) add2bag(e.target.value, e.target.name); else removeItem(e.target.value); } );
 		    row.insertCell().appendChild(ie);
 
@@ -215,7 +214,7 @@
 		})();
 
 		caja.cleanCaja = function() {
-		    Array.from(cajita.querySelectorAll("input:checked")).reduce( (_, ic) => { ic.checked = false; }, {} );
+		    Array.from(cajita.querySelectorAll("input:checked")).forEach(ic => {ic.checked = false }); //.reduce( (_, ic) => { ic.checked = false; }, {} );
 		};
 
 	    })();

@@ -37,20 +37,33 @@
 		let fields = new Set();
 		let cambios = new Map();
 		let records = new Map();
+		let costos = new Set(['costo', 'impuesto', 'descuento']);
 
 //		let add = document.location.origin + ':8081';
 
+		function outputs(row, k) {
+		    let ie = document.createElement('input');
+		    ie.type = 'text'; ie.size = 5; ie.name = k; ie.disabled = true;
+		    row.insertCell().appendChild( ie );
+		    fields.add( k );
+		    return ie;
+		}
+
 		function addfield( k ) {
+		    if (k.startsWith('u')) { return; }
 		    let row = tabla.insertRow();
 		    // label
-		    row.insertCell().appendChild( document.createTextNode(k) );
+		    row.insertCell().appendChild( document.createTextNode(k.replace('prc', 'precio')) );
 		    // input
+		    let cell = row.insertCell();
 		    let ie = document.createElement('input');
 		    ie.type = 'text'; ie.size = 5; ie.name = k;
-		    if (k == 'desc') { ie.size = 40; }
+		    if (k == 'desc') { ie.size = 40; cell.colSpan = 3; }
 		    if (k == 'clave') { ie.disabled = true; }
-		    row.insertCell().appendChild( ie );
-//		    if (k.startsWith('prc') { row,insertCell().appendChild( document.createElement() ); }
+		    if (k.startsWith('prc')) { outputs(row, k.replace('prc', 'u')).disabled = false; outputs(row, k.replace('prc', 'precio')); }
+		    if (k == 'costo') { outputs(row, 'costol'); }
+		    if (costos.has(k)) { ie.type = 'number'; }
+		    cell.appendChild( ie );
 		    fields.add( k );
 		}
 
@@ -63,19 +76,27 @@
 		}
 
 		function setfields( o ) {
-		    fields.forEach( k => {tabla.querySelector('input[name='+k+']').value = o[k] || '' } );
+		    let costol = o.costol
+		    let a = Object.assign({}, o, {costol: (costol/1e4).toFixed(2)});
+		    Array.from(fields).filter( k => k.startsWith('prc') ).forEach( k => {a[k.replace('prc', 'precio')] = (a[k]*costol/1e4).toFixed(2)} );
+		    fields.forEach( k => {tabla.querySelector('input[name='+k+']').value = a[k] || '' } );
 		    udiag.returnValue = o.clave;
-		    udiag.showModal();
 		}
+
+		admin.nuevo = function() {
+		    return SQL.get({desc: 'VVV'})
+			.then( JSON.parse )
+			.then( a => { records.set(a[0].clave, a[0]); setfields(a[0]); udiag.showModal(); } );
+		};
 
 		admin.getRecord = function(e) {
 		    let clave = e.target.parentElement.dataset.clave;
 		    if (records.has(clave))
-			setfields( cambios.has(clave) ? Object.assign({}, records.get(clave), cambios.get(clave)) : records.get(clave) );
+			{ setfields( cambios.has(clave) ? Object.assign({}, records.get(clave), cambios.get(clave)) : records.get(clave) ); udiag.showModal(); }
 		    else {
 			SQL.get({clave: clave})
 			    .then( JSON.parse )
-			    .then( a => { records.set(clave, a[0]); setfields(a[0]); } );
+			    .then( a => { records.set(clave, a[0]); setfields(a[0]); udiag.showModal(); } );
 		    }
 		};
 
@@ -87,6 +108,22 @@
 		    let ele = tabla.querySelector("input[name=costo]");
 		    return admin.anUpdate({target: {name: 'costo', value: ele.value} });
 		};
+
+		admin.clonar = function(event) {
+		};
+
+		function compute(k, clave) {
+		    if (costos.has(k) || k.startsWith('prc')) {
+			let w = Object.assign({}, records.get(clave), cambios.get(clave));
+			if (costos.has(k)) {
+			    w.costol = w.costo*(100+(Number(w.impuesto)||0))*(100-(Number(w.descuento)||0));
+			    let a = records.get(clave);
+			    a.costol = w.costol;
+			    records.set( clave, a );
+			}
+		        setfields( w );
+		    }
+		}
 
 		admin.anUpdate = function(e) {
 		    let clave = udiag.returnValue;
@@ -100,11 +137,12 @@
 			cambios.set( clave, a );
 			addupdate(clave, e.target.name+'='+e.target.value)
 		    }
+		    compute(e.target.name, clave);
 		};
 
 		function clearTable(tb) { while (tb.firstChild) { tb.removeChild( tb.firstChild ); } }; // XXX unify
 
-		admin.emptyCambios = () => { cambios = new Map(); records = new Map(); clearTable(lista); ups.style.visibility = 'hidden'; };
+		admin.emptyCambios = () => { cambios.clear(); records.clear(); clearTable(lista); ups.style.visibility = 'hidden'; };
 
 		function update(o) { return  XHR.get(document.location.origin + ':8081/update?' + encPpties(o) ) }
 

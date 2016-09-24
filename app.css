@@ -11,6 +11,12 @@ button[name=cerrar] { color: white; background-color: red ; }
 
 .entrada { color: white; background-color: blue;}
 
+.encontrado { background-color: #aaeedd; }
+
+.precio1 { background-color:#e6ccff; }
+
+.amarillo tr:hover > td { background-color: #ffff97; }
+
 dialog { font: 100% arial; }
 
 .activo {
@@ -45,10 +51,6 @@ dialog { font: 100% arial; }
     border-bottom: 2px solid black;
     border-top: 2px solid black;
 }
-
-.amarillo tr:hover { background-color: #ffff99; }
-
-.encontrado { background-color: #aaeedd; }
 
 .basura { cursor: url(bin-icon.png), default; }
 

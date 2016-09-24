@@ -18,7 +18,7 @@ local MM = {caja={}, tickets={}, tabs={}, entradas={}, cambios={}, recording={},
 
 local function safe(f)
     local ok,err = pcall(f)
-    if ok then return ok else print('Error: \n', err); return false end
+    if not ok then print('Error: \n', err); return false end
 end
 
 local function asJSON(w) return string.format('data: %s', hd.asJSON(w)) end
@@ -48,19 +48,20 @@ local function cambios()
     local conn = sql.connect( fdbname )
     print('Connected to DB', fdbname, '\n')
 
-    local costol = 'UPDATE %q SET costol = costo*(100+impuesto)*(100-descuento) %s'
+-- IT DOESN'T PRINT HERE
+    function MM.tickets.addDescPrc( w )
+	local j = w.precio:sub(-1)
+	local qry = string.format('SELECT desc, precio%d ||"/"|| IFNULL(u%d,"?") prc FROM precios WHERE clave LIKE %q', j, j, w.clave)
+	local a = fd.first( conn.query(qry), function(x) return x end )
+	w.desc = a.desc; w.prc = a.prc;
+	return w
+    end
+
+    local costol = 'UPDATE %q SET costol = costo*(100+impuesto)*(100-descuento), fecha = %q %s'
 
     local function reformat(v, k)
 	local vv = (k == 'desc' or k == 'fecha' or k:match'^u') and string.format("'%s'", v) or (math.tointeger(v) or tonumber(v) or 0)
 	return k .. ' = ' .. vv
-    end
-
-    function MM.tickets.addDescPrc( w )
-	local j = w.precio:sub(-1)
-	local qry = string.format('SELECT desc, precio%d ||"/"|| u%d prc FROM precios WHERE clave LIKE %q', j, j, w.clave)
-	local a = fd.first( conn.query(qry), function(x) return x end )
-	w.desc = a.desc; w.prc = a.prc;
-	return w
     end
 
     function MM.cambios.add( w )
@@ -69,27 +70,32 @@ local function cambios()
 	local vwname = w.vwname
 	local clause = string.format('WHERE clave LIKE %q', clave)
 
-	w.id_tag = nil; w.args = nil; w.clave = nil; w.tbname = nil; w.vwname = nil; w.fecha = hoy 
+	w.id_tag = nil; w.args = nil; w.clave = nil; w.tbname = nil; w.vwname = nil;
 
 	local ret = fd.reduce( fd.keys(w), fd.map( reformat ), fd.into, {} )
 	local qry = string.format('UPDATE %q SET %s %s', tbname, table.concat(ret, ', '), clause)
 	assert( conn.exec( qry ), 'Error executing: ' .. qry )
 
 	if w.costo or w.impuesto or w.descuento then
-	    qry = string.format(costol, tbname, clause)
+	    w.costo = nil; w.impuesto = nil; w.descuento = nil; w.fecha = hoy;
+	    qry = string.format(costol, tbname, w.fecha, clause)
 	    assert( conn.exec( qry ), 'Error executing: ' .. qry )
+	    qry = string.format('SELECT * FROM %q %s', vwname, clause)
+	    ret = fd.first( conn.query( qry ), function(x) return x end )
+	    fd.reduce( fd.keys(ret), fd.filter(function(x,k) return k:match'^precio' end), fd.merge, w )
 	end
 
 	qry = string.format('UPDATE cambios SET version = version + 1, fecha = %q %s', hoy, clause)
 	assert( conn.exec( qry ), 'Error executing: ' .. qry )
 
-	clause = string.format('WHERE cambios.clave = %q AND cambios.clave = %s.clave', clave, vwname)
-	qry = string.format('SELECT * FROM %q, cambios %s', vwname, clause)
-	return fd.first( conn.query( qry ), function(x) return x end )
+	return w
+--	clause = string.format('WHERE cambios.clave = %q AND cambios.clave = %s.clave', clave, vwname)
+--	qry = string.format('SELECT * FROM %q, cambios %s', vwname, clause)
+--	return fd.first( conn.query( qry ), function(x) return x end )
     end
 
     function MM.cambios.sse( w )
-	local clause = 'WHERE version > 0 GROUP BY clave' -- XXX AND fecha LIKE %q', hoy)
+	local clause = 'WHERE version > 0' -- XXX AND fecha LIKE %q GROUP BY clave', hoy)
 	local qry = string.format('SELECT clave FROM cambios %s', clause)
 	local qry2 = string.format('SELECT * FROM faltantes, precios WHERE precios.clave = faltantes.clave AND precios.clave IN (%s)', qry)
 
@@ -157,9 +163,7 @@ local function tickets( conn )
 	return t
     end
     local tkt = require'ferre.ticket'
---    local lpr = require'ferre.lpr'
     local lpr = require'ferre.bixolon'
-    local fs = require'carlos.files'
     local function forPrinting( w )
 	w.total = string.format( '%.2f', w.totalCents / 100 )
 	w.fecha = w.uid:match'([^P]+)P'
@@ -175,6 +179,7 @@ local function tickets( conn )
 	local a = fd.first( conn.query(string.format('%s WHERE uid = %q ', query, uid)), function(x) return x end )
 	w.uid = uid; w.totalCents = a.totalCents; w.count = a.count
 	forPrinting( w )
+	MM.tabs.remove( w.pid )
 	return w
     end
 
@@ -194,6 +199,7 @@ local function tabs( conn )
     local query = 'SELECT * FROM ' .. tbname
 
     conn.exec( string.format(sql.newTable, tbname, schema) )
+    conn.exec( string.format('DELETE FROM %q', tbname ) )
 
     function MM.tabs.add( w, q )
 	local j = q:find'args'
@@ -201,6 +207,10 @@ local function tabs( conn )
 	local vals = string.format('%d, %q', w.pid, w.query)
 	conn.exec( string.format("INSERT INTO %q VALUES( %s )", tbname, vals) )
 	return w
+    end
+
+    function MM.tabs.remove( pid )
+	conn.exec( string.format("DELETE FROM %q WHERE pid = %d", tbname, pid) )
     end
 
     function MM.tabs.sse()
