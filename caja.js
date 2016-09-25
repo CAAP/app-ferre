@@ -82,14 +82,14 @@
 
 		function fillme(o, letra) {
 		    let prc = o.precios[o.precio].split(' / ');
-		    let ret = ['"XXXX"', hoy, '"XXXX"', '"."', '"."', '"."', o.qty, '"'+o.desc+'"', '"'+prc[0]+'"', prc[1], (o.totalCents/100).toFixed(2), '"SUBTOTAL"', tbruto.textContent,'"IVA"', tiva.textContent, '"TOTAL"', ttotal.textContent, '"'+letra+'"'];
+		    let ret = ['"XXXX"', hoy, '"XXXX"', '"."', '"."', '"."', o.qty, '"'+o.desc+'"', '"'+prc[1]+'"', prc[0], (o.totalCents/100).toFixed(2), '"SUBTOTAL"', tbruto.textContent,'"IVA"', tiva.textContent, '"TOTAL"', ttotal.textContent, '"'+letra.replace('\n','')+'"'];
 		    return ret.join('\t');
 		}
 
 		function temporal(s) {
 		    let ret = [];
 		    TICKET.items.forEach(item => ret.push( fillme(item, s) ));
-		    let b = new Blob([ret.join('')], {type: 'text/html'});
+		    let b = new Blob([ret.join('\n')], {type: 'text/html'});
 		    let a = document.createElement('a');
 		    let url = URL.createObjectURL(b);
 		    a.href = url;

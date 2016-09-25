@@ -87,6 +87,7 @@ local function cambios()
 
 	qry = string.format('UPDATE cambios SET version = version + 1, fecha = %q %s', hoy, clause)
 	assert( conn.exec( qry ), 'Error executing: ' .. qry )
+	w.clave = clave
 
 	return w
 --	clause = string.format('WHERE cambios.clave = %q AND cambios.clave = %s.clave', clave, vwname)
@@ -271,6 +272,7 @@ local function recording()
 	if tag == 'u' then local m = MM.cambios.add( w ); m.event = m.faltante and 'faltante' or 'update'; return m end
 	if tag == 'g' then MM.tabs.add( w, q ); w.event = 'tabs'; return w end
 	if tag == 'h' then  local m = MM.entradas.add( w ); m.event = 'entradas'; return m end
+	if tag == 'd' then w.ret = { 'event: delete\ndata: '.. w.pid ..'\n\n' }; w.event = 'none' w.data = ''; return w end
     -- printing: 'a', 'b', 'c'
 	w.ret = { 'event: delete\ndata: '.. w.pid ..'\n\n' }
 	MM.tickets.add( w ); w.event = 'feed'; return w
