@@ -80,22 +80,25 @@
 		const tbruto = document.getElementById( TICKET.tbrutoID );
 		const ttotal = document.getElementById( TICKET.ttotalID );
 
-		function fillme(o) {
-		    let ret = ['"XXXX"', hoy, '"XXXX"', '"."', '"."', '"."', o.qty, '"'+o.desc+'"', o.precios[o.precio],(o.totalCents/100).toFixed(2), '"SUBTOTAL"', tbruto.textContent,'"IVA"', tiva.textContent, "TOTAL", ttotal.textContent, o.letra];
+		function fillme(o, letra) {
+		    let prc = o.precios[o.precio].split(' / ');
+		    let ret = ['"XXXX"', hoy, '"XXXX"', '"."', '"."', '"."', o.qty, '"'+o.desc+'"', '"'+prc[0]+'"', prc[1], (o.totalCents/100).toFixed(2), '"SUBTOTAL"', tbruto.textContent,'"IVA"', tiva.textContent, '"TOTAL"', ttotal.textContent, '"'+letra+'"'];
 		    return ret.join('\t');
 		}
 
-		caja.timbrar = function() {
+		function temporal(s) {
 		    let ret = [];
-		    TICKET.items.forEach(item => ret.push( fillme(item) ));
-		    let b = new Blob([ret.join('\n')], {type: 'text/html'});
+		    TICKET.items.forEach(item => ret.push( fillme(item, s) ));
+		    let b = new Blob([ret.join('')], {type: 'text/html'});
 		    let a = document.createElement('a');
 		    let url = URL.createObjectURL(b);
 		    a.href = url;
 		    a.download = 'facturar.tsv'
 		    a.click();
 		    URL.revokeObjectURL(url);
-		};
+		}
+
+		caja.timbrar = () => XHR.get('/caja/pesos.lua?pesos='+ttotal.textContent).then( temporal )
 
 		caja.timbrarORIG = function() {
 		    let rfc = TICKET.bagRFC;

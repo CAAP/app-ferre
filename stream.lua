@@ -260,8 +260,6 @@ local function streaming()
     return true
 end
 
-local letra = require'ferre.enpesos'
-
 -- Clients communicate to server using port 8081. id_tag help to sort out data
 local function recording()
     local srv = assert( socket.bind('*', 8081) )
@@ -274,7 +272,6 @@ local function recording()
 	if tag == 'g' then MM.tabs.add( w, q ); w.event = 'tabs'; return w end
 	if tag == 'h' then  local m = MM.entradas.add( w ); m.event = 'entradas'; return m end
     -- printing: 'a', 'b', 'c'
-	if tag == 'c' then w.letra = letra(string.format('%.2f',w.totalCents/100)) end
 	w.ret = { 'event: delete\ndata: '.. w.pid ..'\n\n' }
 	MM.tickets.add( w ); w.event = 'feed'; return w
     end
