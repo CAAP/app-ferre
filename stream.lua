@@ -95,7 +95,7 @@ local function cambios()
     end
 
     function MM.cambios.sse( w )
-	local clause = 'WHERE version > 0' -- XXX AND fecha LIKE %q GROUP BY clave', hoy)
+	local clause = string.format('WHERE version > 0 AND fecha LIKE %q', hoy) -- XXX
 	local qry = string.format('SELECT clave FROM cambios %s', clause)
 	local qry2 = string.format('SELECT * FROM faltantes, precios WHERE precios.clave = faltantes.clave AND precios.clave IN (%s)', qry)
 
@@ -260,6 +260,8 @@ local function streaming()
     return true
 end
 
+local letra = require'ferre.enpesos'
+
 -- Clients communicate to server using port 8081. id_tag help to sort out data
 local function recording()
     local srv = assert( socket.bind('*', 8081) )
@@ -272,6 +274,7 @@ local function recording()
 	if tag == 'g' then MM.tabs.add( w, q ); w.event = 'tabs'; return w end
 	if tag == 'h' then  local m = MM.entradas.add( w ); m.event = 'entradas'; return m end
     -- printing: 'a', 'b', 'c'
+	if tag == 'c' then w.letra = letra(string.format('%.2f',w.totalCents/100)) end
 	w.ret = { 'event: delete\ndata: '.. w.pid ..'\n\n' }
 	MM.tickets.add( w ); w.event = 'feed'; return w
     end

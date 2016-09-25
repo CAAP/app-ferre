@@ -57,6 +57,7 @@
 		let diag = document.getElementById( 'dialogo-rfc' );
 		let tabla = document.getElementById( 'tabla-rfc' );
 		let ancho = new Set(['ciudad', 'correo', 'calle']);
+		const hoy = new Date().toLocaleDateString('es-MX');
 
 		function makeDisplay( k ) {
 		    let row = tabla.insertRow();
@@ -75,7 +76,28 @@
 
 		XHR.getJSON('/ferre/factura.lua').then( a => a.forEach( makeDisplay ) );
 
+		const tiva = document.getElementById( TICKET.tivaID );
+		const tbruto = document.getElementById( TICKET.tbrutoID );
+		const ttotal = document.getElementById( TICKET.ttotalID );
+
+		function fillme(o) {
+		    let ret = ['"XXXX"', hoy, '"XXXX"', '"."', '"."', '"."', o.qty, '"'+o.desc+'"', o.precios[o.precio],(o.totalCents/100).toFixed(2), '"SUBTOTAL"', tbruto.textContent,'"IVA"', tiva.textContent, "TOTAL", ttotal.textContent, o.letra];
+		    return ret.join('\t');
+		}
+
 		caja.timbrar = function() {
+		    let ret = [];
+		    TICKET.items.forEach(item => ret.push( fillme(item) ));
+		    let b = new Blob([ret.join('\n')], {type: 'text/html'});
+		    let a = document.createElement('a');
+		    let url = URL.createObjectURL(b);
+		    a.href = url;
+		    a.download = 'facturar.tsv'
+		    a.click();
+		    URL.revokeObjectURL(url);
+		};
+
+		caja.timbrarORIG = function() {
 		    let rfc = TICKET.bagRFC;
 		    XHR.getJSON('/ferre/rfc.lua?rfc=' + rfc)
 			.then( a => {
@@ -162,7 +184,7 @@
 
 		function add2bag( uid, rfc ) {
 		    TICKET.bagUID.add( uid );
-//		    if (!TICKET.bagRFC && (rfc != "undefined") && (rfc.length > 0) ) { TICKET.bagRFC = rfc; TICKET.timbre.disabled = false; }
+		    if (!TICKET.bagRFC && (rfc != "undefined") && (rfc.length > 0) ) { TICKET.bagRFC = rfc; TICKET.timbre.disabled = false; }
 		    SQL.get( { uid: uid, week: cajita.dataset.week } )
 			.then( JSON.parse )
 			.then( objs => Promise.all( objs.map( data ) ) );
@@ -175,7 +197,7 @@
 
 		const ttotal = document.getElementById( TICKET.ttotalID );
 
-		caja.print = () => Promise.all(Array.from(TICKET.bagUID).map( encodeURIComponent ).map( k => SQL.print({week: cajita.dataset.week, total: ttotal.textContent, uid: k, tag: '', person: ''})));
+		caja.print = () => Promise.all(Array.from(TICKET.bagUID).map( encodeURIComponent ).map( k => SQL.print({week: cajita.dataset.week, total: ttotal.textContent, uid: k, tag: 'TKT', person: 'YO'})));
 
 		let removeItem = uid => Promise.all( Array.from(mybag.querySelectorAll('tr[data-uid="' + uid + '"]')).map( TICKET.remove ) );
 
@@ -184,7 +206,7 @@
 		    let row = cajita.insertRow(0);
 
 		    let ie = document.createElement('input');
-		    ie.type = 'checkbox'; ie.value = w.uid; ie.name = w.rfc || '';
+		    ie.type = 'checkbox'; ie.value = w.uid; ie.name = w.rfc || ((TICKET.TAGS.facturar == w.id_tag) && 'XXX');
 		    ie.addEventListener('change', e => { if (e.target.checked) add2bag(e.target.value, e.target.name); else removeItem(e.target.value); } );
 		    row.insertCell().appendChild(ie);
 

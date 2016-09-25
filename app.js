@@ -66,7 +66,7 @@
 
 	    ferre.clickItem = e => TICKET.remove( e.target.parentElement );
 
-	    ferre.emptyBag = TICKET.empty;
+	    ferre.emptyBag = () => { TICKET.empty(); ferre.saveme(); }
 
 	    ferre.print = function(a) {
 		if (TICKET.items.size == 0) {return;}
@@ -132,9 +132,7 @@
 		    slc.appendChild(opt);
 		})();
 
-	    (function saveme() {
-		document.addEventListener('keyup', e => {if (e.key ? (e.key == 116) : ('F5' ==  e.which)) { slc.value = 0; ferre.tab(); } } )
-	    })();
+		ferre.saveme = () => { slc.value = 0; ferre.tab(); }
 
 		PEOPLE.load().then( a => a.forEach( p => { let opt = document.createElement('option'); opt.value = p.id; opt.appendChild(document.createTextNode(p.nombre)); slc.appendChild(opt); } ) );
 

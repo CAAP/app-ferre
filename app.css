@@ -7,7 +7,9 @@ input[type=number] {
     width: 50px;
 }
 
-button[name=cerrar] { color: white; background-color: red ; }
+button[name=cerrar] { color: white; background-color: red; }
+
+button[name=guardar] { color: white; background-color: blue; }
 
 .entrada { color: white; background-color: blue;}
 
