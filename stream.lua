@@ -69,12 +69,13 @@ local function cambios()
 	local tbname = w.tbname
 	local vwname = w.vwname
 	local clause = string.format('WHERE clave LIKE %q', clave)
+	local obs = w.obs and (#w.obs > 0) and w.obs
 
-	w.id_tag = nil; w.args = nil; w.clave = nil; w.tbname = nil; w.vwname = nil;
+	w.id_tag = nil; w.args = nil; w.clave = nil; w.tbname = nil; w.vwname = nil; w.obs = nil;
 
 	local ret = fd.reduce( fd.keys(w), fd.map( reformat ), fd.into, {} )
 	local qry = string.format('UPDATE %q SET %s %s', tbname, table.concat(ret, ', '), clause)
-	assert( conn.exec( qry ), 'Error executing: ' .. qry )
+	assert( conn.exec( qry ) ) --, 'Error executing: ' .. qry
 
 	if w.costo or w.impuesto or w.descuento then
 	    w.costo = nil; w.impuesto = nil; w.descuento = nil; w.fecha = hoy;
@@ -84,6 +85,14 @@ local function cambios()
 	    ret = fd.first( conn.query( qry ), function(x) return x end )
 	    fd.reduce( fd.keys(ret), fd.filter(function(x,k) return k:match'^precio' end), fd.merge, w )
 	end
+
+	if obs then -- UPDATE faltantes c/ categorias
+	    assert(conn.exec(string.format('INSERT INTO categorias VALUES (%q, %q)', clave, obs)), 'Error executing INSERT INTO categorias')
+	    qry = string.format('SELECT obs FROM categorias WHERE clave LIKE %q', clave)
+	    ret = fd.reduce( conn.query(qry), fd.map(function(x) return string.format("'%s'", x.obs) end), fd.into, {} )
+	    w.obs = string.format('[%s]', table.concat(ret, ', ')) -- XXX
+	    w.clave = clave;
+        end
 
 	qry = string.format('UPDATE cambios SET version = version + 1, fecha = %q %s', hoy, clause)
 	assert( conn.exec( qry ), 'Error executing: ' .. qry )

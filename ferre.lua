@@ -49,6 +49,8 @@ conn.exec'CREATE TABLE IF NOT EXISTS cambios (clave PRIMARY KEY, version INTEGER
 
 conn.exec'INSERT INTO cambios SELECT clave, 0, fecha FROM datos'
 
+conn.exec'CREATE TABLE IF NOT EXISTS categorias (clave, obs)'
+
 print''
 
 
