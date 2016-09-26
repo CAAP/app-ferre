@@ -14,8 +14,9 @@
 
 	    function clearTable(tb) { while (tb.firstChild) { tb.removeChild( tb.firstChild ); } }
 
-	    function newItem(a, j) {
+	    function newItem(b, j) {
 		let row = BROWSE.lis.insertRow(j);
+		let a = BROWSE.adapt ? BROWSE.adapt(b) : b;
 		row.title = a.desc.substr(0,3); // TRYING OUT LOCATION XXX
 		if (a.desc.startsWith(sstr)) { row.classList.add('encontrado'); };
 		row.dataset.clave = a.clave;
