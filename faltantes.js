@@ -40,9 +40,9 @@
 
 		function asnum(s) { let n = Number(s); return Number.isNaN(n) ? s : n; }
 
-		function choice(s) { inObs.value = ''; let opt = document.createElement('option'); opt.value = s; lsObs.appendChild( opt ); }
+		function choice(s) { let opt = document.createElement('option'); opt.value = s; lsObs.appendChild( opt ); }
 
-		function clearTable(tb) { while (tb.firstChild) { tb.removeChild( tb.firstChild ); } }; //recycle?
+		function clearTable(tb) { inObs.value = ''; while (tb.firstChild) { tb.removeChild( tb.firstChild ); } }; //recycle?
 
 		app.menu = e => {
 		    clave = asnum(e.target.parentElement.dataset.clave);
