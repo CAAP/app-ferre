@@ -5,14 +5,7 @@
 		STORE: 'faltantes-desc',
 		KEY: 'desc',
 		INDEX: 'proveedor',
-		FILE: '/ferre/faltantes.lua',
-		update: a => {
-		    let os = IDB.write2DB( app );
-		    return Promise.all( a.map( o => os.get( o.clave ).then( q => {
-			if (q) { return Object.assign(q, o); } else { return o; } })
-			.then( os.put )
-		    ) );
-		}
+		FILE: '/ferre/faltantes.lua'
 	 };
 
 	window.onload = function() {
@@ -94,5 +87,6 @@
 
 	    // SET FOOTER
 	    (function() { document.getElementById('copyright').innerHTML = 'versi&oacute;n ' + 2.0 + ' | cArLoS&trade; &copy;&reg;' })();
+
 	};
 

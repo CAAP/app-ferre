@@ -31,13 +31,13 @@
 
 	    (function() {
 		let diagI = document.getElementById('dialogo-item');
-		let inObs = diagI.querySelector('input[list=obs]'); // faltantes
+//		let inObs = diagI.querySelector('input[list=obs]'); // faltantes
 		let lsObs = document.getElementById('obs'); // faltantes
 		let clave = -1;
 
 		function asnum(s) { let n = Number(s); return Number.isNaN(n) ? s : n; };
 		function uptoCents(q) { return Math.round( 100 * q[q.precio] * q.qty * (1-q.rea/100) ); };
-		function clearTable(tb) { inObs.value = ''; while (tb.firstChild) { tb.removeChild( tb.firstChild ); } }; //recycle?
+//		function clearTable(tb) { inObs.value = ''; while (tb.firstChild) { tb.removeChild( tb.firstChild ); } }; //recycle?
 		function choice(s) { let opt = document.createElement('option'); opt.value = s; lsObs.appendChild( opt ); }
 
 		ferre.menu = e => {
@@ -46,7 +46,8 @@
 //		    if (e.target.parentElement.querySelector('.faltante'))
 //			return;
 		    clave = asnum(e.target.parentElement.dataset.clave);
-		    IDB.readDB( DATA ).get( clave ).then(p => {if (p) { clearTable(lsObs); if (p.obs) { p.obs.forEach( choice ) }}}).then( () => diagI.showModal());
+		    diagI.showModal();
+//		    IDB.readDB( DATA ).get( clave ).then(p => {if (p) { clearTable(lsObs); if (p.obs) { p.obs.forEach( choice ) }}}).then( () => diagI.showModal());
 		};
 
 		// Add: faltante XXX
@@ -60,7 +61,7 @@
 
 		ferre.faltante = function() {
 		    if (window.confirm('Enviar reporte de faltante?'))
-			SQL.update({clave: clave, faltante: 1, obs: encodeURIComponent(inObs.value), tbname: 'faltantes', vwname: 'faltantes', id_tag: 'u'})
+			SQL.update({clave: clave, faltante: 1, tbname: 'faltantes', vwname: 'faltantes', id_tag: 'u'})
 			    .then( () => diagI.close() );
 
 		};
