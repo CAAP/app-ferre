@@ -14,13 +14,7 @@
 
 	    function clearTable(tb) { while (tb.firstChild) { tb.removeChild( tb.firstChild ); } }
 
-	    function newItem(b, j) {
-		let row = BROWSE.lis.insertRow(j);
-		let a = BROWSE.adapt ? BROWSE.adapt(b) : b;
-		row.title = a.desc.substr(0,3); // TRYING OUT LOCATION XXX
-		if (a.desc.startsWith(sstr)) { row.classList.add('encontrado'); };
-		row.dataset.clave = a.clave;
-		// insert rows
+	    BROWSE.rows = function(a, row) {
 		row.insertCell().appendChild( document.createTextNode( a.fecha ) );
 		let clave = row.insertCell();
 		clave.classList.add('pesos'); clave.appendChild( document.createTextNode( a.clave ) );
@@ -29,11 +23,19 @@
 		desc.classList.add('desc'); desc.appendChild( document.createTextNode( a.desc ) );
 		let precios = a.precios;
 		Object.keys( precios ).forEach( k => {
-		let pesos = row.insertCell();
-		pesos.classList.add('total'); pesos.appendChild( document.createTextNode( precios[k] ) ); // a.precios.precio1
-		if (k == 'precio1') { pesos.classList.add(k); }
+		    let pesos = row.insertCell();
+		    pesos.classList.add('total'); pesos.appendChild( document.createTextNode( precios[k] ) );
+		    if (k == 'precio1') { pesos.classList.add(k); }
 		} );
-//		pesos.classList.add('pesos'); pesos.appendChild( document.createTextNode( Object.keys(precios).forEach() ) );
+	    };
+
+	    function newItem(a, j) {
+		let row = BROWSE.lis.insertRow(j);
+		row.title = a.desc.substr(0,3); // TRYING OUT LOCATION XXX
+		if (a.desc.startsWith(sstr)) { row.classList.add('encontrado'); };
+		row.dataset.clave = a.clave;
+		// insert rows
+		BROWSE.rows(a, row);
 	    }
 
 	    function browsing(j, M) {
@@ -58,6 +60,8 @@
 		console.log('Searching by description:' + s); sstr = s;
 		return searchIndex('next', s);
 	    }
+
+	    BROWSE.search = searchByDesc; // XXX with care
 
 	    function searchByClave(s) {
 		console.log('Searching by clave:' + s);

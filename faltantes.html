@@ -8,40 +8,24 @@
     <link rel="stylesheet" href="app.css">
     <script type="text/javascript" src="xhr.js"></script>
     <script type="text/javascript" src="idb.js"></script>
-    <script type="text/javascript" src="sql.js"></script>
-    <script type="text/javascript" src="data.js"></script>
-    <script type="text/javascript" src="ticket.js"></script>
     <script type="text/javascript" src="browse.js"></script>
     <script type="text/javascript" src="faltantes.js"></script>
 </head>
 
 <body lang="es-MX">
 
-    <header> <label id="notifications"></label> </header>
+    <header> <label id="notifications"></label> <button onclick="app.load()">Indexar</button> <button onclick="app.done()">Completo</button> </header>
 
-    <section id="buscar">
-        <div> <input type="search" size=40 placeholder="Art&iacute;culo o Clave" onchange="app.startSearch(event)" onkeyup="app.keyPressed(event)"> <button>Buscar</button> </div>
-
-    <section id="resultados" class="tablas">
+    <section id="resultados" class="scrollable">
         <table>
 	    <dt>
             <thead>
-                <tr><th> Fecha </th><th> Clave </th><th> Descripci&oacute;n </th></tr>
+                <tr><th> Fecha </th><th> Clave </th><th> Descripci&oacute;n </th><th> Costo </th><th> Observaciones </th><th> Proveedor </th></tr>
             </thead>
 	    </dt>
-	    <tbody id="tabla-resultados" class="amarillo" onclick="app.menu(event)" onwheel="app.scroll(event)"></tbody>
-	    <tfoot><tr><th colspan=6><button onclick="app.scroll({deltaY:0})">&larr;Anterior</button> <label> | </label> <button onclick="app.scroll({deltaY:1})">Siguiente&rarr;</button></th></tr></tfoot>
+	    <tbody id="tabla-resultados" class="amarillo" onwheel="app.scroll(event)"></tbody>
 	</table>
     </section>
-
-    </section>
-
-    <section><dialog id="dialogo-item"><table><tbody>
-        <tr><td>Observaciones:</td></tr>
-        <tr><td><input list="obs" /> <datalist id="obs"></datalist></td></tr>
-	<tr><td><button onclick="app.faltante()">Faltante</button></td></tr>
-	<tr><td><button name="cerrar" onclick="app.cerrar(event)">Cerrar</button></tr></tr>
-    </tbody></table></dialog></section>
 
     <footer> <label id="copyright"></label> </footer>
 

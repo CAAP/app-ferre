@@ -6,8 +6,6 @@ local hd = require'ferre.header'
 local sql = require'carlos.sqlite'
 local mx = require'ferre.timezone'
 
---local function mx() return os.time() - 18000 end
-
 local hoy = os.date('%d-%b-%y', mx())
 local today = os.date('%F', mx())
 local week = os.date('W%U', mx())
@@ -86,19 +84,13 @@ local function cambios()
 	    fd.reduce( fd.keys(ret), fd.filter(function(x,k) return k:match'^precio' end), fd.merge, w )
 	end
 
---[[
 	if obs then -- UPDATE faltantes c/ categorias
---	    qry = string.format("INSERT INTO categorias VALUES ('%s', '%s')", clave, obs)
---	    print(qry)
---	    assert(conn.exec(qry), 'Error executing INSERT INTO categorias')
-	    fd.reduce({{clave, (obs:gsub('"','\"'))}}, sql.into'categorias', conn)
-		print('Done with insert statement')
+	    qry = string.format("INSERT INTO categorias VALUES ('%s', '%s')", clave, obs)
+	    assert(conn.exec(qry), 'Error executing INSERT INTO categorias')
 	    qry = string.format('SELECT obs FROM categorias WHERE clave LIKE %q', clave)
 	    ret = fd.reduce( conn.query(qry), fd.map(function(x) return string.format("'%s'", x.obs) end), fd.into, {} )
-		print('Done with obs selection')
 	    w.obs = string.format('[%s]', table.concat(ret, ', ')) -- XXX
         end
---]]
 
 	qry = string.format('UPDATE cambios SET version = version + 1, fecha = %q %s', hoy, clause)
 	assert( conn.exec( qry ), 'Error executing: ' .. qry )

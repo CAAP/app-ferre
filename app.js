@@ -38,6 +38,7 @@
 		function asnum(s) { let n = Number(s); return Number.isNaN(n) ? s : n; };
 		function uptoCents(q) { return Math.round( 100 * q[q.precio] * q.qty * (1-q.rea/100) ); };
 		function clearTable(tb) { inObs.value = ''; while (tb.firstChild) { tb.removeChild( tb.firstChild ); } }; //recycle?
+		function choice(s) { let opt = document.createElement('option'); opt.value = s; lsObs.appendChild( opt ); }
 
 		ferre.menu = e => {
 		    const slc = document.getElementById('personas');
@@ -59,7 +60,7 @@
 
 		ferre.faltante = function() {
 		    if (window.confirm('Enviar reporte de faltante?'))
-			SQL.update({clave: clave, faltante: 1, tbname: 'faltantes', vwname: 'faltantes', id_tag: 'u'}) //obs: encodeURIComponent(inObs.value), 
+			SQL.update({clave: clave, faltante: 1, obs: encodeURIComponent(inObs.value), tbname: 'faltantes', vwname: 'faltantes', id_tag: 'u'})
 			    .then( () => diagI.close() );
 
 		};

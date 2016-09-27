@@ -1,66 +1,90 @@
         "use strict";
 
-	var app = {};
+	var app = { VERSION: 1,
+		DB: 'faltantes',
+		STORE: 'faltantes-desc',
+		KEY: 'desc',
+		INDEX: 'proveedor',
+		FILE: '/ferre/faltantes.lua',
+		update: a => {
+		    let os = IDB.write2DB( app );
+		    return Promise.all( a.map( o => os.get( o.clave ).then( q => {
+			if (q) { return Object.assign(q, o); } else { return o; } })
+			.then( os.put )
+		    ) );
+		}
+	 };
 
 	window.onload = function() {
-	    const DBs = [ DATA ];
+	    const DBs = [ app ]; // , TICKET
 
-	    app.reloadDB = function reloadDB() { return IDB.clearDB(DATA).then( () => IDB.populateDB( DATA ) ); };
-
-	    // SQL
-
-	    SQL.DB = document.location.origin + ':8081';
-
-	    // BROWSE
-
-	    BROWSE.tab = document.getElementById('resultados');
-	    BROWSE.lis = document.getElementById('tabla-resultados');
-
-            BROWSE.adapt = a => {a.precios = new Map(); return a};
-
-	    BROWSE.DBget = s => IDB.readDB( DATA ).get( s );
-
-	    BROWSE.DBindex = (a, b, f) => IDB.readDB( DATA ).index( a, b, f );
-
-	    app.startSearch = BROWSE.startSearch;
-
-	    app.keyPressed = BROWSE.keyPressed;
-
-	    app.scroll = BROWSE.scroll;
-
-	    app.cerrar = e => e.target.closest('dialog').close();
-
-	    // TICKET -- DIALOG
+	    // Resultados
 
 	    (function() {
-		let diagI = document.getElementById('dialogo-item');
-		let inObs = diagI.querySelector('input[list=obs]');
-		let lsObs = diagI.querySelector('#obs');
-		let clave = -1;
 
-		function asnum(s) { let n = Number(s); return Number.isNaN(n) ? s : n; }
+		const tab = document.getElementById('resultados');
+		const lis = document.getElementById('tabla-resultados');
+		const IDBKeyRange =  window.IDBKeyRange || window.webkitIDBKeyRange || window.msIDBKeyRange;
 
-		function choice(s) { let opt = document.createElement('option'); opt.value = s; lsObs.appendChild( opt ); }
-
-		function clearTable(tb) { inObs.value = ''; while (tb.firstChild) { tb.removeChild( tb.firstChild ); } }; //recycle?
-
-		app.menu = e => {
-		    clave = asnum(e.target.parentElement.dataset.clave);
-		    IDB.readDB( DATA ).get( clave ).then(p => {if (p) { clearTable(lsObs); if (p.obs) { p.obs.forEach( choice ) }}}).then( () => diagI.showModal());
+		let update = e => {
+		    let tr = e.target.parentElement.parentElement;
+		    let desc = tr.querySelector('.desc').textContent;
+		    let objStore = IDB.write2DB( app );
+		    return objStore.get( desc ).then( q => {
+			if (q) { q.proveedor = e.target.value; q.proveedor = e.target.value; return q; }
+			else { Promise.fail('No key found!'); }
+		    }, e => console.log("Error searching by desc: " + e)  )
+		    .then( objStore.put );
 		};
 
-		app.faltante = function() {
-		    if (window.confirm('Enviar reporte de faltante?'))
-			SQL.update({clave: clave, faltante: 1, obs: encodeURIComponent(inObs.value), tbname: 'faltantes', vwname: 'faltantes', id_tag: 'u'})
-			    .then( () => diagI.close() );
-
+		function displayItem( a ) {
+		    let row = lis.insertRow();
+		    row.insertCell().appendChild( document.createTextNode( a.fecha ) );
+		    let clave = row.insertCell();
+		    clave.classList.add('pesos'); clave.appendChild( document.createTextNode( a.clave ) );
+		    let desc = row.insertCell();
+		    desc.classList.add('desc');
+		    desc.appendChild( document.createTextNode( a.desc ) );
+		    row.insertCell().appendChild( document.createTextNode( a.costol ) );
+		    let obs = a.obs ? a.obs.join(', ') : '';
+		    row.insertCell().appendChild( document.createTextNode( obs ) );
+		    let ie = document.createElement('input'); ie.value = a.proveedor || ''; ie.size = 8; ie.addEventListener('change', update);
+		    row.insertCell().appendChild( ie );
 		};
+
+		function clearTable(tb) { while (tb.firstChild) { tb.removeChild( tb.firstChild ); } };
+
+		function load(s) {
+		    clearTable(lis);
+		    let objStore = IDB.readDB( app );
+		    objStore.count().then( result => {
+			if (!(result>0)) { return; }
+			return objStore.index( IDBKeyRange.upperBound(s, false), 'prev', cursor => {
+			    if (cursor) {
+				displayItem( cursor.value );
+		    		cursor.continue();
+			    }
+			} );
+			return objStore.openCursor( cursor => {
+			    if (cursor) {
+				displayItem( cursor.value );
+		    		cursor.continue();
+			    }
+			});
+		    });
+		};
+
+		app.load = () => load('X');
+
+		app.done = () => load('V');
 	    })();
+
 
 	    // LOAD DBs
  	    if (IDB.indexedDB) { DBs.forEach( IDB.loadDB ); } else { alert("IDBIndexed not available."); }
 
 	    // HEADER
+
 	    (function() {
 	        const note = document.getElementById('notifications');
 		let FORMAT = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
@@ -70,20 +94,5 @@
 
 	    // SET FOOTER
 	    (function() { document.getElementById('copyright').innerHTML = 'versi&oacute;n ' + 2.0 + ' | cArLoS&trade; &copy;&reg;' })();
-
-	// SERVER-SIDE EVENT SOURCE
-		(function() {
-		    let esource = new EventSource(document.location.origin + ":8080");
-		    esource.addEventListener("update", function(e) {
-			console.log("update event received.");
-			DATA.update( JSON.parse(e.data) );
-		    }, false);
-		    esource.addEventListener("faltante", function(e) {
-			console.log("faltante event received.");
-			DATA.update( JSON.parse(e.data) )
-			    .then( () => { let r = document.body.querySelector('tr[data-clave="'+JSON.parse(e.data)[0].clave+'"]'); if (r) { r.querySelector('.desc').classList.add('faltante'); } } );
-		    }, false);
-		})();
-
 	};
 
