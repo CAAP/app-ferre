@@ -192,12 +192,6 @@
 			.then( JSON.parse )
 			.then( objs => Promise.all( objs.map( data ) ) );
 		}
-
-		caja.faltantes = () => XHR.get('/caja/faltantes.lua')
-		    .then( JSON.parse )
-		    .then( objs => objs.map( o => Object.assign(o, {rea:0, qty:0, precio:'precio1', totalCents:o.costol}) ) )
-		    .then( objs => Promise.all( objs.map( data ) ) );
-
 		const ttotal = document.getElementById( TICKET.ttotalID );
 
 		caja.print = () => Promise.all(Array.from(TICKET.bagUID).map( encodeURIComponent ).map( k => SQL.print({week: cajita.dataset.week, total: ttotal.textContent, uid: k, tag: 'TKT', person: 'YO'})));
