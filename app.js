@@ -73,7 +73,7 @@
 
 		const persona = document.getElementById('personas'); // XXX refactor all instances of this
 
-	    ferre.emptyBag = () => { TICKET.empty(); SQL.print({id_tag: 'd', pid: Number(persona.value)}); ferre.saveme(); } //
+	    ferre.emptyBag = () => { TICKET.empty(); SQL.print({id_tag: 'd', pid: Number(persona.value)}); } // ferre.saveme(); 
 
 	    ferre.print = function(a) {
 		if (TICKET.items.size == 0) {return;}

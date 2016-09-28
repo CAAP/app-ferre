@@ -19,6 +19,17 @@
 		const lis = document.getElementById('tabla-resultados');
 		const IDBKeyRange =  window.IDBKeyRange || window.webkitIDBKeyRange || window.msIDBKeyRange;
 
+		app.guardar = () => {
+		    let ret = [];
+		    IDB.readDB( app ).openCursor( cursor =>  {
+			if (cursor) {
+			    let o = cursor.value;
+			    ret.push( 'args=clave+'+o.clave+'+proveedor+'+o.proveedor );
+			    cursor.continue();
+			} else { XHR.get( '/ferre/proveedor.lua?' + ret.join('&') ); }
+		    } );
+		};
+
 		let update = e => {
 		    let tr = e.target.parentElement.parentElement;
 		    let desc = tr.querySelector('.desc').textContent;
@@ -58,12 +69,6 @@
 		    		cursor.continue();
 			    }
 			} );
-			return objStore.openCursor( cursor => {
-			    if (cursor) {
-				displayItem( cursor.value );
-		    		cursor.continue();
-			    }
-			});
 		    });
 		};
 
