@@ -59,10 +59,16 @@
 			.then( TICKET.add );
 		};
 
-		ferre.faltante = function() {
+		let diagF = document.getElementById('dialogo-faltante');
+		let obs = diagF.querySelector('input[name=obs]').textContent;
+
+		ferre.enviarF = e => { ferre.cerrar(e); return SQL.update({clave: clave, faltante: 1, obs: obs || '', tbname: 'faltantes', vwname: 'faltantes', id_tag: 'u'}); };
+
+		ferre.faltante = function(e) {
+//		    ferre.cerrar(e); diagF.showModal();
+		    diagI.close();
 		    if (window.confirm('Enviar reporte de faltante?'))
-			SQL.update({clave: clave, faltante: 1, tbname: 'faltantes', vwname: 'faltantes', id_tag: 'u'})
-			    .then( () => diagI.close() );
+			SQL.update({clave: clave, faltante: 1, tbname: 'faltantes', vwname: 'faltantes', id_tag: 'u'});
 
 		};
 	    })();

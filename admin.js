@@ -6,9 +6,11 @@
 	window.onload = function() {
 	    const DBs = [ DATA ];
 
-//	    ferre.reloadDB = function reloadDB() { return IDB.clearDB(DATA).then( () => IDB.populateDB( DATA ) ); };
+	    admin.reloadDB = function reloadDB() { return IDB.clearDB(DATA).then( () => IDB.populateDB( DATA ) ); };
 
 	    admin.cerrar = e => e.target.closest('dialog').close(); // XXX unify
+
+	    DATA.file = '/ferre/costos.lua';
 
 	    // BROWSE
 
@@ -189,6 +191,11 @@
 		    }, false);
 		    esource.addEventListener("faltante", function(e) {
 			console.log("faltante event received.");
+			DATA.update( JSON.parse(e.data) )
+			    .then( () => { let r = document.body.querySelector('tr[data-clave="'+JSON.parse(e.data)[0].clave+'"]'); if (r) { r.querySelector('.desc').classList.add('faltante'); } } );
+		    }, false);
+		    esource.addEventListener("costo", function(e) {
+			console.log("update-costo event received.");
 			DATA.update( JSON.parse(e.data) )
 			    .then( () => { let r = document.body.querySelector('tr[data-clave="'+JSON.parse(e.data)[0].clave+'"]'); if (r) { r.querySelector('.desc').classList.add('faltante'); } } );
 		    }, false);

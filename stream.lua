@@ -7,6 +7,9 @@ local sql = require'carlos.sqlite'
 local mx = require'ferre.timezone'
 
 local hoy = os.date('%d-%b-%y', mx())
+local ayer = os.date('*t', mx())
+ayer.day = ayer.day-1
+ayer = os.date('%d-%b-%y', os.time(ayer))
 local today = os.date('%F', mx())
 local week = os.date('W%U', mx())
 local dbname = string.format('/db/%s.db', week)
@@ -14,9 +17,9 @@ local fdbname = '/db/ferre.db'
 
 local MM = {caja={}, tickets={}, tabs={}, entradas={}, cambios={}, recording={}, streaming={}}
 
-local function safe(f)
+local function safe(f, msg)
     local ok,err = pcall(f)
-    if not ok then print('Error: \n', err); return false end
+    if not ok then print('Error: \n', msg or '',  err); return false end
 end
 
 local function asJSON(w) return string.format('data: %s', hd.asJSON(w)) end
@@ -55,7 +58,7 @@ local function cambios()
 	return w
     end
 
-    local costol = 'UPDATE %q SET costol = costo*(100+impuesto)*(100-descuento), fecha = %q %s'
+    local costol = 'UPDATE datos SET costol = costo*(100+impuesto)*(100-descuento), fecha = %q %s'
 
     local function reformat(v, k)
 	local vv = (k == 'desc' or k == 'fecha' or k:match'^u') and string.format("'%s'", v) or (math.tointeger(v) or tonumber(v) or 0)
@@ -67,7 +70,7 @@ local function cambios()
 	local tbname = w.tbname
 	local vwname = w.vwname
 	local clause = string.format('WHERE clave LIKE %q', clave)
-	local obs = w.obs and (#w.obs > 0) and w.obs
+	local obs = w.obs
 
 	w.id_tag = nil; w.args = nil; w.clave = nil; w.tbname = nil; w.vwname = nil; w.obs = nil;
 
@@ -77,15 +80,20 @@ local function cambios()
 
 	if w.costo or w.impuesto or w.descuento then
 	    w.costo = nil; w.impuesto = nil; w.descuento = nil; w.fecha = hoy;
-	    qry = string.format(costol, tbname, w.fecha, clause)
+	    qry = string.format(costol, w.fecha, clause)
 	    assert( conn.exec( qry ), 'Error executing: ' .. qry )
 	    w.faltante = 0
-	    qry = string.format('UPDATE faltantes SET faltante = 0, fecha = %q WHERE clave LIKE %q', hoy, clave)
+	    qry = string.format('UPDATE faltantes SET faltante = 0, fecha = %q %s', hoy, clause)
 	    assert(conn.exec(qry), 'Error executing: ' .. qry)
 	    qry = string.format('SELECT * FROM %q %s', vwname, clause)
 	    ret = fd.first( conn.query( qry ), function(x) return x end )
 	    fd.reduce( fd.keys(ret), fd.filter(function(x,k) return k:match'^precio' end), fd.merge, w )
+	    -- in order to update admin.html
+	    ret = fd.first( conn.query(string.format('SELECT clave, costol FROM datos %s', clause)), function(x) return x end )
+	    w.ret = { string.format('event: costo\n%s\n\n', asJSON(ret)) }
 	end
+
+	if obs then assert( conn.exec(string.format('UPDATE faltantes SET obs = obs ||", "|| %q %s'), obs, clause), 'Error updating obs field for faltantes table' ); w.obs = obs end
 
 --[[
 	if obs then -- UPDATE faltantes c/ categorias
@@ -183,6 +191,7 @@ local function tickets( conn )
 	w.datos = fd.reduce( w.args, fd.map( asTable ), fd.map( MM.tickets.addDescPrc ), fd.map( subTotal ), fd.into, {} )
         lpr( tkt( w ) )
 	w.datos = nil
+	return true
     end
 
 -- XXX input is not parsed to Number
@@ -191,7 +200,7 @@ local function tickets( conn )
 	fd.reduce( w.args, fd.map( collect ), ids( uid, w.id_tag ), sql.into( tbname ), conn )
 	local a = fd.first( conn.query(string.format('%s WHERE uid = %q ', query, uid)), function(x) return x end )
 	w.uid = uid; w.totalCents = a.totalCents; w.count = a.count
-	forPrinting( w )
+	safe( function() forPrinting( w ) end, 'Connecting to printing daemon' ) -- in case of error still send it to CAJA
 	MM.tabs.remove( w.pid )
 	return w
     end

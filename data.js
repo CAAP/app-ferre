@@ -5,7 +5,7 @@
 		STORE: 'datos-clave',
 		KEY: 'clave',
 		INDEX: 'desc',
-		FILE: 'ferre.json',
+		FILE: '/ferre/precios.lua',
 		MAP: function(q) {
 		    q.precios = {};
 		    for (let i=1; i<4; i++) {
@@ -21,7 +21,7 @@
 			    if (q) { return Object.assign(q, o); } else { return o; } } )
 			    .then( DATA.MAP )
 			    .then( os.put )
-			    .then( o => { if (o.desc.startsWith('VVV')) { return os.delete( o.clave ) } } )
+			    .then( o => { if (o.desc.startsWith('VV')) { return os.delete( o.clave ) } } )
 			) );
 		}
 	 };

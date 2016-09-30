@@ -19,7 +19,7 @@
 		const lis = document.getElementById('tabla-resultados');
 		const IDBKeyRange =  window.IDBKeyRange || window.webkitIDBKeyRange || window.msIDBKeyRange;
 
-		app.reload = () => IDB.clearDB( app ).then(() => IDB.populateDB(app) );
+		app.reload = () => IDB.clearDB( app ).then(() => IDB.populateDB(app) ).then( app.load );
 
 		app.guardar = () => {
 		    let ret = [];
