@@ -18,9 +18,10 @@
 		update: a => {
 		    let os = IDB.write2DB( DATA );
 		    return Promise.all( a.map( o => os.get( o.clave ).then( q => {
-			    if (q) { return Object.assign(q, o); } else { return o; } })
+			    if (q) { return Object.assign(q, o); } else { return o; } } )
 			    .then( DATA.MAP )
 			    .then( os.put )
+			    .then( o => { if (o.desc.startsWith('VVV')) { return os.delete( o.clave ) } } )
 			) );
 		}
 	 };

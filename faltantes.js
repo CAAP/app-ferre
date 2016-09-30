@@ -19,6 +19,8 @@
 		const lis = document.getElementById('tabla-resultados');
 		const IDBKeyRange =  window.IDBKeyRange || window.webkitIDBKeyRange || window.msIDBKeyRange;
 
+		app.reload = () => IDB.clearDB( app ).then(() => IDB.populateDB(app) );
+
 		app.guardar = () => {
 		    let ret = [];
 		    IDB.readDB( app ).openCursor( cursor =>  {

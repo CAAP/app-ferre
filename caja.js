@@ -82,7 +82,9 @@
 
 		function fillme(o, letra) {
 		    let prc = o.precios[o.precio].split(' / ');
-		    let ret = ['"XXXX"', hoy, '"XXXX"', '"."', '"."', '"."', o.qty, '"'+o.desc+'"', '"'+prc[1]+'"', prc[0], (o.totalCents/100).toFixed(2), '"SUBTOTAL"', tbruto.textContent,'"IVA"', tiva.textContent, '"TOTAL"', ttotal.textContent, '"'+letra.replace('\n','')+'"'];
+		    let p = (100 * prc[0] * (100-o.rea) / 1e4).toFixed(2);
+		    let u = (prc[1].length > 0) ? prc[1] : 'PZ';
+		    let ret = ['"XXXX"', hoy, '"XXXX"', '"."', '"."', '"."', o.qty, '"'+o.desc+'"', '"'+u+'"', p, (o.totalCents/100).toFixed(2), '"SUBTOTAL"', tbruto.textContent,'"IVA"', tiva.textContent, '"TOTAL"', ttotal.textContent, '"'+letra.replace('\n','')+'"'];
 		    return ret.join('\t');
 		}
 

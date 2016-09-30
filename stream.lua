@@ -79,11 +79,15 @@ local function cambios()
 	    w.costo = nil; w.impuesto = nil; w.descuento = nil; w.fecha = hoy;
 	    qry = string.format(costol, tbname, w.fecha, clause)
 	    assert( conn.exec( qry ), 'Error executing: ' .. qry )
+	    w.faltante = 0
+	    qry = string.format('UPDATE faltantes SET faltante = 0, fecha = %q WHERE clave LIKE %q', hoy, clave)
+	    assert(conn.exec(qry), 'Error executing: ' .. qry)
 	    qry = string.format('SELECT * FROM %q %s', vwname, clause)
 	    ret = fd.first( conn.query( qry ), function(x) return x end )
 	    fd.reduce( fd.keys(ret), fd.filter(function(x,k) return k:match'^precio' end), fd.merge, w )
 	end
 
+--[[
 	if obs then -- UPDATE faltantes c/ categorias
 	    qry = string.format("INSERT INTO categorias VALUES ('%s', '%s')", clave, obs)
 	    assert(conn.exec(qry), 'Error executing INSERT INTO categorias')
@@ -91,6 +95,7 @@ local function cambios()
 	    ret = fd.reduce( conn.query(qry), fd.map(function(x) return string.format("'%s'", x.obs) end), fd.into, {} )
 	    w.obs = string.format('[%s]', table.concat(ret, ', ')) -- XXX
         end
+--]]
 
 	qry = string.format('UPDATE cambios SET version = version + 1, fecha = %q %s', hoy, clause)
 	assert( conn.exec( qry ), 'Error executing: ' .. qry )
