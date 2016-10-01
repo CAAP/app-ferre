@@ -17,6 +17,34 @@
 
 
 /*
+		PEOPLE.horarios = new Map();
+
+		ferre.tag = () => {
+		    const pid = Number(slc.value);
+		    if (PEOPLE.horarios.has(pid)) { msg_tag( pid ); }
+		    else { tag.textContent = ''; }
+		};
+
+
+		function msg_tag(pid) {
+			tag.textContent = PEOPLE.horarios.get(pid);
+			if ((tag.textContent[0] == 'E') ^ (tag.classList.contains('entrada')))
+			    tag.classList.toggle('entrada');
+		}
+
+
+
+		    esource.addEventListener("entradas", function(e) {
+			JSON.parse( e.data ).forEach( p => PEOPLE.horarios.set( p.pid, p.tag + ' ' + p.hora ) );
+			ferre.tag();
+		    }, false);
+
+		    esource.addEventListener("entradas", function(e) {
+			JSON.parse( e.data ).forEach( p => PEOPLE.horarios.set( p.pid, p.tag + ' ' + p.hora ) );
+			caja.tab();
+		    }, false);
+
+
 	    // PEOPLE - Scheduling support
 	    (function() {
 		const slc = document.getElementById('personas');

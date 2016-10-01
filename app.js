@@ -108,7 +108,7 @@
 	    (function() {
 		const slc = document.getElementById('personas');
 		slc.dataset.id = 0;
-		const tag = document.getElementById('tag');
+//		const tag = document.getElementById('tag');
 
 		function asnum(s) { let n = Number(s); return Number.isNaN(n) ? s : n; };
 		function data( o ) { return IDB.readDB( DATA ).get( asnum(o.clave) ).then( w => Object.assign( o, w ) ).then( TICKET.add ); }
@@ -116,22 +116,10 @@
 		function recreate(q) { return q.split('&').reduce( (p, s) => p.then( () => data(a2obj(s.split('+'))) ), Promise.resolve() ); }
 		function tabs(k) { slc.dataset.id = k; if (PEOPLE.tabs.has(k)) { recreate(PEOPLE.tabs.get(k).query); } }
 
-		function msg_tag(pid) {
-			tag.textContent = PEOPLE.horarios.get(pid);
-			if ((tag.textContent[0] == 'E') ^ (tag.classList.contains('entrada')))
-			    tag.classList.toggle('entrada');
-		}
-
-		ferre.tag = () => {
-		    const pid = Number(slc.value);
-		    if (PEOPLE.horarios.has(pid)) { msg_tag( pid ); }
-		    else { tag.textContent = ''; }
-		};
-
 		ferre.tab = () => {
-		    const pid = Number(slc.value); // alt: slc.value
-	// message tag
-		    ferre.tag();
+		    const pid = Number(slc.value);
+	/* message tag
+		    ferre.tag(); */
 	// if ticket-bag is not empty then send info to server for broadcasting
 		    if (TICKET.items.size > 0) { ferre.print('guardar').then( ferre.emptyBag ).then( () => tabs(pid) ); }
 		    else { tabs(pid); }
@@ -149,7 +137,6 @@
 
 		PEOPLE.load().then( a => a.forEach( p => { let opt = document.createElement('option'); opt.value = p.id; opt.appendChild(document.createTextNode(p.nombre)); slc.appendChild(opt); } ) );
 
-		PEOPLE.horarios = new Map();
 	    })();
 
 	    // LOAD DBs
@@ -186,10 +173,6 @@
 			const pid = Number(e.data);
 			PEOPLE.tabs.delete(pid);
 			console.log('Remove ticket for: ' + PEOPLE.id[pid]);
-		    }, false);
-		    esource.addEventListener("entradas", function(e) {
-			JSON.parse( e.data ).forEach( p => PEOPLE.horarios.set( p.pid, p.tag + ' ' + p.hora ) );
-			ferre.tag();
 		    }, false);
 		})();
 
