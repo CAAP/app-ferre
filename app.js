@@ -43,9 +43,7 @@
 		ferre.menu = e => {
 		    const slc = document.getElementById('personas');
 		    if (slc.value == 0) { return; }
-//		    if (e.target.parentElement.querySelector('.faltante'))
-//			return;
-		    clave = asnum(e.target.parentElement.dataset.clave);
+		    clave = asnum(e.target.parentElement.dataset.clave); // XXX one can use this instead: diagI.returnValue = clave;
 		    diagI.showModal();
 //		    IDB.readDB( DATA ).get( clave ).then(p => {if (p) { clearTable(lsObs); if (p.obs) { p.obs.forEach( choice ) }}}).then( () => diagI.showModal());
 		};
@@ -60,16 +58,15 @@
 		};
 
 		let diagF = document.getElementById('dialogo-faltante');
-		let obs = diagF.querySelector('input[name=obs]').textContent;
+		let obs = diagF.querySelector('input[name=obs]');
 
-		ferre.enviarF = e => { ferre.cerrar(e); return SQL.update({clave: clave, faltante: 1, obs: obs || '', tbname: 'faltantes', vwname: 'faltantes', id_tag: 'u'}); };
+		ferre.enviarF = e => SQL.update({clave: clave, faltante: 1, obs: obs.value, tbname: 'faltantes', vwname: 'faltantes', id_tag: 'u'}).then( () => { obs.value = ''; ferre.cerrar(e); } );
 
 		ferre.faltante = function(e) {
-//		    ferre.cerrar(e); diagF.showModal();
-		    diagI.close();
+		    ferre.cerrar(e); IDB.readDB( DATA ).get( clave ).then( w => { obs.value = w.obs; diagF.showModal(); } );
+/*		    diagI.close();
 		    if (window.confirm('Enviar reporte de faltante?'))
-			SQL.update({clave: clave, faltante: 1, tbname: 'faltantes', vwname: 'faltantes', id_tag: 'u'});
-
+			SQL.update({clave: clave, faltante: 1, tbname: 'faltantes', vwname: 'faltantes', id_tag: 'u'}); */
 		};
 	    })();
 

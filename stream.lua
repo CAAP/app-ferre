@@ -15,7 +15,7 @@ local week = os.date('W%U', mx())
 local dbname = string.format('/db/%s.db', week)
 local fdbname = '/db/ferre.db'
 
-local MM = {caja={}, tickets={}, tabs={}, entradas={}, cambios={}, recording={}, streaming={}}
+local MM = {tickets={}, tabs={}, entradas={}, cambios={}, recording={}, streaming={}}
 
 local function safe(f, msg)
     local ok,err = pcall(f)
@@ -88,22 +88,12 @@ local function cambios()
 	    qry = string.format('SELECT * FROM %q %s', vwname, clause)
 	    ret = fd.first( conn.query( qry ), function(x) return x end )
 	    fd.reduce( fd.keys(ret), fd.filter(function(x,k) return k:match'^precio' end), fd.merge, w )
-	    -- in order to update admin.html
+	    -- in order to update costo in admin.html
 	    ret = fd.first( conn.query(string.format('SELECT clave, costol FROM datos %s', clause)), function(x) return x end )
 	    w.ret = { string.format('event: costo\n%s\n\n', asJSON(ret)) }
 	end
 
-	if obs then assert( conn.exec(string.format('UPDATE faltantes SET obs = obs ||", "|| %q %s'), obs, clause), 'Error updating obs field for faltantes table' ); w.obs = obs end
-
---[[
-	if obs then -- UPDATE faltantes c/ categorias
-	    qry = string.format("INSERT INTO categorias VALUES ('%s', '%s')", clave, obs)
-	    assert(conn.exec(qry), 'Error executing INSERT INTO categorias')
-	    qry = string.format('SELECT obs FROM categorias WHERE clave LIKE %q', clave)
-	    ret = fd.reduce( conn.query(qry), fd.map(function(x) return string.format("'%s'", x.obs) end), fd.into, {} )
-	    w.obs = string.format('[%s]', table.concat(ret, ', ')) -- XXX
-        end
---]]
+	if obs then assert( conn.exec(string.format('UPDATE faltantes SET obs = %q %s', obs, clause)), 'Error updating obs field for faltantes table' ); w.obs = obs end
 
 	qry = string.format('UPDATE cambios SET version = version + 1, fecha = %q %s', hoy, clause)
 	assert( conn.exec( qry ), 'Error executing: ' .. qry )
@@ -124,35 +114,6 @@ local function cambios()
 	else  return sse{ data=table.concat( fd.reduce(conn.query(qry2), fd.map(asJSON), fd.into, {} ), ',\n'), event='update' } end
     end
 end
-
-local function entradas( conn )
-    local tbname = 'entradas'
-    local vwname = 'horas'
-    local schema = 'uid, tag'
-    local stmt = string.format('AS SELECT * FROM %q WHERE uid LIKE %q GROUP BY uid', tbname, today..'%')
-    local query = string.format('SELECT * FROM %q', vwname)
-
-    conn.exec( string.format(sql.newTable, tbname, schema) )
-    conn.exec( string.format('DROP VIEW IF EXISTS %q', vwname) )
-    conn.exec( string.format('CREATE VIEW IF NOT EXISTS %q %s', vwname, stmt ) )
-
-    local function reformat(w) return { pid=w.uid:match'%d+$', hora=w.uid:match'T(%d+:%d+)', tag=w.tag } end
-
-    function MM.entradas.add( w )
-	local uid = os.date('%FT%TP', mx()) .. w.pid
-	w.uid = uid
-	conn.exec( string.format('INSERT INTO %q VALUES(%q, %q)', tbname, uid, w.tag) )
-	return reformat( w )
-    end
-
-    function MM.entradas.sse()
-	if conn.count( vwname ) == 0 then return ':empty\n\n'
-	else return sse{ data=table.concat( fd.reduce(conn.query(query), fd.map(reformat), fd.map(asJSON), fd.into, {} ), ',\n'), event='entradas' } end
-    end
-
-    return conn
-end
-
 --
 local function tickets( conn )
     local tbname = 'tickets'
@@ -330,11 +291,54 @@ end
 
 --
 
-fd.comp{ cambios, recording, streaming, tickets, tabs, entradas, init, sql.connect( dbname ) }
+fd.comp{ cambios, recording, streaming, tickets, tabs, init, sql.connect( dbname ) }
 
 while 1 do
 --    safe( MM.streaming.connect )
     MM.streaming.connect()
---    MM.recording.talk()
     safe( MM.recording.talk )
 end
+
+
+--[[
+	if obs then -- UPDATE faltantes c/ categorias
+	    qry = string.format("INSERT INTO categorias VALUES ('%s', '%s')", clave, obs)
+	    assert(conn.exec(qry), 'Error executing INSERT INTO categorias')
+	    qry = string.format('SELECT obs FROM categorias WHERE clave LIKE %q', clave)
+	    ret = fd.reduce( conn.query(qry), fd.map(function(x) return string.format("'%s'", x.obs) end), fd.into, {} )
+	    w.obs = string.format('[%s]', table.concat(ret, ', ')) -- XXX
+        end
+--]]
+
+
+--[[
+local function entradas( conn )
+    local tbname = 'entradas'
+    local vwname = 'horas'
+    local schema = 'uid, tag'
+    local stmt = string.format('AS SELECT * FROM %q WHERE uid LIKE %q GROUP BY uid', tbname, today..'%')
+    local query = string.format('SELECT * FROM %q', vwname)
+
+    conn.exec( string.format(sql.newTable, tbname, schema) )
+    conn.exec( string.format('DROP VIEW IF EXISTS %q', vwname) )
+    conn.exec( string.format('CREATE VIEW IF NOT EXISTS %q %s', vwname, stmt ) )
+
+    local function reformat(w) return { pid=w.uid:match'%d+$', hora=w.uid:match'T(%d+:%d+)', tag=w.tag } end
+
+    function MM.entradas.add( w )
+	local uid = os.date('%FT%TP', mx()) .. w.pid
+	w.uid = uid
+	conn.exec( string.format('INSERT INTO %q VALUES(%q, %q)', tbname, uid, w.tag) )
+	return reformat( w )
+    end
+
+    function MM.entradas.sse()
+	if conn.count( vwname ) == 0 then return ':empty\n\n'
+	else return sse{ data=table.concat( fd.reduce(conn.query(query), fd.map(reformat), fd.map(asJSON), fd.into, {} ), ',\n'), event='entradas' } end
+    end
+
+    return conn
+end
+--]]
+
+
