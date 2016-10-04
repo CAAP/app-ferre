@@ -119,12 +119,14 @@
 
 	    caja.updateItem = TICKET.update;
 
-//	    caja.clickItem = e => TICKET.remove( e.target.parentElement );
+	    caja.clickItem = e => TICKET.remove( e.target.parentElement );
 
 	    caja.emptyBag = () => { TICKET.empty(); TICKET.bagUID.clear(); TICKET.bagRFC = false; TICKET.timbre.disabled = true; caja.cleanCaja(); }
 
 	    // LOAD DBs
  	    if (IDB.indexedDB) { DBs.forEach( IDB.loadDB ); } else { alert("IDBIndexed not available."); }
+
+	    PEOPLE.load();
 
 	    // HEADER
 

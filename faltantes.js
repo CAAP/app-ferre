@@ -26,7 +26,8 @@
 		    IDB.readDB( app ).openCursor( cursor =>  {
 			if (cursor) {
 			    let o = cursor.value;
-			    ret.push( 'args=clave+'+o.clave+'+proveedor+'+o.proveedor );
+			    if (!(o.proveedor.startsWith('X') || o.proveedor.length == 0))
+			        ret.push( 'args=clave+'+o.clave+'+proveedor+'+o.proveedor );
 			    cursor.continue();
 			} else { XHR.get( '/ferre/proveedor.lua?' + ret.join('&') ); }
 		    } );
@@ -52,7 +53,7 @@
 		    desc.classList.add('desc');
 		    desc.appendChild( document.createTextNode( a.desc ) );
 		    row.insertCell().appendChild( document.createTextNode( a.costol ) );
-		    let obs = a.obs ? a.obs.join(', ') : '';
+		    let obs = a.obs || '';
 		    row.insertCell().appendChild( document.createTextNode( obs ) );
 		    let ie = document.createElement('input'); ie.value = a.proveedor || ''; ie.size = 8; ie.addEventListener('change', update);
 		    row.insertCell().appendChild( ie );
