@@ -21,6 +21,41 @@
 
 		app.reload = () => IDB.clearDB( app ).then(() => IDB.populateDB(app) ).then( app.load );
 
+		let pages = '<html><body><table><tbody>$BODY</tbody></table></body></html>'
+
+		let ans = '';
+
+		function generar() {
+		    let ret = [];
+		    return IDB.readDB( app ).index( IDBKeyRange.upperBound('V', false), 'prev', cursor =>  {
+			if (cursor) {
+			    let o = cursor.value;
+			    if (!(o.proveedor.startsWith('X') || o.proveedor.length == 0))
+			        ret.push( '<tr><td>'+o.desc+'</td><td align="right">'+o.costol+'</td><td align="center">'+(o.obs||'')+'</td></tr>' );
+			    cursor.continue();
+			} else { ans = pages.replace('$BODY', ret.join('')); }
+		    } );
+		}
+
+		app.print = function() {
+		    return new Promise((resolve, reject) => {
+			let iframe = document.createElement('iframe');
+			iframe.style.visibility = "hidden";
+			iframe.width = 400;
+			document.body.appendChild(iframe);
+			iframe.onload = resolve(iframe.contentWindow);
+		    } )
+			.then( win => generar().then( () => { return win } ) )
+			.then( win => { let doc = win.document; doc.open(); doc.write(ans); doc.close(); return win } )
+			.then( win => win.print() )
+			.then( () => document.body.removeChild(document.body.lastChild) );
+		};
+
+		function slice(a) {
+		    let mid = a.length / 2;
+		    XHR.get('/ferre/proveedor.lua?'+ a.slice(0,mid).join('&')).then( () => XHR.get('/ferre/proveedor.lua?'+ a.slice(mid).join('&')) );
+		}
+
 		app.guardar = () => {
 		    let ret = [];
 		    IDB.readDB( app ).openCursor( cursor =>  {
@@ -29,7 +64,7 @@
 			    if (!(o.proveedor.startsWith('X') || o.proveedor.length == 0))
 			        ret.push( 'args=clave+'+o.clave+'+proveedor+'+o.proveedor );
 			    cursor.continue();
-			} else { XHR.get( '/ferre/proveedor.lua?' + ret.join('&') ); }
+			} else { slice(ret); }//XHR.get( '/ferre/proveedor.lua?' + ret.join('&') ); }
 		    } );
 		};
 
