@@ -30,7 +30,7 @@
 		    return IDB.readDB( app ).index( IDBKeyRange.upperBound('V', false), 'prev', cursor =>  {
 			if (cursor) {
 			    let o = cursor.value;
-			    if (!(o.proveedor.startsWith('X') || o.proveedor.length == 0))
+			    if (!(o.proveedor.startsWith('Z') || o.proveedor.length == 0))
 			        ret.push( '<tr><td>'+o.desc+'</td><td align="right">'+o.costol+'</td><td align="center">'+(o.obs||'')+'</td></tr>' );
 			    cursor.continue();
 			} else { ans = pages.replace('$BODY', ret.join('')); }
@@ -52,8 +52,8 @@
 		};
 
 		function slice(a) {
-		    let mid = a.length / 2;
-		    XHR.get('/ferre/proveedor.lua?'+ a.slice(0,mid).join('&')).then( () => XHR.get('/ferre/proveedor.lua?'+ a.slice(mid).join('&')) );
+		    let third = a.length / 3;
+		    XHR.get('/ferre/proveedor.lua?'+ a.slice(0,third).join('&')).then( () => XHR.get('/ferre/proveedor.lua?'+ a.slice(third, 2*third).join('&')) ).then( () => XHR.get('/ferre/proveedor.lua?'+ a.slice(2*third).join('&')) );
 		}
 
 		app.guardar = () => {
