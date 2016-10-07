@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title> VENTAS </title>
+    <link rel="stylesheet" href="app.css">
+    <script type="text/javascript" src="xhr.js"></script>
+    <script type="text/javascript" src="idb.js"></script>
+    <script type="text/javascript" src="data.js"></script>
+    <script type="text/javascript" src="browse.js"></script>
+    <script type="text/javascript" src="gps.js"></script>
+</head>
+
+<body lang="es-MX">
+
+    <header> <label id="notifications"></label> </header>
+
+    <section id="buscar">
+        <div> <input type="search" size=40 placeholder="Art&iacute;culo o Clave" onchange="ferre.startSearch(event)" onkeyup="ferre.keyPressed(event)"> <button>Buscar</button> </div>
+
+    <section id="resultados" class="tablas">
+        <table>
+	    <dt>
+            <thead>
+                <tr><th> Fecha </th><th> Clave </th><th> Descripci&oacute;n </th><th> GPS </th></tr>
+            </thead>
+	    </dt>
+	    <tbody id="tabla-resultados" class="amarillo" onclick="ferre.menu(event)" onwheel="ferre.scroll(event)"></tbody>
+	    <tfoot><tr><th colspan=4><button onclick="ferre.scroll({deltaY:0})">&larr;Anterior</button> <label> | </label> <button onclick="ferre.scroll({deltaY:1})">Siguiente&rarr;</button></th></tr></tfoot>
+	</table>
+    </section>
+
+    </section>
+
+    <footer> <label id="copyright"></label> </footer>
+
+</body>
+</html>

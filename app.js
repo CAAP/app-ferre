@@ -166,8 +166,6 @@
 	    // LOAD DBs
  		if (IDB.indexedDB)
 		    Promise.all( DBs.map( IDB.loadDB ) ).then( () => console.log('Success!') ).then( addEvents );
-
-		addEvents();
 	    })();
 
 	};

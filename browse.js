@@ -31,7 +31,7 @@
 
 	    function newItem(a, j) {
 		let row = BROWSE.lis.insertRow(j);
-		row.title = a.desc.substr(0,3); // TRYING OUT LOCATION XXX
+//		row.title = a.desc.substr(0,3); // TRYING OUT LOCATION XXX
 		if (a.desc.startsWith(sstr)) { row.classList.add('encontrado'); };
 		row.dataset.clave = a.clave;
 		// insert rows
