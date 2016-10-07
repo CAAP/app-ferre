@@ -47,6 +47,8 @@
 
 	    // FACTURAR
 
+		const hoy = new Date().toLocaleDateString('es-MX');
+
 		function fillme(o, letra) {
 		    let prc = o.precios[o.precio].split(' / ');
 		    let p = (100 * prc[0] * (100-o.rea) / 1e4).toFixed(2);
@@ -112,7 +114,7 @@
 		function add2bag( uid, rfc ) {
 		    TICKET.bagUID.add( uid );
 		    if (!TICKET.bagRFC && (rfc != "undefined") && (rfc.length > 0) ) { TICKET.bagRFC = rfc; TICKET.timbre.disabled = false; }
-		    SQL.get( { uid: uid, week: cajita.dataset.week } )
+		    SQL.get( { uid: uid } )
 			.then( JSON.parse )
 			.then( objs => Promise.all( objs.map( data ) ) );
 		}
