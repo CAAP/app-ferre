@@ -66,18 +66,18 @@
 
 	    const persona = document.getElementById('personas'); // XXX refactor all instances of this
 
-	    ferre.emptyBag = () => { TICKET.empty(); SQL.print({id_tag: 'd', pid: Number(persona.value)}); } // ferre.saveme(); 
+	    ferre.emptyBag = () => { TICKET.empty(); return SQL.print({id_tag: 'd', pid: Number(persona.value)}) } // ferre.saveme(); 
 
 	    ferre.print = function(a) {
 		if (TICKET.items.size == 0) {return;}
 		const id_tag = TICKET.TAGS[a] || TICKET.TAGS.none;
 		const pid = Number(document.getElementById('personas').dataset.id);
 
-		let objs = ['tag='+a, 'person='+(PEOPLE.id[pid] || 'NAP'),'id_tag='+id_tag, 'pid='+pid, 'count='+TICKET.items.size]; // , 'rfc='+rfc
+		let objs = ['id_tag='+id_tag, 'pid='+pid]; // , 'rfc='+rfc // 'person='+(PEOPLE.id[pid] || 'NAP'), // 'tag='+a, // , 'count='+TICKET.items.size
 
 		TICKET.items.forEach( item => objs.push( 'args=' + TICKET.plain(item) ) );
 
-		return SQL.print( objs ); //.then( ferre.emptyBag ); //then( doprint ).then( ferre.emptyBag )
+		return SQL.print( objs ).then( ferre.emptyBag ); //then( doprint ).then( ferre.emptyBag )
 	    };
 
 	    (function() {

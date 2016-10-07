@@ -49,7 +49,8 @@ local function cambios()
     local conn = sql.connect( fdbname )
     print('Connected to DB', fdbname, '\n')
 
--- IT DOESN'T PRINT HERE
+--[[
+-- AUXILIARY fn FOR PRINTING
     function MM.tickets.addDescPrc( w )
 	local j = w.precio:sub(-1)
 	local qry = string.format('SELECT desc, precio%d ||"/"|| IFNULL(u%d,"?") prc FROM precios WHERE clave LIKE %q', j, j, w.clave)
@@ -57,6 +58,7 @@ local function cambios()
 	w.desc = a.desc; w.prc = a.prc;
 	return w
     end
+--]]
 
     local costol = 'UPDATE datos SET costol = costo*(100+impuesto)*(100-descuento), fecha = %q %s'
 
@@ -132,6 +134,7 @@ local function tickets( conn )
 
     local function ids( uid, tag ) return fd.map( function(t) t[1] = uid; t[2] = tag; return t end ) end
 
+--[[
     local function subTotal( w )
 	w.subTotal = string.format( '%.2f', w.totalCents / 100 )
 	return w
@@ -151,6 +154,7 @@ local function tickets( conn )
 	w.datos = nil
 	return true
     end
+--]]
 
 -- XXX input is not parsed to Number
     function MM.tickets.add( w )
@@ -158,8 +162,8 @@ local function tickets( conn )
 	fd.reduce( w.args, fd.map( collect ), ids( uid, w.id_tag ), sql.into( tbname ), conn )
 	local a = fd.first( conn.query(string.format('%s WHERE uid = %q ', query, uid)), function(x) return x end )
 	w.uid = uid; w.totalCents = a.totalCents; w.count = a.count
-	safe( function() forPrinting( w ) end, 'Connecting to printing daemon' ) -- in case of error still send it to CAJA
-	MM.tabs.remove( w.pid )
+--	safe( function() forPrinting( w ) end, 'Connecting to printing daemon' ) -- in case of error still send it to CAJA
+--	MM.tabs.remove( w.pid )
 	return w
     end
 
@@ -251,7 +255,7 @@ local function recording()
 	if tag == 'u' then local m = MM.cambios.add( w ); m.event = m.faltante and 'faltante' or 'update'; return m end
 	if tag == 'g' then MM.tabs.add( w, q ); w.event = 'tabs'; return w end
 	if tag == 'h' then  local m = MM.entradas.add( w ); m.event = 'entradas'; return m end
-	if tag == 'd' then w.ret = { 'event: delete\ndata: '.. w.pid ..'\n\n' }; w.event = 'none' w.data = ''; return w end
+	if tag == 'd' then MM.tabs.remove(w.pid); w.ret = { 'event: delete\ndata: '.. w.pid ..'\n\n' }; w.event = 'none' w.data = ''; return w end
     -- printing: 'a', 'b', 'c'
 	w.ret = { 'event: delete\ndata: '.. w.pid ..'\n\n' }
 	MM.tickets.add( w ); w.event = 'feed'; return w

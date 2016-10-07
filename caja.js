@@ -122,6 +122,8 @@
 		let removeItem = uid => Promise.all( Array.from(mybag.querySelectorAll('tr[data-uid="' + uid + '"]')).map( TICKET.remove ) );
 
 // XXX check may be innecesary to look for pid & time since it comes from feed
+		const doprint = document.getElementById("doprint");
+
 		function add2caja(w) {
 		    let row = cajita.insertRow(0);
 
@@ -129,6 +131,8 @@
 		    ie.type = 'checkbox'; ie.value = w.uid; ie.name = w.rfc || ((TICKET.TAGS.facturar == w.id_tag) && 'XXX');
 		    ie.addEventListener('change', e => { if (e.target.checked) add2bag(e.target.value, e.target.name); else removeItem(e.target.value); } );
 		    row.insertCell().appendChild(ie);
+
+		    if (doprint.checked) { XHR.get('/ticket/print.lua?uid='+w.uid+'&tag='+TICKET.TAGS.ID[w.id_tag]||''); }
 
 		    w.nombre = PEOPLE.id[asnum(w.uid.substr(-1))] || 'NaP';
 		    w.time = w.uid.substr(11,5);
