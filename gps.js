@@ -7,13 +7,6 @@
 
 	    app.reloadDB = function reloadDB() { return IDB.clearDB( DATA ).then( () => IDB.populateDB( DATA ) ); };
 
-		    let objStore = IDB.write2DB( app );
-		    return objStore.get( desc ).then( q => {
-			if (q) { q.proveedor = e.target.value; q.proveedor = e.target.value; return q; }
-			else { Promise.fail('No key found!'); }
-		    }, e => console.log("Error searching by desc: " + e)  )
-		    .then( objStore.put );
-
 	    function asnum(s) { let n = Number(s); return Number.isNaN(n) ? s : n; };
 	    app.updateGPS = function(e) {
 		let clave = asnum(e.target.parentElement.dataset.clave);
@@ -68,9 +61,7 @@
 	    (function() { document.getElementById('copyright').innerHTML = 'versi&oacute;n ' + 2.0 + ' | cArLoS&trade; &copy;&reg;' })();
 
 	    // LOAD DBs
- 		if (IDB.indexedDB)
-		    Promise.all( DBs.map( IDB.loadDB ) ).then( () => console.log('Success!') );
-	    })();
-
+ 	    if (IDB.indexedDB)
+		Promise.all( DBs.map( IDB.loadDB ) ).then( () => console.log('Success!') );
 	};
 

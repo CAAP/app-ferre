@@ -111,7 +111,7 @@
 
 		function data( o ) { return IDB.readDB( DATA ).get( asnum(o.clave) ).then( w => Object.assign( o, w ) ).then( TICKET.show ).then( () => { mybag.lastChild.dataset.uid = o.uid } ) }
 
-		function add2bag( uid, rfc ) {
+		function add2bag( uid, rfc ) {  //  rfc
 		    TICKET.bagUID.add( uid );
 		    if (!TICKET.bagRFC && (rfc != "undefined") && (rfc.length > 0) ) { TICKET.bagRFC = rfc; TICKET.timbre.disabled = false; }
 		    SQL.get( { uid: uid } )
@@ -158,7 +158,7 @@
 
 		// LOAD DBs
  		if (IDB.indexedDB)
-		    Promise.all( DBs.map( IDB.loadDB ) ).then( PEOPLE.load ).then( addEvents, () => alert("IDBIndexed not available.") );
+		    Promise.all( DBs.map( IDB.loadDB ) ).then( PEOPLE.load ).then( addEvents );
 	    })();
 
 	};
