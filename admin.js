@@ -183,9 +183,6 @@
 
 	    SQL.DB = 'ferre';
 
-	    // LOAD DBs
- 	    if (IDB.indexedDB) { DBs.forEach( IDB.loadDB ); } else { alert("IDBIndexed not available."); }
-
 	    // SET HEADER
 	    (function() {
 	        let note = document.getElementById('notifications');
@@ -198,7 +195,8 @@
 	    (function() { document.getElementById('copyright').innerHTML = 'versi&oacute;n ' + 1.0 + ' | cArLoS&trade; &copy;&reg;'; })();
 
 	// SERVER-SIDE EVENT SOURCE
-		(function() {
+	    (function() {
+		function addEvents() {
 		    let esource = new EventSource(document.location.origin + ":8080");
 		    esource.addEventListener("update", function(e) {
 			console.log("update event received.");
@@ -213,7 +211,12 @@
 			console.log("update-costo event received.");
 			admin.update( [JSON.parse(e.data)] );
 		    }, false);
-		})();
+		}
+
+	    // LOAD DBs
+ 		if (IDB.indexedDB)
+		    Promise.all( DBs.map( IDB.loadDB ) ).then( addEvents, () => alert("IDBIndexed not available.") );
+	    })();
 
 
 	};

@@ -5,7 +5,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title> CAJA </title>
-    <link rel="stylesheet" href="caja.css">
     <link rel="stylesheet" href="app.css">
     <script type="text/javascript" src="xhr.js"></script>
     <script type="text/javascript" src="sql.js"></script>
@@ -27,6 +26,7 @@
 	<table>
 	    <caption>CAJA</caption>
 	    <dt><thead>
+		<tr><th colspan=6> <input type="date" onchange="caja.getByDate(event)"/> </th></tr>
 		<tr><th> </th><th> Hora </th><th> Nombre </th><th> Art&iacute;culos </th><th> Total </th><th> </th></tr>
 	    </dt></thead>
 	    <tbody id="tabla-caja"></tbody>

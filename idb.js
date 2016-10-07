@@ -5,18 +5,20 @@
 	    indexedDB: (window.indexedDB || window.mozIndexedDB || window.webkitIndexedDB || window.msIndexedDB),
 
 	    loadDB: function(k) {
+		return new Promise( (resolve, reject) => {
 		let req = IDB.indexedDB.open(k.DB, k.VERSION);
-		req.onerror = e => console.log('Error loading database: ' + k.DB + ' | ' + e.target.errorCode);
-	        req.onsuccess = function(e) { k.CONN = e.target.result; if (k.load) { k.load(); }};
+		req.onerror = e => reject( 'Error loading database: ' + k.DB + ' | ' + e.target.errorCode );
+	        req.onsuccess = function(e) { k.CONN = e.target.result; resolve( k ); }; // if (k.load) { k.load(); 
 		req.onupgradeneeded = function(e) {
 		    console.log('Upgrade ongoing.');
 		    let objStore = e.target.result.createObjectStore(k.STORE, { keyPath: k.KEY });
 		    if (k.INDEX) { objStore.createIndex(k.INDEX, k.INDEX, { unique: false } ) }
 		    objStore.transaction.oncomplete = function(ev) {
 			console.log('ObjectStore ' + k.STORE + ' created successfully.');
-			if (k.FILE) { IDB.populateDB( k ); }
+			if (k.FILE) { resolve( IDB.populateDB(k) ); } else { resolve( k ); }
 		    };
 		};
+		} );
 	    },
 
 	    populateDB: function(k) {
@@ -36,6 +38,8 @@
 	    },
 
 	    clearDB: k => IDB.write2DB(k).clear(),
+
+	    recreateDB: k => IDB.clearDB(k).then( IDB.populateDB )
 	};
 
 	(function() {
@@ -67,7 +71,7 @@
 		let os = new ObjStore( objStore, k );
 		os.clear = function() { return new Promise( (resolve, reject) => {
 		    let request = objStore.clear();
-		    request.onsuccess = resolve(true);
+		    request.onsuccess = resolve(k);
 		    request.onerror = reject(event.target.errorCode);
 		})};
 		os.delete = function(w) { return new Promise( (resolve, reject) => {

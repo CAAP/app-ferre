@@ -7,9 +7,9 @@ local sql = require'carlos.sqlite'
 local mx = require'ferre.timezone'
 
 local hoy = os.date('%d-%b-%y', mx())
-local ayer = os.date('*t', mx())
+--[[local ayer = os.date('*t', mx())
 ayer.day = ayer.day-1
-ayer = os.date('%d-%b-%y', os.time(ayer))
+ayer = os.date('%d-%b-%y', os.time(ayer)) --]]
 local today = os.date('%F', mx())
 local week = os.date('W%U', mx())
 local dbname = string.format('/db/%s.db', week)
@@ -100,9 +100,6 @@ local function cambios()
 	w.clave = clave
 
 	return w
---	clause = string.format('WHERE cambios.clave = %q AND cambios.clave = %s.clave', clave, vwname)
---	qry = string.format('SELECT * FROM %q, cambios %s', vwname, clause)
---	return fd.first( conn.query( qry ), function(x) return x end )
     end
 
     function MM.cambios.sse( w )

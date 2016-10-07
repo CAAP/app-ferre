@@ -31,24 +31,19 @@
 
 	    (function() {
 		let diagI = document.getElementById('dialogo-item');
-//		let inObs = diagI.querySelector('input[list=obs]'); // faltantes
 		let lsObs = document.getElementById('obs'); // faltantes
 		let clave = -1;
 
 		function asnum(s) { let n = Number(s); return Number.isNaN(n) ? s : n; };
 		function uptoCents(q) { return Math.round( 100 * q[q.precio] * q.qty * (1-q.rea/100) ); };
-//		function clearTable(tb) { inObs.value = ''; while (tb.firstChild) { tb.removeChild( tb.firstChild ); } }; //recycle?
-		function choice(s) { let opt = document.createElement('option'); opt.value = s; lsObs.appendChild( opt ); }
 
 		ferre.menu = e => {
 		    const slc = document.getElementById('personas');
 		    if (slc.value == 0) { return; }
 		    clave = asnum(e.target.parentElement.dataset.clave); // XXX one can use this instead: diagI.returnValue = clave;
 		    diagI.showModal();
-//		    IDB.readDB( DATA ).get( clave ).then(p => {if (p) { clearTable(lsObs); if (p.obs) { p.obs.forEach( choice ) }}}).then( () => diagI.showModal());
 		};
 
-		// Add: faltante XXX
 		ferre.add2bag = function() {
 		    diagI.close();
 		    if (TICKET.items.has( clave )) { console.log('Item is already in the bag.'); return false; }
@@ -62,26 +57,20 @@
 
 		ferre.enviarF = e => SQL.update({clave: clave, faltante: 1, obs: obs.value, tbname: 'faltantes', vwname: 'faltantes', id_tag: 'u'}).then( () => { obs.value = ''; ferre.cerrar(e); } );
 
-		ferre.faltante = function(e) {
-		    ferre.cerrar(e); IDB.readDB( DATA ).get( clave ).then( w => { obs.value = w.obs; diagF.showModal(); } );
-/*		    diagI.close();
-		    if (window.confirm('Enviar reporte de faltante?'))
-			SQL.update({clave: clave, faltante: 1, tbname: 'faltantes', vwname: 'faltantes', id_tag: 'u'}); */
-		};
+		ferre.faltante = e => IDB.readDB( DATA ).get( clave ).then( w => { ferre.cerrar(e); obs.value = w.obs; diagF.showModal(); } );
 	    })();
 
 	    ferre.updateItem = TICKET.update;
 
 	    ferre.clickItem = e => TICKET.remove( e.target.parentElement );
 
-		const persona = document.getElementById('personas'); // XXX refactor all instances of this
+	    const persona = document.getElementById('personas'); // XXX refactor all instances of this
 
 	    ferre.emptyBag = () => { TICKET.empty(); SQL.print({id_tag: 'd', pid: Number(persona.value)}); } // ferre.saveme(); 
 
 	    ferre.print = function(a) {
 		if (TICKET.items.size == 0) {return;}
 		const id_tag = TICKET.TAGS[a] || TICKET.TAGS.none;
-//		let rfc = ''; if (a == 'facturar') { rfc = arg1; };
 		const pid = Number(document.getElementById('personas').dataset.id);
 
 		let objs = ['tag='+a, 'person='+(PEOPLE.id[pid] || 'NAP'),'id_tag='+id_tag, 'pid='+pid, 'count='+TICKET.items.size]; // , 'rfc='+rfc
@@ -136,10 +125,8 @@
 
 	    })();
 
-	    // LOAD DBs
- 	    if (IDB.indexedDB) { DBs.forEach( IDB.loadDB ); } else { alert("IDBIndexed not available."); }
-
 	    // HEADER
+
 	    (function() {
 	        const note = document.getElementById('notifications');
 		let FORMAT = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
@@ -148,14 +135,17 @@
 	    })();
 
 	    // SET FOOTER
+
 	    (function() { document.getElementById('copyright').innerHTML = 'versi&oacute;n ' + 2.0 + ' | cArLoS&trade; &copy;&reg;' })();
 
-	// SERVER-SIDE EVENT SOURCE
-		(function() {
+	    // SERVER-SIDE EVENT SOURCE
+
+	    (function() {
+		function addEvents() {
 		    let esource = new EventSource(document.location.origin + ":8080");
 		    esource.addEventListener("tabs", function(e) {
-			console.log("tabs event received.");
-			JSON.parse( e.data ).forEach( o => PEOPLE.tabs.set(o.pid, o) );
+		 	console.log("tabs event received.");
+		    	JSON.parse( e.data ).forEach( o => PEOPLE.tabs.set(o.pid, o) );
 		    }, false);
 		    esource.addEventListener("update", function(e) {
 			console.log("update event received.");
@@ -171,7 +161,14 @@
 			PEOPLE.tabs.delete(pid);
 			console.log('Remove ticket for: ' + PEOPLE.id[pid]);
 		    }, false);
-		})();
+		}
+
+	    // LOAD DBs
+ 		if (IDB.indexedDB)
+		    Promise.all( DBs.map( IDB.loadDB ) ).then( () => console.log('Success!') ).then( addEvents );
+
+		addEvents();
+	    })();
 
 	};
 

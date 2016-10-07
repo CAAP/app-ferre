@@ -7,12 +7,75 @@
 
 	    caja.cerrar = e => e.target.closest('dialog').close();
 
-	    caja.print = () => Promise.all(Array.from(TICKET.bagUID).map( encodeURIComponent ).map( k => XHR.get('/ticket/print.lua?uid='+k) )); //SQL.print({week: cajita.dataset.week, uid: k })));
-
 	    // SQL
 
 	    SQL.DB = 'caja';
 	
+	    // FACTURAR
+
+	    (function (){
+		let diag = document.getElementById( 'dialogo-rfc' );
+		let tabla = document.getElementById( 'tabla-rfc' );
+		let ancho = new Set(['ciudad', 'correo', 'calle']);
+		const hoy = new Date().toLocaleDateString('es-MX');
+
+		function makeDisplay( k ) {
+		    let row = tabla.insertRow();
+		    row.insertCell().appendChild( document.createTextNode(k.replace(/([A-Z])/g,' $1')) );
+		    let ie = document.createElement('input');
+		    ie.type = 'text'; ie.size = 12; ie.name = k; ie.disabled = true;
+		    if (ancho.has(k)) { ie.size = 25; }
+		    if (k == 'razonSocial') { ie.size = 40; }
+		    row.insertCell().appendChild( ie );
+		}
+
+		function fillVal( k, v ) {
+		    let ie = tabla.querySelector('input[name='+k+']');
+		    if (ie) { ie.value = v; }
+		}
+
+		XHR.getJSON('/ferre/factura.lua').then( a => a.forEach( makeDisplay ) );
+
+		const tiva = document.getElementById( TICKET.tivaID );
+		const tbruto = document.getElementById( TICKET.tbrutoID );
+		const ttotal = document.getElementById( TICKET.ttotalID );
+
+		function fillme(o, letra) {
+		    let prc = o.precios[o.precio].split(' / ');
+		    let p = (100 * prc[0] * (100-o.rea) / 1e4).toFixed(2);
+		    let u = (prc[1].length > 0) ? prc[1] : 'PZ';
+		    let ret = ['"XXXX"', hoy, '"XXXX"', '"."', '"."', '"."', o.qty, '"'+o.desc+'"', '"'+u+'"', p, (o.totalCents/100).toFixed(2), '"SUBTOTAL"', tbruto.textContent,'"IVA"', tiva.textContent, '"TOTAL"', ttotal.textContent, '"'+letra.replace('\n','')+'"'];
+		    return ret.join('\t');
+		}
+
+		function temporal(s) {
+		    let ret = [];
+		    TICKET.items.forEach(item => ret.push( fillme(item, s) ));
+		    let b = new Blob([ret.join('\n')], {type: 'text/html'});
+		    let a = document.createElement('a');
+		    let url = URL.createObjectURL(b);
+		    a.href = url;
+		    a.download = 'facturar.tsv'
+		    a.click();
+		    URL.revokeObjectURL(url);
+		}
+
+		caja.timbrar = () => XHR.get('/caja/pesos.lua?pesos='+ttotal.textContent).then( temporal )
+
+		caja.timbrarORIG = function() {
+		    let rfc = TICKET.bagRFC;
+		    XHR.getJSON('/ferre/rfc.lua?rfc=' + rfc)
+			.then( a => {
+			    if (a.length==1) {
+				let q = a[0];
+				for (let k in q) { fillVal(k, q[k]); }
+				diag.showModal();
+			    }
+			});
+		};
+
+	    })();
+
 	    // PAGAR
 
 	    (function() {
@@ -44,30 +107,6 @@
 		    mytotal.value = ttotal.textContent;
 		    paga.showModal();
 		};
-
-	    // FACTURAR
-
-		function fillme(o, letra) {
-		    let prc = o.precios[o.precio].split(' / ');
-		    let p = (100 * prc[0] * (100-o.rea) / 1e4).toFixed(2);
-		    let u = (prc[1].length > 0) ? prc[1] : 'PZ';
-		    let ret = ['"XXXX"', hoy, '"XXXX"', '"."', '"."', '"."', o.qty, '"'+o.desc+'"', '"'+u+'"', p, (o.totalCents/100).toFixed(2), '"SUBTOTAL"', tbruto.textContent,'"IVA"', tiva.textContent, '"TOTAL"', ttotal.textContent, '"'+letra.replace('\n','')+'"'];
-		    return ret.join('\t');
-		}
-
-		function temporal(s) {
-		    let ret = [];
-		    TICKET.items.forEach(item => ret.push( fillme(item, s) ));
-		    let b = new Blob([ret.join('\n')], {type: 'text/html'});
-		    let a = document.createElement('a');
-		    let url = URL.createObjectURL(b);
-		    a.href = url;
-		    a.download = 'facturar.tsv'
-		    a.click();
-		    URL.revokeObjectURL(url);
-		}
-
-		caja.timbrar = () => XHR.get('/caja/pesos.lua?pesos='+ttotal.textContent).then( temporal )
 	    })();
 
 	    // TICKET
@@ -84,6 +123,10 @@
 
 	    caja.emptyBag = () => { TICKET.empty(); TICKET.bagUID.clear(); TICKET.bagRFC = false; TICKET.timbre.disabled = true; caja.cleanCaja(); }
 
+	    // LOAD DBs
+ 	    if (IDB.indexedDB) { DBs.forEach( IDB.loadDB ); } else { alert("IDBIndexed not available."); }
+
+	    PEOPLE.load();
 
 	    // HEADER
 
@@ -95,12 +138,9 @@
 		note.appendChild( document.createTextNode( now ) );
 	    })();
 
-	    // FOOTER
-
 	    (function() { document.getElementById('copyright').innerHTML = 'versi&oacute;n ' + 1.0 + ' | cArLoS&trade; &copy;&reg;'; })();
 
 	// ping CAJA
-
 	    (function() {
 		const cajita = document.getElementById('tabla-caja');
 		const mybag = TICKET.bag;
@@ -116,8 +156,9 @@
 			.then( JSON.parse )
 			.then( objs => Promise.all( objs.map( data ) ) );
 		}
+		const ttotal = document.getElementById( TICKET.ttotalID );
 
-		caja.cleanCaja = () => Array.from(cajita.querySelectorAll("input:checked")).forEach(ic => {ic.checked = false });
+		caja.print = () => Promise.all(Array.from(TICKET.bagUID).map( encodeURIComponent ).map( k => SQL.print({week: cajita.dataset.week, total: ttotal.textContent, uid: k, tag: 'TKT', person: 'YO'})));
 
 		let removeItem = uid => Promise.all( Array.from(mybag.querySelectorAll('tr[data-uid="' + uid + '"]')).map( TICKET.remove ) );
 
@@ -137,22 +178,24 @@
 		    for (let k of ['time', 'nombre', 'count', 'total', 'tag']) { row.insertCell().appendChild( document.createTextNode(w[k]) ); }
 		}
 
-		function clearTable(tb) { while (tb.firstChild) { tb.removeChild( tb.firstChild ); } }; //recycle?
-
 	// SERVER-SIDE EVENT SOURCE
-		function addEvents() {	
+		(function() {
 		    let esource = new EventSource(document.location.origin + ":8080");
 		    esource.addEventListener("feed", function(e) {
 			console.log('FEED message received\n');
 			JSON.parse( e.data ).forEach( add2caja );
 		    }, false);
+		    esource.addEventListener("week", function(e) {
+			let week = JSON.parse( e.data );
+			cajita.dataset.week = week;
+			console.log('WEEK: ' + week);
+		    }, false);
+		})();
 
-		    caja.getByDate = e => XHR.getJSON('/caja/getDate.lua?uid='+e.target.value).then(data => {clearTable(cajita); esource.close(); data.forEach(add2caja)});
-		}
+		caja.cleanCaja = function() {
+		    Array.from(cajita.querySelectorAll("input:checked")).forEach(ic => {ic.checked = false }); //.reduce( (_, ic) => { ic.checked = false; }, {} );
+		};
 
-		// LOAD DBs
- 		if (IDB.indexedDB)
-		    Promise.all( DBs.map( IDB.loadDB ) ).then( PEOPLE.load ).then( addEvents, () => alert("IDBIndexed not available.") );
 	    })();
 
 	};
