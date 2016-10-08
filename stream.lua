@@ -7,9 +7,6 @@ local sql = require'carlos.sqlite'
 local mx = require'ferre.timezone'
 
 local hoy = os.date('%d-%b-%y', mx())
---[[local ayer = os.date('*t', mx())
-ayer.day = ayer.day-1
-ayer = os.date('%d-%b-%y', os.time(ayer)) --]]
 local today = os.date('%F', mx())
 local week = os.date('W%U', mx())
 local dbname = string.format('/db/%s.db', week)
@@ -48,17 +45,6 @@ end
 local function cambios()
     local conn = sql.connect( fdbname )
     print('Connected to DB', fdbname, '\n')
-
---[[
--- AUXILIARY fn FOR PRINTING
-    function MM.tickets.addDescPrc( w )
-	local j = w.precio:sub(-1)
-	local qry = string.format('SELECT desc, precio%d ||"/"|| IFNULL(u%d,"?") prc FROM precios WHERE clave LIKE %q', j, j, w.clave)
-	local a = fd.first( conn.query(qry), function(x) return x end )
-	w.desc = a.desc; w.prc = a.prc;
-	return w
-    end
---]]
 
     local costol = 'UPDATE datos SET costol = costo*(100+impuesto)*(100-descuento), fecha = %q %s'
 
@@ -134,36 +120,12 @@ local function tickets( conn )
 
     local function ids( uid, tag ) return fd.map( function(t) t[1] = uid; t[2] = tag; return t end ) end
 
---[[
-    local function subTotal( w )
-	w.subTotal = string.format( '%.2f', w.totalCents / 100 )
-	return w
-    end
-    local function asTable( s )
-	local t = {}
-	for k,v in s:gmatch'([^|]+)|([^|]+)' do t[k] = v end
-	return t
-    end
-    local tkt = require'ferre.ticket'
-    local lpr = require'ferre.bixolon'
-    local function forPrinting( w )
-	w.total = string.format( '%.2f', w.totalCents / 100 )
-	w.fecha = w.uid:match'([^P]+)P'
-	w.datos = fd.reduce( w.args, fd.map( asTable ), fd.map( MM.tickets.addDescPrc ), fd.map( subTotal ), fd.into, {} )
-        lpr( tkt( w ) )
-	w.datos = nil
-	return true
-    end
---]]
-
 -- XXX input is not parsed to Number
     function MM.tickets.add( w )
 	local uid = os.date('%FT%TP', mx()) .. w.pid
 	fd.reduce( w.args, fd.map( collect ), ids( uid, w.id_tag ), sql.into( tbname ), conn )
 	local a = fd.first( conn.query(string.format('%s WHERE uid = %q ', query, uid)), function(x) return x end )
 	w.uid = uid; w.totalCents = a.totalCents; w.count = a.count
---	safe( function() forPrinting( w ) end, 'Connecting to printing daemon' ) -- in case of error still send it to CAJA
---	MM.tabs.remove( w.pid )
 	return w
     end
 

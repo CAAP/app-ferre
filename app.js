@@ -80,6 +80,12 @@
 		return SQL.print( objs ).then( ferre.emptyBag ); //then( doprint ).then( ferre.emptyBag )
 	    };
 
+	    ferre.surtir = function() {
+		let objs = [];
+		TICKET.items.forEach( item => objs.push( 'args=clave+'+item.clave+'+qty+'+item.qty  ) );
+		return XHR.get('/ticket/surtir.lua?'+objs.join('&')).then( ferre.saveme );
+	    };
+
 	    (function() {
 		const ttotal = document.getElementById( TICKET.ttotalID );
 		TICKET.total = function(amount) { ttotal.textContent = (amount / 100).toFixed(2); };
