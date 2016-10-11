@@ -2,10 +2,14 @@
 
 	var app = { VERSION: 1,
 		DB: 'faltantes',
-		STORE: 'faltantes-desc',
-		KEY: 'desc',
-		INDEX: 'proveedor',
-		FILE: '/ferre/faltantes.lua'
+		STORE: 'faltantes-clave',
+		KEY: 'clave',
+		INDEX: 'provdesc',
+		FILE: '/ferre/faltantes.lua',
+		MAP: function(q) {
+		    q.provdesc = q.proveedor + '|' + q.desc.sub(1,10);
+		    return q;
+		}
 	 };
 
 	window.onload = function() {
@@ -50,6 +54,7 @@
 			.then( win => win.print() )
 			.then( () => document.body.removeChild(document.body.lastChild) );
 		};
+/*
 
 		function slice(a) {
 		    let third = a.length / 3;
@@ -67,20 +72,25 @@
 			} else { slice(ret); }//XHR.get( '/ferre/proveedor.lua?' + ret.join('&') ); }
 		    } );
 		};
+*/
+
+	    function asnum(s) { let n = Number(s); return Number.isNaN(n) ? s : n; };
 
 		let update = e => {
-		    let tr = e.target.parentElement.parentElement;
-		    let desc = tr.querySelector('.desc').textContent;
+		    const tr = e.target.parentElement.parentElement;
+		    const clave = asnum( tr.dataset.clave );
+		    const prove = e.target.value;
+
 		    let objStore = IDB.write2DB( app );
-		    return objStore.get( desc ).then( q => {
-			if (q) { q.proveedor = e.target.value; q.proveedor = e.target.value; return q; }
-			else { Promise.fail('No key found!'); }
-		    }, e => console.log("Error searching by desc: " + e)  )
-		    .then( objStore.put );
+		    return XHR.get('/ferre/proveedor.lua?clave='+clave+'&proveedor='+prove)
+			.then( () => objStore.get( clave ) )
+			.then( q => { if (q) { q.proveedor = prove; q.provdesc = q.proveedor + '|' + q.desc.sub(1,10); return q; } } )
+			.then( objStore.put );
 		};
 
 		function displayItem( a ) {
 		    let row = lis.insertRow();
+		    row.dataset.clave = a.clave;
 		    row.insertCell().appendChild( document.createTextNode( a.fecha ) );
 		    let clave = row.insertCell();
 		    clave.classList.add('pesos'); clave.appendChild( document.createTextNode( a.clave ) );
@@ -101,7 +111,7 @@
 		    let objStore = IDB.readDB( app );
 		    objStore.count().then( result => {
 			if (!(result>0)) { return; }
-			return objStore.index( IDBKeyRange.upperBound(s, false), 'prev', cursor => {
+			return objStore.index( IDBKeyRange.upperBound(s, false), 'next', cursor => {
 			    if (cursor) {
 				displayItem( cursor.value );
 		    		cursor.continue();
@@ -112,7 +122,7 @@
 
 		app.load = () => load('X');
 
-		app.done = () => load('V');
+		app.done = () => load('A');
 	    })();
 
 
