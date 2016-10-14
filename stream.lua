@@ -39,99 +39,79 @@ end
 ---
 local function init( conn )
     print('Connected to DB', dbname, '\n')
+    assert( conn.exec"ATTACH DATABASE '/db/ferre.db' AS FR" )
+    assert( conn.exec"ATTACH DATABASE '/db/inventario.db' AS NV" )
     return conn
 end
 
-local function cambios()
-    local conn = sql.connect( fdbname )
-    print('Connected to DB', fdbname, '\n')
-
+local function cambios( conn )
     local costol = 'UPDATE datos SET costol = costo*(100+impuesto)*(100-descuento), fecha = %q %s'
+    local isstr = {desc=true, fecha=true, obs=true, proveedor=true, gps=true, u1=true, u2=true, u3=true}
+
+    local function up_costos(w, clause)
+	w.costo = nil; w.impuesto = nil; w.descuento = nil; w.fecha = hoy;
+	local qry = string.format(costol, w.fecha, clause)
+	assert( conn.exec( qry ), 'Error executing: ' .. qry )
+	w.faltante = 0
+	qry = string.format('UPDATE faltantes SET faltante = 0 %s', hoy, clause)
+	assert(conn.exec(qry), 'Error executing: ' .. qry)
+-- VIEW precios is necessary to produce precio1, precio2, etc
+	qry = string.format('SELECT * FROM precios %s', clause)
+	ret = fd.first( conn.query( qry ), function(x) return x end )
+	fd.reduce( fd.keys(ret), fd.filter(function(x,k) return k:match'^precio' end), fd.merge, w )
+	    -- in order to update costo in admin.html
+	ret = fd.first( conn.query(string.format('SELECT clave, costol FROM datos %s', clause)), function(x) return x end )
+	w.ret = { string.format('event: costo\n%s\n\n', asJSON(ret)) }
+    end
 
     local function reformat(v, k)
-	local vv = (k == 'desc' or k == 'fecha' or k:match'^u') and string.format("'%s'", v) or (math.tointeger(v) or tonumber(v) or 0)
+	local vv = isstr[k] and string.format("'%s'", v) or (math.tointeger(v) or tonumber(v) or 0)
 	return k .. ' = ' .. vv
     end
 
     function MM.cambios.add( w )
 	local clave = w.clave
 	local tbname = w.tbname
-	local vwname = w.vwname
 	local clause = string.format('WHERE clave LIKE %q', clave)
-	local obs = w.obs
 
-	w.id_tag = nil; w.args = nil; w.clave = nil; w.tbname = nil; w.vwname = nil; w.obs = nil;
+	w.id_tag = nil; w.args = nil; w.clave = nil; w.tbname = nil;
+
+	if w.desc then w.desc = w.desc:upper() end
 
 	local ret = fd.reduce( fd.keys(w), fd.map( reformat ), fd.into, {} )
 	local qry = string.format('UPDATE %q SET %s %s', tbname, table.concat(ret, ', '), clause)
-	assert( conn.exec( qry ) ) --, 'Error executing: ' .. qry
+	assert( conn.exec( qry ) )
 
-	if w.costo or w.impuesto or w.descuento then
-	    w.costo = nil; w.impuesto = nil; w.descuento = nil; w.fecha = hoy;
-	    qry = string.format(costol, w.fecha, clause)
-	    assert( conn.exec( qry ), 'Error executing: ' .. qry )
-	    w.faltante = 0
-	    qry = string.format('UPDATE faltantes SET faltante = 0, fecha = %q %s', hoy, clause)
-	    assert(conn.exec(qry), 'Error executing: ' .. qry)
-	    qry = string.format('SELECT * FROM %q %s', vwname, clause)
-	    ret = fd.first( conn.query( qry ), function(x) return x end )
-	    fd.reduce( fd.keys(ret), fd.filter(function(x,k) return k:match'^precio' end), fd.merge, w )
-	    -- in order to update costo in admin.html
-	    ret = fd.first( conn.query(string.format('SELECT clave, costol FROM datos %s', clause)), function(x) return x end )
-	    w.ret = { string.format('event: costo\n%s\n\n', asJSON(ret)) }
-	end
+	if w.costo or w.impuesto or w.descuento then up_costos(w, clause) end
+--	if obs then assert( conn.exec(string.format('UPDATE faltantes SET obs = %q %s', obs, clause)), 'Error updating obs field for faltantes table' ); w.obs = obs end
 
-	if obs then assert( conn.exec(string.format('UPDATE faltantes SET obs = %q %s', obs, clause)), 'Error updating obs field for faltantes table' ); w.obs = obs end
-
-	qry = string.format('UPDATE cambios SET version = version + 1, fecha = %q %s', hoy, clause)
-	assert( conn.exec( qry ), 'Error executing: ' .. qry )
 	w.clave = clave
 
 	return w
     end
-
-    function MM.cambios.sse( w )
-	local clause = string.format('WHERE version > 0 AND fecha LIKE %q', hoy) -- XXX
-	local qry = string.format('SELECT clave FROM cambios %s', clause)
-	local qry2 = string.format('SELECT * FROM faltantes, precios WHERE precios.clave = faltantes.clave AND precios.clave IN (%s)', qry)
-
-	if conn.count( 'cambios', clause ) == 0 then return ':empty\n\n'
-	else  return sse{ data=table.concat( fd.reduce(conn.query(qry2), fd.map(asJSON), fd.into, {} ), ',\n'), event='update' } end
-    end
 end
+
 --
 local function tickets( conn )
     local tbname = 'tickets'
-    local vwname = 'caja'
     local schema = 'uid, id_tag, clave, precio, qty INTEGER, rea INTEGER, totalCents INTEGER'
     local keys = { uid=1, id_tag=2, clave=3, precio=4, qty=5, rea=6, totalCents=7 }
-    local stmt = string.format('AS SELECT uid, SUM(qty) count, SUM(totalCents) totalCents, id_tag FROM %q WHERE uid LIKE %q GROUP BY uid', tbname, today..'%')
-    local query = 'SELECT * FROM ' .. vwname
+    local query = "SELECT uid, SUM(qty) count, SUM(totalCents) totalCents, id_tag FROM %q WHERE uid LIKE '%s%%' GROUP BY uid"
 
-    conn.exec( string.format(sql.newTable, tbname, schema) )
-    conn.exec( string.format('DROP VIEW IF EXISTS %q', vwname) )
-    conn.exec( string.format('CREATE VIEW IF NOT EXISTS %q %s', vwname, stmt) )
-
-    local function collect( q )
-	local t = { '', '' } -- uid & id_tag
-	for k,v in q:gmatch'([^|]+)|([^|]+)' do if keys[k] then t[keys[k]] = v end end
-	return t
-    end
-
-    local function ids( uid, tag ) return fd.map( function(t) t[1] = uid; t[2] = tag; return t end ) end
+    assert( conn.exec( string.format(sql.newTable, tbname, schema) ) )
 
 -- XXX input is not parsed to Number
     function MM.tickets.add( w )
 	local uid = os.date('%FT%TP', mx()) .. w.pid
-	fd.reduce( w.args, fd.map( collect ), ids( uid, w.id_tag ), sql.into( tbname ), conn )
-	local a = fd.first( conn.query(string.format('%s WHERE uid = %q ', query, uid)), function(x) return x end )
+	fd.reduce( w.args, fd.map( hd.args(keys, uid, w.id_tag) ), sql.into( tbname ), conn ) -- ids( uid, w.id_tag ), 
+	local a = fd.first( conn.query(string.format(query, tbname, uid)), function(x) return x end )
 	w.uid = uid; w.totalCents = a.totalCents; w.count = a.count
 	return w
     end
 
     function MM.tickets.sse()
-	if conn.count( vwname ) == 0 then return ':empty\n\n'
-	else return sse{ data=table.concat( fd.reduce(conn.query(query), fd.map(asJSON), fd.into, {} ), ',\n'), event='feed' } end
+	if conn.count( tbname, clause ) == 0 then return ':empty\n\n'
+	else return sse{ data=table.concat( fd.reduce(conn.query(string.format(query, tbname, today)), fd.map(asJSON), fd.into, {} ), ',\n'), event='feed' } end
     end
 
     return conn
@@ -144,19 +124,19 @@ local function tabs( conn )
     local keys = { pid=1, query=2 } -- clave=2, precio=3, qty=4, rea=5, totalCents=6 }
     local query = 'SELECT * FROM ' .. tbname
 
-    conn.exec( string.format(sql.newTable, tbname, schema) )
-    conn.exec( string.format('DELETE FROM %q', tbname ) )
+    assert( conn.exec( string.format(sql.newTable, tbname, schema) ) )
+    assert( conn.exec( string.format('DELETE FROM %q', tbname ) ) )
 
     function MM.tabs.add( w, q )
 	local j = q:find'args'
 	w.query = q:sub(j):gsub('args=', '')
 	local vals = string.format('%d, %q', w.pid, w.query)
-	conn.exec( string.format("INSERT INTO %q VALUES( %s )", tbname, vals) )
+	assert( conn.exec( string.format("INSERT INTO %q VALUES( %s )", tbname, vals) ) )
 	return w
     end
 
     function MM.tabs.remove( pid )
-	conn.exec( string.format("DELETE FROM %q WHERE pid = %d", tbname, pid) )
+	assert( conn.exec( string.format("DELETE FROM %q WHERE pid = %d", tbname, pid) ) )
     end
 
     function MM.tabs.sse()
@@ -177,7 +157,7 @@ local function streaming()
     local cts = {}
 
     local function init( c )
-	local ret = c:send(string.format('event: week\ndata: %q\n\n', week))
+	local ret = true -- c:send(string.format('event: week\ndata: %q\n\n', week))
 	for _,feed in pairs(MM) do
 	    if ret and feed.sse then ret = ret and c:send( feed.sse() ) end
 	end
@@ -216,7 +196,7 @@ local function recording()
 	local tag = w.id_tag
 	if tag == 'u' then local m = MM.cambios.add( w ); m.event = m.faltante and 'faltante' or 'update'; return m end
 	if tag == 'g' then MM.tabs.add( w, q ); w.event = 'tabs'; return w end
-	if tag == 'h' then  local m = MM.entradas.add( w ); m.event = 'entradas'; return m end
+--	if tag == 'h' then  local m = MM.entradas.add( w ); m.event = 'entradas'; return m end
 	if tag == 'd' then MM.tabs.remove(w.pid); w.ret = { 'event: delete\ndata: '.. w.pid ..'\n\n' }; w.event = 'none' w.data = ''; return w end
     -- printing: 'a', 'b', 'c'
 	w.ret = { 'event: delete\ndata: '.. w.pid ..'\n\n' }
@@ -254,7 +234,7 @@ end
 
 --
 
-fd.comp{ cambios, recording, streaming, tickets, tabs, init, sql.connect( dbname ) }
+fd.comp{ recording, streaming, cambios, tickets, tabs, init, sql.connect( dbname ) }
 
 while 1 do
 --    safe( MM.streaming.connect )
