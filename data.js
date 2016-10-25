@@ -37,7 +37,7 @@
 			.then( o => { if (o.desc.startsWith('VV')) {return os.delete( o.clave );} } );
 		}
 	    };
-	
+/*	
 	    let COST = {
 		STORE: 'proveedores',
 		INDEX: 'proveedor',
@@ -48,10 +48,12 @@
 			.then( DATA.inplace );
 		}
 	    };
+*/
+	    let FALT = {STORE: 'precios', INDEX: 'falt-prov-desc'};
 
-	    let VERS =  {update: o => {localStorage.vers = o.vers; localStorage.week = o.week;} };
+	    let VERS =  {update: o => {localStorage.vers = o.vers; localStorage.week = o.week;}};
 
-	    let STORES = {PRICE:PRICE, PACK:PACK, COST:COST, VERS:VERS};
+	    let STORES = {PRICE:PRICE, PACK:PACK, FALT:FALT, VERS:VERS}; // COST:COST
 
 	    DATA.STORES = STORES;
 
@@ -60,7 +62,7 @@
 		esrc.addEventListener('update', e => {
 		    const data = JSON.parse(e.data);
 		    const upd = data.find(o => {o.store == 'VERS'});
-		    if (localStorage.week && upd.week < localStorage.week && upd.vers <= localStorage.vers) {return;}
+		    if (localStorage.week && upd.week < localStorage.week && upd.vers <= localStorage.vers) {console.log('Update already registered!'); return;}
 		    console.log('Update event ongoing!');
 		    Promise.all( data.map(q => {const store = q.store; delete q.store; return STORES[store].update(q);}) );
 		}, false);

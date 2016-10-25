@@ -3,7 +3,7 @@
 	var admin = {};
 
 	window.onload = function() {
-	    const COST = DATA.STORES.COST;
+	    const PRICE = DATA.STORES.PRICE;
 
 	    DATA.inplace = q => {let r = document.body.querySelector('tr[data-clave="'+q.clave+'"]'); if (r) {DATA.clearTable(r); BROWSE.rows(q,r); r.classList.add('modificado');} return q;};
 
@@ -14,9 +14,9 @@
 	    BROWSE.tab = document.getElementById('resultados');
 	    BROWSE.lis = document.getElementById('tabla-resultados');
 
-	    BROWSE.DBget = clave => IDB.readDB( COST ).get( clave );
+	    BROWSE.DBget = clave => IDB.readDB( PRICE ).get( clave );
 
-	    BROWSE.DBindex = (a, b, f) => IDB.readDB( COST ).index( a, b, f ); // XXX readDB proveedores HERE
+	    BROWSE.DBindex = (a, b, f) => IDB.readDB( PRICE ).index( a, b, f ); // XXX readDB proveedores HERE
 
 	    BROWSE.rows = function(a, row) {
 		// XXX readDB proveedores & get costol
@@ -28,8 +28,8 @@
 		desc.classList.add('desc'); desc.appendChild( document.createTextNode( a.desc ) );
 		let costol = row.insertCell();
 		costol.classList.add('total'); costol.classList.add('precio1');
-		IDB.readDB( COSTO ).get(a.clave).then(q => costol.appendChild( document.createTextNode( (q.costol / 1e4).toFixed(2) ) ))
-//		costol.appendChild( document.createTextNode( (a.costol / 1e4).toFixed(2) ) );
+//		IDB.readDB( COSTO ).get(a.clave).then(q => costol.appendChild( document.createTextNode( (q.costol / 1e4).toFixed(2) ) ))
+		costol.appendChild( document.createTextNode( (a.costol / 1e4).toFixed(2) ) );
 	    };
 
 	    admin.startSearch = BROWSE.startSearch;
@@ -192,7 +192,6 @@
  		if (IDB.indexedDB)
 		    IDB.loadDB( DATA ).then( addEvents, () => alert("IDBIndexed not available.") );
 	    })();
-
 
 	};
 

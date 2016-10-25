@@ -6,7 +6,7 @@
 	    let precios = {
 		STORE: 'precios',
 		KEY: 'clave',
-		INDEX: ['desc', 'faltante'],
+		INDEX: [{key: 'desc'}, {name:'falt-prov-desc', key:['faltante','proveedor','desc']}],
 		FILE: '/ferre/precios.lua',
 		MAP: function(q) {
 		    q.precios = {};
@@ -22,17 +22,10 @@
 	    let paquetes = {
 		STORE: 'paquetes',
 		KEY: 'clave',
-		INDEX: ['uid', 'tag'] // 'desc'
+		INDEX: [{key:'uid'}, {key:'tag'}] // 'desc'
 	    };
 
-	    let proveedores = {
-		STORE: 'proveedores',
-		KEY: 'clave',
-		INDEX: ['proveedor'],
-		FILE: '/ferre/proveedores.lua'
-	    };
-
-	    DATA.STORES.push( paquetes, precios, proveedores );
+	    DATA.STORES.push( paquetes, precios );
 
 	    function ifLoad(k) { return IDB.readDB(k).count().then( q => { if (q == 0 && k.FILE) { return IDB.populateDB(k) } } ); }
 

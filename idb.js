@@ -13,7 +13,7 @@
 			let conn = e.target.result;
 			function upgrade( kk ) {
 			    let objStore = conn.createObjectStore(kk.STORE, { keyPath: kk.KEY });
-			    if (kk.INDEX) { kk.INDEX.forEach( idx => objStore.createIndex(idx, idx, {unique: false}) ) }
+			    if (kk.INDEX) { kk.INDEX.forEach( idx => objStore.createIndex(idx.name||idx.key, idx.key, {unique: false}) ) }
 			    console.log('ObjectStore ' + kk.STORE + ' created successfully.');
 			}
 
