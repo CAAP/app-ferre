@@ -1,26 +1,24 @@
 
         "use strict";
 
-	var admin = { VERSION: 1,
-		DB: 'costos',
-		STORE: 'costos-clave',
-		KEY: 'clave',
-		INDEX: 'desc',
-		FILE: '/ferre/costos.lua',
+	var admin = {};
+
+	window.onload = function() {
+	    const DBs = [ DATA ];
+
+	    const COSTO = {
+		STORE: 'proveedores',
+		INDEX: 'proveedor',
 		update: a => {
-		    let os = IDB.write2DB( admin );
+		    let os = IDB.write2DB( COSTO );
 		    return Promise.all( a.map( o => os.get( o.clave ).then( q => {
 			    if (q) { return Object.assign(q, o); } else { return o; } } )
 			    .then( os.put )
-			    .then( o => { if (o.desc.startsWith('VV')) { return os.delete( o.clave ) } } )
 			) );
 		}
-	};
+	    };
 
-	window.onload = function() {
-	    const DBs = [ admin ];
-
-	    admin.reloadDB = function reloadDB() { return IDB.clearDB( admin ).then( () => IDB.populateDB( admin ) ); };
+//	    admin.reloadDB = function reloadDB() { return IDB.clearDB( DATA ).then( () => IDB.populateDB( DATA ) ); };
 
 	    admin.cerrar = e => e.target.closest('dialog').close(); // XXX unify
 
@@ -29,11 +27,12 @@
 	    BROWSE.tab = document.getElementById('resultados');
 	    BROWSE.lis = document.getElementById('tabla-resultados');
 
-	    BROWSE.DBget = clave => IDB.readDB( admin ).get( clave );
+	    BROWSE.DBget = clave => IDB.readDB( DATA ).get( clave );
 
-	    BROWSE.DBindex = (a, b, f) => IDB.readDB( admin ).index( a, b, f );
+	    BROWSE.DBindex = (a, b, f) => IDB.readDB( DATA ).index( a, b, f ); // XXX readDB proveedores HERE
 
 	    BROWSE.rows = function(a, row) {
+		// XXX readDB proveedores & get costol
 		row.insertCell().appendChild( document.createTextNode( a.fecha ) );
 		let clave = row.insertCell();
 		clave.classList.add('pesos'); clave.appendChild( document.createTextNode( a.clave ) );
@@ -42,7 +41,8 @@
 		desc.classList.add('desc'); desc.appendChild( document.createTextNode( a.desc ) );
 		let costol = row.insertCell();
 		costol.classList.add('total'); costol.classList.add('precio1');
-		costol.appendChild( document.createTextNode( (a.costol / 1e4).toFixed(2) ) );
+		IDB.readDB( COSTO ).get(a.clave).then(q => costol.appendChild( document.createTextNode( (q.costol / 1e4).toFixed(2) ) ))
+//		costol.appendChild( document.createTextNode( (a.costol / 1e4).toFixed(2) ) );
 	    };
 
 	    admin.startSearch = BROWSE.startSearch;
@@ -63,7 +63,7 @@
 		let fields = new Set();
 		let cambios = new Map();
 		let records = new Map();
-		let costos = new Set(['costo', 'impuesto', 'descuento']);
+		let costos = new Set(['costo', 'impuesto', 'descuento', 'prc1', 'prc2', 'prc3']);
 
 		function outputs(row, k) {
 		    let ie = document.createElement('input');
@@ -170,7 +170,7 @@
 		admin.enviar = function() {
 		    if (window.confirm('Estas seguro de realizar los cambios?'))
 			Promise.all( Array.from(cambios.keys())
-			    .map( clave => Object.assign({clave: clave, tbname: 'datos', vwname: 'precios', id_tag: 'u'}, cambios.get(clave)) )
+			    .map( clave => Object.assign({clave: clave, tbname: 'datos', id_tag: 'u'}, cambios.get(clave)) )
 			    .map( update ) )
 			.then( clave => console.log('clave: '+clave) );
 			admin.emptyCambios();
@@ -197,19 +197,21 @@
 	// SERVER-SIDE EVENT SOURCE
 	    (function() {
 		function addEvents() {
+		    COSTO.CONN = DATA.CONN;
+
 		    let esource = new EventSource(document.location.origin + ":8080");
 		    esource.addEventListener("update", function(e) {
 			console.log("update event received.");
-			admin.update( JSON.parse(e.data) );
+			DATA.update( JSON.parse(e.data) );
 		    }, false);
 		    esource.addEventListener("faltante", function(e) {
 			console.log("faltante event received.");
-			admin.update( JSON.parse(e.data) )
-			    .then( () => { let r = document.body.querySelector('tr[data-clave="'+JSON.parse(e.data)[0].clave+'"]'); if (r) { r.querySelector('.desc').classList.add('faltante'); } } );
+			DATA.update( JSON.parse(e.data) )
+			    .then( () => { let r = document.body.querySelector('tr[data-clave="'+JSON.parse(e.data)[0].clave+'"]'); if (r) { r.querySelector('.desc').classList.toggle('faltante'); } } ); // toggle faltante
 		    }, false);
 		    esource.addEventListener("costo", function(e) {
 			console.log("update-costo event received.");
-			admin.update( [JSON.parse(e.data)] );
+			COSTO.update( [JSON.parse(e.data)] );
 		    }, false);
 		}
 

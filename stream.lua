@@ -45,15 +45,27 @@ local function init( conn )
 end
 
 local function cambios( conn )
+    local tbname = 'updates'
+    local schema = 'vers INTEGER PRIMARY KEY, clave, campo, valor'
+--    local keys = { vers=1, clave=2, campo=3 }
+    local query = "SELECT max(vers) vers FROM "..tbname
+
+    assert( conn.exec( string.format(sql.newTable, tbname, schema) ) )
+
     local costol = 'UPDATE datos SET costol = costo*(100+impuesto)*(100-descuento), fecha = %q %s'
     local isstr = {desc=true, fecha=true, obs=true, proveedor=true, gps=true, u1=true, u2=true, u3=true}
+
+    local function reformat(v, k)
+	local vv = isstr[k] and string.format("'%s'", v) or (math.tointeger(v) or tonumber(v) or 0)
+	return k .. ' = ' .. vv
+    end
 
     local function up_costos(w, clause)
 	w.costo = nil; w.impuesto = nil; w.descuento = nil; w.fecha = hoy;
 	local qry = string.format(costol, w.fecha, clause)
 	assert( conn.exec( qry ), 'Error executing: ' .. qry )
 	w.faltante = 0
-	qry = string.format('UPDATE faltantes SET faltante = 0 %s', hoy, clause)
+	qry = string.format('UPDATE faltantes SET faltante = 0 %s', clause)
 	assert(conn.exec(qry), 'Error executing: ' .. qry)
 -- VIEW precios is necessary to produce precio1, precio2, etc
 	qry = string.format('SELECT * FROM precios %s', clause)
@@ -61,13 +73,17 @@ local function cambios( conn )
 	fd.reduce( fd.keys(ret), fd.filter(function(x,k) return k:match'^precio' end), fd.merge, w )
 	    -- in order to update costo in admin.html
 	ret = fd.first( conn.query(string.format('SELECT clave, costol FROM datos %s', clause)), function(x) return x end )
-	w.ret = { string.format('event: costo\n%s\n\n', asJSON(ret)) }
+	w.ret = ret --{ string.format('event: costo\n%s\n\n', asJSON(ret)) }
     end
 
-    local function reformat(v, k)
-	local vv = isstr[k] and string.format("'%s'", v) or (math.tointeger(v) or tonumber(v) or 0)
-	return k .. ' = ' .. vv
+    local function up_precios(w, clause)
+	local ps = fd.reduce( fd.keys(w), fd.filter(function(_,k) return k:match'^prc' end), fd.map(function(_,k) return k end), fd.into, {} )
+	for i=1,#ps do local k = ps[i]; w[k] = nil; ps[i] = k:gsub('prc','precio') end
+	local ret = fd.first( conn.query(string.format('SELECT %s FROM precios %s', table.concat(ps, ', '), clause)), function(x) return x end )
+	fd.reduce( fd.keys(ret), fd.merge, w )
     end
+
+-- XXX ALL can be based on updates instead !!! XXX
 
     function MM.cambios.add( w )
 	local clave = w.clave
@@ -80,10 +96,15 @@ local function cambios( conn )
 
 	local ret = fd.reduce( fd.keys(w), fd.map( reformat ), fd.into, {} )
 	local qry = string.format('UPDATE %q SET %s %s', tbname, table.concat(ret, ', '), clause)
-	assert( conn.exec( qry ) )
+	assert( conn.exec( qry ), qry )
 
 	if w.costo or w.impuesto or w.descuento then up_costos(w, clause) end
---	if obs then assert( conn.exec(string.format('UPDATE faltantes SET obs = %q %s', obs, clause)), 'Error updating obs field for faltantes table' ); w.obs = obs end
+
+	if w.prc1 or w.prc2 or w.prc3 then up_precios(w, clause) end
+
+	fd.reduce( fd.keys(w), fd.map(function(v,k) return {'', clave, k=='ret' and 'costol' or k, k=='ret' and v.costol or v} end), sql.into'updates', conn)
+
+	w.ret = w.ret and { string.format('event: costo\n%s\n\n', asJSON(w.ret)) }
 
 	w.clave = clave
 

@@ -55,7 +55,7 @@
 		let diagF = document.getElementById('dialogo-faltante');
 		let obs = diagF.querySelector('input[name=obs]');
 
-		ferre.enviarF = e => SQL.update({clave: clave, faltante: 1, obs: obs.value, tbname: 'faltantes', vwname: 'faltantes', id_tag: 'u'}).then( () => { obs.value = ''; ferre.cerrar(e); } );
+		ferre.enviarF = e => SQL.update({clave: clave, faltante: 1, obs: obs.value, tbname: 'faltantes', id_tag: 'u'}).then( () => { obs.value = ''; ferre.cerrar(e); } );
 
 		ferre.faltante = e => IDB.readDB( DATA ).get( clave ).then( w => { ferre.cerrar(e); obs.value = w.obs; diagF.showModal(); } );
 	    })();
@@ -66,7 +66,7 @@
 
 	    const persona = document.getElementById('personas'); // XXX refactor all instances of this
 
-	    ferre.emptyBag = () => { TICKET.empty(); return SQL.print({id_tag: 'd', pid: Number(persona.value)}) } // ferre.saveme(); 
+	    ferre.emptyBag = () => { TICKET.empty(); return SQL.print({id_tag: 'd', pid: Number(persona.value)}) }
 
 	    ferre.print = function(a) {
 		if (TICKET.items.size == 0) {return;}
@@ -113,7 +113,7 @@
 	/* message tag
 		    ferre.tag(); */
 	// if ticket-bag is not empty then send info to server for broadcasting
-		    if (TICKET.items.size > 0) { ferre.print('guardar').then( ferre.emptyBag ).then( () => tabs(pid) ); }
+		    if (TICKET.items.size > 0) { ferre.print('guardar').then( () => {TICKET.empty(); tabs(pid);} ); }
 		    else { tabs(pid); }
 		};
 

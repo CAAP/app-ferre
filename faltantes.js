@@ -4,7 +4,7 @@
 		DB: 'faltantes',
 		STORE: 'faltantes-clave',
 		KEY: 'clave',
-		INDEX: 'provdesc',
+		INDEX: ['provdesc'],
 		FILE: '/ferre/faltantes.lua',
 		MAP: function(q) {
 		    q.provdesc = q.proveedor + '|' + q.desc.sub(1,10);

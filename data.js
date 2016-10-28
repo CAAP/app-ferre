@@ -2,10 +2,8 @@
 
 	var DATA = { VERSION: 1,
 		DB: 'datos',
-		STORE: 'datos-clave',
-		KEY: 'clave',
+		STORE: 'precios',
 		INDEX: 'desc',
-		FILE: '/ferre/precios.lua',
 		MAP: function(q) {
 		    q.precios = {};
 		    for (let i=1; i<4; i++) {

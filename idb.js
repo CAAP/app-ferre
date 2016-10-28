@@ -6,18 +6,22 @@
 
 	    loadDB: function(k) {
 		return new Promise( (resolve, reject) => {
-		let req = IDB.indexedDB.open(k.DB, k.VERSION);
-		req.onerror = e => reject( 'Error loading database: ' + k.DB + ' | ' + e.target.errorCode );
-	        req.onsuccess = function(e) { k.CONN = e.target.result; resolve( k ); }; // if (k.load) { k.load(); 
-		req.onupgradeneeded = function(e) {
-		    console.log('Upgrade ongoing.');
-		    let objStore = e.target.result.createObjectStore(k.STORE, { keyPath: k.KEY });
-		    if (k.INDEX) { objStore.createIndex(k.INDEX, k.INDEX, { unique: false } ) }
-		    objStore.transaction.oncomplete = function(ev) {
-			console.log('ObjectStore ' + k.STORE + ' created successfully.');
-			if (k.FILE) { resolve( IDB.populateDB(k) ); } else { resolve( k ); }
+		    let req = IDB.indexedDB.open(k.DB, k.VERSION);
+		    req.onerror = e => reject( 'Error loading database: ' + k.DB + ' | ' + e.target.errorCode );
+	            req.onsuccess = function(e) { k.CONN = e.target.result; resolve( k ); };
+		    req.onupgradeneeded = function(e) {
+			let conn = e.target.result;
+			function upgrade( kk ) {
+			    let objStore = conn.createObjectStore(kk.STORE, { keyPath: kk.KEY });
+			    if (kk.INDEX) { kk.INDEX.forEach( idx => objStore.createIndex(idx, idx, {unique: false}) ) }
+			    console.log('ObjectStore ' + kk.STORE + ' created successfully.');
+			}
+
+			console.log('Upgrade ongoing.');
+			k.STORES.forEach(upgrade);
+			k.CONN = conn;
+			conn.transaction.oncomplete = () => resolve( k );
 		    };
-		};
 		} );
 	    },
 
@@ -34,7 +38,7 @@
 		    return Promise.all( datos.map( dato => os.add(asobj(dato, ks)) ) );
 		}
 
-		return XHR.getJSON( k.FILE ).then( store ).then( () => console.log("Datos loaded to DB " + k.DB) );
+		return XHR.getJSON( k.FILE ).then( store ).then( () => console.log("Datos loaded to store " + k.STORE) );
 	    },
 
 	    clearDB: k => IDB.write2DB(k).clear(),
