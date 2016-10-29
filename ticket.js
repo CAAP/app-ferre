@@ -161,7 +161,7 @@
 		if (!TICKET.bag.hasChildNodes()) { TICKET.empty(); } else { bagTotal(); } // TICKET.myticket.style.visibility = 'hidden';
 	    };
 
-	    TICKET.empty = function(e) { TICKET.items.clear(); clearTable( TICKET.bag ); TICKET.myticket.style.visibility = 'hidden'; };
+	    TICKET.empty = function() { TICKET.items.clear(); clearTable( TICKET.bag ); TICKET.myticket.style.visibility = 'hidden'; };
 //	    TICKET.empty = function(e) { TICKET.items = new Map(); clearTable( TICKET.bag ); toggleTicket(); };
 
 	    })();

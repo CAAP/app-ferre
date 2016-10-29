@@ -14,9 +14,12 @@
 		    return Promise.all( a.map( o => os.get( o.clave ).then( q => {
 			    if (q) { return Object.assign(q, o); } else { return o; } } )
 			    .then( os.put )
+			    .then( DATA.inplace )
 			) );
 		}
 	    };
+
+	    DATA.inplace = q => {let r = document.body.querySelector('tr[data-clave="'+q.clave+'"]'); if (r) {DATA.clearTable(r); BROWSE.rows(q,r); r.classList.add('modificado');} return q;};
 
 //	    admin.reloadDB = function reloadDB() { return IDB.clearDB( DATA ).then( () => IDB.populateDB( DATA ) ); };
 
@@ -204,13 +207,13 @@
 			console.log("update event received.");
 			DATA.update( JSON.parse(e.data) );
 		    }, false);
-		    esource.addEventListener("faltante", function(e) {
+/*		    esource.addEventListener("faltante", function(e) {
 			console.log("faltante event received.");
 			DATA.update( JSON.parse(e.data) )
 			    .then( () => { let r = document.body.querySelector('tr[data-clave="'+JSON.parse(e.data)[0].clave+'"]'); if (r) { r.querySelector('.desc').classList.toggle('faltante'); } } ); // toggle faltante
-		    }, false);
-		    esource.addEventListener("costo", function(e) {
-			console.log("update-costo event received.");
+		    }, false); */
+		    esource.addEventListener("proveedor", function(e) {
+			console.log("proveedor event received.");
 			COSTO.update( [JSON.parse(e.data)] );
 		    }, false);
 		}

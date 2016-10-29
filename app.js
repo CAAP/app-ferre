@@ -5,6 +5,8 @@
 	window.onload = function() {
 	    const DBs = [ DATA ]; // , TICKET
 
+	    DATA.inplace = q => {let r = document.body.querySelector('tr[data-clave="'+q.clave+'"]'); if (r) {DATA.clearTable(r); BROWSE.rows(q,r);} return q;};
+
 	    ferre.reloadDB = function reloadDB() { return IDB.clearDB(DATA).then( () => IDB.populateDB( DATA ) ); };
 
 	    // BROWSE
@@ -69,7 +71,7 @@
 	    ferre.emptyBag = () => { TICKET.empty(); return SQL.print({id_tag: 'd', pid: Number(persona.value)}) }
 
 	    ferre.print = function(a) {
-		if (TICKET.items.size == 0) {return;}
+		if (TICKET.items.size == 0) {return Promise.resolve();}
 		const id_tag = TICKET.TAGS[a] || TICKET.TAGS.none;
 		const pid = Number(document.getElementById('personas').dataset.id);
 
@@ -77,7 +79,7 @@
 
 		TICKET.items.forEach( item => objs.push( 'args=' + TICKET.plain(item) ) );
 
-		return SQL.print( objs ).then( ferre.emptyBag ); //then( doprint ).then( ferre.emptyBag )
+		return SQL.print( objs ).then( TICKET.empty ); //then( doprint ).then( ferre.emptyBag )
 	    };
 
 	    ferre.surtir = function() {
@@ -112,9 +114,9 @@
 		    const pid = Number(slc.value);
 	/* message tag
 		    ferre.tag(); */
-	// if ticket-bag is not empty then send info to server for broadcasting
-		    if (TICKET.items.size > 0) { ferre.print('guardar').then( () => {TICKET.empty(); tabs(pid);} ); }
-		    else { tabs(pid); }
+		    ferre.print('guardar').then( () => tabs(pid) );
+//		    if (TICKET.items.size > 0) { ferre.print('guardar').then( () => tabs(pid) ); }
+//		    else { tabs(pid); }
 		};
 
 		(function nobody(){
@@ -157,11 +159,11 @@
 			console.log("update event received.");
 			DATA.update( JSON.parse(e.data) );
 		    }, false);
-		    esource.addEventListener("faltante", function(e) {
+/*		    esource.addEventListener("faltante", function(e) {
 			console.log("faltante event received.");
 			DATA.update( JSON.parse(e.data) )
 			    .then( () => { let r = document.body.querySelector('tr[data-clave="'+JSON.parse(e.data)[0].clave+'"]'); if (r) { r.querySelector('.desc').classList.add('faltante'); } } );
-		    }, false);
+		    }, false); */
 		    esource.addEventListener("delete", function(e) {
 			const pid = Number(e.data);
 			PEOPLE.tabs.delete(pid);
