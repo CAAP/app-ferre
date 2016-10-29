@@ -95,7 +95,7 @@
 		row.title = q.desc.substr(0,3); // TRYING OUT LOCATION XXX
 		row.dataset.clave = q.clave;
 		row.insertCell().appendChild( document.createTextNode( q.clave ) );
-		row.insertCell().appendChild( inputE( [['type', 'number'], ['size', 2], ['min', 0], ['name', 'qty'], ['value', q.qty]] ) ).focus();
+		row.insertCell().appendChild( inputE( [['type', 'number'], ['size', 2], ['min', 0], ['name', 'qty'], ['value', q.qty]] ) ).select(); // XXX focus()
 		let desc = row.insertCell();
 		if (q.faltante) { desc.classList.add('faltante'); }
 		desc.classList.add('basura'); desc.appendChild( document.createTextNode( q.desc ) );
