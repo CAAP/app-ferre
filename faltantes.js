@@ -6,6 +6,8 @@
 
 	    const FALT = DATA.STORES.FALT;
 
+	    DATA.inplace = q => Promise.resolve(q);
+
 	    // Resultados
 
 	    (function() {
@@ -47,17 +49,14 @@
 
 	    function asnum(s) { let n = Number(s); return Number.isNaN(n) ? s : n; };
 
+		function encPpties(o) { return Object.keys(o).map( k => { return (k + '=' + encodeURIComponent(o[k])); } ).join('&'); }
+
 		let update = e => {
 		    const tr = e.target.parentElement.parentElement;
 		    const clave = asnum( tr.dataset.clave );
 		    const prove = e.target.value;
 
-		    let objStore = IDB.write2DB( FALT );
-// XXX Change this to stream (8081)
-		    return XHR.get('/ferre/proveedor.lua?clave='+clave+'&proveedor='+prove)
-			.then( () => objStore.get( clave ) )
-			.then( q => { if (q) { q.proveedor = prove; return q; } } )
-			.then( objStore.put );
+		    return XHR.get(document.location.origin + ':8081/update?' + encPpties({clave: clave, tbname: 'proveedores', proveedor: prove}) );
 		};
 
 		function displayItem( a ) {
