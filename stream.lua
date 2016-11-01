@@ -45,11 +45,10 @@ local function init( conn )
 end
 
 local function cambios( conn )
-    local tbname = 'updates'
     local schema = 'vers INTEGER PRIMARY KEY, clave, campo, valor'
-    local query = 'SELECT max(vers) vers FROM '..tbname
+    local QRY = 'SELECT max(vers) vers FROM updates'
 
-    assert( conn.exec( string.format(sql.newTable, tbname, schema) ) )
+    assert( conn.exec( string.format(sql.newTable, 'updates', schema) ) )
 
     local costol = 'UPDATE datos SET costol = costo*(100+impuesto)*(100-descuento), fecha = %q %s'
     local isstr = {desc=true, fecha=true, obs=true, proveedor=true, gps=true, u1=true, u2=true, u3=true}
@@ -81,12 +80,14 @@ local function cambios( conn )
 	fd.reduce( fd.keys(ret), fd.merge, w )
     end
 
+    local stores = {proveedor='COSTO', costol='COSTO', uid='PACK'}
+
     function MM.cambios.add( w )
 	local clave = w.clave
 	local tbname = w.tbname
 	local clause = string.format('WHERE clave LIKE %q', clave)
 
-	w.id_tag = nil; w.args = nil; w.clave = nil; w.tbname = nil;
+	w.id_tag = nil; w.args = nil; w.clave = nil; w.tbname = nil; -- SANITIZE
 
 	if w.desc then w.desc = w.desc:upper() end
 
@@ -98,15 +99,20 @@ local function cambios( conn )
 
 	if w.prc1 or w.prc2 or w.prc3 then up_precios(w, clause) end
 
-	fd.reduce( fd.keys(w), fd.map(function(v,k) return {'', clave, k, v} end), sql.into'updates', conn)
+	ret = {VERS={store='VERS', week=week}}
 
-	if w.proveedor or w.costol then
-	    w.ret = {string.format('event: proveedor\n%s\n\n', asJSON{clave=clave, proveedor=w.proveedor, costol=w.costol})}; w.proveedor = nil; w.costol = nil
+	local function events(k, v)
+	    local store = stores[k] or 'PRICE'
+	    if not ret[store] then ret[store] = {clave=clave, store=store} end
+	    ret[store][k] = v
 	end
 
-	w.clave = clave
+	fd.reduce( fd.keys(w), fd.map(function(v,k) events(k, v); return {'', clave, k, v} end), sql.into'updates', conn )
 
-	return w
+	local vers = fd.first( conn.query(QRY), function(x) return x end ).vers
+	ret.VERS.vers = vers
+
+	return {data=table.concat(fd.reduce(fd.keys(ret), fd.map(function(x) return asJSON(x) end), fd.into, {}), ',\n'), event='update'}
     end
 end
 
@@ -213,7 +219,7 @@ local function recording()
 
     local function classify( w, q )
 	local tag = w.id_tag
-	if tag == 'u' then local m = MM.cambios.add( w ); m.event = 'update'; return m end -- m.event = m.faltante and 'faltante' or 'update';
+--XXX	if tag == 'u' then local m = MM.cambios.add( w ); m.event = 'update'; return m end -- m.event = m.faltante and 'faltante' or 'update';
 	if tag == 'g' then MM.tabs.add( w, q ); w.event = 'tabs'; return w end
 --	if tag == 'h' then  local m = MM.entradas.add( w ); m.event = 'entradas'; return m end
 	if tag == 'd' then MM.tabs.remove(w.pid); w.ret = { 'event: delete\ndata: '.. w.pid ..'\n\n' }; w.event = 'none' w.data = ''; return w end
@@ -238,10 +244,10 @@ local function recording()
 	    if not e then
 		local url, qry = head:match'/(%g+)%?(%g+)'
 		repeat head = c:receive() until head:match'^Origin:'
-		local msg = sse( add( qry ) )
+--		local msg = sse( add( qry ) )
+		local msg = (url:match'update') and sse( MM.cambios.add( hd.parse( qry ) ) ) or sse( add( qry ) )
 		ip = head:match'^Origin: (%g+)'
 		c:send( hd.response({ip=ip, body='OK'}).asstr() )
---		local msg = (url == 'update') and sse( cambios() ) or sse( add( qry ) ) -- intoDB
 		MM.streaming.broadcast( msg )
 	    end
 	    c:close()

@@ -3,7 +3,8 @@
 	var caja = {};
 
 	window.onload = function addFuns() {
-	    const DBs = [ DATA ];
+
+	    const PRICE = DATA.STORES.PRICE;
 
 	    caja.cerrar = e => e.target.closest('dialog').close();
 
@@ -109,7 +110,7 @@
 
 	 	function asnum(s) { let n = Number(s); return Number.isNaN(n) ? s : n; }
 
-		function data( o ) { return IDB.readDB( DATA ).get( asnum(o.clave) ).then( w => Object.assign( o, w ) ).then( TICKET.show ).then( () => { mybag.lastChild.dataset.uid = o.uid } ) }
+		function data( o ) { return IDB.readDB( PRICE ).get( asnum(o.clave) ).then( w => Object.assign( o, w ) ).then( TICKET.show ).then( () => { mybag.lastChild.dataset.uid = o.uid } ) }
 
 		function add2bag( uid, rfc ) {  //  rfc
 		    TICKET.bagUID.add( uid );
@@ -148,17 +149,19 @@
 	// SERVER-SIDE EVENT SOURCE
 		function addEvents() {	
 		    let esource = new EventSource(document.location.origin + ":8080");
+		    DATA.onLoaded(esource);
 		    esource.addEventListener("feed", function(e) {
 			console.log('FEED message received\n');
 			JSON.parse( e.data ).forEach( add2caja );
 		    }, false);
 
-		    caja.getByDate = e => XHR.getJSON('/caja/getDate.lua?uid='+e.target.value).then(data => {clearTable(cajita); esource.close(); data.forEach(add2caja)});
+//XXX		    caja.getByDate = e => XHR.getJSON('/caja/getDate.lua?uid='+e.target.value).then(data => {clearTable(cajita); esource.close(); data.forEach(add2caja)});
 		}
 
-		// LOAD DBs
+	    // LOAD DBs
  		if (IDB.indexedDB)
-		    Promise.all( DBs.map( IDB.loadDB ) ).then( PEOPLE.load ).then( addEvents );
+		    IDB.loadDB( DATA ).then( () => console.log('Success!') ).then( addEvents );
+
 	    })();
 
 	};

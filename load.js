@@ -22,7 +22,7 @@
 	    let paquetes = {
 		STORE: 'paquetes',
 		KEY: 'clave',
-		INDEX: ['desc']
+		INDEX: ['uid', 'tag'] // 'desc'
 	    };
 
 	    let proveedores = {

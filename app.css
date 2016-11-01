@@ -1,6 +1,9 @@
 td { font: 100% arial; }
 
-table { border-spacing: 6px 6px; }
+table {
+    border-spacing: 6px 6px;
+    width: 100%;
+}
 
 input[type=number] {
     text-align: right;

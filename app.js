@@ -3,20 +3,19 @@
 	var ferre = {};
 
 	window.onload = function() {
-	    const DBs = [ DATA ]; // , TICKET
+
+	    const PRICE = DATA.STORES.PRICE;
 
 	    DATA.inplace = q => {let r = document.body.querySelector('tr[data-clave="'+q.clave+'"]'); if (r) {DATA.clearTable(r); BROWSE.rows(q,r);} return q;};
-
-	    ferre.reloadDB = function reloadDB() { return IDB.clearDB(DATA).then( () => IDB.populateDB( DATA ) ); };
 
 	    // BROWSE
 
 	    BROWSE.tab = document.getElementById('resultados');
 	    BROWSE.lis = document.getElementById('tabla-resultados');
 
-	    BROWSE.DBget = s => IDB.readDB( DATA ).get( s );
+	    BROWSE.DBget = s => IDB.readDB( PRICE ).get( s );
 
-	    BROWSE.DBindex = (a, b, f) => IDB.readDB( DATA ).index( a, b, f );
+	    BROWSE.DBindex = (a, b, f) => IDB.readDB( PRICE ).index( a, b, f );
 
 	    ferre.startSearch = BROWSE.startSearch;
 
@@ -33,7 +32,6 @@
 
 	    (function() {
 		let diagI = document.getElementById('dialogo-item');
-		let lsObs = document.getElementById('obs'); // faltantes
 		let clave = -1;
 
 		function asnum(s) { let n = Number(s); return Number.isNaN(n) ? s : n; };
@@ -49,7 +47,7 @@
 		ferre.add2bag = function() {
 		    diagI.close();
 		    if (TICKET.items.has( clave )) { console.log('Item is already in the bag.'); return false; }
-		    return IDB.readDB( DATA ).get( clave )
+		    return IDB.readDB( PRICE ).get( clave )
 			.then( w => { w.qty=1; w.precio='precio1'; w.rea=0; w.totalCents=uptoCents(w); return w; } )
 			.then( TICKET.add );
 		};
@@ -59,7 +57,7 @@
 
 		ferre.enviarF = e => SQL.update({clave: clave, faltante: 1, obs: obs.value, tbname: 'faltantes', id_tag: 'u'}).then( () => { obs.value = ''; ferre.cerrar(e); } );
 
-		ferre.faltante = e => IDB.readDB( DATA ).get( clave ).then( w => { ferre.cerrar(e); obs.value = w.obs; diagF.showModal(); } );
+		ferre.faltante = e => IDB.readDB( PRICE ).get( clave ).then( w => { ferre.cerrar(e); obs.value = w.obs; diagF.showModal(); } );
 	    })();
 
 	    ferre.updateItem = TICKET.update;
@@ -105,7 +103,7 @@
 //		const tag = document.getElementById('tag');
 
 		function asnum(s) { let n = Number(s); return Number.isNaN(n) ? s : n; };
-		function data( o ) { return IDB.readDB( DATA ).get( asnum(o.clave) ).then( w => Object.assign( o, w ) ).then( TICKET.add ); }
+		function data( o ) { return IDB.readDB( PRICE ).get( asnum(o.clave) ).then( w => Object.assign( o, w ) ).then( TICKET.add ); }
 		function a2obj( a ) { const M = a.length/2; let o = {}; for (let i=0; i<M; i++) { o[a[i*2]] = a[i*2+1]; } return o; }
 		function recreate(q) { return q.split('&').reduce( (p, s) => p.then( () => data(a2obj(s.split('+'))) ), Promise.resolve() ); }
 		function tabs(k) { slc.dataset.id = k; if (PEOPLE.tabs.has(k)) { recreate(PEOPLE.tabs.get(k).query); } }
@@ -151,19 +149,11 @@
 	    (function() {
 		function addEvents() {
 		    let esource = new EventSource(document.location.origin + ":8080");
+		    DATA.onLoaded(esource);
 		    esource.addEventListener("tabs", function(e) {
 		 	console.log("tabs event received.");
 		    	JSON.parse( e.data ).forEach( o => PEOPLE.tabs.set(o.pid, o) );
 		    }, false);
-		    esource.addEventListener("update", function(e) {
-			console.log("update event received.");
-			DATA.update( JSON.parse(e.data) );
-		    }, false);
-/*		    esource.addEventListener("faltante", function(e) {
-			console.log("faltante event received.");
-			DATA.update( JSON.parse(e.data) )
-			    .then( () => { let r = document.body.querySelector('tr[data-clave="'+JSON.parse(e.data)[0].clave+'"]'); if (r) { r.querySelector('.desc').classList.add('faltante'); } } );
-		    }, false); */
 		    esource.addEventListener("delete", function(e) {
 			const pid = Number(e.data);
 			PEOPLE.tabs.delete(pid);
@@ -173,7 +163,7 @@
 
 	    // LOAD DBs
  		if (IDB.indexedDB)
-		    Promise.all( DBs.map( IDB.loadDB ) ).then( () => console.log('Success!') ).then( addEvents );
+		    IDB.loadDB( DATA ).then( () => console.log('Success!') ).then( addEvents );
 	    })();
 
 	};

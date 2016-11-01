@@ -12,21 +12,6 @@
 
 	    TICKET.items = new Map();
 
-/*
-	    TICKET.load = function() {
-		let items = TICKET.items;
-		if (items.size > 0) {
-		    toggleTicket();
-		    let total = 0;
-		    items.forEach( item => {
-			total += asnum(item.totalCents);
-			displayItem( item );
-		    } );
-		    TICKET.total( total );
-		}
-	    };
-*/
-
 	    function tocents(x) { return (x / 100).toFixed(2); };
 
 	    function uptoCents(q) { return Math.round( 100 * q[q.precio] * q.qty * (1-q.rea/100) ); };
@@ -162,7 +147,6 @@
 	    };
 
 	    TICKET.empty = function() { TICKET.items.clear(); clearTable( TICKET.bag ); TICKET.myticket.style.visibility = 'hidden'; };
-//	    TICKET.empty = function(e) { TICKET.items = new Map(); clearTable( TICKET.bag ); toggleTicket(); };
 
 	    })();
 

@@ -1,27 +1,11 @@
-
         "use strict";
 
 	var admin = {};
 
 	window.onload = function() {
-	    const DBs = [ DATA ];
-
-	    const COSTO = {
-		STORE: 'proveedores',
-		INDEX: 'proveedor',
-		update: a => {
-		    let os = IDB.write2DB( COSTO );
-		    return Promise.all( a.map( o => os.get( o.clave ).then( q => {
-			    if (q) { return Object.assign(q, o); } else { return o; } } )
-			    .then( os.put )
-			    .then( DATA.inplace )
-			) );
-		}
-	    };
+	    const COST = DATA.STORES.COST;
 
 	    DATA.inplace = q => {let r = document.body.querySelector('tr[data-clave="'+q.clave+'"]'); if (r) {DATA.clearTable(r); BROWSE.rows(q,r); r.classList.add('modificado');} return q;};
-
-//	    admin.reloadDB = function reloadDB() { return IDB.clearDB( DATA ).then( () => IDB.populateDB( DATA ) ); };
 
 	    admin.cerrar = e => e.target.closest('dialog').close(); // XXX unify
 
@@ -30,9 +14,9 @@
 	    BROWSE.tab = document.getElementById('resultados');
 	    BROWSE.lis = document.getElementById('tabla-resultados');
 
-	    BROWSE.DBget = clave => IDB.readDB( DATA ).get( clave );
+	    BROWSE.DBget = clave => IDB.readDB( COST ).get( clave );
 
-	    BROWSE.DBindex = (a, b, f) => IDB.readDB( DATA ).index( a, b, f ); // XXX readDB proveedores HERE
+	    BROWSE.DBindex = (a, b, f) => IDB.readDB( COST ).index( a, b, f ); // XXX readDB proveedores HERE
 
 	    BROWSE.rows = function(a, row) {
 		// XXX readDB proveedores & get costol
@@ -200,27 +184,13 @@
 	// SERVER-SIDE EVENT SOURCE
 	    (function() {
 		function addEvents() {
-		    COSTO.CONN = DATA.CONN;
-
 		    let esource = new EventSource(document.location.origin + ":8080");
-		    esource.addEventListener("update", function(e) {
-			console.log("update event received.");
-			DATA.update( JSON.parse(e.data) );
-		    }, false);
-/*		    esource.addEventListener("faltante", function(e) {
-			console.log("faltante event received.");
-			DATA.update( JSON.parse(e.data) )
-			    .then( () => { let r = document.body.querySelector('tr[data-clave="'+JSON.parse(e.data)[0].clave+'"]'); if (r) { r.querySelector('.desc').classList.toggle('faltante'); } } ); // toggle faltante
-		    }, false); */
-		    esource.addEventListener("proveedor", function(e) {
-			console.log("proveedor event received.");
-			COSTO.update( [JSON.parse(e.data)] );
-		    }, false);
+		    DATA.onLoaded(esource);
 		}
 
 	    // LOAD DBs
  		if (IDB.indexedDB)
-		    Promise.all( DBs.map( IDB.loadDB ) ).then( addEvents, () => alert("IDBIndexed not available.") );
+		    IDB.loadDB( DATA ).then( addEvents, () => alert("IDBIndexed not available.") );
 	    })();
 
 
