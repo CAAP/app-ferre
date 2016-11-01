@@ -6,7 +6,7 @@
 
 	(function() {
 
-	    let sstr = '';
+	    let sstr = '\uffff';
 	    const IDBKeyRange =  window.IDBKeyRange || window.webkitIDBKeyRange || window.msIDBKeyRange;
 	    const N = 11;
 
@@ -48,20 +48,12 @@
 		};
 	    }
 
-	    function searchIndex(type, s, M) {
-		let NN = M || N;
-		let t = type.substr(0,4) == 'next';
-		let range = t ? IDBKeyRange.lowerBound(s, NN<N) : IDBKeyRange.upperBound(s, NN<N);
-		let j = t ? -1 : 0;
-		return BROWSE.DBindex( range, type, browsing(j, NN) );
-	    }
-
 	    function searchByDesc(s) {
 		console.log('Searching by description:' + s); sstr = s;
-		return searchIndex('next', s);
+		return BROWSE.searchIndex('next', s);
 	    }
 
-	    BROWSE.search = searchByDesc; // XXX with care
+//	    BROWSE.search = searchByDesc; // XXX with care
 
 	    function searchByClave(s) {
 		console.log('Searching by clave:' + s);
@@ -70,9 +62,21 @@
 
 	    function retrieve(t) {
 		let ans = BROWSE.lis;
-		let s = ans[(t == 'prev') ? 'firstChild' : 'lastChild'].querySelector('.desc').textContent;
-		searchIndex(t, s, 1).then( () => ans.removeChild((t == 'prev') ? ans.lastChild : ans.firstChild ), e => console.log('Error: ' + e));
+		let s = BROWSE.fetchBy(ans, t); // ans[(t == 'prev') ? 'firstChild' : 'lastChild'].querySelector('.desc').textContent;
+		BROWSE.searchIndex(t, s, 1).then( () => ans.removeChild((t == 'prev') ? ans.lastChild : ans.firstChild ), e => console.log('Error: ' + e));
 	    }
+
+	    BROWSE.fetchBy = (tr, d) => tr[(d == 'prev') ? 'firstChild' : 'lastChild'].querySelector('.desc').textContent;
+
+//	    BROWSE.appendOne = () => retrive('next', true);
+
+	    BROWSE.searchIndex = function searchIndex(type, s, M) {
+		let NN = M || N;
+		let t = type.substr(0,4) == 'next';
+		let range = t ? IDBKeyRange.lowerBound(s, NN<N) : IDBKeyRange.upperBound(s, NN<N);
+		let j = t ? -1 : 0;
+		return BROWSE.DBindex( range, type, browsing(j, NN) );
+	    };
 
  	    BROWSE.startSearch = function startSearch(e) {
 		const ss = e.target.value.toUpperCase();

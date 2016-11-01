@@ -3,25 +3,87 @@
 	var app = {};
 
 	window.onload = function() {
-
+	    const PRICE = DATA.STORES.PRICE;
 	    const FALT = DATA.STORES.FALT;
 
-	    DATA.inplace = q => Promise.resolve(q);
+//	    DATA.inplace = q => Promise.resolve(q);
+	    // BROWSE
 
-	    // Resultados
+	    BROWSE.tab = document.getElementById('resultados');
+	    BROWSE.lis = document.getElementById('tabla-resultados');
+
+	    BROWSE.DBget = clave => IDB.readDB( PRICE ).get( clave );
+
+	    BROWSE.DBindex = (a, b, f) => IDB.readDB( FALT ).index( a, b, f );
+
+	    app.scroll = BROWSE.scroll;
 
 	    (function() {
 		const tab = document.getElementById('resultados');
 		const lis = document.getElementById('tabla-resultados');
+		const flbl = document.getElementById('falts');
 		const IDBKeyRange =  window.IDBKeyRange || window.webkitIDBKeyRange || window.msIDBKeyRange;
 
-//		app.reload = () => IDB.clearDB( app ).then(() => IDB.populateDB(app) ).then( app.load );
-
 		let pages = '<html><body><table><tbody>$BODY</tbody></table></body></html>'
-
 		let ans = '';
+		let falts = 0;
 
-		function generar() {
+	    	function asnum(s) { let n = Number(s); return Number.isNaN(n) ? s : n; };
+		function encPpties(o) { return Object.keys(o).map( k => { return (k + '=' + encodeURIComponent(o[k])); } ).join('&'); }
+
+	    DATA.inplace = q => {
+		let r = document.body.querySelector('tr[data-clave="'+q.clave+'"]');
+		if (q.faltante && q.faltante != 1) { flbl.textContent = --falts; return q; } // r.parentElement.removeChild(r);  BROWSE.appendOne().then(() => 
+		if (r) {DATA.clearTable(r); BROWSE.rows(q,r);}
+		return q;
+	    };
+
+		BROWSE.fetchBy = tr => [1, tr.querySelector('input[name="prov"]').value, tr.querySelector('.desc').textContent];
+
+		let update = e => {
+		    const tr = e.target.parentElement.parentElement;
+		    const clave = asnum( tr.dataset.clave );
+		    const prove = e.target.value.toUpperCase();
+		    return XHR.get(document.location.origin + ':8081/update?' + encPpties({clave: clave, tbname: 'proveedores', proveedor: prove}) );
+		};
+
+		let pedido = e => XHR.get(document.location.origin + ':8081/update?' + encPpties({clave: e.target.value, tbname: 'faltantes', faltante: 2}));
+/*{
+//		    const tr = e.target.parentElement.parentElement;
+		    return XHR.get(document.location.origin + ':8081/update?' + encPpties({clave: e.target.value, tbname: 'faltantes', faltante: 2}));
+		}; */
+
+		BROWSE.rows = function( a, row ) {
+		    row.insertCell().appendChild( document.createTextNode( a.fecha ) );
+		    let clave = row.insertCell();
+		    clave.classList.add('pesos'); clave.appendChild( document.createTextNode( a.clave ) );
+		    let desc = row.insertCell();
+		    desc.classList.add('desc');
+		    desc.appendChild( document.createTextNode( a.desc ) );
+		    let costol = row.insertCell();
+		    costol.classList.add('total');
+		    costol.appendChild( document.createTextNode( (a.costol / 1e4).toFixed(2) ) );
+		    let obs = a.obs || '';
+		    row.insertCell().appendChild( document.createTextNode( obs ) );
+		    let prov = document.createElement('input');
+		    prov.name = 'prov'; prov.value = a.proveedor || ''; prov.size = 12; prov.addEventListener('change', update);
+		    row.insertCell().appendChild( prov );
+		    let ie = document.createElement('input');
+		    ie.type = 'checkbox'; ie.value = a.clave; ie.addEventListener('change', pedido);
+		    row.insertCell().appendChild( ie );
+		};
+
+		function load() {
+		    const fkey = IDBKeyRange.bound([1,'9','9'], [1,'a','a'], false, false);
+		    return IDB.readDB( FALT ).countIndex(fkey).then( n => {falts = n; flbl.textContent = n;} )
+			.then(() => BROWSE.searchIndex('next', [1,'9','9']));
+		};
+
+		app.load = load;
+	    })();
+
+
+/*		function generar() {
 		    let ret = [];
 		    return IDB.readDB( FALT ).index( IDBKeyRange.upperBound('V', false), 'prev', cursor =>  {
 			if (cursor) {
@@ -45,54 +107,7 @@
 			.then( win => { let doc = win.document; doc.open(); doc.write(ans); doc.close(); return win } )
 			.then( win => win.print() )
 			.then( () => document.body.removeChild(document.body.lastChild) );
-		};
-
-	    function asnum(s) { let n = Number(s); return Number.isNaN(n) ? s : n; };
-
-		function encPpties(o) { return Object.keys(o).map( k => { return (k + '=' + encodeURIComponent(o[k])); } ).join('&'); }
-
-		let update = e => {
-		    const tr = e.target.parentElement.parentElement;
-		    const clave = asnum( tr.dataset.clave );
-		    const prove = e.target.value;
-
-		    return XHR.get(document.location.origin + ':8081/update?' + encPpties({clave: clave, tbname: 'proveedores', proveedor: prove}) );
-		};
-
-		function displayItem( a ) {
-		    let row = lis.insertRow();
-		    row.dataset.clave = a.clave;
-		    row.insertCell().appendChild( document.createTextNode( a.fecha ) );
-		    let clave = row.insertCell();
-		    clave.classList.add('pesos'); clave.appendChild( document.createTextNode( a.clave ) );
-		    let desc = row.insertCell();
-		    desc.classList.add('desc');
-		    desc.appendChild( document.createTextNode( a.desc ) );
-		    row.insertCell().appendChild( document.createTextNode( a.costol ) );
-		    let obs = a.obs || '';
-		    row.insertCell().appendChild( document.createTextNode( obs ) );
-		    let ie = document.createElement('input'); ie.value = a.proveedor || ''; ie.size = 8; ie.addEventListener('change', update);
-		    row.insertCell().appendChild( ie );
-		};
-
-		function clearTable(tb) { while (tb.firstChild) { tb.removeChild( tb.firstChild ); } };
-
-		function load() {
-		    clearTable(lis);
-		    let falts = []
-		    return IDB.readDB( FALT ).index( IDBKeyRange.lowerBound([0,'A','A'], true), 'next', cursor => {
-			if (cursor) { displayItem( cursor.value ); cursor.continue(); }
-		    } );
-		};
-
-		app.load = load;
-
-//		load();
-
-//		app.load = () => load('X');
-
-//		app.done = () => load('A');
-	    })();
+		}; */
 
 	    // HEADER
 	    (function() {

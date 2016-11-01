@@ -19,7 +19,6 @@
 	    BROWSE.DBindex = (a, b, f) => IDB.readDB( PRICE ).index( a, b, f ); // XXX readDB proveedores HERE
 
 	    BROWSE.rows = function(a, row) {
-		// XXX readDB proveedores & get costol
 		row.insertCell().appendChild( document.createTextNode( a.fecha ) );
 		let clave = row.insertCell();
 		clave.classList.add('pesos'); clave.appendChild( document.createTextNode( a.clave ) );
@@ -28,7 +27,6 @@
 		desc.classList.add('desc'); desc.appendChild( document.createTextNode( a.desc ) );
 		let costol = row.insertCell();
 		costol.classList.add('total'); costol.classList.add('precio1');
-//		IDB.readDB( COSTO ).get(a.clave).then(q => costol.appendChild( document.createTextNode( (q.costol / 1e4).toFixed(2) ) ))
 		costol.appendChild( document.createTextNode( (a.costol / 1e4).toFixed(2) ) );
 	    };
 

@@ -20,7 +20,7 @@
 		    let os = IDB.write2DB( PRICE );
 		    return os.get( o.clave ).then( q => {if (q) {return Object.assign(q, o);} else {return o;} } )
 			.then( prc2txt )
-			.then( os.put )
+			.then( os.put ) // XXX Join with last check i.e., if statement: put or delete, not both
 			.then( DATA.inplace )
 			.then( o => { if (o.desc.startsWith('VV')) {return os.delete( o.clave );} } );
 		}
@@ -61,15 +61,15 @@
 		Object.values(STORES).forEach(store => {store.CONN = DATA.CONN});
 		esrc.addEventListener('update', e => {
 		    const data = JSON.parse(e.data);
-		    const upd = data.find(o => {o.store == 'VERS'});
+		    const upd = data.find(o => {return o.store == 'VERS'});
 		    if (localStorage.week && upd.week < localStorage.week && upd.vers <= localStorage.vers) {console.log('Update already registered!'); return;}
 		    console.log('Update event ongoing!');
 		    Promise.all( data.map(q => {const store = q.store; delete q.store; return STORES[store].update(q);}) );
 		}, false);
-		if (localStorage.week && localStorage.vers)
+/*		if (localStorage.week && localStorage.vers)
 		    XHR.get('/ferre/updates.lua?week='+localStorage.week+'&vers='+localStorage.vers);
 		else
-		    alert('No update-record found!');
+		    alert('No update-record found!'); */
 	    };
 
 	})();
