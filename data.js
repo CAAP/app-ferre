@@ -17,12 +17,12 @@
 		STORE: 'precios',
 		INDEX: 'desc',
 		update: o => {
+		    if (o.desc && o.desc.startsWith('VV')) { return os.delete( o.clave ); }
 		    let os = IDB.write2DB( PRICE );
 		    return os.get( o.clave ).then( q => {if (q) {return Object.assign(q, o);} else {return o;} } )
 			.then( prc2txt )
 			.then( os.put ) // XXX Join with last check i.e., if statement: put or delete, not both
-			.then( DATA.inplace )
-			.then( o => { if (o.desc.startsWith('VV')) {return os.delete( o.clave );} } );
+			.then( DATA.inplace );
 		}
 	    };
 
