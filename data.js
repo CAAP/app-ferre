@@ -58,7 +58,7 @@
 	    DATA.STORES = STORES;
 
 	    DATA.onLoaded = esrc => {
-		Object.values(STORES).forEach(store => {store.CONN = DATA.CONN});
+		Object.keys(STORES).forEach(store => {STORES[store].CONN = DATA.CONN});
 		esrc.addEventListener('update', e => {
 		    const data = JSON.parse(e.data);
 		    const upd = data.find(o => {return o.store == 'VERS'});

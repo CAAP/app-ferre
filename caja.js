@@ -127,6 +127,8 @@
 // XXX check may be innecesary to look for pid & time since it comes from feed
 		const doprint = document.getElementById("doprint");
 
+		const regInt = /\d+$/;
+
 		function add2caja(w) {
 		    let row = cajita.insertRow(0);
 
@@ -137,7 +139,7 @@
 
 		    if (doprint.checked) { XHR.get('/ticket/print.lua?uid='+w.uid+'&tag='+TICKET.TAGS.ID[w.id_tag]||''); }
 
-		    w.nombre = PEOPLE.id[asnum(w.uid.substr(-1))] || 'NaP';
+		    w.nombre = PEOPLE.id[w.uid.match(regInt)[0]] || 'NaP';
 		    w.time = w.uid.substr(11,5);
 		    w.tag = TICKET.TAGS.ID[w.id_tag];
 		    w.total = (w.totalCents / 100).toFixed(2);
@@ -160,7 +162,7 @@
 
 	    // LOAD DBs
  		if (IDB.indexedDB)
-		    IDB.loadDB( DATA ).then( () => console.log('Success!') ).then( addEvents );
+		    IDB.loadDB( DATA ).then( () => console.log('Success!') ).then( PEOPLE.load ).then( addEvents );
 
 	    })();
 

@@ -6,7 +6,6 @@
 	    const PRICE = DATA.STORES.PRICE;
 	    const FALT = DATA.STORES.FALT;
 
-//	    DATA.inplace = q => Promise.resolve(q);
 	    // BROWSE
 
 	    BROWSE.tab = document.getElementById('resultados');
@@ -15,8 +14,6 @@
 	    BROWSE.DBget = clave => IDB.readDB( PRICE ).get( clave );
 
 	    BROWSE.DBindex = (a, b, f) => IDB.readDB( FALT ).index( a, b, f );
-
-	    app.scroll = BROWSE.scroll;
 
 	    (function() {
 		const tab = document.getElementById('resultados');
@@ -31,9 +28,16 @@
 	    	function asnum(s) { let n = Number(s); return Number.isNaN(n) ? s : n; };
 		function encPpties(o) { return Object.keys(o).map( k => { return (k + '=' + encodeURIComponent(o[k])); } ).join('&'); }
 
+		function addOne(a) {
+		    let row = BROWSE.lis.insertRow();
+		    row.dataset.clave = a.clave;
+		    BROWSE.rows( a, row);
+		}
+
 	    DATA.inplace = q => {
 		let r = document.body.querySelector('tr[data-clave="'+q.clave+'"]');
-		if (q.faltante && q.faltante != 1) { flbl.textContent = --falts; return q; } // r.parentElement.removeChild(r);  BROWSE.appendOne().then(() => 
+		if (q.faltante && q.faltante != 1) {  r.parentElement.removeChild(r); flbl.textContent = --falts; return q; }
+		if (q.faltante && q.faltante == 1 && !r) { addOne(q); return q;}
 		if (r) {DATA.clearTable(r); BROWSE.rows(q,r);}
 		return q;
 	    };
@@ -48,10 +52,6 @@
 		};
 
 		let pedido = e => XHR.get(document.location.origin + ':8081/update?' + encPpties({clave: e.target.value, tbname: 'faltantes', faltante: 2}));
-/*{
-//		    const tr = e.target.parentElement.parentElement;
-		    return XHR.get(document.location.origin + ':8081/update?' + encPpties({clave: e.target.value, tbname: 'faltantes', faltante: 2}));
-		}; */
 
 		BROWSE.rows = function( a, row ) {
 		    row.insertCell().appendChild( document.createTextNode( a.fecha ) );
@@ -76,7 +76,14 @@
 		function load() {
 		    const fkey = IDBKeyRange.bound([1,'9','9'], [1,'a','a'], false, false);
 		    return IDB.readDB( FALT ).countIndex(fkey).then( n => {falts = n; flbl.textContent = n;} )
-			.then(() => BROWSE.searchIndex('next', [1,'9','9']));
+			.then( () => IDB.readDB( FALT ).index(fkey, 'next', cursor => {
+			    if (cursor) {
+				const a = cursor.value;
+				addOne( a );
+				cursor.continue();
+			    }
+			} ) );
+//			.then(() => BROWSE.searchIndex('next', [1,'9','9']));
 		};
 
 		app.load = load;

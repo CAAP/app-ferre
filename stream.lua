@@ -122,9 +122,11 @@ local function tickets( conn )
     local schema = 'uid, id_tag, clave, precio, qty INTEGER, rea INTEGER, totalCents INTEGER'
     local keys = { uid=1, id_tag=2, clave=3, precio=4, qty=5, rea=6, totalCents=7 }
     local clause = string.format("WHERE uid LIKE '%s%%'", today)
+    local query = "SELECT uid, SUM(qty) count, SUM(totalCents) totalCents, id_tag FROM %q WHERE uid LIKE '%s%%' GROUP BY uid"
     local QRY = string.format('SELECT uid, SUM(qty) count, SUM(totalCents) totalCents, id_tag FROM %q %s GROUP BY uid', tbname, clause)
 
     assert( conn.exec( string.format(sql.newTable, tbname, schema) ) )
+
 
 -- XXX input is not parsed to Number
     function MM.tickets.add( w )
@@ -137,7 +139,7 @@ local function tickets( conn )
 
     function MM.tickets.sse()
 	if conn.count( tbname, clause ) == 0 then return ':empty\n\n'
-	else return sse{ data=table.concat( fd.reduce(conn.query(QRY), fd.map(asJSON), fd.into, {} ), ',\n'), event='feed' } end
+	else return sse{ data=table.concat( fd.reduce(conn.query(string.format(query, tbname, today)), fd.map(asJSON), fd.into, {} ), ',\n'), event='feed' } end
     end
 
     return conn
