@@ -115,6 +115,8 @@
 
 //		console.log( clave + ' - ' + k + ': ' + v);
 
+		if (k == 'qty' && v == 0) { return TICKET.remove(tr); }
+
 		if (items.has( clave )) {
 		    let q = items.get( clave );
 		    q[k] = v;

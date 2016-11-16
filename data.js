@@ -17,7 +17,7 @@
 		STORE: 'precios',
 		INDEX: 'desc',
 		update: o => {
-		    if (o.desc && o.desc.startsWith('VV')) { return os.delete( o.clave ); }
+		    if (o.desc && o.desc.startsWith('VV')) { return IDB.write2DB( PRICE ).delete( o.clave ); }
 		    let os = IDB.write2DB( PRICE );
 		    return os.get( o.clave ).then( q => {if (q) {return Object.assign(q, o);} else {return o;} } )
 			.then( prc2txt )
