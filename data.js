@@ -17,7 +17,7 @@
 		STORE: 'precios',
 		INDEX: 'desc',
 		update: o => {
-		    if (o.desc && o.desc.startsWith('VV')) { return os.delete( o.clave ); }
+		    if (o.desc && o.desc.startsWith('VV')) { return IDB.write2DB( PRICE ).delete( o.clave ); }
 		    let os = IDB.write2DB( PRICE );
 		    return os.get( o.clave ).then( q => {if (q) {return Object.assign(q, o);} else {return o;} } )
 			.then( prc2txt )
@@ -37,18 +37,7 @@
 			.then( o => { if (o.desc.startsWith('VV')) {return os.delete( o.clave );} } );
 		}
 	    };
-/*	
-	    let COST = {
-		STORE: 'proveedores',
-		INDEX: 'proveedor',
- 		update: o => {
-		    let os = IDB.write2DB( DATA.COSTO );
-		    return os.get( o.clave ).then( q => {if (q) {return Object.assign(q, o);} else {return o;} } )
-			.then( os.put )
-			.then( DATA.inplace );
-		}
-	    };
-*/
+
 	    let FALT = {STORE: 'precios', INDEX: 'falt-prov-desc'};
 
 	    let VERS =  {update: o => {localStorage.vers = o.vers; localStorage.week = o.week;}};
