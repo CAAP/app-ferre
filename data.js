@@ -21,7 +21,7 @@
 		    let os = IDB.write2DB( PRICE );
 		    return os.get( o.clave ).then( q => {if (q) {return Object.assign(q, o);} else {return o;} } )
 			.then( prc2txt )
-			.then( os.put ) // XXX Join with last check i.e., if statement: put or delete, not both
+			.then( os.put )
 			.then( DATA.inplace );
 		}
 	    };
@@ -51,6 +51,8 @@
 		esrc.addEventListener('update', e => {
 		    const data = JSON.parse(e.data);
 		    const upd = data.find(o => {return o.store == 'VERS'});
+
+		    Promise.all( data.map( DATA.inplace ) );
 		    if (localStorage.week && upd.week < localStorage.week && upd.vers <= localStorage.vers) {console.log('Update already registered!'); return;}
 		    console.log('Update event ongoing!');
 		    Promise.all( data.map(q => {const store = q.store; delete q.store; return STORES[store].update(q);}) );

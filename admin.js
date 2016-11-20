@@ -95,7 +95,14 @@
 		admin.nuevo = function() {
 		    return SQL.get({desc: 'VVV'})
 			.then( JSON.parse )
-			.then( a => { records.set(a[0].clave, a[0]); setfields(a[0]); udiag.showModal(); } );
+			.then( a => {
+			    let o = a[0];
+			    let clave = o.clave;
+			    records.set(clave, o);
+			    cambios.set(clave, o);
+			    setfields(o);
+			    udiag.showModal();
+			} );
 		};
 
 		admin.getRecord = function(e) {

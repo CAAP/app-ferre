@@ -15,8 +15,25 @@
 
 <body lang="es-MX">
 
-    <header> <label id="notifications"></label> <button onclick="app.print()"> IMPRIMIR </button> <label> Faltantes: </label> <label id="falts"></label> </header>
+    <header> <label id="notifications"></label> <button onclick="app.print()"> IMPRIMIR </button> </header>
 
+    <section id="buscar">
+        <div> <input type="search" size=40 placeholder="Art&iacute;culo o Clave" onchange="app.startSearch(event)" onkeyup="app.keyPressed(event)"> <button>Buscar</button> </div>
+
+    <section id="resultados" class="tablas" style="overflow-x:auto">
+        <table>
+	    <dt>
+            <thead>
+                <tr><th> Fecha </th><th> Clave </th><th> Descripci&oacute;n </th><th> Costo </th><th> Observaciones </th><th> Proveedor </th><th> Pedido </th></tr>
+            </thead>
+	    </dt>
+	    <tbody id="tabla-resultados" class="amarillo" onwheel="app.scroll(event)"></tbody>
+	    <tfoot><tr><th colspan=6><button onclick="app.scroll({deltaY:0})">&larr;Anterior</button> <label> | </label> <button onclick="app.scroll({deltaY:1})">Siguiente&rarr;</button></th></tr></tfoot>
+	</table>
+    </section>
+
+    </section>
+<!---
     <section id="resultados" class="scrollable">
         <table>
 	    <dt>
@@ -27,6 +44,7 @@
 	    <tbody id="tabla-resultados" class="amarillo"></tbody>
 	</table>
     </section>
+-->
 
     <footer> <label id="copyright"></label> </footer>
 

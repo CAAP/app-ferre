@@ -2,6 +2,8 @@
 
 	var app = {};
 
+// XXX Faltantes busqueda
+
 	window.onload = function() {
 	    const PRICE = DATA.STORES.PRICE;
 	    const FALT = DATA.STORES.FALT;
@@ -11,19 +13,28 @@
 	    BROWSE.tab = document.getElementById('resultados');
 	    BROWSE.lis = document.getElementById('tabla-resultados');
 
-	    BROWSE.DBget = clave => IDB.readDB( PRICE ).get( clave );
+	    BROWSE.DBget = s => IDB.readDB( PRICE ).get( s );
 
-	    BROWSE.DBindex = (a, b, f) => IDB.readDB( FALT ).index( a, b, f );
+	    BROWSE.DBindex = (a, b, f) => IDB.readDB( PRICE ).index( a, b, f );
+
+	    BROWSE.OK = function(o) { return (o.faltante == 1) };
+
+	    app.keyPressed = BROWSE.keyPressed;
+
+	    app.startSearch = BROWSE.startSearch;
+
+	    app.scroll = BROWSE.scroll;
 
 	    (function() {
 		const tab = document.getElementById('resultados');
 		const lis = document.getElementById('tabla-resultados');
 		const flbl = document.getElementById('falts');
-		const IDBKeyRange =  window.IDBKeyRange || window.webkitIDBKeyRange || window.msIDBKeyRange;
+		const IDBKeyRange =  window.IDBKeyRange || window.webkitIDBKeyRange || window.msIDBKeyRange; // XXX NEEDED ?
 
 		let pages = '<html><body><table><tbody>$BODY</tbody></table></body></html>'
 		let ans = '';
 		let falts = 0;
+		const xhro = document.location.origin + ':8081/update?';
 
 	    	function asnum(s) { let n = Number(s); return Number.isNaN(n) ? s : n; };
 		function encPpties(o) { return Object.keys(o).map( k => { return (k + '=' + encodeURIComponent(o[k])); } ).join('&'); }
@@ -42,16 +53,14 @@
 		return q;
 	    };
 
-		BROWSE.fetchBy = tr => [1, tr.querySelector('input[name="prov"]').value, tr.querySelector('.desc').textContent];
-
 		let update = e => {
 		    const tr = e.target.parentElement.parentElement;
 		    const clave = asnum( tr.dataset.clave );
 		    const prove = e.target.value.toUpperCase();
-		    return XHR.get(document.location.origin + ':8081/update?' + encPpties({clave: clave, tbname: 'proveedores', proveedor: prove}) );
+		    return XHR.get(xhro + encPpties({clave: clave, tbname: 'proveedores', proveedor: prove}) );
 		};
 
-		let pedido = e => XHR.get(document.location.origin + ':8081/update?' + encPpties({clave: e.target.value, tbname: 'faltantes', faltante: 2}));
+		let pedido = e => XHR.get(xhro + encPpties({clave: e.target.value, tbname: 'faltantes', faltante: 2}));
 
 		BROWSE.rows = function( a, row ) {
 		    row.insertCell().appendChild( document.createTextNode( a.fecha ) );
@@ -83,10 +92,11 @@
 				cursor.continue();
 			    }
 			} ) );
-//			.then(() => BROWSE.searchIndex('next', [1,'9','9']));
 		};
 
-		app.load = load;
+		app.load = function() {
+		    XHR.getJSON('/ferre/faltantes.lua');
+		};
 	    })();
 
 
@@ -132,7 +142,7 @@
 		function addEvents() {
 		    let esource = new EventSource(document.location.origin + ":8080");
 		    DATA.onLoaded(esource);
-		    app.load();
+//		    app.load();
 		}
 
     // LOAD DBs

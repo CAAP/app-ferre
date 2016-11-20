@@ -115,6 +115,8 @@ local function cambios( conn )
 	return {data=table.concat(fd.reduce(fd.keys(ret), fd.map(function(x) return asJSON(x) end), fd.into, {}), ',\n'), event='update'}
     end
 
+-- XXX
+--[[
     function MM.cambios.sse()
 	local ret = {VERS={store='VERS', week=week}}
 	local function events(k, v)
@@ -122,9 +124,10 @@ local function cambios( conn )
 	    if not ret[store] then ret[store] = {clave=clave, store=store} end
 	    ret[store][k] = v
 	end
-	if w.week < week then
+	if w.week < week then end
 
     end
+--]]
 end
 
 --

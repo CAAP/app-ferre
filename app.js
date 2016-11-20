@@ -17,9 +17,9 @@
 
 	    BROWSE.DBindex = (a, b, f) => IDB.readDB( PRICE ).index( a, b, f );
 
-	    ferre.startSearch = BROWSE.startSearch;
-
 	    ferre.keyPressed = BROWSE.keyPressed;
+
+	    ferre.startSearch = BROWSE.startSearch;
 
 	    ferre.scroll = BROWSE.scroll;
 
