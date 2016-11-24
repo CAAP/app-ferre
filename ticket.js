@@ -48,13 +48,13 @@
 		return ret;
 	    }
 
-	    function toggleTicket() {
+/*	    function toggleTicket() {
 		let myticket = TICKET.myticket;
 		if (myticket.classList.toggle('visible'))
 		    myticket.style.visibility = 'visible';
 		else
 		    myticket.style.visibility = 'hidden';
-	    }
+	    } */
 
 	    function bagTotal() {
 		let total = 0;

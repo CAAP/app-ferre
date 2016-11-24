@@ -41,7 +41,7 @@
 	    function browsing(j, M) {
 		let k = 0;
 		return function(cursor) {
-		    if (!cursor) { return Promise.reject('Not suitable value found!'); }
+		    if (!cursor) { return Promise.reject('Not suitable value found!'); } // XXX STILL necessary ????
 		    if (k == M) { return true; }
 		    if (BROWSE.OK(cursor.value)) { newItem(cursor.value, j); k++; }
 		    cursor.continue();
@@ -53,7 +53,7 @@
 	    function searchIndex(type, s, M) {
 		let NN = M || N;
 		let t = type.substr(0,4) == 'next';
-		let range = t ? IDBKeyRange.lowerBound(s, NN<N) : IDBKeyRange.upperBound(s, NN<N);
+		let range = t ? IDBKeyRange.lowerBound(s, NN<N) : IDBKeyRange.upperBound(s, NN<N); // XXX WHY ???? Rationale
 		let j = t ? -1 : 0;
 		return BROWSE.DBindex( range, type, browsing(j, NN) );
 	    }
@@ -72,8 +72,17 @@
 
 	    function retrieve(t) {
 		let ans = BROWSE.lis;
-		let s = ans[(t == 'prev') ? 'firstChild' : 'lastChild'].querySelector('.desc').textContent; //let s = BROWSE.fetchBy(ans, t);
-		searchIndex(t, s, 1).then( () => ans.removeChild((t == 'prev') ? ans.lastChild : ans.firstChild ), e => console.log('Error: ' + e));
+		const pred = (t == 'prev');
+		let s = ans[pred ? 'firstChild' : 'lastChild'].querySelector('.desc').textContent; //let s = BROWSE.fetchBy(ans, t);
+
+		let range = pred ? IDBKeyRange.upperBound(s, true) : IDBKeyRange.lowerBound(s, true);
+		let j = pred ? 0 : -1;
+		BROWSE.DBindex( range, t, cursor => {
+		    if (!cursor) { return false; }
+		    if (BROWSE.OK(cursor.value)) { newItem(cursor.value, j); ans.removeChild(pred ? ans.lastChild : ans.firstChild ); return true; }
+		    cursor.continue();
+		} );
+//		searchIndex(t, s, 1).then( () => ans.removeChild((t == 'prev') ? ans.lastChild : ans.firstChild ), e => console.log('Error: ' + e));
 	    }
 
 //	    BROWSE.fetchBy = (tr, d) => tr[(d == 'prev') ? 'firstChild' : 'lastChild'].querySelector('.desc').textContent;

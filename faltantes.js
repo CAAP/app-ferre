@@ -2,11 +2,11 @@
 
 	var app = {};
 
-// XXX Faltantes busqueda
-
 	window.onload = function() {
 	    const PRICE = DATA.STORES.PRICE;
 	    const FALT = DATA.STORES.FALT;
+
+	    DATA.inplace = q => {let r = document.body.querySelector('tr[data-clave="'+q.clave+'"]'); if (r) {r.classList.add('modificado');} return q;};
 
 	    // BROWSE
 
@@ -26,12 +26,14 @@
 	    app.scroll = BROWSE.scroll;
 
 	    (function() {
-		const tab = document.getElementById('resultados');
-		const lis = document.getElementById('tabla-resultados');
-		const flbl = document.getElementById('falts');
+		const bus = document.getElementById('buscar');
+		const fts = document.getElementById('faltantes');
+		const lfs = document.getElementById('lista-falts');
+		const dps = document.getElementById('proveedores');
+		const lps = document.getElementById('lista-provs');
 		const IDBKeyRange =  window.IDBKeyRange || window.webkitIDBKeyRange || window.msIDBKeyRange; // XXX NEEDED ?
 
-		let pages = '<html><body><table><tbody>$BODY</tbody></table></body></html>'
+		let pages = '<html><body><table><tbody>$BODY</tbody></table></body></html>';
 		let ans = '';
 		let falts = 0;
 		const xhro = document.location.origin + ':8081/update?';
@@ -39,12 +41,13 @@
 	    	function asnum(s) { let n = Number(s); return Number.isNaN(n) ? s : n; };
 		function encPpties(o) { return Object.keys(o).map( k => { return (k + '=' + encodeURIComponent(o[k])); } ).join('&'); }
 
-		function addOne(a) {
-		    let row = BROWSE.lis.insertRow();
-		    row.dataset.clave = a.clave;
-		    BROWSE.rows( a, row);
+		function update(e) {
+		    const tr = e.target.parentElement.parentElement;
+		    const clave = asnum( tr.dataset.clave );
+		    const prove = e.target.value.toUpperCase();
+		    return XHR.get(xhro + encPpties({clave: clave, tbname: 'proveedores', proveedor: prove}) );
 		}
-
+/*
 	    DATA.inplace = q => {
 		let r = document.body.querySelector('tr[data-clave="'+q.clave+'"]');
 		if (q.faltante && q.faltante != 1) {  r.parentElement.removeChild(r); flbl.textContent = --falts; return q; }
@@ -52,13 +55,9 @@
 		if (r) {DATA.clearTable(r); BROWSE.rows(q,r);}
 		return q;
 	    };
+*/
 
-		let update = e => {
-		    const tr = e.target.parentElement.parentElement;
-		    const clave = asnum( tr.dataset.clave );
-		    const prove = e.target.value.toUpperCase();
-		    return XHR.get(xhro + encPpties({clave: clave, tbname: 'proveedores', proveedor: prove}) );
-		};
+		app.print = () => window.open('/milista.html','lista-falts');
 
 		let pedido = e => XHR.get(xhro + encPpties({clave: e.target.value, tbname: 'faltantes', faltante: 2}));
 
@@ -82,49 +81,7 @@
 		    row.insertCell().appendChild( ie );
 		};
 
-		function load() {
-		    const fkey = IDBKeyRange.bound([1,'9','9'], [1,'a','a'], false, false);
-		    return IDB.readDB( FALT ).countIndex(fkey).then( n => {falts = n; flbl.textContent = n;} )
-			.then( () => IDB.readDB( FALT ).index(fkey, 'next', cursor => {
-			    if (cursor) {
-				const a = cursor.value;
-				addOne( a );
-				cursor.continue();
-			    }
-			} ) );
-		};
-
-		app.load = function() {
-		    XHR.getJSON('/ferre/faltantes.lua');
-		};
 	    })();
-
-
-/*		function generar() {
-		    let ret = [];
-		    return IDB.readDB( FALT ).index( IDBKeyRange.upperBound('V', false), 'prev', cursor =>  {
-			if (cursor) {
-			    let o = cursor.value;
-			    if (!(o.proveedor.startsWith('Z') || o.proveedor.length == 0))
-			        ret.push( '<tr><td>'+o.desc+'</td><td align="right">'+o.costol+'</td><td align="center">'+(o.obs||'')+'</td></tr>' );
-			    cursor.continue();
-			} else { ans = pages.replace('$BODY', ret.join('')); }
-		    } );
-		}
-
-		app.print = function() {
-		    return new Promise((resolve, reject) => {
-			let iframe = document.createElement('iframe');
-			iframe.style.visibility = "hidden";
-			iframe.width = 400;
-			document.body.appendChild(iframe);
-			iframe.onload = resolve(iframe.contentWindow);
-		    } )
-			.then( win => generar().then( () => { return win } ) )
-			.then( win => { let doc = win.document; doc.open(); doc.write(ans); doc.close(); return win } )
-			.then( win => win.print() )
-			.then( () => document.body.removeChild(document.body.lastChild) );
-		}; */
 
 	    // HEADER
 	    (function() {
@@ -142,7 +99,7 @@
 		function addEvents() {
 		    let esource = new EventSource(document.location.origin + ":8080");
 		    DATA.onLoaded(esource);
-//		    app.load();
+		    IDB.readDB( FALT ).countIndex( IDBKeyRange.only(1) ).then( q => { document.getElementById('falts-cnt').textContent = q; });
 		}
 
     // LOAD DBs

@@ -6,7 +6,7 @@
 	    let precios = {
 		STORE: 'precios',
 		KEY: 'clave',
-		INDEX: [{key: 'desc'}, {name:'falt-prov-desc', key:['faltante','proveedor','desc']}],
+		INDEX: [{key: 'desc'}, {key: 'faltante'}, {key: 'proveedor'}], //{name:'falt-prov-desc', key:['faltante','proveedor','desc']}],
 		FILE: '/ferre/precios.lua',
 		MAP: function(q) {
 		    q.precios = {};

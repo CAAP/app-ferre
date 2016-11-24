@@ -38,11 +38,13 @@
 		}
 	    };
 
-	    let FALT = {STORE: 'precios', INDEX: 'falt-prov-desc'};
+	    let FALT = {STORE: 'precios', INDEX: 'faltante'};
+
+	    let PROV = {STORE: 'precios', INDEX: 'proveedor'};
 
 	    let VERS =  {update: o => {localStorage.vers = o.vers; localStorage.week = o.week;}};
 
-	    let STORES = {PRICE:PRICE, PACK:PACK, FALT:FALT, VERS:VERS}; // COST:COST
+	    let STORES = {PRICE:PRICE, PACK:PACK, FALT:FALT, PROV:PROV, VERS:VERS}; // COST:COST
 
 	    DATA.STORES = STORES;
 
@@ -52,7 +54,7 @@
 		    const data = JSON.parse(e.data);
 		    const upd = data.find(o => {return o.store == 'VERS'});
 
-		    Promise.all( data.map( DATA.inplace ) );
+//		    Promise.all( data.map( DATA.inplace ) ); XXX Need to address issue of already registered from admin et al.
 		    if (localStorage.week && upd.week < localStorage.week && upd.vers <= localStorage.vers) {console.log('Update already registered!'); return;}
 		    console.log('Update event ongoing!');
 		    Promise.all( data.map(q => {const store = q.store; delete q.store; return STORES[store].update(q);}) );
