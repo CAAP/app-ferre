@@ -36,8 +36,6 @@ dialog { font: 100% arial; }
     text-align: right;
 }
 
-.desc th,td { width: 400px; }
-
 .faltante { color: red; text-decoration: line-through; }
 
 .pesos { text-align: right; }
@@ -88,12 +86,6 @@ dialog { font: 100% arial; }
 
 #keys-resultados { visibility: hidden; }
 
-#ticket {
-    margin: 4px;
-    padding: 5px;
-    background-color: #ffffcc;
-}
-
 #buscar {
     margin: 4px;
     padding: 5px;
@@ -123,5 +115,7 @@ header, footer {
 #ticket {
     margin: 4px;
     padding: 5px;
+    background-color: #ffffcc;
     order: 2;
 }
+

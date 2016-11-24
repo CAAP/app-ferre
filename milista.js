@@ -9,9 +9,7 @@
 	    // BROWSE
 
 	    (function() {
-		const fts = document.getElementById('faltantes');
 		const lfs = document.getElementById('lista-falts');
-		const dps = document.getElementById('proveedores');
 		const lps = document.getElementById('lista-provs');
 		const IDBKeyRange =  window.IDBKeyRange || window.webkitIDBKeyRange || window.msIDBKeyRange; // XXX NEEDED ?
 
