@@ -106,23 +106,22 @@ header, footer {
     background-color: #ccffcc;
 }
 
-#flexi {
+#main {
     line-style: none;
-
     -webkit-display: flex;
     display: flex;
-    -webkit-flex-flow: row wrap;
-    flex-flow: row wrap;
+    -webkit-flex-flow: row;
+    flex-flow: row;
 }
 
-#main.feed {
-    margin: 4px;
-    padding: 5px;
-    order: 2;
-}
-
-#main.ticket {
+#feed {
     margin: 4px;
     padding: 5px;
     order: 1;
+}
+
+#ticket {
+    margin: 4px;
+    padding: 5px;
+    order: 2;
 }

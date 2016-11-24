@@ -99,7 +99,7 @@
 			    let o = a[0];
 			    let clave = o.clave;
 			    records.set(clave, o);
-			    cambios.set(clave, o);
+//			    cambios.set(clave, o);
 			    setfields(o);
 			    udiag.showModal();
 			} );
