@@ -16,16 +16,6 @@
 		const IDBKeyRange =  window.IDBKeyRange || window.webkitIDBKeyRange || window.msIDBKeyRange; // XXX NEEDED ?
 
 		let fsData = new Map();
-/*
-		function proveedores(a) {
-		    let j = 0;
-		    let row;
-		    a.forEach( p => {
-			if (j % 3 == 0) { row = lps.insertRow();}
-			row.insertCell().appendChild( document.createTextNode( p ) );
-			j++;
-		    } );
-		} */
 
 		function loadData() {
 		    let ret = [];
@@ -45,7 +35,6 @@
 				if (j % 3 == 0) { row = lps.insertRow();}
 				row.insertCell().appendChild( document.createTextNode( p ) );
 				j++;
-				console.log(q);
 				q.sort((a,b) => a.desc.localeCompare(b.desc));
 			    } );
 			}
@@ -71,6 +60,8 @@
 			fsData.get( prov ).forEach( displayOne );
 		    }
 		};
+
+		app.reset = () => {DATA.clearTable(lfs); DATA.clearTable(lps); fsData.clear(); loadData();};
 
     // LOAD DBos
 		let afterLoad = () => Object.keys(DATA.STORES).forEach(store => {DATA.STORES[store].CONN = DATA.CONN});

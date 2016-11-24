@@ -69,8 +69,8 @@ dialog { font: 100% arial; }
     width: 25%;
     height: 30%;
     z-index: 3;
-    overflow: auto;
     background-color: #ffffcc;
+    overflow: auto;
 }
 
 .basura { cursor: url(bin-icon.png), default; }

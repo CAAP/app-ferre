@@ -13,10 +13,13 @@
 
 <body lang="es-MX">
 
-    <section id="faltantes scrollable"><table><tbody id="lista-falts"></tbody></table>
+    <section id="faltantes scrollable">
+	<table><tbody id="lista-falts"></tbody></table>
 
-    <section id="proveedores" class="dialogos no-print"><table><caption>Lista de Proveedores</caption><tbody id="lista-provs" class="marcado" onclick="app.toggleProv(event)"><tbody></table></section>
-
+        <section id="proveedores" class="dialogos no-print">
+	    <p><button onclick="app.reset()" name="cerrar">Reset</button></p>
+	    <table><caption>Lista de Proveedores</caption><tbody id="lista-provs" class="marcado" onclick="app.toggleProv(event)"><tbody></table>
+	</section>
     </section>
 
 </body>
