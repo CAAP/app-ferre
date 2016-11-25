@@ -62,16 +62,24 @@ dialog { font: 100% arial; }
 
 .dialogos {
     position: fixed;
-    top: 5%;
+    top: 0%;
     left: 70%;
     width: 25%;
-    height: 30%;
     z-index: 3;
     background-color: #ffffcc;
+    display: inline-block;
+}
+
+.embiggen {
+    display: none;
     overflow: auto;
 }
 
+.dialogos:hover .embiggen { display: block; }
+
 .basura { cursor: url(bin-icon.png), default; }
+
+a+button {margin-left: 15px; }
 
 @media print {
     .no-print { display: none; }
