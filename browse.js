@@ -63,8 +63,6 @@
 		return searchIndex('next', s);
 	    }
 
-//	    BROWSE.search = searchByDesc; // XXX with care
-
 	    function searchByClave(s) {
 		console.log('Searching by clave:' + s);
 		return BROWSE.DBget( asnum(s) ).then(result => searchByDesc(result ? result.desc : s), e => console.log("Error searching by clave: " + e));
@@ -82,10 +80,7 @@
 		    if (BROWSE.OK(cursor.value)) { newItem(cursor.value, j); ans.removeChild(pred ? ans.lastChild : ans.firstChild ); return true; }
 		    cursor.continue();
 		} );
-//		searchIndex(t, s, 1).then( () => ans.removeChild((t == 'prev') ? ans.lastChild : ans.firstChild ), e => console.log('Error: ' + e));
 	    }
-
-//	    BROWSE.fetchBy = (tr, d) => tr[(d == 'prev') ? 'firstChild' : 'lastChild'].querySelector('.desc').textContent;
 
  	    BROWSE.startSearch = function startSearch(e) {
 		const ss = e.target.value.toUpperCase();

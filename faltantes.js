@@ -44,8 +44,10 @@
 		function update(e) {
 		    const tr = e.target.parentElement.parentElement;
 		    const clave = asnum( tr.dataset.clave );
-		    const prove = e.target.value.toUpperCase();
-		    return XHR.get(xhro + encPpties({clave: clave, tbname: 'proveedores', proveedor: prove}) );
+		    let ret = {clave: clave, tbname: (e.target.name == 'proveedor' ? 'proveedores' : 'faltantes')};
+		    ret[e.target.name] = e.target.value.toUpperCase();
+//		    const prove = e.target.value.toUpperCase();
+		    return XHR.get(xhro + encPpties(ret) );
 		}
 /*
 	    DATA.inplace = q => {
@@ -71,13 +73,16 @@
 		    let costol = row.insertCell();
 		    costol.classList.add('total');
 		    costol.appendChild( document.createTextNode( (a.costol / 1e4).toFixed(2) ) );
-		    let obs = a.obs || '';
-		    row.insertCell().appendChild( document.createTextNode( obs ) );
+		    let obs = document.createElement('input');
+		    obs.name = 'obs'; obs.value = a.obs || ''; obs.size = 12; obs.addEventListener('change', update);
+		    row.insertCell().appendChild( obs );
+//		    let obs = a.obs || '';
+//		    row.insertCell().appendChild( document.createTextNode( obs ) );
 		    let prov = document.createElement('input');
-		    prov.name = 'prov'; prov.value = a.proveedor || ''; prov.size = 12; prov.addEventListener('change', update);
+		    prov.name = 'proveedor'; prov.value = a.proveedor || ''; prov.size = 12; prov.addEventListener('change', update);
 		    row.insertCell().appendChild( prov );
 		    let ie = document.createElement('input');
-		    ie.type = 'checkbox'; ie.value = a.clave; ie.addEventListener('change', pedido);
+		    ie.type = 'checkbox'; ie.name = 'faltante', ie.value = 2; ie.addEventListener('change', update);
 		    row.insertCell().appendChild( ie );
 		};
 

@@ -21,7 +21,6 @@ button[name=guardar] { color: white; background-color: blue; }
 
 .amarillo tr:hover > td { background-color: #ffff97; }
 
-
 dialog { font: 100% arial; }
 
 .activo {
@@ -62,25 +61,22 @@ dialog { font: 100% arial; }
 
 .dialogos {
     position: fixed;
-    top: 0%;
-    left: 60%;
+    top: 1%;
+    max-height: 30%;
     z-index: 3;
     background-color: #ffffcc;
+    padding: 5px;
     display: inline-block;
     overflow: auto;
 }
 
 .embiggen {
     display: none;
-    height: 200px;
-    overflow: auto;
 }
 
 .dialogos:hover .embiggen { display: block;}
 
 .basura { cursor: url(bin-icon.png), default; }
-
-a+button {margin-left: 15px; }
 
 @media print {
     .no-print { display: none; }

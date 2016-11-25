@@ -14,12 +14,14 @@
 <body lang="es-MX">
 
     <section>
-	<table><tbody id="lista-falts"></tbody></table>
 
-        <section class="dialogos no-print">
-	    <p><a class="espaciado">PROVEEDORES</a><button class="espaciado" onclick="app.reset()" name="cerrar">Reset</button></p>
-	    <div class="embiggen"><table><tbody id="lista-provs" class="marcado" onclick="app.toggleProv(event)"><tbody></table></div>
-	</section>
+    <section class="dialogos no-print">
+        <button onclick="app.reset()" name="cerrar">Reset</button><label style="margin-left:10px">PROVEEDORES</label>
+	<div class="embiggen"><table><tbody id="lista-provs" class="marcado" onclick="app.toggleProv(event)"><tbody></table></div>
+    </section>
+
+    <table style="margin-top:2.5%"><tbody id="lista-falts"></tbody></table>
+
     </section>
 
 </body>
