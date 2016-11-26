@@ -162,7 +162,7 @@
 		admin.enviar = function() {
 		    if (window.confirm('Estas seguro de realizar los cambios?'))
 			Promise.all( Array.from(cambios.keys())
-			    .map( clave => Object.assign({clave: clave, tbname: 'datos', id_tag: 'u'}, cambios.get(clave)) )
+			    .map( clave => Object.assign({clave: clave, tbname: 'datos'}, cambios.get(clave)) )
 			    .map( update ) )
 			.then( clave => console.log('clave: '+clave) );
 			admin.emptyCambios();

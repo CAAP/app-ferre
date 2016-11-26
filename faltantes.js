@@ -25,6 +25,8 @@
 
 	    app.scroll = BROWSE.scroll;
 
+	    app.print = () => window.open('/milista.html','lista-falts');
+
 	    (function() {
 		const bus = document.getElementById('buscar');
 		const fts = document.getElementById('faltantes');
@@ -43,7 +45,7 @@
 
 		function update(e) {
 		    const tr = e.target.parentElement.parentElement;
-		    const clave = asnum( tr.dataset.clave );
+		    const clave = tr.dataset.clave; // XXX asnum not needed
 		    let ret = {clave: clave, tbname: (e.target.name == 'proveedor' ? 'proveedores' : 'faltantes')};
 		    ret[e.target.name] = e.target.value.toUpperCase();
 //		    const prove = e.target.value.toUpperCase();
@@ -59,9 +61,13 @@
 	    };
 */
 
-		app.print = () => window.open('/milista.html','lista-falts');
+		app.remove = e => {
+		    const clave = e.target.parentElement.dataset.clave;
+		    if (window.confirm('Estas seguro de eliminar este articulo?'))
+			XHR.get(xhro + encPpties({clave: clave, tbname: 'datos', desc: 'VVVVV'}));
+		};
 
-		let pedido = e => XHR.get(xhro + encPpties({clave: e.target.value, tbname: 'faltantes', faltante: 2}));
+//		let pedido = e => XHR.get(xhro + encPpties({clave: e.target.value, tbname: 'faltantes', faltante: 2}));
 
 		BROWSE.rows = function( a, row ) {
 		    row.insertCell().appendChild( document.createTextNode( a.fecha ) );
