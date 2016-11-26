@@ -34,32 +34,17 @@
 		const dps = document.getElementById('proveedores');
 		const lps = document.getElementById('lista-provs');
 		const IDBKeyRange =  window.IDBKeyRange || window.webkitIDBKeyRange || window.msIDBKeyRange; // XXX NEEDED ?
-
-		let pages = '<html><body><table><tbody>$BODY</tbody></table></body></html>';
-		let ans = '';
-		let falts = 0;
 		const xhro = document.location.origin + ':8081/update?';
 
-	    	function asnum(s) { let n = Number(s); return Number.isNaN(n) ? s : n; };
 		function encPpties(o) { return Object.keys(o).map( k => { return (k + '=' + encodeURIComponent(o[k])); } ).join('&'); }
 
 		function update(e) {
 		    const tr = e.target.parentElement.parentElement;
-		    const clave = tr.dataset.clave; // XXX asnum not needed
+		    const clave = tr.dataset.clave;
 		    let ret = {clave: clave, tbname: (e.target.name == 'proveedor' ? 'proveedores' : 'faltantes')};
 		    ret[e.target.name] = e.target.value.toUpperCase();
-//		    const prove = e.target.value.toUpperCase();
 		    return XHR.get(xhro + encPpties(ret) );
 		}
-/*
-	    DATA.inplace = q => {
-		let r = document.body.querySelector('tr[data-clave="'+q.clave+'"]');
-		if (q.faltante && q.faltante != 1) {  r.parentElement.removeChild(r); flbl.textContent = --falts; return q; }
-		if (q.faltante && q.faltante == 1 && !r) { addOne(q); return q;}
-		if (r) {DATA.clearTable(r); BROWSE.rows(q,r);}
-		return q;
-	    };
-*/
 
 		app.remove = e => {
 		    const clave = e.target.parentElement.dataset.clave;
@@ -67,7 +52,13 @@
 			XHR.get(xhro + encPpties({clave: clave, tbname: 'datos', desc: 'VVVVV'}));
 		};
 
-//		let pedido = e => XHR.get(xhro + encPpties({clave: e.target.value, tbname: 'faltantes', faltante: 2}));
+		function isfalt(o) { return (o.faltante == 1) }
+
+		function faltnoprov(o) { return (o.faltante == 1) && !(Number(o.proveedor) || o.proveedor) }
+
+		app.filtro = e => { BROWSE.OK = (e.target.checked ? faltnoprov : isfalt); };
+
+		BROWSE.OK = isfalt;
 
 		BROWSE.rows = function( a, row ) {
 		    row.insertCell().appendChild( document.createTextNode( a.fecha ) );
@@ -82,8 +73,6 @@
 		    let obs = document.createElement('input');
 		    obs.name = 'obs'; obs.value = a.obs || ''; obs.size = 12; obs.addEventListener('change', update);
 		    row.insertCell().appendChild( obs );
-//		    let obs = a.obs || '';
-//		    row.insertCell().appendChild( document.createTextNode( obs ) );
 		    let prov = document.createElement('input');
 		    prov.name = 'proveedor'; prov.value = a.proveedor || ''; prov.size = 12; prov.addEventListener('change', update);
 		    row.insertCell().appendChild( prov );

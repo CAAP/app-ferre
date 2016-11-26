@@ -15,7 +15,7 @@
 
 <body lang="es-MX">
 
-    <header> <label id="notifications"></label> <button onclick="app.print()"> IMPRIMIR </button>  <a>Faltantes: <label id="falts-cnt"></label></a> </header>
+    <header onchange="app.filtro(event)"> <label id="notifications"></label> <button onclick="app.print()"> IMPRIMIR </button>  <a>Faltantes: <label id="falts-cnt"></label></a> <label><input type="checkbox" name="filtro" /> Filtrar </label> </header>
 
     <section id="buscar">
         <div> <input type="search" size=40 placeholder="Art&iacute;culo o Clave" onchange="app.startSearch(event)" onkeyup="app.keyPressed(event)"> <button>Buscar</button> </div>
