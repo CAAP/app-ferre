@@ -15,14 +15,16 @@
 
 		let fsData = new Map();
 
+		function asnum(s) { let n = Number(s); return Number.isNaN(n) ? s : n; };
+
 		function loadData() {
 		    let ret = [];
 		    return IDB.readDB( FALT ).index(IDBKeyRange.only(1), 'next', cursor => {
 			if (cursor ) { ret.push( cursor.value ); cursor.continue(); }
 			else {
 			    ret.forEach( a => {
-				let p = a.proveedor;
-				if (Number(p) || p) {
+				let p = asnum(a.proveedor);
+				if (p) {
 				    if (fsData.has( p )) { fsData.get( p ).push( a ); }
 				    else { fsData.set( p, [a] ); }
 				}
@@ -49,7 +51,7 @@
 		}
 
 		app.toggleProv = e => {
-		    let prov = e.target.textContent;
+		    let prov = asnum(e.target.textContent);
 		    let pred = e.target.classList.toggle('activo');
 		    if (pred) {
 			let p = lfs.insertRow().insertCell();
