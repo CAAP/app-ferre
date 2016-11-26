@@ -22,7 +22,7 @@
 			else {
 			    ret.forEach( a => {
 				let p = a.proveedor;
-				if (a.proveedor && (a.proveedor.length > 0)) {
+				if (Number(p) || p) {
 				    if (fsData.has( p )) { fsData.get( p ).push( a ); }
 				    else { fsData.set( p, [a] ); }
 				}
