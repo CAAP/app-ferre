@@ -47,6 +47,8 @@
 
 		let pedido = e => XHR.get( xhro + encPpties({clave: e.target.value, tbname: 'faltantes', faltante: 2}) ).then( () => { let tr = e.target.parentElement.parentElement; tr.parentElement.removeChild( tr ); });
 
+		let proveedor = e => XHR.get( xhro + encPpties({clave: e.target.name, tbname: 'proveedores', proveedor: e.target.value})).then( () => e.target.parentElement.parentElement.classList.add('modificado') );
+
 		function displayOne(q) {
 		    let row = lfs.insertRow();
 		    row.insertCell().appendChild( document.createTextNode( q.desc ) );
@@ -54,9 +56,17 @@
 		    costol.classList.add('total');
 		    costol.appendChild( document.createTextNode( (q.costol / 1e4).toFixed(2) ) );
 		    row.insertCell().appendChild( document.createTextNode( q.obs ) );
+
+		    let prov = row.insertCell();
+		    prov.classList.add('no-print');
 		    let ie = document.createElement('input');
-		    ie.type = 'checkbox'; ie.value = q.clave; ie.addEventListener('change', pedido);
-		    row.insertCell().appendChild( ie );
+		    ie.name = q.clave; ie.value = q.proveedor; ie.addEventListener('change', proveedor);
+		    prov.appendChild( ie );
+		    let pred = row.insertCell();
+		    pred.classList.add('no-print');
+		    let ck = document.createElement('input');
+		    ck.type = 'checkbox'; ck.value = q.clave; ck.addEventListener('change', pedido);
+		    pred.appendChild( ck );
 		}
 
 		app.toggleProv = e => {
