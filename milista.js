@@ -41,6 +41,12 @@
 		    });
 		}
 
+		const xhro = document.location.origin + ':8081/update?';
+
+		function encPpties(o) { return Object.keys(o).map( k => { return (k + '=' + encodeURIComponent(o[k])); } ).join('&'); }
+
+		let pedido = e => XHR.get( xhro + encPpties({clave: e.target.value, tbname: 'faltantes', faltante: 2}) ).then( () => { let tr = e.target.parentElement.parentElement; tr.parentElement.removeChild( tr ); });
+
 		function displayOne(q) {
 		    let row = lfs.insertRow();
 		    row.insertCell().appendChild( document.createTextNode( q.desc ) );
@@ -48,6 +54,9 @@
 		    costol.classList.add('total');
 		    costol.appendChild( document.createTextNode( (q.costol / 1e4).toFixed(2) ) );
 		    row.insertCell().appendChild( document.createTextNode( q.obs ) );
+		    let ie = document.createElement('input');
+		    ie.type = 'checkbox'; ie.value = q.clave; ie.addEventListener('change', pedido);
+		    row.insertCell().appendChild( ie );
 		}
 
 		app.toggleProv = e => {

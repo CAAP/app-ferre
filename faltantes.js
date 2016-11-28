@@ -33,7 +33,7 @@
 		const lfs = document.getElementById('lista-falts');
 		const dps = document.getElementById('proveedores');
 		const lps = document.getElementById('lista-provs');
-		const IDBKeyRange =  window.IDBKeyRange || window.webkitIDBKeyRange || window.msIDBKeyRange; // XXX NEEDED ?
+		const IDBKeyRange =  window.IDBKeyRange || window.webkitIDBKeyRange || window.msIDBKeyRange;
 		const xhro = document.location.origin + ':8081/update?';
 
 		function encPpties(o) { return Object.keys(o).map( k => { return (k + '=' + encodeURIComponent(o[k])); } ).join('&'); }
@@ -76,9 +76,9 @@
 		    let prov = document.createElement('input');
 		    prov.name = 'proveedor'; prov.value = a.proveedor || ''; prov.size = 12; prov.addEventListener('change', update);
 		    row.insertCell().appendChild( prov );
-		    let ie = document.createElement('input');
+/*		    let ie = document.createElement('input');
 		    ie.type = 'checkbox'; ie.name = 'faltante', ie.value = 2; ie.addEventListener('change', update);
-		    row.insertCell().appendChild( ie );
+		    row.insertCell().appendChild( ie ); */
 		};
 
 	    })();
