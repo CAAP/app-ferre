@@ -76,9 +76,9 @@
 		    let prov = document.createElement('input');
 		    prov.name = 'proveedor'; prov.value = a.proveedor || ''; prov.size = 12; prov.addEventListener('change', update);
 		    row.insertCell().appendChild( prov );
-/*		    let ie = document.createElement('input');
+		    let ie = document.createElement('input');
 		    ie.type = 'checkbox'; ie.name = 'faltante', ie.value = 2; ie.addEventListener('change', update);
-		    row.insertCell().appendChild( ie ); */
+		    row.insertCell().appendChild( ie );
 		};
 
 	    })();
