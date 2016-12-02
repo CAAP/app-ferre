@@ -75,9 +75,11 @@
 
 		let objs = ['id_tag='+id_tag, 'pid='+pid]; // , 'rfc='+rfc // 'person='+(PEOPLE.id[pid] || 'NAP'), // 'tag='+a, // , 'count='+TICKET.items.size
 
+		TICKET.myticket.style.visibility = 'hidden';
+
 		TICKET.items.forEach( item => objs.push( 'args=' + TICKET.plain(item) ) );
 
-		return SQL.print( objs ).then( TICKET.empty ); //then( doprint ).then( ferre.emptyBag )
+		return SQL.print( objs ).then( TICKET.empty, () => {TICKET.myticket.style.visibility = 'visible'} );
 	    };
 
 	    ferre.surtir = function() {
