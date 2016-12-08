@@ -17,12 +17,13 @@
 
 <body lang="es-MX">
 
-    <div id='main'>
-    <section id="feed">
     <header> <label id="notifications"></label> | <label class="entrada">Imprimir <input id="doprint" type="checkbox"></label> </header>
 <!-- <select name="persona" id="personas" onchange="caja.tab()"></select> <label id="tag" onclick="caja.showD()"></label> -->
 
-    <section id="caja">
+    <div id='main'>
+    <section id="feed">
+
+    <section id="caja" class="scrollable">
 	<table>
 	    <caption>CAJA</caption>
 	    <dt><thead>
@@ -56,7 +57,7 @@
 	</table>
     </section>
 
-   </div>
+    </div>
 
 <!--
    <section><dialog id="dialogo-schedule"><p>Marcar</p><p><button name="action" onclick="caja.marcar(event)"></button></p><p></p><button name="cerrar" onclick="caja.cerrar(event)">Cerrar</button></dialog></section>
