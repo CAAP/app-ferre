@@ -97,15 +97,16 @@
 			.then( JSON.parse )
 			.then( a => {
 			    let o = a[0];
-			    let clave = o.clave;
-			    records.set(clave, o);
+			    let clave = a[0].clave;
+//			    let o = {clave: clave, costol: 0}
+			    records.set(clave, o); // o 
 //			    cambios.set(clave, o);
 			    setfields(o);
 			    udiag.showModal();
 			} );
 		};
 
-		admin.getRecord = function(e) {
+	admin.getRecord = function(e) {
 		    let clave = e.target.parentElement.dataset.clave;
 		    if (records.has(clave))
 			{ setfields( cambios.has(clave) ? Object.assign({}, records.get(clave), cambios.get(clave)) : records.get(clave) ); udiag.showModal(); }
