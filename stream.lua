@@ -14,6 +14,8 @@ local fdbname = '/db/ferre.db'
 
 local MM = {tickets={}, tabs={}, entradas={}, cambios={}, recording={}, streaming={}}
 
+local servers = {}
+
 local function safe(f, msg)
     local ok,err = pcall(f)
     if not ok then print('Error: \n', msg or '',  err); return false end
@@ -141,7 +143,6 @@ local function tickets( conn )
 
     assert( conn.exec( string.format(sql.newTable, tbname, schema) ) )
 
-
 -- XXX input is not parsed to Number
     function MM.tickets.add( w )
 	local uid = os.date('%FT%TP', mx()) .. w.pid
@@ -160,6 +161,33 @@ local function tickets( conn )
 end
 
 --
+
+local function tabs( conn )
+    local tabs = {}
+    local m = 0
+
+    function MM.tabs.add( w, q )
+	local j = q:find'args'
+	w.query = q:sub(j):gsub('args=', '')
+	tabs[w.pid] = {pid=w.pid, query=w.query}
+	m = m + 1
+	return w
+    end
+
+    function MM.tabs.remove( pid )
+	tabs[pid] = nil
+	m = m - 1
+    end
+
+    function MM.tabs.sse()
+	if m == 0 then return ':empty\n\n'
+	else return sse{ data=table.concat( fd.reduce(fd.keys(tabs), fd.map(asJSON), fd.into, {} ), ',\n'), event='tabs' } end
+    end
+
+    return conn
+end
+
+--[[
 local function tabs( conn )
     local tbname = 'tabs'
     local schema = 'pid INTEGER PRIMARY KEY, query' -- 'clave, precio, qty INTEGER, rea INTEGER, totalCents INTEGER'
@@ -188,17 +216,19 @@ local function tabs( conn )
 
     return conn
 end
+--]]
 
 
 -- Clients connect to port 8080 for SSE: caja & ventas
 local function streaming()
     local srv = assert( socket.bind('*', 8080) )
-    srv:settimeout(1)
+    srv:settimeout(0)
+    servers[1] = srv
     print'Listening on port 8080\n'
 
     local cts = {}
 
-    local function init( c )
+    local function initFeed( c )
 	local ret = true -- c:send(string.format('event: week\ndata: %q\n\n', week))
 	for _,feed in pairs(MM) do
 	    if ret and feed.sse then ret = ret and c:send( feed.sse() ) end
@@ -209,10 +239,10 @@ local function streaming()
     function MM.streaming.connect()
 	local c = srv:accept()
 	if c then
-	    c:settimeout(1)
+	    c:settimeout(0)
 	    local ip = c:getpeername():match'%g+' --XXX ip should be used
 	    local response = hd.response({content='stream', body='retry: 60'}).asstr()
-	    if c:send( response ) and init(c) then cts[#cts+1] = c
+	    if c:send( response ) and initFeed(c) then cts[#cts+1] = c
 	    else c:close() end
 	    print('Connected on port 8080 to:', ip)
 	end
@@ -231,7 +261,8 @@ end
 -- Clients communicate to server using port 8081. id_tag help to sort out data
 local function recording()
     local srv = assert( socket.bind('*', 8081) )
-    srv:settimeout(1)
+    srv:settimeout(0)
+    servers[2] = srv
     print'Listening on port 8081\n'
 
     local function classify( w, q )
@@ -256,6 +287,7 @@ local function recording()
     function MM.recording.talk()
 	local c = srv:accept()
 	if c then
+	    c:settimeout(0)
 	    local ip = c:getpeername():match'%g+'
 	    local head, e = c:receive()
 	    if not e then
@@ -280,6 +312,7 @@ fd.comp{ recording, streaming, cambios, tickets, tabs, init, sql.connect( dbname
 
 while 1 do
 --    safe( MM.streaming.connect )
+    socket.select(servers)
     MM.streaming.connect()
     safe( MM.recording.talk )
 end
