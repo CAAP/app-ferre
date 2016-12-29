@@ -71,9 +71,9 @@
 		<tr><td><label>Por Pagar: </td><td><input type="text" name="cuenta" size=5 disabled="true" /></td></label></tr>
 		<tr><td><label>Recibo: </td><td><input type="number" name="recibo" size=5 /></label></td></tr>
 		<tr><td><label>Cambio: </td><td><output name="cambio"></label></td></tr>
-		<tr><td colspan=2><input type="text" name="rfc" size=20 placeholder="RFC o Nombre" /></td></tr>
+		<tr><td colspan=2><input type="search" name="rfc" size=20 placeholder="RFC o Nombre" /></td></tr>
 <!--		<tr><td><input type="checkbox" value="registrar" /><a>Registrar</a></td></tr> -->
-		<tr><td><button>CREDITO</button></td><td><button onclick="caja.validar(event); return false;">PAGAR</button></td></tr>
+		<tr><td><button name="credito" onclick="caja.acreditar(event)">CREDITO</button></td><td><button name="efectivo" onclick="caja.acreditar(event); return false;">EFECTIVO</button></td></tr>
 	    </table></form></dialog></section>
 
     <footer> <label id="copyright"></label> </footer>

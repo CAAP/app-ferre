@@ -33,17 +33,35 @@
 
 		const paga = document.getElementById( "dialogo-pagar" );
 		const mytotal = paga.querySelector('input[name="cuenta"]');
+		const money = paga.querySelector('input[name="recibo"]');
 		const mydebt =  paga.querySelector('output');
 
-		caja.validar = function(e) {
+		let procesar = {};
+
+		function validar() {
 		    if ( parseFloat(mydebt.value) >= 0 )
 			paga.close();
-		};
+		}
+
+		procesar.credito = function() {
+		    let rfc = e.target.closest('input[name="rfc"]').value;
+		}
+
+		procesar.efectivo = function() {
+		}
 
 //		PAGADO can be added to ticket, it's a map
 		caja.pagar = function() {
-		    mytotal.value = ttotal.textContent;
+		    let total = ttotal.textContent;
+		    mytotal.value = total;
+		    money.value = total;
 		    paga.showModal();
+		    money.select();
+		};
+
+		caja.acreditar = function(e) {
+		    procesar[e.name]();
+		    validar();
 		};
 
 	    // FACTURAR
