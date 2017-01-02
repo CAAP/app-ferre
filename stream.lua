@@ -48,7 +48,7 @@ end
 
 local function cambios( conn )
     local schema = 'vers INTEGER PRIMARY KEY, clave, campo, valor'
-    local QRY = 'SELECT max(vers) vers FROM updates'
+--    local QRY = 'SELECT max(vers) vers FROM updates'
 
     assert( conn.exec( string.format(sql.newTable, 'updates', schema) ) )
 
@@ -111,7 +111,8 @@ local function cambios( conn )
 
 	fd.reduce( fd.keys(w), fd.map(function(v,k) events(k, v); return {'', clave, k, v} end), sql.into'updates', conn )
 
-	local vers = fd.first( conn.query(QRY), function(x) return x end ).vers
+--	local vers = fd.first( conn.query(QRY), function(x) return x end ).vers
+	local vers = conn.count'updates'
 	ret.VERS.vers = vers
 
 	return {data=table.concat(fd.reduce(fd.keys(ret), fd.map(function(x) return asJSON(x) end), fd.into, {}), ',\n'), event='update'}
@@ -222,9 +223,10 @@ end
 -- Clients connect to port 8080 for SSE: caja & ventas
 local function streaming()
     local srv = assert( socket.bind('*', 8080) )
+    local skt = srv:getsockname()
     srv:settimeout(0)
     servers[1] = srv
-    print'Listening on port 8080\n'
+    print(skt, 'listening on port 8080\n')
 
     local cts = {}
 
@@ -236,17 +238,19 @@ local function streaming()
 	return ret
     end
 
-    function MM.streaming.connect()
+    local function connect2stream()
 	local c = srv:accept()
 	if c then
-	    c:settimeout(0)
-	    local ip = c:getpeername():match'%g+' --XXX ip should be used
-	    local response = hd.response({content='stream', body='retry: 60'}).asstr()
-	    if c:send( response ) and initFeed(c) then cts[#cts+1] = c
-	    else c:close() end
-	    print('Connected on port 8080 to:', ip)
+	c:settimeout(1)
+	local ip = c:getpeername():match'%g+' --XXX ip should be used
+	print(ip, 'connected on port 8080 to', skt)
+	local response = hd.response({content='stream', body='retry: 60'}).asstr()
+	if c:send( response ) and initFeed(c) then cts[#cts+1] = c
+	else c:close() end
 	end
     end
+
+    servers[srv] = connect2stream
 
     -- Messages are broadcasted using SSE with different event names.
     function MM.streaming.broadcast( msg )
@@ -261,9 +265,10 @@ end
 -- Clients communicate to server using port 8081. id_tag help to sort out data
 local function recording()
     local srv = assert( socket.bind('*', 8081) )
+    local skt = srv:getsockname()
     srv:settimeout(0)
     servers[2] = srv
-    print'Listening on port 8081\n'
+    print(skt, 'listening on port 8081\n')
 
     local function classify( w, q )
 	local tag = w.id_tag
@@ -284,24 +289,31 @@ local function recording()
     end
 
     -- Hear for incoming connections and broadcast when needed
-    function MM.recording.talk()
+    local function listen2talk()
 	local c = srv:accept()
 	if c then
-	    c:settimeout(0)
-	    local ip = c:getpeername():match'%g+'
-	    local head, e = c:receive()
-	    if not e then
-		local url, qry = head:match'/(%g+)%?(%g+)'
-		repeat head = c:receive() until head:match'^Origin:'
+	c:settimeout(1)
+	local ip = c:getpeername():match'%g+'
+	print(ip, 'connected on port 8081 to', skt)
+	local head, e = c:receive()
+	if e then print('Error:', e)
+	else
+	    local url, qry = head:match'/(%g+)%?(%g+)'
+	    repeat head = c:receive() until head:match'^Origin:'
 --		local msg = sse( add( qry ) )
-		local msg = (url:match'update') and sse( MM.cambios.add( hd.parse( qry ) ) ) or sse( add( qry ) )
-		ip = head:match'^Origin: (%g+)'
-		c:send( hd.response({ip=ip, body='OK'}).asstr() )
-		MM.streaming.broadcast( msg )
-	    end
-	    c:close()
+	print(url)
+	    local msg = (url:match'update') and sse( MM.cambios.add( hd.parse( qry ) ) ) or sse( add( qry ) )
+	    ip = head:match'^Origin: (%g+)'
+--	print(ip)
+	    c:send( hd.response({ip=ip, body='OK'}).asstr() )
+--	print(msg)
+	    MM.streaming.broadcast( msg )
+	end
+	c:close()
 	end
     end
+
+    servers[srv] = listen2talk
 
     return true
 end
@@ -312,8 +324,7 @@ fd.comp{ recording, streaming, cambios, tickets, tabs, init, sql.connect( dbname
 
 while 1 do
 --    safe( MM.streaming.connect )
-    socket.select(servers)
-    MM.streaming.connect()
-    safe( MM.recording.talk )
+    local ready = socket.select(servers)
+    for _,srv in ipairs(ready) do safe( servers[srv] ) end
 end
 
