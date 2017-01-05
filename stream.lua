@@ -188,37 +188,6 @@ local function tabs( conn )
     return conn
 end
 
---[[
-local function tabs( conn )
-    local tbname = 'tabs'
-    local schema = 'pid INTEGER PRIMARY KEY, query' -- 'clave, precio, qty INTEGER, rea INTEGER, totalCents INTEGER'
-    local keys = { pid=1, query=2 } -- clave=2, precio=3, qty=4, rea=5, totalCents=6 }
-    local query = 'SELECT * FROM ' .. tbname
-
-    assert( conn.exec( string.format(sql.newTable, tbname, schema) ) )
-    assert( conn.exec( string.format('DELETE FROM %q', tbname ) ) )
-
-    function MM.tabs.add( w, q )
-	local j = q:find'args'
-	w.query = q:sub(j):gsub('args=', '')
-	local vals = string.format('%d, %q', w.pid, w.query)
-	assert( conn.exec( string.format("INSERT OR REPLACE INTO %q VALUES( %s )", tbname, vals) ) )
-	return w
-    end
-
-    function MM.tabs.remove( pid )
-	assert( conn.exec( string.format("DELETE FROM %q WHERE pid = %d", tbname, pid) ) )
-    end
-
-    function MM.tabs.sse()
-	if conn.count( tbname ) == 0 then return ':empty\n\n'
-	else return sse{ data=table.concat( fd.reduce(conn.query(query), fd.map(asJSON), fd.into, {} ), ',\n'), event='tabs' } end
-    end
-
-    return conn
-end
---]]
-
 
 -- Clients connect to port 8080 for SSE: caja & ventas
 local function streaming()
@@ -272,7 +241,6 @@ local function recording()
 
     local function classify( w, q )
 	local tag = w.id_tag
---XXX	if tag == 'u' then local m = MM.cambios.add( w ); m.event = 'update'; return m end -- m.event = m.faltante and 'faltante' or 'update';
 	if tag == 'g' then MM.tabs.add( w, q ); w.event = 'tabs'; return w end
 --	if tag == 'h' then  local m = MM.entradas.add( w ); m.event = 'entradas'; return m end
 	if tag == 'd' then MM.tabs.remove(w.pid); w.ret = { 'event: delete\ndata: '.. w.pid ..'\n\n' }; w.event = 'none' w.data = ''; return w end
@@ -300,13 +268,9 @@ local function recording()
 	else
 	    local url, qry = head:match'/(%g+)%?(%g+)'
 	    repeat head = c:receive() until head:match'^Origin:'
---		local msg = sse( add( qry ) )
-	print(url)
 	    local msg = (url:match'update') and sse( MM.cambios.add( hd.parse( qry ) ) ) or sse( add( qry ) )
 	    ip = head:match'^Origin: (%g+)'
---	print(ip)
 	    c:send( hd.response({ip=ip, body='OK'}).asstr() )
---	print(msg)
 	    MM.streaming.broadcast( msg )
 	end
 	c:close()
@@ -323,7 +287,6 @@ end
 fd.comp{ recording, streaming, cambios, tickets, tabs, init, sql.connect( dbname ) }
 
 while 1 do
---    safe( MM.streaming.connect )
     local ready = socket.select(servers)
     for _,srv in ipairs(ready) do safe( servers[srv] ) end
 end
