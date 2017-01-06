@@ -82,7 +82,7 @@ local function cambios( conn )
 	fd.reduce( fd.keys(ret), fd.merge, w )
     end
 
-    local stores = {uid='PACK'}
+--    local stores = {uid='PACK'}
 
     function MM.cambios.add( w )
 	local clave = w.clave
@@ -104,18 +104,17 @@ local function cambios( conn )
 	ret = {VERS={store='VERS', week=week}}
 
 	local function events(k, v)
-	    local store = stores[k] or 'PRICE'
+	    local store = 'PRICE' -- stores[k] or 'PRICE'
 	    if not ret[store] then ret[store] = {clave=clave, store=store} end
 	    ret[store][k] = v
 	end
 
 	fd.reduce( fd.keys(w), fd.map(function(v,k) events(k, v); return {'', clave, k, v} end), sql.into'updates', conn )
 
---	local vers = fd.first( conn.query(QRY), function(x) return x end ).vers
 	local vers = conn.count'updates'
 	ret.VERS.vers = vers
 
-	return {data=table.concat(fd.reduce(fd.keys(ret), fd.map(function(x) return asJSON(x) end), fd.into, {}), ',\n'), event='update'}
+	return {data=table.concat(fd.reduce(fd.keys(ret), fd.map( asJSON ), fd.into, {}), ',\n'), event='update'}
     end
 
 -- XXX
