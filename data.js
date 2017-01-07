@@ -48,14 +48,11 @@
 
 	    DATA.STORES = STORES;
 
+	    let updateMe = data => Promise.all( data.map(q => {const store = q.store; delete q.store; return STORES[store].update(q);}) );
+
 	    DATA.onLoaded = esrc => {
 		Object.keys(STORES).forEach(store => {STORES[store].CONN = DATA.CONN}); // XXX other method instead of Object.keys
 
-/*		if (localStorage.week && localStorage.vers)
-		    XHR.get('/ferre/updates.lua?week='+localStorage.week+'&vers='+localStorage.vers);
-		else
-		    alert('No update-version found!'); // XXX IDB.write2DB().clearDB().then();
-**/
 		esrc.addEventListener('update', e => {
 		    const data = JSON.parse(e.data);
 		    const upd = data.find(o => {return o.store == 'VERS'});
@@ -63,10 +60,10 @@
 //		    Promise.all( data.map( DATA.inplace ) ); XXX Need to address issue of already registered from admin et al.
 		    if (localStorage.week && upd.week == localStorage.week && upd.prev == localStorage.vers) {
 			console.log('Update event ongoing!');
-			Promise.all( data.map(q => {const store = q.store; delete q.store; return STORES[store].update(q);}) );
+			updateMe( data );
 		    } else {
 			console.log('Update mismatch error: ' + localStorage.week + '(' + upd.week + ') V' + localStorage.vers + '(V' + upd.vers + ')');
-			XHR.getJSON('/ferre/updates.lua?week='+localStorage.week+'&vers='+localStorage.vers).then(data => Promise.all( data.map(q => {const store = q.store; delete q.store; return STORES[store].update(q);}) ) );
+			XHR.getJSON('/ferre/updates.lua?oweek='+localStorage.week+'&overs='+localStorage.vers+'&nweek='+upd.week).then( updateMe );
 		    }
 		}, false);
 	    };

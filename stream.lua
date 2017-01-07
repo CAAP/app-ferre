@@ -8,13 +8,15 @@ local mx = require'ferre.timezone'
 
 local hoy = os.date('%d-%b-%y', mx())
 local today = os.date('%F', mx())
-local week = os.date('W%U', mx())
+local week = os.date('Y%YW%U', mx())
 local dbname = string.format('/db/%s.db', week)
 local fdbname = '/db/ferre.db'
 
 local MM = {tickets={}, tabs={}, entradas={}, cambios={}, recording={}, streaming={}}
 
 local servers = {}
+
+local ups = {week=week, vers=0, store='VERS'}
 
 local function safe(f, msg)
     local ok,err = pcall(f)
@@ -48,9 +50,10 @@ end
 
 local function cambios( conn )
     local schema = 'vers INTEGER PRIMARY KEY, clave, campo, valor'
---    local QRY = 'SELECT max(vers) vers FROM updates'
 
     assert( conn.exec( string.format(sql.newTable, 'updates', schema) ) )
+
+    ups.vers = conn.count'updates'
 
     local costol = 'UPDATE datos SET costol = costo*(100+impuesto)*(100-descuento), fecha = %q %s'
     local isstr = {desc=true, fecha=true, obs=true, proveedor=true, gps=true, u1=true, u2=true, u3=true}
@@ -101,7 +104,9 @@ local function cambios( conn )
 
 	if w.prc1 or w.prc2 or w.prc3 then up_precios(w, clause) end
 
-	ret = {VERS={store='VERS', week=week}}
+	ret = {VERS=ups}
+	ups.week = week
+	ups.prev = ups.vers
 
 	local function events(k, v)
 	    local store = 'PRICE' -- stores[k] or 'PRICE'
@@ -111,25 +116,16 @@ local function cambios( conn )
 
 	fd.reduce( fd.keys(w), fd.map(function(v,k) events(k, v); return {'', clave, k, v} end), sql.into'updates', conn )
 
-	local vers = conn.count'updates'
-	ret.VERS.vers = vers
+	ups.vers = conn.count'updates'
 
 	return {data=table.concat(fd.reduce(fd.keys(ret), fd.map( asJSON ), fd.into, {}), ',\n'), event='update'}
     end
 
 -- XXX
---[[
     function MM.cambios.sse()
-	local ret = {VERS={store='VERS', week=week}}
-	local function events(k, v)
-	    local store = stores[k] or 'PRICE'
-	    if not ret[store] then ret[store] = {clave=clave, store=store} end
-	    ret[store][k] = v
-	end
-	if w.week < week then end
-
+	return sse{data=asJSON(fd.reduce(fd.keys(ups), fd.merge, {prev=ups.vers})), event='update'}
     end
---]]
+
 end
 
 --
@@ -284,6 +280,14 @@ end
 --
 
 fd.comp{ recording, streaming, cambios, tickets, tabs, init, sql.connect( dbname ) }
+
+local time=mx()
+while ups.vers == 0 do
+    time = time - 3600*24*7
+    ups.week = os.date('Y%YW%U', time)
+    local conn = sql.connect(string.format('/db/%s.db', ups.week))
+    ups.vers = conn.count'updates'
+end
 
 while 1 do
     local ready = socket.select(servers)
