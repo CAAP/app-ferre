@@ -4,13 +4,14 @@ local socket = require"socket"
 local fd = require'carlos.fold'
 local hd = require'ferre.header'
 local sql = require'carlos.sqlite'
-local mx = require'ferre.timezone'
+local mx = require'ferre.timezone' --XXX REMOVE!!!
+local ex = requireÂ'erre.extras'
 
-local hoy = os.date('%d-%b-%y', mx())
-local today = os.date('%F', mx())
-local week = os.date('Y%YW%U', mx())
-local dbname = string.format('/db/%s.db', week)
-local fdbname = '/db/ferre.db'
+local ahora = ex.now()
+local hoy = os.date('%d-%b-%y', ahora)
+local today = os.date('%F', ahora)
+local week = ex.week() -- os.date('Y%YW%U', mx())
+local dbname = string.format('/db/%s.db', week) -- XXX REMOVE!!!
 
 local MM = {tickets={}, tabs={}, entradas={}, cambios={}, recording={}, streaming={}}
 
@@ -53,7 +54,7 @@ local function cambios( conn )
 
     assert( conn.exec( string.format(sql.newTable, 'updates', schema) ) )
 
-    ups.vers = conn.count'updates'
+--    ups.vers = conn.count'updates'
 
     local costol = 'UPDATE datos SET costol = costo*(100+impuesto)*(100-descuento), fecha = %q %s'
     local isstr = {desc=true, fecha=true, obs=true, proveedor=true, gps=true, u1=true, u2=true, u3=true}
@@ -281,6 +282,7 @@ end
 
 fd.comp{ recording, streaming, cambios, tickets, tabs, init, sql.connect( dbname ) }
 
+--[[
 local time=mx()
 while ups.vers == 0 do
     time = time - 3600*24*7
@@ -288,6 +290,9 @@ while ups.vers == 0 do
     local conn = sql.connect(string.format('/db/%s.db', ups.week))
     ups.vers = conn.count'updates'
 end
+--]]
+
+ex.version( ups )
 
 while 1 do
     local ready = socket.select(servers)
