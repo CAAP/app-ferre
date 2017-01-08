@@ -62,8 +62,9 @@
 		    const upd = data.find(o => {return o.store == 'VERS'});
 
 //		    Promise.all( data.map( DATA.inplace ) ); XXX Need to address issue of already registered from admin et al.
+
 		    if (localStorage.week && upd.week == localStorage.week && upd.prev == localStorage.vers) {
-			console.log('Update event ongoing!');
+			console.log(upd.vers == localStorage.vers?'Already up-to-date.':'Update event ongoing!');
 			updateMe( data );
 		    } else {
 			console.log('Update mismatch error: ' + localStorage.week + '(' + upd.week + ') V' + localStorage.vers + '(V' + upd.vers + ')');
