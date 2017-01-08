@@ -42,7 +42,9 @@
 
 	    let PROV = {STORE: 'precios', INDEX: 'proveedor'};
 
-	    let VERS =  {update: o => {localStorage.vers = o.vers; localStorage.week = o.week;}};
+	    let lvers;
+
+	    let VERS =  {update: o => {localStorage.vers = o.vers; localStorage.week = o.week; lvers.textContent = ' | ' + o.week + 'V' + o.vers }};
 
 	    let STORES = {PRICE:PRICE, PACK:PACK, FALT:FALT, PROV:PROV, VERS:VERS}; // COST:COST
 

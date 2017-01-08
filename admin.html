@@ -29,6 +29,7 @@
             </thead>
 	    </dt>
 	    <tbody id="tabla-resultados" class="amarillo" onclick="admin.getRecord(event)" onwheel="admin.scroll(event)"></tbody>
+	    <tfoot><tr><th colspan=6><button onclick="admin.scroll({deltaY:0})">&larr;Anterior</button> <label> | </label> <button onclick="admin.scroll({deltaY:1})">Siguiente&rarr;</button></th></tr></tfoot>
 	</table>
 	</section>
 
@@ -53,7 +54,7 @@
 
     <section><dialog id="dialogo-cambios"><table><caption>PRODUCTO</caption><thead><th></th><th></th><th></th><th></th></thead><tbody id="tabla-cambios" onchange="admin.anUpdate(event)"></tbody></table><button align="right" name="cerrar" onclick="admin.cerrar(event)">Cerrar</button>&emsp;&emsp;<button onclick="admin.actualizar(event)">Actualizar</button></dialog></section>
 
-    <footer> <label id="copyright"></label> </footer>
+    <footer> <label id="copyright"></label> <label id="db-vers"></label> </footer>
 
 </body>
 </html>

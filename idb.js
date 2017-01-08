@@ -38,13 +38,7 @@
 		    return Promise.all( datos.map( dato => os.add(asobj(dato, ks)) ) );
 		}
 
-		function getVers() {
-		    if (k.VERS) {
-			return XHR.getJSON( k.VERS ).then( o => { localStorage.vers = o.vers; localStorage.week = o.week; } );
-		    }
-		}
-
-		return XHR.getJSON( k.FILE ).then( store ).then( () => console.log("Datos loaded to store " + k.STORE) ).then( getVers );
+		return XHR.getJSON( k.FILE ).then( store ).then( () => console.log("Datos loaded to store " + k.STORE) );
 	    },
 
 	    clearDB: k => IDB.write2DB(k).clear(),

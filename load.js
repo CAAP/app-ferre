@@ -8,7 +8,6 @@
 		KEY: 'clave',
 		INDEX: [{key: 'desc'}, {key: 'faltante'}, {key: 'proveedor'}],
 		FILE: '/ferre/precios.lua',
-		VERS: '/ferre/version.lua',
 		MAP: function(q) {
 		    q.precios = {};
 		    for (let i=1; i<4; i++) {
