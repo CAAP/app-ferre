@@ -5,7 +5,7 @@ local fd = require'carlos.fold'
 local hd = require'ferre.header'
 local sql = require'carlos.sqlite'
 local mx = require'ferre.timezone' --XXX REMOVE!!!
-local ex = requireÂ'erre.extras'
+local ex = require'ferre.extras'
 
 local ahora = ex.now()
 local hoy = os.date('%d-%b-%y', ahora)
