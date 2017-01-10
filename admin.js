@@ -96,11 +96,10 @@
 		    return SQL.get({desc: 'VVV'})
 			.then( JSON.parse )
 			.then( a => {
-			    let o = a[0];
-			    let clave = a[0].clave;
-//			    let o = {clave: clave, costol: 0}
-			    records.set(clave, o); // o 
-//			    cambios.set(clave, o);
+			    let clave = a[0].clave.toString();
+			    console.log(a[0]);
+			    let o = {clave: clave, costo: 0, costol: 0, prc1: 0, prc2: 0, prc3: 0}; // a[0];
+			    records.set(clave, o);
 			    setfields(o);
 			    udiag.showModal();
 			} );
