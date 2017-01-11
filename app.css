@@ -74,12 +74,29 @@ dialog { font: 100% arial; }
     display: none;
 }
 
-.dialogos:hover .embiggen { display: block;}
+.dialogos:hover .embiggen { display: block; }
+
+
+.carrito {
+    display: block;
+    position: fixed;
+    top: 1%;
+    max-height: 60%;
+    z-index: 2;
+    padding: 5px;
+    overflow: auto;
+}
 
 .basura { cursor: url(bin-icon.png), default; }
 
 @media print {
     .no-print { display: none; }
+}
+
+#ticket-count {
+    position: absolute;
+    padding-left: 18px;
+    font-weight: bold;
 }
 
 #personas td:hover {

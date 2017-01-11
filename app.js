@@ -30,12 +30,20 @@
 	    TICKET.bag = document.getElementById( TICKET.bagID );
 	    TICKET.myticket = document.getElementById( TICKET.myticketID );
 
+	    TICKET.show = () => { TICKET.myticket.style.display = 'block'; TICKET.myticket.style.visibility = 'visible'; }
+
 	    (function() {
-		let diagI = document.getElementById('dialogo-item');
+		const diagI = document.getElementById('dialogo-item');
+		const tcount = document.getElementById(TICKET.tcountID);
+		const ttotal = document.getElementById( TICKET.ttotalID );
+
 		let clave = -1;
 
 		function asnum(s) { let n = Number(s); return Number.isNaN(n) ? s : n; };
 		function uptoCents(q) { return Math.round( 100 * q[q.precio] * q.qty * (1-q.rea/100) ); };
+
+		TICKET.total = cents => { ttotal.textContent = ' $' + Math.round(cents / 100); };
+// .toFixed(2)
 
 		ferre.menu = e => {
 		    const slc = document.getElementById('personas');
@@ -49,7 +57,8 @@
 		    if (TICKET.items.has( clave )) { console.log('Item is already in the bag.'); return false; }
 		    return IDB.readDB( PRICE ).get( clave )
 			.then( w => { w.qty=1; w.precio='precio1'; w.rea=0; w.totalCents=uptoCents(w); return w; } )
-			.then( TICKET.add );
+			.then( TICKET.add )
+			.then( n => {tcount.textContent = n;} );
 		};
 
 		let diagF = document.getElementById('dialogo-faltante');
@@ -58,6 +67,8 @@
 		ferre.enviarF = e => SQL.update({clave: clave, faltante: 1, obs: obs.value, tbname: 'faltantes', id_tag: 'u'}).then( () => { obs.value = ''; ferre.cerrar(e); } );
 
 		ferre.faltante = e => IDB.readDB( PRICE ).get( clave ).then( w => { ferre.cerrar(e); obs.value = w.obs; diagF.showModal(); } );
+
+		ferre.emptyBag = () => { ttotal.textContent = ''; tcount.textContent = ''; TICKET.empty(); return SQL.print({id_tag: 'd', pid: Number(persona.value)}) }
 	    })();
 
 	    ferre.updateItem = TICKET.update;
@@ -65,8 +76,6 @@
 	    ferre.clickItem = e => TICKET.remove( e.target.parentElement );
 
 	    const persona = document.getElementById('personas'); // XXX refactor all instances of this
-
-	    ferre.emptyBag = () => { TICKET.empty(); return SQL.print({id_tag: 'd', pid: Number(persona.value)}) }
 
 	    ferre.print = function(a) {
 		if (TICKET.items.size == 0) {return Promise.resolve();}
@@ -87,11 +96,6 @@
 		TICKET.items.forEach( item => objs.push( 'args=clave+'+item.clave+'+qty+'+item.qty  ) );
 		return XHR.get('/ticket/surtir.lua?'+objs.join('&')).then( ferre.saveme );
 	    };
-
-	    (function() {
-		const ttotal = document.getElementById( TICKET.ttotalID );
-		TICKET.total = function(amount) { ttotal.textContent = (amount / 100).toFixed(2); };
-	    })();
 
 	    // SQL
 

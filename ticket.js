@@ -1,6 +1,6 @@
 	"use strict";
 
-	var TICKET = { bagID: 'ticket-compra', ttotalID: 'ticket-total', myticketID: 'ticket', tivaID: 'ticket-iva', tbrutoID: 'ticket-bruto' };
+	var TICKET = { bagID: 'ticket-compra', myticketID: 'ticket', ttotalID: 'ticket-total', tivaID: 'ticket-iva', tbrutoID: 'ticket-bruto', tcountID: 'ticket-count' };
 
 	(function() {
 	    const VARS = ['clave', 'qty', 'rea', 'precio', 'totalCents'];
@@ -124,6 +124,7 @@
 		TICKET.items.set( w.clave, w );
 		displayItem( w );
 		bagTotal();
+		return TICKET.items.size;
 	    };
 
 	    TICKET.show = function(w) {
