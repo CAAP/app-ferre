@@ -124,7 +124,6 @@
 		TICKET.items.set( w.clave, w );
 		displayItem( w );
 		bagTotal();
-		return TICKET.items.size;
 	    };
 
 	    TICKET.show = function(w) {
@@ -141,7 +140,7 @@
 		if (!TICKET.bag.hasChildNodes()) { TICKET.empty(); } else { bagTotal(); } // TICKET.myticket.style.visibility = 'hidden';
 	    };
 
-	    TICKET.empty = function() { TICKET.items.clear(); clearTable( TICKET.bag ); TICKET.myticket.style.visibility = 'hidden'; };
+	    TICKET.empty = function() { TICKET.items.clear(); clearTable( TICKET.bag ); TICKET.myticket.style.visibility = 'hidden'; TICKET.extraEmpty(); };
 
 	    })();
 

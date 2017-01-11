@@ -47,9 +47,11 @@
 		function asnum(s) { let n = Number(s); return Number.isNaN(n) ? s : n; };
 		function uptoCents(q) { return Math.round( 100 * q[q.precio] * q.qty * (1-q.rea/100) ); };
 
-		TICKET.total = cents => { ttotal.textContent = ' $' + (cents / 100).toFixed(2); };
+		TICKET.total = cents => { ttotal.textContent = ' $' + (cents / 100).toFixed(2); tcount.textContent = TICKET.items.size;};
 
-		let emptyCart = () => { ttotal.textContent = ''; tcount.textContent = ''; TICKET.empty(); };
+		TICKET.extraEmpty = () => { ttotal.textContent = ''; tcount.textContent = ''; };
+
+		ferre.emptyBag = () => {TICKET.empty(); return SQL.print({id_tag: 'd', pid: Number(persona.value)})};
 
 		ferre.menu = e => {
 		    if (persona.value == 0) { return; }
@@ -62,8 +64,7 @@
 		    if (TICKET.items.has( clave )) { console.log('Item is already in the bag.'); return false; }
 		    return IDB.readDB( PRICE ).get( clave )
 			.then( w => { w.qty=1; w.precio='precio1'; w.rea=0; w.totalCents=uptoCents(w); return w; } )
-			.then( TICKET.add )
-			.then( n => {tcount.textContent = n;} );
+			.then( TICKET.add );
 		};
 
 	    ferre.print = function(a) {
@@ -77,21 +78,19 @@
 
 		TICKET.items.forEach( item => objs.push( 'args=' + TICKET.plain(item) ) );
 
-		return SQL.print( objs ).then( emptyCart, () => {TICKET.myticket.style.visibility = 'visible'} );
+		return SQL.print( objs ).then( TICKET.empty, () => {TICKET.myticket.style.visibility = 'visible'} );
 	    };
 
 		ferre.enviarF = e => SQL.update({clave: clave, faltante: 1, obs: obs.value, tbname: 'faltantes', id_tag: 'u'}).then( () => { obs.value = ''; ferre.cerrar(e); } );
 
 		ferre.faltante = e => IDB.readDB( PRICE ).get( clave ).then( w => { ferre.cerrar(e); obs.value = w.obs; diagF.showModal(); } );
 
-		ferre.emptyBag = () => { emptyCart(); return SQL.print({id_tag: 'd', pid: Number(persona.value)}) }
-
 	    // PEOPLE - Multi-User support
 
 		function data( o ) { return IDB.readDB( PRICE ).get( asnum(o.clave) ).then( w => Object.assign( o, w ) ).then( TICKET.add ); }
 		function a2obj( a ) { const M = a.length/2; let o = {}; for (let i=0; i<M; i++) { o[a[i*2]] = a[i*2+1]; } return o; }
 //		function recreate(q) { return  q.split('&').reduce( (p, s) => p.then( () => data(a2obj(s.split('+'))) ), Promise.resolve() ); }
-		let recreate = q => Promise.all( q.split('&').map(s => data(a2obj(s.split('+')))) ).then( n => {tcount.textContent = n;} ); // XXX What's return from Promise.all ???
+		let recreate = q => Promise.all( q.split('&').map(s => data(a2obj(s.split('+')))) ).then( () => Promise.resolve() ).then( () => {tcount.textContent = TICKET.items.size;} );
 		function tabs(k) { persona.dataset.id = k; if (PEOPLE.tabs.has(k)) { recreate(PEOPLE.tabs.get(k).query); } }
 
 		ferre.tab = () => {
@@ -104,6 +103,14 @@
 		};
 
 		ferre.saveme = () => { persona.value = 0; ferre.tab(); }
+
+		(function appendNobody(){
+		    let opt = document.createElement('option');
+		    opt.value = 0;
+		    opt.label = '';
+		    opt.selected = true;
+		    persona.appendChild(opt);
+		})();
 
 		PEOPLE.load().then( a => a.forEach( p => { let opt = document.createElement('option'); opt.value = p.id; opt.appendChild(document.createTextNode(p.nombre)); persona.appendChild(opt); } ) );
 
