@@ -36,18 +36,23 @@
 		const diagI = document.getElementById('dialogo-item');
 		const tcount = document.getElementById(TICKET.tcountID);
 		const ttotal = document.getElementById( TICKET.ttotalID );
+		const persona = document.getElementById('personas');
+		const diagF = document.getElementById('dialogo-faltante');
+		const obs = diagF.querySelector('input[name=obs]');
 
 		let clave = -1;
+		persona.dataset.id = 0;
+//		const tag = document.getElementById('tag');
 
 		function asnum(s) { let n = Number(s); return Number.isNaN(n) ? s : n; };
 		function uptoCents(q) { return Math.round( 100 * q[q.precio] * q.qty * (1-q.rea/100) ); };
 
-		TICKET.total = cents => { ttotal.textContent = ' $' + Math.round(cents / 100); };
-// .toFixed(2)
+		TICKET.total = cents => { ttotal.textContent = ' $' + (cents / 100).toFixed(2); };
+
+		let emptyCart = () => { ttotal.textContent = ''; tcount.textContent = ''; TICKET.empty(); };
 
 		ferre.menu = e => {
-		    const slc = document.getElementById('personas');
-		    if (slc.value == 0) { return; }
+		    if (persona.value == 0) { return; }
 		    clave = asnum(e.target.parentElement.dataset.clave); // XXX one can use this instead: diagI.returnValue = clave;
 		    diagI.showModal();
 		};
@@ -61,26 +66,10 @@
 			.then( n => {tcount.textContent = n;} );
 		};
 
-		let diagF = document.getElementById('dialogo-faltante');
-		let obs = diagF.querySelector('input[name=obs]');
-
-		ferre.enviarF = e => SQL.update({clave: clave, faltante: 1, obs: obs.value, tbname: 'faltantes', id_tag: 'u'}).then( () => { obs.value = ''; ferre.cerrar(e); } );
-
-		ferre.faltante = e => IDB.readDB( PRICE ).get( clave ).then( w => { ferre.cerrar(e); obs.value = w.obs; diagF.showModal(); } );
-
-		ferre.emptyBag = () => { ttotal.textContent = ''; tcount.textContent = ''; TICKET.empty(); return SQL.print({id_tag: 'd', pid: Number(persona.value)}) }
-	    })();
-
-	    ferre.updateItem = TICKET.update;
-
-	    ferre.clickItem = e => TICKET.remove( e.target.parentElement );
-
-	    const persona = document.getElementById('personas'); // XXX refactor all instances of this
-
 	    ferre.print = function(a) {
 		if (TICKET.items.size == 0) {return Promise.resolve();}
 		const id_tag = TICKET.TAGS[a] || TICKET.TAGS.none;
-		const pid = Number(document.getElementById('personas').dataset.id);
+		const pid = Number(persona.dataset.id);
 
 		let objs = ['id_tag='+id_tag, 'pid='+pid]; // , 'rfc='+rfc // 'person='+(PEOPLE.id[pid] || 'NAP'), // 'tag='+a, // , 'count='+TICKET.items.size
 
@@ -88,8 +77,42 @@
 
 		TICKET.items.forEach( item => objs.push( 'args=' + TICKET.plain(item) ) );
 
-		return SQL.print( objs ).then( TICKET.empty, () => {TICKET.myticket.style.visibility = 'visible'} );
+		return SQL.print( objs ).then( emptyCart, () => {TICKET.myticket.style.visibility = 'visible'} );
 	    };
+
+		ferre.enviarF = e => SQL.update({clave: clave, faltante: 1, obs: obs.value, tbname: 'faltantes', id_tag: 'u'}).then( () => { obs.value = ''; ferre.cerrar(e); } );
+
+		ferre.faltante = e => IDB.readDB( PRICE ).get( clave ).then( w => { ferre.cerrar(e); obs.value = w.obs; diagF.showModal(); } );
+
+		ferre.emptyBag = () => { emptyCart(); return SQL.print({id_tag: 'd', pid: Number(persona.value)}) }
+
+	    // PEOPLE - Multi-User support
+
+		function data( o ) { return IDB.readDB( PRICE ).get( asnum(o.clave) ).then( w => Object.assign( o, w ) ).then( TICKET.add ); }
+		function a2obj( a ) { const M = a.length/2; let o = {}; for (let i=0; i<M; i++) { o[a[i*2]] = a[i*2+1]; } return o; }
+//		function recreate(q) { return  q.split('&').reduce( (p, s) => p.then( () => data(a2obj(s.split('+'))) ), Promise.resolve() ); }
+		let recreate = q => Promise.all( q.split('&').map(s => data(a2obj(s.split('+')))) ).then( n => {tcount.textContent = n;} ); // XXX What's return from Promise.all ???
+		function tabs(k) { persona.dataset.id = k; if (PEOPLE.tabs.has(k)) { recreate(PEOPLE.tabs.get(k).query); } }
+
+		ferre.tab = () => {
+		    const pid = Number(persona.value);
+	/* message tag
+		    ferre.tag(); */
+		    ferre.print('guardar').then( () => tabs(pid) );
+//		    if (TICKET.items.size > 0) { ferre.print('guardar').then( () => tabs(pid) ); }
+//		    else { tabs(pid); }
+		};
+
+		ferre.saveme = () => { persona.value = 0; ferre.tab(); }
+
+		PEOPLE.load().then( a => a.forEach( p => { let opt = document.createElement('option'); opt.value = p.id; opt.appendChild(document.createTextNode(p.nombre)); persona.appendChild(opt); } ) );
+
+
+	    })();
+
+	    ferre.updateItem = TICKET.update;
+
+	    ferre.clickItem = e => TICKET.remove( e.target.parentElement );
 
 	    ferre.surtir = function() {
 		let objs = [];
@@ -100,42 +123,6 @@
 	    // SQL
 
 	    SQL.DB = document.location.origin + ':8081';
-
-	    // PEOPLE - Multi-User support
-
-	    (function() {
-		const slc = document.getElementById('personas');
-		slc.dataset.id = 0;
-//		const tag = document.getElementById('tag');
-
-		function asnum(s) { let n = Number(s); return Number.isNaN(n) ? s : n; };
-		function data( o ) { return IDB.readDB( PRICE ).get( asnum(o.clave) ).then( w => Object.assign( o, w ) ).then( TICKET.add ); }
-		function a2obj( a ) { const M = a.length/2; let o = {}; for (let i=0; i<M; i++) { o[a[i*2]] = a[i*2+1]; } return o; }
-		function recreate(q) { return q.split('&').reduce( (p, s) => p.then( () => data(a2obj(s.split('+'))) ), Promise.resolve() ); }
-		function tabs(k) { slc.dataset.id = k; if (PEOPLE.tabs.has(k)) { recreate(PEOPLE.tabs.get(k).query); } }
-
-		ferre.tab = () => {
-		    const pid = Number(slc.value);
-	/* message tag
-		    ferre.tag(); */
-		    ferre.print('guardar').then( () => tabs(pid) );
-//		    if (TICKET.items.size > 0) { ferre.print('guardar').then( () => tabs(pid) ); }
-//		    else { tabs(pid); }
-		};
-
-		(function nobody(){
-		    let opt = document.createElement('option');
-		    opt.value = 0;
-		    opt.label = '';
-		    opt.selected = true;
-		    slc.appendChild(opt);
-		})();
-
-		ferre.saveme = () => { slc.value = 0; ferre.tab(); }
-
-		PEOPLE.load().then( a => a.forEach( p => { let opt = document.createElement('option'); opt.value = p.id; opt.appendChild(document.createTextNode(p.nombre)); slc.appendChild(opt); } ) );
-
-	    })();
 
 	    // HEADER
 
