@@ -49,7 +49,8 @@
 		app.remove = e => {
 		    const clave = e.target.parentElement.dataset.clave;
 		    if (window.confirm('Estas seguro de eliminar este articulo?'))
-			XHR.get(xhro + encPpties({clave: clave, tbname: 'datos', desc: 'VVVVV'}));
+			XHR.get(xhro + encPpties({clave: clave, tbname: 'datos', desc: 'VVVVV'}))
+			.then( () => DATA.inplace({clave: clave}) );
 		};
 
 		function isfalt(o) { return (o.faltante == 1) }
