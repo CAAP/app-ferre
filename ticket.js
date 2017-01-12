@@ -1,6 +1,6 @@
 	"use strict";
 
-	var TICKET = { bagID: 'ticket-compra', ttotalID: 'ticket-total', myticketID: 'ticket', tivaID: 'ticket-iva', tbrutoID: 'ticket-bruto' };
+	var TICKET = { bagID: 'ticket-compra', myticketID: 'ticket', ttotalID: 'ticket-total', tivaID: 'ticket-iva', tbrutoID: 'ticket-bruto', tcountID: 'ticket-count' };
 
 	(function() {
 	    const VARS = ['clave', 'qty', 'rea', 'precio', 'totalCents'];
@@ -140,7 +140,7 @@
 		if (!TICKET.bag.hasChildNodes()) { TICKET.empty(); } else { bagTotal(); } // TICKET.myticket.style.visibility = 'hidden';
 	    };
 
-	    TICKET.empty = function() { TICKET.items.clear(); clearTable( TICKET.bag ); TICKET.myticket.style.visibility = 'hidden'; };
+	    TICKET.empty = function() { TICKET.items.clear(); clearTable( TICKET.bag ); TICKET.myticket.style.visibility = 'hidden'; TICKET.extraEmpty(); };
 
 	    })();
 
