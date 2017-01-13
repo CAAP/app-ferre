@@ -54,8 +54,6 @@ local function cambios( conn )
 
     assert( conn.exec( string.format(sql.newTable, 'updates', schema) ) )
 
---    ups.vers = conn.count'updates'
-
     local costol = 'UPDATE datos SET costol = costo*(100+impuesto)*(100-descuento), fecha = %q %s'
     local isstr = {desc=true, fecha=true, obs=true, proveedor=true, gps=true, u1=true, u2=true, u3=true}
 

@@ -97,13 +97,22 @@
 	    TICKET.myticket = document.getElementById( TICKET.myticketID );
 	    TICKET.timbre = TICKET.myticket.querySelector('button[name="timbrar"]');
 	    TICKET.bagRFC = false;
-	    TICKET.bagUID = new Set();
+	    TICKET.bagUID = new Set(); // XXX Ordered Set instead?
+
+	    TICKET.extraEmpty = () => true;
 
 	    caja.updateItem = TICKET.update;
 
 	    caja.clickItem = e => TICKET.remove( e.target.parentElement );
 
 	    caja.emptyBag = () => { TICKET.empty(); TICKET.bagUID.clear(); TICKET.bagRFC = false; TICKET.timbre.disabled = true; caja.cleanCaja(); }
+
+	    caja.print2 = function() {
+		if (TICKET.items.size > 0) {
+		let objs = ['uid='+, 'tag=CAJA'];
+		    TICKET.items.forEach( item => objs.push( 'args=' + TICKET.plain(item) ) );
+		}
+	    };
 
 
 	    // HEADER
