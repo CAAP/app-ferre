@@ -121,11 +121,13 @@
 
 	    ferre.clickItem = e => TICKET.remove( e.target.parentElement );
 
+/*
 	    ferre.surtir = function() {
 		let objs = [];
 		TICKET.items.forEach( item => objs.push( 'args=clave+'+item.clave+'+qty+'+item.qty  ) );
 		return XHR.get('/ticket/surtir.lua?'+objs.join('&')).then( ferre.saveme );
 	    };
+*/
 
 	    // SQL
 

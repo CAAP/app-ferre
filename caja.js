@@ -109,7 +109,7 @@
 
 	    caja.print2 = function() {
 		if (TICKET.items.size > 0) {
-		let objs = ['uid='+, 'tag=CAJA'];
+		let objs = ['uid='+1, 'tag=CAJA'];
 		    TICKET.items.forEach( item => objs.push( 'args=' + TICKET.plain(item) ) );
 		}
 	    };

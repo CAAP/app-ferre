@@ -88,7 +88,7 @@
 		BROWSE.tab.style.visibility='hidden';
 		clearTable( BROWSE.lis );
 		e.target.value = "";
-		e.target.blur();
+//		e.target.blur();
 	// IF string.contains('*') : searchSQL
 		if (ss.includes('*')) {
 		    XHR.getJSON('/ferre/query.lua?desc='+encodeURIComponent(ss))

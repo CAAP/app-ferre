@@ -18,13 +18,12 @@
 
 <body lang="es-MX">
 
-    <header>
-	<label id="notifications"></label> <select name="persona" id="personas" accesskey="c" onchange="ferre.tab()"></select> <label id="tag"></label>
+    <header> <label id="notifications"></label> <select name="persona" id="personas" accesskey="c" onchange="ferre.tab()"></select> <label id="tag"></label> <span><label id="ticket-count"></label><img src="empty-cart.svg" height="25px"> <label id="ticket-total" class="total"></label></span> </header>
 
-    <section id="buscar" class="dialogos carro">
-        <div><input type="search" size=40 accesskey="b" placeholder="Art&iacute;culo o Clave" onchange="ferre.startSearch(event)" onkeyup="ferre.keyPressed(event)"> <button>Buscar</button></div>
+    <section id="buscar">
+        <div> <input type="search" size=40 accesskey="b" placeholder="Art&iacute;culo o Clave" onchange="ferre.startSearch(event)" onkeyup="ferre.keyPressed(event)"> <button>Buscar</button> </div>
 
-	<section id="resultados" class="tablas embiggen">
+    <section id="resultados" class="tablas">
         <table>
 	    <dt>
             <thead>
@@ -34,25 +33,23 @@
 	    <tbody id="tabla-resultados" class="amarillo" onclick="ferre.menu(event)" onwheel="ferre.scroll(event)"></tbody>
 	    <tfoot><tr><th colspan=6><button accesskey="a" onclick="ferre.scroll({deltaY:0})">&larr;Anterior</button> <label> | </label> <button accesskey="s" onclick="ferre.scroll({deltaY:1})">Siguiente&rarr;</button></th></tr></tfoot>
 	</table>
-	</section>
     </section>
 
-    </header>
+    </section>
 
-
-    <section id="ticket" class="tablas">
+    <section id="ticket" class="tablas" style="overflow-x:auto">
 	<table>
-	    <tbody>
-		<tr><td><button name="cerrar" onclick="ferre.emptyBag()">Cancelar</button>&emsp;<button onclick="ferre.print('presupuesto')">Presupuesto</button>&emsp;<button onclick="ferre.print('ticket')">Caja</button></td><td><label id="ticket-count"></label><img src="empty-cart.svg" height="25px"></td><td><label id="ticket-total" class="total"></label></td></tr>
-	    </tbody>
-	</table>
-	<table>
+           <caption> TICKET </caption>
 	    <dt>
             <thead>
                 <tr> <th> Clave </th><th> Cantidad </th><th class="desc"> Descripci&oacute;n </th><th> Precio </th><th> Descuento </th><th> Total </th> </tr> 
             </thead>
 	    </dt>
-	    <tbody id="ticket-compra" class="amarillo scrollable" onchange="ferre.updateItem(event)" ondblclick="ferre.clickItem(event)"></tbody>
+	    <tfoot><tr><th colspan=6 align="right"><button name="cerrar" onclick="ferre.emptyBag()">Cancelar</button>&emsp;<button name="guardar" onclick="ferre.saveme()">Guardar</button>&emsp;<button onclick="ferre.surtir()">Surtir</button>&emsp;<button onclick="ferre.print('presupuesto')">Presupuesto</button>&emsp;<button onclick="ferre.print('ticket')">Caja</button></th></tr></tfoot>
+
+<!-- &emsp;<label id="ticket-total" class="total"></label> --!>
+
+	    <tbody id="ticket-compra" class="amarillo" onchange="ferre.updateItem(event)" ondblclick="ferre.clickItem(event)"></tbody>
 	</table>
     </section>
 
