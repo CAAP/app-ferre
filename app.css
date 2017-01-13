@@ -69,8 +69,8 @@ dialog { font: 100% arial; }
 
 .dialogos:hover .embiggen { display: block; }
 
-.carro {
-    padding-left: 25px;
+.query {
+    padding-left: 30px;
     position: fixed;
     top: 4px;
     background-color: #ffffff;
@@ -102,7 +102,7 @@ dialog { font: 100% arial; }
 
 #ticket-count {
     position: absolute;
-    padding-left: 18px;
+    padding-left: 12px;
     font-weight: bold;
 }
 

@@ -21,7 +21,7 @@
     <header>
 	<label id="notifications"></label> <select name="persona" id="personas" accesskey="c" onchange="ferre.tab()"></select> <label id="tag"></label>
 
-    <section id="buscar" class="dialogos carro">
+    <section id="buscar" class="dialogos query">
         <div><input type="search" size=40 accesskey="b" placeholder="Art&iacute;culo o Clave" onchange="ferre.startSearch(event)" onkeyup="ferre.keyPressed(event)"> <button>Buscar</button></div>
 
 	<section id="resultados" class="tablas embiggen">
@@ -46,14 +46,16 @@
 		<tr><td><button name="cerrar" onclick="ferre.emptyBag()">Cancelar</button>&emsp;<button onclick="ferre.print('presupuesto')">Presupuesto</button>&emsp;<button onclick="ferre.print('ticket')">Caja</button></td><td><label id="ticket-count"></label><img src="empty-cart.svg" height="25px"></td><td><label id="ticket-total" class="total"></label></td></tr>
 	    </tbody>
 	</table>
+	<section class="scrollable">
 	<table>
 	    <dt>
             <thead>
                 <tr> <th> Clave </th><th> Cantidad </th><th class="desc"> Descripci&oacute;n </th><th> Precio </th><th> Descuento </th><th> Total </th> </tr> 
             </thead>
 	    </dt>
-	    <tbody id="ticket-compra" class="amarillo scrollable" onchange="ferre.updateItem(event)" ondblclick="ferre.clickItem(event)"></tbody>
+	    <tbody id="ticket-compra" class="amarillo" onchange="ferre.updateItem(event)" ondblclick="ferre.clickItem(event)"></tbody>
 	</table>
+	</section>
     </section>
 
     <section><dialog id="dialogo-rfc">
