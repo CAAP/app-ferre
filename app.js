@@ -83,7 +83,7 @@
 
 		ferre.enviarF = e => SQL.update({clave: clave, faltante: 1, obs: obs.value, tbname: 'faltantes', id_tag: 'u'}).then( () => { obs.value = ''; ferre.cerrar(e); } );
 
-		ferre.faltante = e => IDB.readDB( PRICE ).get( clave ).then( w => { ferre.cerrar(e); obs.value = w.obs; diagF.showModal(); } );
+		ferre.faltante = e => IDB.readDB( PRICE ).get( clave ).then( w => { ferre.cerrar(e); if (w.faltante < 2) {obs.value = w.obs; diagF.showModal();} } );
 
 	    // PEOPLE - Multi-User support
 
