@@ -67,10 +67,22 @@
 		return ret;
 	    }
 
+	    function israbatt(q, row, prev) {
+		let rabatt = asnum(q.rea) > 0 || q.precio != 'precio1';
+		if (rabatt ^ prev) {
+		    if (rabatt)
+			row.classList.add('rabatt');
+		    else
+			row.classList.remove('rabatt');
+		}
+	    }
+
 	    function displayItem(q) {
 		let row = TICKET.bag.insertRow(0);
 		row.title = q.desc.substr(0,3); // TRYING OUT LOCATION XXX
 		row.dataset.clave = q.clave;
+		israbatt(q, row, false);
+		// DATOS
 		row.insertCell().appendChild( document.createTextNode( q.clave ) );
 		row.insertCell().appendChild( inputE( [['type', 'number'], ['size', 2], ['min', 0], ['name', 'qty'], ['value', q.qty]] ) ).select();
 		let desc = row.insertCell();
@@ -87,6 +99,8 @@
 	    function showItem(q) {
 		let row = TICKET.bag.insertRow();
 		row.dataset.clave = q.clave;
+		israbatt(q, row, false);
+		// DATOS
 		q.subTotal = tocents(q.totalCents);
 		q.prc = q.precios[q.precio];
 		EVARS.forEach( v => row.insertCell().appendChild( document.createTextNode( q[v] ) ) );
@@ -105,13 +119,13 @@
 
 		e.target.value = v;
 
-//		console.log( clave + ' - ' + k + ': ' + v);
-
 		if (k == 'qty' && v == 0) { return TICKET.remove(tr); }
 
 		if (items.has( clave )) {
 		    let q = items.get( clave );
+		    let rabatt = (q.rea > 0 || q.precio != 'precio1');
 		    q[k] = v;
+		    israbatt(q, tr, rabatt);
 		    q.totalCents = uptoCents(q); // partial total
 		    items.set( clave, q );
 		    lbl.textContent = tocents(q.totalCents);
