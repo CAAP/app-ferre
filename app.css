@@ -11,6 +11,8 @@ button[name=cerrar] { color: white; background-color: red; }
 
 button[name=guardar] { color: white; background-color: blue; }
 
+img:hover { background-color: #9be8ff;}
+
 .entrada { color: white; background-color: blue;}
 
 .encontrado { background-color: #aaeedd; }
@@ -39,7 +41,7 @@ dialog { font: 100% arial; }
 
 .pesos { text-align: right; }
 
-.rabatt .pesos { background-color: #e6ccff; }
+.rabatt .total { background-color: #e6ccff; }
 
 .marcado td:hover {
     cursor:default;

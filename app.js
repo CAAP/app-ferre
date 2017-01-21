@@ -32,6 +32,8 @@
 
 	    TICKET.show = () => { TICKET.myticket.style.display = 'block'; TICKET.myticket.style.visibility = 'visible'; }
 
+	    ferre.rabatt = () => TICKET.bag.childNodes.forEach(tr => { if (!tr.classList.contains('rabatt')) {let i = tr.querySelector('input[name=rea]'); i.value = 7; TICKET.update({target: i});} } );
+
 	    (function() {
 		const diagI = document.getElementById('dialogo-item');
 		const tcount = document.getElementById(TICKET.tcountID);

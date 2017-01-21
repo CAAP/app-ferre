@@ -104,7 +104,7 @@
 		q.subTotal = tocents(q.totalCents);
 		q.prc = q.precios[q.precio];
 		EVARS.forEach( v => row.insertCell().appendChild( document.createTextNode( q[v] ) ) );
-		row.lastChild.classList.add('pesos');
+		row.lastChild.classList.add('total');
 	    }
 
 	    TICKET.plain = o => VARS.map( v => { return (v + '+' + o[v] || '') } ).join('+');
