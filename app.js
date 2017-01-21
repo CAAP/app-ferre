@@ -32,7 +32,16 @@
 
 	    TICKET.show = () => { TICKET.myticket.style.display = 'block'; TICKET.myticket.style.visibility = 'visible'; }
 
-	    ferre.rabatt = () => TICKET.bag.childNodes.forEach(tr => { if (!tr.classList.contains('rabatt')) {let i = tr.querySelector('input[name=rea]'); i.value = 7; TICKET.update({target: i});} } );
+	    ferre.rabatt = function() {
+		function prom(row) {
+		    if (!row.classList.contains('rabatt')) {
+			let i = row.querySelector('input[name=rea]');
+			i.value = 7;
+			TICKET.update({target: i});
+		    }
+		}
+		Array.from(TICKET.bag.children).forEach(prom);
+	    };
 
 	    (function() {
 		const diagI = document.getElementById('dialogo-item');
