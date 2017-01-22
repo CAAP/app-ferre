@@ -11,9 +11,11 @@ button[name=cerrar] { color: white; background-color: red; }
 
 button[name=guardar] { color: white; background-color: blue; }
 
-.azul:hover { background-color: #9be8ff;}
+.azul { background-color: white; filter: drop-shadow(4px 4px 2px black); }
 
-.entrada { color: white; background-color: blue;}
+.azul:hover { transform: scale(1.2); }
+
+.entrada { color: white; background-color: blue; }
 
 .encontrado { background-color: #aaeedd; }
 
