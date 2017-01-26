@@ -107,6 +107,7 @@
 
 	    caja.emptyBag = () => { TICKET.empty(); TICKET.bagUID.clear(); TICKET.bagRFC = false; TICKET.timbre.disabled = true; caja.cleanCaja(); }
 
+		// XXX Temporal
 	    caja.print2 = function() {
 		if (TICKET.items.size > 0) {
 		let objs = ['uid='+1, 'tag=CAJA'];

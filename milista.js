@@ -69,6 +69,17 @@
 		    pred.appendChild( ck );
 		}
 
+		app.save = function temporal(s) {
+		    let ret = Array.from(lfs.children).map(row => Array.from(row.children).map(x => x.textContent).join('\t'));
+		    let b = new Blob([ret.join('\n')], {type: 'text/html'});
+		    let a = document.createElement('a');
+		    let url = URL.createObjectURL(b);
+		    a.href = url;
+		    a.download = 'ListaFaltantes.tsv'
+		    a.click();
+		    URL.revokeObjectURL(url);
+		};
+
 		app.toggleProv = e => {
 		    let prov = asnum(e.target.textContent);
 		    let pred = e.target.classList.toggle('activo');

@@ -36,6 +36,25 @@
 
 	    admin.scroll = BROWSE.scroll;
 
+	    admin.guardar = function temporal(s) {
+		let ret = [];
+		IDB.readDB( PRICE ).openCursor(cursor => {
+		if (cursor) {
+		    let a = cursor.value;
+		    ret.push( a.desc + '\t' + (a.costol / 1e4).toFixed(2) );
+		    cursor.continue();
+		} else {
+		    let b = new Blob([ret.join('\n')], {type: 'text/html'});
+		    let a = document.createElement('a');
+		    let url = URL.createObjectURL(b);
+		    a.href = url;
+		    a.download = 'ListaPrecios.tsv'
+		    a.click();
+		    URL.revokeObjectURL(url);
+		} });
+	    };
+
+
 	    // UPDATES
 
 	    // cambios dialog - lista de cambios
