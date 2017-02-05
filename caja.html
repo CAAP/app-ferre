@@ -17,7 +17,21 @@
 
 <body lang="es-MX">
 
-    <header> <label id="notifications"></label> | <label class="entrada">Imprimir <input id="doprint" type="checkbox"></label> </header>
+    <header>
+	<label id="notifications"></label> | <label class="entrada">Imprimir <input id="doprint" type="checkbox"></label>
+	<section class="dialogos fechas">
+	    <input type="date" onchange="caja.getByDate(event)"/>
+	    <section class="embiggen">
+		<table>
+		    <dt>
+		    <thead><tr><th> </th><th> Hora </th><th> Nombre </th><th> Art&iacute;culos </th><th> Total </th><th> </th></tr></thead>
+		    </dt>
+		<tbody id="tabla-caja-old"></tbody>
+		</table>
+	    </section>
+	</section>
+    </header>
+
 <!-- <select name="persona" id="personas" onchange="caja.tab()"></select> <label id="tag" onclick="caja.showD()"></label> -->
 
     <div id='main'>
@@ -27,7 +41,6 @@
 	<table>
 	    <caption>CAJA</caption>
 	    <dt><thead>
-	<!-- 	<tr><th colspan=6> <input type="date" onchange="caja.getByDate(event)"/> </th></tr> -->
 		<tr><th> </th><th> Hora </th><th> Nombre </th><th> Art&iacute;culos </th><th> Total </th><th> </th></tr>
 	    </dt></thead>
 	    <tbody id="tabla-caja"></tbody>

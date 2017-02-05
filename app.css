@@ -51,7 +51,7 @@ dialog { font: 100% arial; }
 }
 
 .scrollable {
-    max-height: 500px;
+    max-height: 300px;
     overflow: auto;
 }
 
@@ -74,6 +74,14 @@ dialog { font: 100% arial; }
 .embiggen { display: none; }
 
 .dialogos:hover .embiggen { display: block; }
+
+.fechas {
+    padding-left: 50px;
+    position: fixed;
+    top: 10px;
+    max-height: 30%;
+    background-color: #ccffcc;
+}
 
 .query {
     padding-left: 30px;

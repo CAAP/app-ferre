@@ -134,7 +134,9 @@
 
 	    (function() {
 		const cajita = document.getElementById('tabla-caja');
+		const cajaOld = document.getElementById('tabla-caja-old');
 		const mybag = TICKET.bag;
+		const clearTable = DATA.clearTable;
 
 	 	function asnum(s) { let n = Number(s); return Number.isNaN(n) ? s : n; }
 
@@ -157,15 +159,11 @@
 
 		const regInt = /\d+$/;
 
-		function add2caja(w) {
-		    let row = cajita.insertRow(0);
-
+		function addRow( row, w ) {
 		    let ie = document.createElement('input');
 		    ie.type = 'checkbox'; ie.value = w.uid; ie.name = w.rfc || ((TICKET.TAGS.facturar == w.id_tag) && 'XXX');
 		    ie.addEventListener('change', e => { if (e.target.checked) add2bag(e.target.value, e.target.name); else removeItem(e.target.value); } );
 		    row.insertCell().appendChild(ie);
-
-		    if (doprint.checked) { XHR.get('/ticket/print.lua?uid='+w.uid+'&tag='+TICKET.TAGS.ID[w.id_tag]||''); }
 
 		    w.nombre = PEOPLE.id[w.uid.match(regInt)[0]] || 'NaP';
 		    w.time = w.uid.substr(11,5);
@@ -174,7 +172,25 @@
 		    for (let k of ['time', 'nombre', 'count', 'total', 'tag']) { row.insertCell().appendChild( document.createTextNode(w[k]) ); }
 		}
 
-		function clearTable(tb) { while (tb.firstChild) { tb.removeChild( tb.firstChild ); } }; //recycle?
+		if (!localStorage.uid) { localStorage.uid = ''; }
+
+		function add2caja(w) {
+		    let row = cajita.insertRow(0);
+		    addRow(row, w);
+		    let uid = w.uid;
+		    if (doprint.checked && (localStorage.uid <= uid)) {
+			XHR.get('/ticket/print.lua?uid='+uid+'&tag='+TICKET.TAGS.ID[w.id_tag]||'');
+			localStorage.uid = uid.substr(1,19); // Date & Time
+		    }
+		}
+
+		function add2cajaOld(w) {
+		    let row = cajaOld.insertRow(0);
+		    addRow(row, w);
+		}
+
+		// SearchByDate
+		caja.getByDate = e => XHR.getJSON('/caja/getDate.lua?uid='+e.target.value).then(data => {clearTable(cajaOld); data.forEach(add2cajaOld)});
 
 	// SERVER-SIDE EVENT SOURCE
 		function addEvents() {	
@@ -184,8 +200,6 @@
 			console.log('FEED message received\n');
 			JSON.parse( e.data ).forEach( add2caja );
 		    }, false);
-
-//XXX		    caja.getByDate = e => XHR.getJSON('/caja/getDate.lua?uid='+e.target.value).then(data => {clearTable(cajita); esource.close(); data.forEach(add2caja)});
 		}
 
 	    // LOAD DBs

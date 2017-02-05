@@ -17,6 +17,8 @@
 
 	    BROWSE.DBindex = (a, b, f) => IDB.readDB( PRICE ).index( a, b, f );
 
+	    BROWSE.OK = function(o) { return (o.faltante == 1) };
+
 	    app.keyPressed = BROWSE.keyPressed;
 
 	    app.startSearch = BROWSE.startSearch;
