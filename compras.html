@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title> COMPRAS </title>
+    <link rel="stylesheet" href="app.css">
+    <script type="text/javascript" src="xhr.js"></script>
+    <script type="text/javascript" src="sql.js"></script>
+    <script type="text/javascript" src="idb.js"></script>
+    <script type="text/javascript" src="browse.js"></script>
+    <script type="text/javascript" src="data.js"></script>
+    <script type="text/javascript" src="compras.js"></script>
+</head>
+
+<body lang="es-MX">
+
+    <header> <label id="notifications"></label> <label> | <input type="file" name="datos" onchange="compras.asxml(event)" /> </label> </header>
+
+	<section>
+        <table>
+	    <tbody id="tabla-conceptos" class="amarillo" onclick="admin.getRecord(event)"></tbody>
+	</table>
+	</section>
+
+    <footer> <label id="copyright"></label> <label id="db-vers"></label> </footer>
+
+</body>
+</html>
