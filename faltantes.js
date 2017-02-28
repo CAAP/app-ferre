@@ -51,7 +51,7 @@
 			.then( () => DATA.inplace({clave: clave}) );
 		};
 
-		function isfalt(o) { return (o.faltante == 1) }
+		function isfalt(o) { return (o.faltante > 0) } // XXX == 1
 
 		function faltnoprov(o) { return (o.faltante == 1) && !(Number(o.proveedor) || o.proveedor) }
 
@@ -65,6 +65,7 @@
 		    clave.classList.add('pesos'); clave.appendChild( document.createTextNode( a.clave ) );
 		    let desc = row.insertCell();
 		    desc.classList.add('desc');
+		    if (a.faltante == 2) { desc.classList.add('faltante'); }
 		    desc.appendChild( document.createTextNode( a.desc ) );
 		    let costol = row.insertCell();
 		    costol.classList.add('total');
@@ -76,7 +77,7 @@
 		    prov.name = 'proveedor'; prov.value = a.proveedor || ''; prov.size = 12; prov.addEventListener('change', update);
 		    row.insertCell().appendChild( prov );
 		    let ie = document.createElement('input');
-		    ie.type = 'checkbox'; ie.name = 'faltante', ie.value = 2; ie.addEventListener('change', update);
+		    ie.type = 'checkbox'; ie.name = 'faltante'; ie.checked = (a.faltante==2); ie.value = (a.faltante == 1 ? 2 : 1); ie.addEventListener('change', update);
 		    row.insertCell().appendChild( ie );
 		};
 

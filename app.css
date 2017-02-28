@@ -120,6 +120,8 @@ dialog { font: 100% arial; }
     font-weight: bold;
 }
 
+#ticket-total { font: 200% arial; }
+
 #personas td:hover {
     cursor:default;
     font: bold italic 100% arial;
