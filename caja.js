@@ -159,8 +159,7 @@
 
 		let removeItem = uid => Promise.all( Array.from(mybag.querySelectorAll('tr[data-uid="' + uid + '"]')).map( TICKET.remove ) );
 
-// XXX check may be innecesary to look for pid & time since it comes from feed
-		const doprint = document.getElementById("doprint");
+//		const doprint = document.getElementById("doprint");
 
 		const regInt = /\d+$/;
 
@@ -177,16 +176,16 @@
 		    for (let k of ['time', 'nombre', 'count', 'total', 'tag']) { row.insertCell().appendChild( document.createTextNode(w[k]) ); }
 		}
 
-		if (!localStorage.uid) { localStorage.uid = ''; }
+//		if (!localStorage.uid) { localStorage.uid = ''; }
 
 		function add2caja(w) {
 		    let row = cajita.insertRow(0);
 		    addRow(row, w);
-		    let uid = w.uid;
+/*		    let uid = w.uid;
 		    if (doprint.checked && (localStorage.uid <= uid)) {
 			XHR.get('/ticket/print.lua?uid='+uid+'&tag='+TICKET.TAGS.ID[w.id_tag]||'');
 			localStorage.uid = uid.substr(1,19); // Date & Time
-		    }
+		    } */
 		}
 
 		function add2cajaOld(w) {
