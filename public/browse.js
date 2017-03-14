@@ -71,7 +71,7 @@
 	    function retrieve(t) {
 		let ans = BROWSE.lis;
 		const pred = (t == 'prev');
-		let s = ans[pred ? 'firstChild' : 'lastChild'].querySelector('.desc').textContent; //let s = BROWSE.fetchBy(ans, t);
+		let s = ans[pred ? 'firstChild' : 'lastChild'].querySelector('.desc').textContent;
 
 		let range = pred ? IDBKeyRange.upperBound(s, true) : IDBKeyRange.lowerBound(s, true);
 		let j = pred ? 0 : -1;
@@ -88,7 +88,6 @@
 		BROWSE.tab.style.visibility='hidden';
 		clearTable( BROWSE.lis );
 		e.target.value = "";
-//		e.target.blur();
 	// IF string.contains('*') : searchSQL
 		if (ss.includes('*')) {
 		    XHR.getJSON('/ferre/query.lua?desc='+encodeURIComponent(ss))

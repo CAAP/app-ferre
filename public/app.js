@@ -27,6 +27,8 @@
 
 	    // TICKET
 
+	    TICKET.load();
+
 	    TICKET.bag = document.getElementById( TICKET.bagID );
 	    TICKET.myticket = document.getElementById( TICKET.myticketID );
 
@@ -82,6 +84,8 @@
 		if (TICKET.items.size == 0) {return Promise.resolve();}
 		const id_tag = TICKET.TAGS[a] || TICKET.TAGS.none;
 		const pid = Number(persona.dataset.id);
+
+		if (pid == 0) { TICKET.empty(); return Promise.resolve(); } // it should NEVER happen XXX
 
 		let objs = ['id_tag='+id_tag, 'pid='+pid]; // , 'rfc='+rfc // 'person='+(PEOPLE.id[pid] || 'NAP'), // 'tag='+a, // , 'count='+TICKET.items.size
 

@@ -23,6 +23,16 @@
 
 	    app.scroll = BROWSE.scroll;
 
+	    //
+
+	    let mfs = [];
+	    IDB.readDB( FALT ).index(  1, 'next', cursor => {
+		if (cursor) {
+		    mfs.push(cursor.value);
+	    	    cursor.continue();
+		} else { mfs.sort(); }
+	    });
+
 	    app.print = () => window.open('/milista.html','lista-falts');
 
 	    (function() {
@@ -65,7 +75,7 @@
 		    clave.classList.add('pesos'); clave.appendChild( document.createTextNode( a.clave ) );
 		    let desc = row.insertCell();
 		    desc.classList.add('desc');
-		    if (a.faltante == 2) { desc.classList.add('faltante'); }
+		    if (a.faltante == 2) { desc.classList.add('faltante'); } // ccs 4 PEDIDO
 		    desc.appendChild( document.createTextNode( a.desc ) );
 		    let costol = row.insertCell();
 		    costol.classList.add('total');

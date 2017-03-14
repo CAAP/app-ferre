@@ -26,6 +26,7 @@
 		}
 	    };
 
+/*
 	    let PACK = {
 		STORE: 'paquetes',
 		INDEX: 'uid',
@@ -37,6 +38,7 @@
 			.then( o => { if (o.desc.startsWith('VV')) {return os.delete( o.clave );} } );
 		}
 	    };
+*/
 
 	    let FALT = {STORE: 'precios', INDEX: 'faltante'};
 
@@ -46,7 +48,7 @@
 
 	    let VERS =  {update: o => {localStorage.vers = o.vers; localStorage.week = o.week; lvers.textContent = ' | ' + o.week + 'V' + o.vers }};
 
-	    let STORES = {PRICE:PRICE, PACK:PACK, FALT:FALT, PROV:PROV, VERS:VERS}; // COST:COST
+	    let STORES = {PRICE:PRICE, FALT:FALT, PROV:PROV, VERS:VERS}; // PACK:PACK
 
 	    DATA.STORES = STORES;
 

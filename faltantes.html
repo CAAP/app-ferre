@@ -5,11 +5,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title> FALTANTES </title>
-    <link rel="stylesheet" href="app.css">
-    <script type="text/javascript" src="xhr.js"></script>
-    <script type="text/javascript" src="idb.js"></script>
-    <script type="text/javascript" src="browse.js"></script>
-    <script type="text/javascript" src="data.js"></script>
+    <link rel="stylesheet" href="public/app.css">
+    <script type="text/javascript" src="public/xhr.js"></script>
+    <script type="text/javascript" src="public/idb.js"></script>
+    <script type="text/javascript" src="public/browse.js"></script>
+    <script type="text/javascript" src="public/data.js"></script>
     <script type="text/javascript" src="faltantes.js"></script>
 </head>
 
@@ -24,7 +24,7 @@
         <table onwheel="app.scroll(event)">
 	    <dt>
             <thead>
-                <tr><th> Fecha </th><th> Clave </th><th> Descripci&oacute;n </th><th> Costo </th><th> Observaciones </th><th> Proveedor </th></tr>
+                <tr><th> Fecha </th><th> Clave </th><th> Descripci&oacute;n </th><th> Costo </th><th> Observaciones </th><th> Proveedor </th><th> PEDIDO </th></tr>
             </thead>
 	    </dt>
 	    <tbody id="tabla-resultados" class="amarillo" ondblclick="app.remove(event)"></tbody>

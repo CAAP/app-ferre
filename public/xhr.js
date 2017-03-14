@@ -7,7 +7,7 @@
 	function request(url, options) {
 	    return new Promise((resolve, reject) => {
 	        let xhr = new XMLHttpRequest;
-	        xhr.onload = event => { if (event.target.status == 200) {resolve( event.target.response )} else {reject(event.target.status)} };
+	        xhr.onload = event => { if (event.target.status == 200) {resolve( event.target.response )} else {reject(event.target)} };
 	        xhr.onerror = reject;
 
 	        let defaultMethod = options.data ? "POST" : "GET";
@@ -35,7 +35,7 @@
 	    });
 	}
 
-	XHR.post = function(url, data) { return request(url, { responseType: 'text', data: data }).then( console.log('Successful POST!') ); }
+	XHR.post = function(url, data, headers) { return request(url, Object.assign({ responseType: 'text', data: data }, headers)).then( console.log('Successful POST!') ); }
 
 	XHR.get = function(url) { return request(url, { responseType: 'text' }).then( console.log('Successful GET!') ); }
 

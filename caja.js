@@ -68,11 +68,13 @@
 
 		const hoy = new Date().toLocaleDateString('es-MX');
 
+		let rmamp = s => s.replace('&', '');
+
 		function fillme(o, letra) {
 		    let prc = o.precios[o.precio].split(' / ');
 		    let p = (100 * prc[0] * (100-o.rea) / 1e4).toFixed(2);
 		    let u = (prc[1].length > 0) ? prc[1] : 'PZ';
-		    let ret = ['"XXXX"', hoy, '"XXXX"', '"."', '"."', '"."', o.qty, '"'+o.desc+'"', '"'+u+'"', p, (o.totalCents/100).toFixed(2), '"SUBTOTAL"', tbruto.textContent,'"IVA"', tiva.textContent, '"TOTAL"', ttotal.textContent, '"'+letra.replace('\n','')+'"'];
+		    let ret = ['"XXXX"', hoy, '"XXXX"', '"."', '"."', '"."', o.qty, '"'+rmamp(o.desc)+'"', '"'+u+'"', p, (o.totalCents/100).toFixed(2), '"SUBTOTAL"', tbruto.textContent,'"IVA"', tiva.textContent, '"TOTAL"', ttotal.textContent, '"'+letra.replace('\n','')+'"'];
 		    return ret.join('\t');
 		}
 
@@ -93,6 +95,8 @@
 
 	    // TICKET
 
+	    TICKET.load();
+
 	    TICKET.bag = document.getElementById( TICKET.bagID );
 	    TICKET.myticket = document.getElementById( TICKET.myticketID );
 	    TICKET.timbre = TICKET.myticket.querySelector('button[name="timbrar"]');
@@ -108,13 +112,14 @@
 	    caja.emptyBag = () => { TICKET.empty(); TICKET.bagUID.clear(); TICKET.bagRFC = false; TICKET.timbre.disabled = true; caja.cleanCaja(); }
 
 		// XXX Temporal
+/*
 	    caja.print2 = function() {
 		if (TICKET.items.size > 0) {
 		let objs = ['uid='+1, 'tag=CAJA'];
 		    TICKET.items.forEach( item => objs.push( 'args=' + TICKET.plain(item) ) );
 		}
 	    };
-
+*/
 
 	    // HEADER
 
