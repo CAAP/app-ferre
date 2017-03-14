@@ -6,18 +6,26 @@ local hd = require'ferre.header'
 local sql = require'carlos.sqlite'
 local mx = require'ferre.timezone' --XXX REMOVE!!!
 local ex = require'ferre.extras'
+local tkt = require'ferre.ticket'
 
 local ahora = ex.now()
 local hoy = os.date('%d-%b-%y', ahora)
 local today = os.date('%F', ahora)
 local week = ex.week() -- os.date('Y%YW%U', mx())
-local dbname = string.format('/db/%s.db', week) -- XXX REMOVE!!!
+local dbname = string.format('/db/%s.db', week)
 
 local MM = {tickets={}, tabs={}, entradas={}, cambios={}, recording={}, streaming={}}
 
 local servers = {}
 
 local ups = {week=week, vers=0, store='VERS'}
+
+local tags = {} -- Initialize later at init
+local nombres = {} -- Initialize later at init
+
+local function id2tag(id) return tags[id] or id end
+
+local function pid2name(pid) return nombres[pid] or 'NaP' end
 
 local function safe(f, msg)
     local ok,err = pcall(f)
@@ -46,6 +54,8 @@ local function init( conn )
     print('Connected to DB', dbname, '\n')
     assert( conn.exec"ATTACH DATABASE '/db/ferre.db' AS FR" )
     assert( conn.exec"ATTACH DATABASE '/db/inventario.db' AS NV" )
+    fd.reduce( conn.query'SELECT * FROM tags', function(a) tags[a.id] = a.nombre end )
+    fd.reduce( conn.query'SELECT * FROM empleados', function(a) nombres[a.id] = a.nombre end )
     return conn
 end
 
@@ -83,8 +93,6 @@ local function cambios( conn )
 	local ret = fd.first( conn.query(string.format('SELECT %s FROM precios %s', table.concat(ps, ', '), clause)), function(x) return x end )
 	fd.reduce( fd.keys(ret), fd.merge, w )
     end
-
---    local stores = {uid='PACK'}
 
     function MM.cambios.add( w )
 	local clave = w.clave
@@ -125,9 +133,51 @@ local function cambios( conn )
 	return sse{data=asJSON(fd.reduce(fd.keys(ups), fd.merge, {prev=ups.vers})), event='update'}
     end
 
+    return conn
+
 end
 
 --
+
+local function printme(q, conn)
+    local uid = q.uid
+    local tag = id2tag(q.id_tag)
+    local y,m,d = uid:match'^(%d+)-(%d+)-(%d+)'
+    local PRC = 'SELECT desc, precio%d ||"/"|| IFNULL(u%d,"?") prc FROM precios WHERE clave LIKE %q'
+
+    local fields = hd.args{clave='clave',precio='precio',qty='qty',rea='rea',totalCents='totalCents'}
+
+    local function precio(w)
+	local j = w.precio:sub(-1)
+	w.clave = w.clave
+	w.qty = w.qty
+	w.rea = w.rea
+	if not w.desc then
+	    local ret = fd.first( conn.query(string.format(PRC, j, j, w.clave)), function(x) return x end )
+	    w.desc = ret.desc
+	    w.prc = ret.prc
+	end
+	w.subTotal = string.format('%.2f', w.totalCents/100)
+	return w
+    end
+
+    local function fetch(w)
+	local fecha = uid:match'([^P]+)P'
+	local p = pid2name(tonumber(uid:match'(%d+)$'))
+
+	local ret = {fecha=fecha, person=p, tag=tag}
+	ret.datos = fd.reduce( w.args, fd.map(fields), fd.map(precio), fd.into, {} )
+	ret.total = string.format('%.2f', w.totalCents/100)
+
+	return ret
+    end
+
+    return function() print( tkt( fetch(q) ) ) end -- lpr
+
+end
+
+--
+
 local function tickets( conn )
     local tbname = 'tickets'
     local schema = 'uid, id_tag, clave, precio, qty INTEGER, rea INTEGER, totalCents INTEGER'
@@ -140,10 +190,11 @@ local function tickets( conn )
 
 -- XXX input is not parsed to Number
     function MM.tickets.add( w )
-	local uid = os.date('%FT%TP', mx()) .. w.pid
+	local uid = os.date('%FT%TP', ex.now()) .. w.pid -- mx() XXX
 	fd.reduce( w.args, fd.map( hd.args(keys, uid, w.id_tag) ), sql.into( tbname ), conn ) -- ids( uid, w.id_tag ), 
 	local a = fd.first( conn.query(string.format(query, tbname, uid)), function(x) return x end )
 	w.uid = uid; w.totalCents = a.totalCents; w.count = a.count
+	safe(printme(w, conn), 'Tring to print, but ...') -- TRYING OUT
 	return w
     end
 
@@ -234,17 +285,19 @@ local function recording()
     print(skt, 'listening on port 8081\n')
 
     local function classify( w, q )
-	local tag = w.id_tag
-	if tag == 'g' then MM.tabs.add( w, q ); w.event = 'tabs'; return w end
+	local tag = id2tag(w.id_tag) -- XXX TRYING!!!
+	if tag == 'guardar' then MM.tabs.add( w, q ); w.event = 'tabs'; return w end
 --	if tag == 'h' then  local m = MM.entradas.add( w ); m.event = 'entradas'; return m end
 	if tag == 'd' then MM.tabs.remove(w.pid); w.ret = { 'event: delete\ndata: '.. w.pid ..'\n\n' }; w.event = 'none' w.data = ''; return w end
-    -- printing: 'a', 'b', 'c'
+    -- ELSE: printing: 'a', 'b', 'c'
 	w.ret = { 'event: delete\ndata: '.. w.pid ..'\n\n' }
 	MM.tickets.add( w ); w.event = 'feed'; return w
     end
 
     local function add( q )
 	local w = hd.parse( q )
+--XXX	if w.pid == 0 then return nil end -- IN-CASE Browser sends 'nobody'
+	w.id_tag = tonumber(w.id_tag)
 	w = classify(w, q)
 	w.args = nil -- sanitize
 	return w
@@ -280,17 +333,8 @@ end
 
 fd.comp{ recording, streaming, cambios, tickets, tabs, init, sql.connect( dbname ) }
 
---[[
-local time=mx()
-while ups.vers == 0 do
-    time = time - 3600*24*7
-    ups.week = os.date('Y%YW%U', time)
-    local conn = sql.connect(string.format('/db/%s.db', ups.week))
-    ups.vers = conn.count'updates'
-end
---]]
-
 ex.version( ups )
+print('Version: ', ups.vers, 'Week: ', ups.week, '\n')
 
 while 1 do
     local ready = socket.select(servers)
