@@ -7,6 +7,7 @@ local sql = require'carlos.sqlite'
 local mx = require'ferre.timezone' --XXX REMOVE!!!
 local ex = require'ferre.extras'
 local tkt = require'ferre.ticket'
+local lpr = require'ferre.bixolon'
 
 local ahora = ex.now()
 local hoy = os.date('%d-%b-%y', ahora)
@@ -172,7 +173,7 @@ local function printme(q, conn)
 	return ret
     end
 
-    return function() print( tkt( fetch(q) ) ) end -- lpr
+    return function() lpr( tkt( fetch(q) ) ) end -- lpr
 
 end
 
