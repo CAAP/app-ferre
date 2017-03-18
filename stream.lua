@@ -199,6 +199,7 @@ local function tickets( conn )
 	return w
     end
 
+--- XXX fd.split for count > 50
     function MM.tickets.sse()
 	if conn.count( tbname, clause ) == 0 then return ':empty\n\n'
 	else return sse{ data=table.concat( fd.reduce(conn.query(string.format(query, tbname, today)), fd.map(asJSON), fd.into, {} ), ',\n'), event='feed' } end
@@ -298,7 +299,7 @@ local function recording()
     local function add( q )
 	local w = hd.parse( q )
 --XXX	if w.pid == 0 then return nil end -- IN-CASE Browser sends 'nobody'
-	w.id_tag = tonumber(w.id_tag)
+--	w.id_tag = tonumber(w.id_tag)
 	w = classify(w, q)
 	w.args = nil -- sanitize
 	return w
