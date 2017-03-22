@@ -4,7 +4,6 @@ local socket = require"socket"
 local fd = require'carlos.fold'
 local hd = require'ferre.header'
 local sql = require'carlos.sqlite'
-local mx = require'ferre.timezone' --XXX REMOVE!!!
 local ex = require'ferre.extras'
 local tkt = require'ferre.ticket'
 local lpr = require'ferre.bixolon'
@@ -135,7 +134,6 @@ local function cambios( conn )
     end
 
     return conn
-
 end
 
 --
@@ -146,18 +144,18 @@ local function printme(q, conn)
     local y,m,d = uid:match'^(%d+)-(%d+)-(%d+)'
     local PRC = 'SELECT desc, precio%d ||"/"|| IFNULL(u%d,"?") prc FROM precios WHERE clave LIKE %q'
 
-    local fields = hd.args{clave='clave',precio='precio',qty='qty',rea='rea',totalCents='totalCents'}
+    local fields = hd.args{clave='clave',precio='precio',qty='qty',rea='rea',totalCents='totalCents'} -- XXX if factura, venta then add: desc='desc', prc='prc'
 
     local function precio(w)
 	local j = w.precio:sub(-1)
 	w.clave = w.clave
 	w.qty = w.qty
 	w.rea = w.rea
-	if not w.desc then
+--	if not w.desc then -- XXX is even this possible? only if it's factura / venta & fields has: desc, prc
 	    local ret = fd.first( conn.query(string.format(PRC, j, j, w.clave)), function(x) return x end )
 	    w.desc = ret.desc
 	    w.prc = ret.prc
-	end
+--	end
 	w.subTotal = string.format('%.2f', w.totalCents/100)
 	return w
     end
@@ -173,8 +171,7 @@ local function printme(q, conn)
 	return ret
     end
 
-    return function() lpr( tkt( fetch(q) ) ) end -- lpr
-
+    return function() lpr( tkt( fetch(q) ) ) end
 end
 
 --
@@ -184,14 +181,14 @@ local function tickets( conn )
     local schema = 'uid, id_tag, clave, precio, qty INTEGER, rea INTEGER, totalCents INTEGER'
     local keys = { uid=1, id_tag=2, clave=3, precio=4, qty=5, rea=6, totalCents=7 }
     local clause = string.format("WHERE uid LIKE '%s%%'", today)
-    local query = "SELECT uid, SUM(qty) count, SUM(totalCents) totalCents, id_tag FROM %q WHERE uid LIKE '%s%%' GROUP BY uid"
+    local query = "SELECT uid, SUM(qty) count, SUM(totalCents) totalCents, id_tag FROM %q WHERE uid LIKE '%s%%' GROUP BY uid||id_tag" -- id_tag CHANGES
     local QRY = string.format('SELECT uid, SUM(qty) count, SUM(totalCents) totalCents, id_tag FROM %q %s GROUP BY uid', tbname, clause)
 
     assert( conn.exec( string.format(sql.newTable, tbname, schema) ) )
 
 -- XXX input is not parsed to Number
     function MM.tickets.add( w )
-	local uid = os.date('%FT%TP', ex.now()) .. w.pid -- mx() XXX
+	local uid = os.date('%FT%TP', ex.now()) .. w.pid
 	fd.reduce( w.args, fd.map( hd.args(keys, uid, w.id_tag) ), sql.into( tbname ), conn ) -- ids( uid, w.id_tag ), 
 	local a = fd.first( conn.query(string.format(query, tbname, uid)), function(x) return x end )
 	w.uid = uid; w.totalCents = a.totalCents; w.count = a.count
@@ -212,23 +209,21 @@ end
 
 local function tabs( conn )
     local tabs = {}
-    local m = 0
+--    local m = 0
 
     function MM.tabs.add( w, q )
 	local j = q:find'args'
 	w.query = q:sub(j):gsub('args=', '')
 	tabs[w.pid] = {pid=w.pid, query=w.query}
-	m = m + 1
+--	m = m + 1
 	return w
     end
 
-    function MM.tabs.remove( pid )
-	tabs[pid] = nil
-	m = m - 1
-    end
+    function MM.tabs.remove( pid ) tabs[pid] = nil end
+	--	m = m - 1
 
     function MM.tabs.sse()
-	if m == 0 then return ':empty\n\n'
+	if #tabs == 0 then return ':empty\n\n' -- m == 0
 	else return sse{ data=table.concat( fd.reduce(fd.keys(tabs), fd.map(asJSON), fd.into, {} ), ',\n'), event='tabs' } end
     end
 
@@ -287,7 +282,7 @@ local function recording()
     print(skt, 'listening on port 8081\n')
 
     local function classify( w, q )
-	local tag = id2tag(w.id_tag) -- XXX TRYING!!!
+	local tag = id2tag(w.id_tag)
 	if tag == 'guardar' then MM.tabs.add( w, q ); w.event = 'tabs'; return w end
 --	if tag == 'h' then  local m = MM.entradas.add( w ); m.event = 'entradas'; return m end
 	if tag == 'd' then MM.tabs.remove(w.pid); w.ret = { 'event: delete\ndata: '.. w.pid ..'\n\n' }; w.event = 'none' w.data = ''; return w end
