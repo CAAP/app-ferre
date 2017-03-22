@@ -20,7 +20,7 @@
 
 	    SQL.update = o => { return xget( 'update', o ) };
 
-//	    SQL.remove = o => { return xget( 'remove', o ) };
+	    SQL.pesos = o => { return xget( 'pesos', o ) };
 
 	    SQL.get = o => { return xget( 'get', o ) };
 

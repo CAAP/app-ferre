@@ -3,6 +3,16 @@
 	var DATA = { VERSION: 1, DB: 'datos', clearTable: tb => { while (tb.firstChild) { tb.removeChild( tb.firstChild ); } } };
 
 	(function() {
+
+	    DATA.asstr = function asstr( obj ) {
+		if (Array.isArray(obj))
+		    return obj.join('&');
+// 	    function ppties(o) { return Object.keys(o).map( k => { return (k + '=' + o[k]); } ).join(); } XXX NEW Feature Some Browsers ONLY
+		let props = [];
+		for (var prop in obj) { props.push( prop + '=' + obj[prop] ) }
+		return props.join('&');
+	    }
+
 	    function prc2txt(q) { // maybe improve SO not to do it for all prices XXX
 		q.precios = {};
 		for (let i=1; i<4; i++) {
@@ -25,20 +35,6 @@
 			.then( DATA.inplace );
 		}
 	    };
-
-/*
-	    let PACK = {
-		STORE: 'paquetes',
-		INDEX: 'uid',
-		update: o => {
-		    let os = IDB.write2DB( PACK );
-		    return os.get( o.clave ).then( q => {if (q) {return Object.assign(q, o);} else {return o;} } )
-			.then( os.put )
-			.then( DATA.inplace )
-			.then( o => { if (o.desc.startsWith('VV')) {return os.delete( o.clave );} } );
-		}
-	    };
-*/
 
 	    let FALT = {STORE: 'precios', INDEX: 'faltante'};
 
@@ -70,7 +66,7 @@
 			updateMe( data );
 		    } else {
 			console.log('Update mismatch error: ' + localStorage.week + '(' + upd.week + ') V' + localStorage.vers + '(V' + upd.vers + ')');
-			XHR.getJSON('/ferre/updates.lua?oweek='+localStorage.week+'&overs='+localStorage.vers+'&nweek='+upd.week).then( updateMe );
+			XHR.getJSON('/app/updates.lua?oweek='+localStorage.week+'&overs='+localStorage.vers+'&nweek='+upd.week).then( updateMe );
 		    }
 		}, false);
 	    };

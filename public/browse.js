@@ -90,7 +90,7 @@
 		e.target.value = "";
 	// IF string.contains('*') : searchSQL
 		if (ss.includes('*')) {
-		    XHR.getJSON('/ferre/query.lua?desc='+encodeURIComponent(ss))
+		    XHR.getJSON('/app/query.lua?desc='+encodeURIComponent(ss))
 			.then( a => {
 			    if (a[0])
 				searchByDesc(a[0].desc.match(ss.replace('*','.+'))[0]).then( () => {BROWSE.tab.style.visibility='visible';} );

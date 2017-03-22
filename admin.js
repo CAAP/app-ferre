@@ -112,8 +112,7 @@
 		}
 
 		admin.nuevo = function() {
-		    return SQL.get({desc: 'VVV'})
-			.then( JSON.parse )
+		    return XHR.getJSON('/admin/get.lua?desc=VVV')
 			.then( a => {
 			    let clave = a[0].clave.toString();
 			    console.log(a[0]);
@@ -129,8 +128,7 @@
 		    if (records.has(clave))
 			{ setfields( cambios.has(clave) ? Object.assign({}, records.get(clave), cambios.get(clave)) : records.get(clave) ); udiag.showModal(); }
 		    else {
-			SQL.get({clave: clave})
-			    .then( JSON.parse )
+			XHR.getJSON('/admin/get.lua?clave='+clave)
 			    .then( a => { records.set(clave, a[0]); setfields(a[0]); udiag.showModal(); } );
 		    }
 		};
@@ -187,12 +185,8 @@
 			admin.emptyCambios();
 		};
 
-		XHR.getJSON('/ferre/header.lua').then( a => a.forEach( addfield ) );
+		XHR.getJSON('/admin/header.lua').then( a => a.forEach( addfield ) );
 	    })();
-
-	    // SQL
-
-	    SQL.DB = 'ferre';
 
 	    // SET HEADER
 	    (function() {

@@ -8,12 +8,8 @@
 
 	    caja.cerrar = e => e.target.closest('dialog').close();
 
-	    caja.print = () => Promise.all(Array.from(TICKET.bagUID).map( encodeURIComponent ).map( k => XHR.get('/ticket/print.lua?uid='+k) )); //SQL.print({week: cajita.dataset.week, uid: k })));
+	    caja.print = () => Promise.all(Array.from(TICKET.bagUID).map( encodeURIComponent ).map( k => XHR.get('/caja/print.lua?uid='+k) )); // XXX should be POST;
 
-	    // SQL
-
-	    SQL.DB = 'caja';
-	
 	    // PAGAR
 
 	    (function() {
@@ -44,7 +40,7 @@
 		}
 
 		procesar.credito = function() {
-		    let rfc = e.target.closest('input[name="rfc"]').value;
+//		    let rfc = e.target.closest('input[name="rfc"]').value;
 		}
 
 		procesar.efectivo = function() {
@@ -95,7 +91,7 @@
 
 	    // TICKET
 
-	    TICKET.load();
+	    TICKET.load_tags();
 
 	    TICKET.bag = document.getElementById( TICKET.bagID );
 	    TICKET.myticket = document.getElementById( TICKET.myticketID );
@@ -145,19 +141,19 @@
 
 	 	function asnum(s) { let n = Number(s); return Number.isNaN(n) ? s : n; }
 
+		// XXX  lastChild dataset add UUID : uuid||id_tag||clave
 		function data( o ) { return IDB.readDB( PRICE ).get( asnum(o.clave) ).then( w => Object.assign( o, w ) ).then( TICKET.show ).then( () => { mybag.lastChild.dataset.uid = o.uid } ) }
 
-		function add2bag( uid, rfc ) {  //  rfc
-		    TICKET.bagUID.add( uid );
-		    if (!TICKET.bagRFC && (rfc != "undefined") && (rfc.length > 0) ) { TICKET.bagRFC = rfc; TICKET.timbre.disabled = false; }
-		    SQL.get( { uid: uid } )
-			.then( JSON.parse )
+		function add2bag( uid, id_tag ) {  //  rfc
+		    TICKET.bagUID.add( uid ); // XXX REMOVE
+//XXX RFC!Here?		    if (!TICKET.bagRFC && (rfc != "undefined") && (rfc.length > 0) ) { TICKET.bagRFC = rfc; TICKET.timbre.disabled = false; }
+		    XHR.getJSON('/caja/get.lua?uid='+uid) // XXX uuid : uid || id_tag
 			.then( objs => Promise.all( objs.map( data ) ) );
 		}
 
 		caja.cleanCaja = () => Array.from(cajita.querySelectorAll("input:checked")).forEach(ic => {ic.checked = false });
 
-		let removeItem = uid => Promise.all( Array.from(mybag.querySelectorAll('tr[data-uid="' + uid + '"]')).map( TICKET.remove ) );
+		let removeByUID = uid => Promise.all( Array.from(mybag.querySelectorAll('tr[data-uid="' + uid + '"]')).map( TICKET.remove ) );
 
 //		const doprint = document.getElementById("doprint");
 
@@ -165,8 +161,8 @@
 
 		function addRow( row, w ) {
 		    let ie = document.createElement('input');
-		    ie.type = 'checkbox'; ie.value = w.uid; ie.name = w.rfc || ((TICKET.TAGS.facturar == w.id_tag) && 'XXX');
-		    ie.addEventListener('change', e => { if (e.target.checked) add2bag(e.target.value, e.target.name); else removeItem(e.target.value); } );
+		    ie.type = 'checkbox'; ie.value = w.uid; ie.name = w.id_tag;// ie.name = w.rfc || ((TICKET.TAGS.facturar == w.id_tag) && 'XXX');
+		    ie.addEventListener('change', e => { if (e.target.checked) add2bag(e.target.value, e.target.name); else removeByUID(e.target.value); } );
 		    row.insertCell().appendChild(ie);
 
 		    w.nombre = PEOPLE.id[w.uid.match(regInt)[0]] || 'NaP';
@@ -176,16 +172,10 @@
 		    for (let k of ['time', 'nombre', 'count', 'total', 'tag']) { row.insertCell().appendChild( document.createTextNode(w[k]) ); }
 		}
 
-//		if (!localStorage.uid) { localStorage.uid = ''; }
 
 		function add2caja(w) {
 		    let row = cajita.insertRow(0);
 		    addRow(row, w);
-/*		    let uid = w.uid;
-		    if (doprint.checked && (localStorage.uid <= uid)) {
-			XHR.get('/ticket/print.lua?uid='+uid+'&tag='+TICKET.TAGS.ID[w.id_tag]||'');
-			localStorage.uid = uid.substr(1,19); // Date & Time
-		    } */
 		}
 
 		function add2cajaOld(w) {

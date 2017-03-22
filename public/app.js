@@ -8,6 +8,10 @@
 
 	    DATA.inplace = q => {let r = document.body.querySelector('tr[data-clave="'+q.clave+'"]'); if (r) {DATA.clearTable(r); BROWSE.rows(q,r);} return q;};
 
+	    const xhro = document.location.origin + ':8081';
+
+	    const xget = (q, o) => XHR.get( xhro + '/' + q +' .lua?' + DATA.asstr(o) );
+
 	    // BROWSE
 
 	    BROWSE.tab = document.getElementById('resultados');
@@ -27,7 +31,7 @@
 
 	    // TICKET
 
-	    TICKET.load();
+	    TICKET.load_tags();
 
 	    TICKET.bag = document.getElementById( TICKET.bagID );
 	    TICKET.myticket = document.getElementById( TICKET.myticketID );
@@ -64,7 +68,7 @@
 
 		TICKET.extraEmpty = () => { ttotal.textContent = ''; tcount.textContent = ''; };
 
-		ferre.emptyBag = () => {TICKET.empty(); return SQL.print({id_tag: 'd', pid: Number(persona.value)})};
+		ferre.emptyBag = () => { TICKET.empty(); return xget('print', {id_tag: 'd', pid: Number(persona.value)}) };
 
 		ferre.menu = e => {
 		    if (persona.value == 0) { return; }
@@ -93,10 +97,10 @@
 
 		TICKET.items.forEach( item => objs.push( 'args=' + TICKET.plain(item) ) );
 
-		return SQL.print( objs ).then( TICKET.empty, () => {TICKET.myticket.style.visibility = 'visible'} );
+		return xget('print', objs ).then( TICKET.empty, () => {TICKET.myticket.style.visibility = 'visible'} );
 	    };
 
-		ferre.enviarF = e => SQL.update({clave: clave, faltante: 1, obs: obs.value, tbname: 'faltantes', id_tag: 'u'}).then( () => { obs.value = ''; ferre.cerrar(e); } );
+		ferre.enviarF = e => xget('update', {clave: clave, faltante: 1, obs: obs.value, tbname: 'faltantes', id_tag: 'u'}).then( () => { obs.value = ''; ferre.cerrar(e); } );
 
 		ferre.faltante = e => IDB.readDB( PRICE ).get( clave ).then( w => { ferre.cerrar(e); if (w.faltante < 2) {obs.value = w.obs; diagF.showModal();} } );
 
@@ -140,13 +144,9 @@
 	    ferre.surtir = function() {
 		let objs = [];
 		TICKET.items.forEach( item => objs.push( 'args=clave+'+item.clave+'+qty+'+item.qty  ) );
-		return XHR.get('/ticket/surtir.lua?'+objs.join('&')).then( ferre.saveme );
+		return xget('surtir', objs).then( ferre.saveme );
 	    };
 */
-
-	    // SQL
-
-	    SQL.DB = document.location.origin + ':8081';
 
 	    // HEADER
 
