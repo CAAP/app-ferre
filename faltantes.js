@@ -25,6 +25,7 @@
 
 	    //
 
+/*
 	    let mfs = [];
 	    IDB.readDB( FALT ).index(  1, 'next', cursor => {
 		if (cursor) {
@@ -32,6 +33,7 @@
 	    	    cursor.continue();
 		} else { mfs.sort(); }
 	    });
+*/
 
 	    app.print = () => window.open('/milista.html','lista-falts');
 
