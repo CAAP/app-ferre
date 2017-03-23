@@ -104,8 +104,8 @@
 	    caja.updateItem = TICKET.update;
 
 	    caja.clickItem = e => TICKET.remove( e.target.parentElement );
-
-	    caja.emptyBag = () => { TICKET.empty(); TICKET.bagUID.clear(); TICKET.bagRFC = false; TICKET.timbre.disabled = true; caja.cleanCaja(); }
+// TICKET.timbre.disabled = true; 
+	    caja.emptyBag = () => { TICKET.empty(); TICKET.bagUID.clear(); TICKET.bagRFC = false; caja.cleanCaja(); }
 
 		// XXX Temporal
 /*
@@ -179,7 +179,7 @@
 		}
 
 		function add2cajaOld(w) {
-		    let row = cajaOld.insertRow(0);
+		    let row = cajaOld.insertRow();
 		    addRow(row, w);
 		}
 

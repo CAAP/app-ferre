@@ -7,6 +7,7 @@ local sql = require'carlos.sqlite'
 local ex = require'ferre.extras'
 local tkt = require'ferre.ticket'
 local lpr = require'ferre.bixolon'
+local precio = require'ferre.precio'
 
 local ahora = ex.now()
 local hoy = os.date('%d-%b-%y', ahora)
@@ -142,30 +143,14 @@ local function printme(q, conn)
     local uid = q.uid
     local tag = id2tag(q.id_tag)
     local y,m,d = uid:match'^(%d+)-(%d+)-(%d+)'
-    local PRC = 'SELECT desc, precio%d ||"/"|| IFNULL(u%d,"?") prc FROM precios WHERE clave LIKE %q'
 
     local fields = hd.args{clave='clave',precio='precio',qty='qty',rea='rea',totalCents='totalCents'} -- XXX if factura, venta then add: desc='desc', prc='prc'
 
-    local function precio(w)
-	local j = w.precio:sub(-1)
-	w.clave = w.clave
-	w.qty = w.qty
-	w.rea = w.rea
---	if not w.desc then -- XXX is even this possible? only if it's factura / venta & fields has: desc, prc
-	    local ret = fd.first( conn.query(string.format(PRC, j, j, w.clave)), function(x) return x end )
-	    w.desc = ret.desc
-	    w.prc = ret.prc
---	end
-	w.subTotal = string.format('%.2f', w.totalCents/100)
-	return w
-    end
-
     local function fetch(w)
-	local fecha = uid:match'([^P]+)P'
 	local p = pid2name(tonumber(uid:match'(%d+)$'))
 
-	local ret = {fecha=fecha, person=p, tag=tag}
-	ret.datos = fd.reduce( w.args, fd.map(fields), fd.map(precio), fd.into, {} )
+	local ret = {uid=uid, person=p, tag=tag}
+	ret.datos = fd.reduce( w.args, fd.map(fields), fd.map(precio(conn)), fd.into, {} )
 	ret.total = string.format('%.2f', w.totalCents/100)
 
 	return ret
