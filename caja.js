@@ -142,7 +142,15 @@
 	 	function asnum(s) { let n = Number(s); return Number.isNaN(n) ? s : n; }
 
 		// XXX  lastChild dataset add UUID : uuid||id_tag||clave
-		function data( o ) { return IDB.readDB( PRICE ).get( asnum(o.clave) ).then( w => Object.assign( o, w ) ).then( TICKET.show ).then( () => { mybag.lastChild.dataset.uid = o.uid } ) }
+		// XXX clave may not exists ??? XXX
+		function data( o ) {
+		    return IDB.readDB( PRICE )
+			.get( asnum(o.clave) )
+			.then( w => { if (w) { return Object.assign( o, w ) } else { return Promise.reject() } } )
+			.then( TICKET.show )
+			.then( () => { mybag.lastChild.dataset.uid = o.uid } )
+			.catch( e => console.log(e) )
+		}
 
 		function add2bag( uid, id_tag ) {  //  rfc
 		    TICKET.bagUID.add( uid ); // XXX REMOVE
