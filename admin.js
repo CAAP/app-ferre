@@ -113,7 +113,7 @@
 		    let clave = e.target.parentElement.dataset.clave;
 		    CHANGES.fetch(clave, '/admin/get.lua?clave='+clave, setfields);
 		    udiag.showModal();
-		    document.querySelectorAll('.modificado').forEach(o => o.classList.remove('modificado'));
+		    tabla.querySelectorAll('.modificado').forEach(o => o.classList.remove('modificado'));
 		    CHANGES.inplace( clave, p => tabla.querySelector("input[name="+p+"]").classList.add('modificado') );
 		};
 
