@@ -27,7 +27,7 @@
 
 	    ferre.scroll = BROWSE.scroll;
 
-	    ferre.cerrar = e => e.target.closest('dialog').close();
+	    ferre.cerrar = DATA.close;
 
 	    // TICKET
 

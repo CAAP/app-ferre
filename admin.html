@@ -6,10 +6,10 @@
     <title> ADMIN </title>
     <link rel="stylesheet" href="public/app.css">
     <script type="text/javascript" src="public/xhr.js"></script>
-<!--    <script type="text/javascript" src="public/sql.js"></script> --!>
     <script type="text/javascript" src="public/idb.js"></script>
     <script type="text/javascript" src="public/browse.js"></script>
     <script type="text/javascript" src="public/data.js"></script>
+    <script type="text/javascript" src="public/changes.js"></script>
     <script type="text/javascript" src="admin.js"></script>
 </head>
 
@@ -35,24 +35,8 @@
 
 	</section>
 
-	<section id="ticket" class="tablas">
-	<table>
-
-           <caption> CAMBIOS </caption>
-	    <dt>
-            <thead>
-                <tr> <th> Clave </th> <th class="desc"> Detalles </th> </tr> 
-            </thead>
-	    </dt>
-	    <tbody id="tabla-update" class="amarillo" onclick="admin.getRecord(event)">
-	    </tbody>
-
-	    <tfoot><tr><th colspan=2><button name="cerrar" onclick="admin.emptyCambios()">Cancelar</button> <button align="right" onclick="admin.enviar()">Aceptar</button></th></tr></tfoot>
-
-	</table>
-	</section>
-
-    <section><dialog id="dialogo-cambios"><table><caption>PRODUCTO</caption><thead><th></th><th></th><th></th><th></th></thead><tbody id="tabla-cambios" onchange="admin.anUpdate(event)"></tbody></table><button align="right" name="cerrar" onclick="admin.cerrar(event)">Cerrar</button>&emsp;&emsp;<button onclick="admin.actualizar(event)">Actualizar</button></dialog></section>
+<!--<thead><th></th><th></th><th></th><th></th></thead>--!>
+    <section><dialog id="dialogo-cambios"><table><caption>PRODUCTO</caption><tbody id="tabla-cambios" onchange="admin.anUpdate(event)"></tbody><tfoot><tr><td><button align="right" name="cerrar" onclick="admin.cerrar(event)">Cerrar</button></td><td><button name="guardar" onclick="admin.enviar()">Guardar</button></td><td colspan="2" align="right"><button onclick="admin.actualizar()">Actualizar</button></td></tr></tfoot></table></dialog></section>
 
     <footer> <label id="copyright"></label> <label id="db-vers"></label> </footer>
 

@@ -7,8 +7,6 @@
 
 	    DATA.inplace = q => {let r = document.body.querySelector('tr[data-clave="'+q.clave+'"]'); if (r) {DATA.clearTable(r); BROWSE.rows(q,r); r.classList.add('modificado');} return q;};
 
-	    admin.cerrar = e => e.target.closest('dialog').close(); // XXX unify
-
 	    // BROWSE
 
 	    BROWSE.tab = document.getElementById('resultados');
@@ -61,12 +59,8 @@
 	    (function() {
 		let tabla = document.getElementById('tabla-cambios'); // tabla inside dialog
 		let udiag = document.getElementById('dialogo-cambios');
-		let lista = document.getElementById('tabla-update');
-		let ups = document.getElementById('ticket');
 
 		let fields = new Set();
-		let cambios = new Map();
-		let records = new Map();
 		let costos = new Set(['costo', 'impuesto', 'descuento', 'prc1', 'prc2', 'prc3']);
 
 		function outputs(row, k) {
@@ -95,14 +89,6 @@
 		    fields.add( k );
 		}
 
-		function addupdate( clave, upd ) {
-		    ups.style.visibility = 'visible';
-		    let row = lista.insertRow();
-		    row.dataset.clave = clave;
-		    row.insertCell().appendChild( document.createTextNode(clave) );
-		    row.insertCell().appendChild( document.createTextNode(upd) );
-		}
-
 		function setfields( o ) {
 		    let costol = o.costol
 		    let a = Object.assign({}, o, {costol: (costol/1e4).toFixed(2)});
@@ -116,73 +102,53 @@
 			.then( a => {
 			    let clave = a[0].clave.toString();
 			    console.log(a[0]);
-			    let o = {clave: clave, costo: 0, costol: 0, prc1: 0, prc2: 0, prc3: 0}; // a[0];
-			    records.set(clave, o);
+			    let o = {clave: clave, costo: 0, costol: 0, prc1: 0, prc2: 0, prc3: 0};
+			    CHANGES.rawset(clave, () => o);
 			    setfields(o);
 			    udiag.showModal();
 			} );
 		};
 
-	admin.getRecord = function(e) {
+		admin.getRecord = function(e) {
 		    let clave = e.target.parentElement.dataset.clave;
-		    if (records.has(clave))
-			{ setfields( cambios.has(clave) ? Object.assign({}, records.get(clave), cambios.get(clave)) : records.get(clave) ); udiag.showModal(); }
-		    else {
-			XHR.getJSON('/admin/get.lua?clave='+clave)
-			    .then( a => { records.set(clave, a[0]); setfields(a[0]); udiag.showModal(); } );
-		    }
+		    CHANGES.fetch(clave, '/admin/get.lua?clave='+clave, setfields);
+		    udiag.showModal();
+		    document.querySelectorAll('.modificado').forEach(o => o.classList.remove('modificado'));
+		    CHANGES.inplace( clave, p => tabla.querySelector("input[name="+p+"]").classList.add('modificado') );
 		};
 
-		function ppties(o) { return Object.keys(o).map( k => { return (k + '=' + o[k]); } ).join('&'); }
-
-		function encPpties(o) { return Object.keys(o).map( k => { return (k + '=' + encodeURIComponent(o[k])); } ).join('&'); }
-
-		admin.actualizar = function(event) {
+		admin.actualizar = function() {
 		    let ele = tabla.querySelector("input[name=costo]");
-		    return admin.anUpdate({target: {name: 'costo', value: ele.value} });
+		    return admin.anUpdate({target: ele});
 		};
 
-		function compute(k, clave) {
-		    if (costos.has(k) || k.startsWith('prc')) {
-			let w = Object.assign({}, records.get(clave), cambios.get(clave));
-			if (costos.has(k)) {
-			    w.costol = w.costo*(100+(Number(w.impuesto)||0))*(100-(Number(w.descuento)||0));
-			    let a = records.get(clave);
-			    a.costol = w.costol;
-			    records.set( clave, a );
-			}
-		        setfields( w );
-		    }
+		admin.cancelar = { CHANGES.clear(); udiag.close(); };
+
+		function costol(o) {o.costol = o.costo*(100+(Number(o.impuesto)||0))*(100-(Number(o.descuento)||0));}
+
+		function compute(clave, k) {
+		    if (k.startsWith('prc'))
+			CHANGES.fetch(clave, '', setfields);
+		    else
+			CHANGES.fetch( clave, '', w => { costol(w); CHANGES.rawset(clave, o => Object.assign(o, {costol: w.costol})); setfields(w); } );
 		}
 
 		admin.anUpdate = function(e) {
 		    let clave = udiag.returnValue;
-		    if (cambios.has( clave )) {
-			let b = cambios.get( clave );
-			b[e.target.name] = e.target.value;
-			cambios.set( clave, b );
-			lista.querySelector('tr[data-clave="'+clave+'"]').lastChild.textContent = ppties(b); // XXX Unify
-		    } else {
-			let a = {}; a[e.target.name] = e.target.value;
-			cambios.set( clave, a );
-			addupdate(clave, e.target.name+'='+e.target.value)
-		    }
-		    compute(e.target.name, clave);
+		    let k = e.target.name;
+		    let v = e.target.value;
+		    CHANGES.update(clave, k, v);
+		    if (costos.has(k)) { compute(clave, k); }
+		    e.target.classList.add('modificado');
 		};
 
-		function clearTable(tb) { while (tb.firstChild) { tb.removeChild( tb.firstChild ); } }; // XXX unify
-
-		admin.emptyCambios = () => { cambios.clear(); records.clear(); clearTable(lista); ups.style.visibility = 'hidden'; };
-
-		function update(o) { return  XHR.get(document.location.origin + ':8081/update?' + encPpties(o) ) }
+		function update(o) { return  XHR.get(document.location.origin + ':8081/update?' + DATA.encPpties(Object.assign(o,{tbname: 'datos'}))) }
 
 		admin.enviar = function() {
+		    let clave = udiag.returnValue;
 		    if (window.confirm('Estas seguro de realizar los cambios?'))
-			Promise.all( Array.from(cambios.keys())
-			    .map( clave => Object.assign({clave: clave, tbname: 'datos'}, cambios.get(clave)) )
-			    .map( update ) )
-			.then( clave => console.log('clave: '+clave) );
-			admin.emptyCambios();
+			CHANGES.fetch(clave, '', update)
+			.then( () => { udiag.close(); CHANGES.clear(); } );
 		};
 
 		XHR.getJSON('/admin/header.lua').then( a => a.forEach( addfield ) );
@@ -197,7 +163,7 @@
 	    })();
 
 	    // SET FOOTER
-	    (function() { document.getElementById('copyright').innerHTML = 'versi&oacute;n ' + 1.0 + ' | cArLoS&trade; &copy;&reg;'; })();
+	    (function() { document.getElementById('copyright').innerHTML = 'versi&oacute;n ' + 2.0 + ' | cArLoS&trade; &copy;&reg;'; })();
 
 	// SERVER-SIDE EVENT SOURCE
 	    (function() {
@@ -212,4 +178,3 @@
 	    })();
 
 	};
-

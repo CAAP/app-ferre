@@ -69,7 +69,7 @@ local function cambios( conn )
     local isstr = {desc=true, fecha=true, obs=true, proveedor=true, gps=true, u1=true, u2=true, u3=true}
 
     local function reformat(v, k)
-	local vv = isstr[k] and string.format("'%s'", v) or (math.tointeger(v) or tonumber(v) or 0)
+	local vv = isstr[k] and string.format("'%s'", v:upper()) or (math.tointeger(v) or tonumber(v) or 0)
 	return k .. ' = ' .. vv
     end
 
@@ -95,14 +95,13 @@ local function cambios( conn )
 	fd.reduce( fd.keys(ret), fd.merge, w )
     end
 
+
     function MM.cambios.add( w )
 	local clave = w.clave
 	local tbname = w.tbname
 	local clause = string.format('WHERE clave LIKE %q', clave)
 
 	w.id_tag = nil; w.args = nil; w.clave = nil; w.tbname = nil; -- SANITIZE
-
-	if w.desc then w.desc = w.desc:upper() end
 
 	local ret = fd.reduce( fd.keys(w), fd.map( reformat ), fd.into, {} )
 	local qry = string.format('UPDATE %q SET %s %s', tbname, table.concat(ret, ', '), clause)

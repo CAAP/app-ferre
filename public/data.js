@@ -3,11 +3,20 @@
 	var DATA = { VERSION: 1, DB: 'datos', clearTable: tb => { while (tb.firstChild) { tb.removeChild( tb.firstChild ); } } };
 
 	(function() {
+	    //  XXX New feature some browsers only
+	    function ppties(o) { return Object.keys(o).map( k => { return (k + '=' + o[k]); } ).join('&'); }
+
+	    DATA.ppties = ppties;
+
+	    DATA.encPpties = o => Object.keys(o).map( k => { return (k + '=' + encodeURIComponent(o[k])); } ).join('&');
+
+	    DATA.close = e => e.target.closest('dialog').close();
+
 
 	    DATA.asstr = function asstr( obj ) {
 		if (Array.isArray(obj))
 		    return obj.join('&');
-// 	    function ppties(o) { return Object.keys(o).map( k => { return (k + '=' + o[k]); } ).join(); } XXX NEW Feature Some Browsers ONLY
+// 	   ppties could be use instead XXX 
 		let props = [];
 		for (var prop in obj) { props.push( prop + '=' + obj[prop] ) }
 		return props.join('&');
