@@ -122,7 +122,7 @@
 		    return admin.anUpdate({target: ele});
 		};
 
-		admin.cancelar = { CHANGES.clear(); udiag.close(); };
+		admin.cancelar = () => { CHANGES.clear(); udiag.close(); };
 
 		function costol(o) {o.costol = o.costo*(100+(Number(o.impuesto)||0))*(100-(Number(o.descuento)||0));}
 
