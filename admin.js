@@ -63,6 +63,13 @@
 		let fields = new Set();
 		let costos = new Set(['costo', 'impuesto', 'descuento', 'prc1', 'prc2', 'prc3']);
 
+		let records = new Map();
+
+		function fetch(k, f) {
+		    if (records.has(k)) { return f( CHANGES.fetch(k, records.get(k)) ); }
+		    return XHR.getJSON('/admin/get.lua?clave='+k).then(a => { records.set(k, a[0]); f(a[0]); });
+		}
+
 		function outputs(row, k) {
 		    let ie = document.createElement('input');
 		    ie.type = 'text'; ie.size = 5; ie.name = k; ie.disabled = true;
@@ -103,7 +110,7 @@
 			    let clave = a[0].clave.toString();
 			    console.log(a[0]);
 			    let o = {clave: clave, costo: 0, costol: 0, prc1: 0, prc2: 0, prc3: 0};
-			    CHANGES.rawset(clave, () => o);
+			    records.set(clave, o);
 			    setfields(o);
 			    udiag.showModal();
 			} );
@@ -111,7 +118,7 @@
 
 		admin.getRecord = function(e) {
 		    let clave = e.target.parentElement.dataset.clave;
-		    CHANGES.fetch(clave, '/admin/get.lua?clave='+clave, setfields);
+		    fetch(clave, setfields);
 		    udiag.showModal();
 		    tabla.querySelectorAll('.modificado').forEach(o => o.classList.remove('modificado'));
 		    CHANGES.inplace( clave, p => tabla.querySelector("input[name="+p+"]").classList.add('modificado') );
@@ -122,15 +129,15 @@
 		    return admin.anUpdate({target: ele});
 		};
 
-		admin.cancelar = () => { CHANGES.clear(); udiag.close(); };
+		admin.cancelar = () => { records.clear(); CHANGES.clear(); udiag.close(); };
 
 		function costol(o) {o.costol = o.costo*(100+(Number(o.impuesto)||0))*(100-(Number(o.descuento)||0));}
 
 		function compute(clave, k) {
 		    if (k.startsWith('prc'))
-			CHANGES.fetch(clave, '', setfields);
+			fetch(clave, setfields);
 		    else
-			CHANGES.fetch( clave, '', w => { costol(w); CHANGES.rawset(clave, o => Object.assign(o, {costol: w.costol})); setfields(w); } );
+			fetch( clave, w => { costol(w); records.set(clave,w); setfields(w); } );
 		}
 
 		admin.anUpdate = function(e) {
@@ -142,13 +149,14 @@
 		    e.target.classList.add('modificado');
 		};
 
-		function update(o) { return  XHR.get(document.location.origin + ':8081/update?' + DATA.encPpties(Object.assign(o,{tbname: 'datos'}))) }
+		function update(clave, o) { return XHR.get(document.location.origin + ':8081/update?' + DATA.encPpties(Object.assign(o,{clave: clave, tbname: 'datos'}))) }
 
 		admin.enviar = function() {
 		    let clave = udiag.returnValue;
 		    if (window.confirm('Estas seguro de realizar los cambios?'))
-			CHANGES.fetch(clave, '', update)
-			.then( () => { udiag.close(); CHANGES.clear(); } );
+			CHANGES.get(clave, update)
+			.then( () => { udiag.close(); records.clear(); CHANGES.clear(); } )
+			.catch( e => { console.log(e); udiag.close(); records.clear(); } );
 		};
 
 		XHR.getJSON('/admin/header.lua').then( a => a.forEach( addfield ) );

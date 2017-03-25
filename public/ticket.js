@@ -46,7 +46,7 @@
 	    function inputE( a ) {
 		let ret = document.createElement('input');
 		ret.addEventListener('keydown', incdec);
-		a.map( o => ret[o[0]] = o[1] );
+		a.forEach( o => { ret[o[0]] = o[1] } );
 		return ret;
 	    }
 
@@ -81,7 +81,7 @@
 
 	    function displayItem(q) {
 		let row = TICKET.bag.insertRow(0);
-		row.title = q.desc.substr(0,3); // TRYING OUT LOCATION XXX
+//		row.title = q.desc.substr(0,3); // TRYING OUT LOCATION XXX
 		row.dataset.clave = q.clave;
 		israbatt(q, row, false);
 		// DATOS
@@ -132,6 +132,7 @@
 		    items.set( clave, q );
 		    lbl.textContent = tocents(q.totalCents);
 		    bagTotal();
+		    return clave; // FIX for caja.js XXX
 		}
 	    };
 
@@ -154,6 +155,7 @@
 		TICKET.items.delete( clave );
 		TICKET.bag.removeChild( tr );
 		if (!TICKET.bag.hasChildNodes()) { TICKET.empty(); } else { bagTotal(); } // TICKET.myticket.style.visibility = 'hidden';
+		return clave; // FIX for caja.js XXX
 	    };
 
 	    TICKET.empty = function() { TICKET.items.clear(); clearTable( TICKET.bag ); TICKET.myticket.style.visibility = 'hidden'; TICKET.extraEmpty(); };

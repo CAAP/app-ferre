@@ -36,7 +36,7 @@
 	    TICKET.bag = document.getElementById( TICKET.bagID );
 	    TICKET.myticket = document.getElementById( TICKET.myticketID );
 
-	    TICKET.show = () => { TICKET.myticket.style.display = 'block'; TICKET.myticket.style.visibility = 'visible'; }
+//XXX WHY?	    TICKET.show = () => { TICKET.myticket.style.display = 'block'; TICKET.myticket.style.visibility = 'visible'; }
 
 	    ferre.rabatt = function() {
 		function prom(row) {
