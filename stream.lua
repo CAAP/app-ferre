@@ -193,22 +193,20 @@ end
 
 local function tabs( conn )
     local tabs = {}
---    local m = 0
 
     function MM.tabs.add( w, q )
+--	w.query = hd.asJSON(fd.reduce(w.args, fd.map(hd.args(keys)), fd.into, {})):gsub('^{', '['):gsub('}$',']')
 	local j = q:find'args'
 	w.query = q:sub(j):gsub('args=', '')
 	tabs[w.pid] = {pid=w.pid, query=w.query}
---	m = m + 1
 	return w
     end
 
     function MM.tabs.remove( pid ) tabs[pid] = nil end
-	--	m = m - 1
 
     function MM.tabs.sse()
-	if #tabs == 0 then return ':empty\n\n' -- m == 0
-	else return sse{ data=table.concat( fd.reduce(fd.keys(tabs), fd.map(asJSON), fd.into, {} ), ',\n'), event='tabs' } end
+	if pairs(tabs)(tabs) then return sse{ data=table.concat( fd.reduce(fd.keys(tabs), fd.map(asJSON), fd.into, {} ), ',\n'), event='tabs' }
+	else return ':empty\n\n' end
     end
 
     return conn
