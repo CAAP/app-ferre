@@ -3,8 +3,8 @@
 	var TICKET = { bagID: 'ticket-compra', myticketID: 'ticket', ttotalID: 'ticket-total', tivaID: 'ticket-iva', tbrutoID: 'ticket-bruto', tcountID: 'ticket-count' };
 
 	(function() {
-	    const VARS = ['clave', 'qty', 'rea', 'precio', 'totalCents'];
-	    const EVARS = ['clave', 'qty', 'desc', 'rea', 'prc', 'subTotal' ];
+	    const VARS = ['id', 'clave', 'qty', 'rea', 'precio', 'totalCents'];
+	    const EVARS = ['id', 'qty', 'desc', 'prc', 'rea', 'subTotal' ]; // clave
 	    const TAGS = {none: 'x'}; // { presupuesto: 'a', ticket: 'b', facturar: 'c', guardar: 'g', impreso: 'I', pagado: 'P', facturado: 'F'};
 	    TAGS.ID = {x: 'none'};
 
@@ -14,13 +14,15 @@
 
 	    TICKET.load_tags = () => XHR.getJSON('/app/tags.lua').then( a => a.forEach( t => { TAGS[t.nombre] = t.id; TAGS.ID[t.id] = t.nombre;} ) );
 
-	    function tocents(x) { return (x / 100).toFixed(2); };
+	    function tocents(x) { return (x / 100).toFixed(2); }
 
-	    function uptoCents(q) { return Math.round( 100 * q[q.precio] * q.qty * (1-q.rea/100) ); };
+	    function uptoCents(q) { return Math.round( 100 * q[q.precio] * q.qty * (1-q.rea/100) ); }
 
-	    function asnum(s) { let n = Number(s); return Number.isNaN(n) ? s : n; };
+	    function asnum(s) { let n = Number(s); return Number.isNaN(n) ? s : n; } // XXX
 
-	    function clearTable(tb) { while (tb.firstChild) { tb.removeChild( tb.firstChild ); } }; //recycle?
+	    function redondeo(x) { return 50 * Math.floor( (x + 25) / 50 ) }
+
+	    function clearTable(tb) { while (tb.firstChild) { tb.removeChild( tb.firstChild ); } } //recycle? XXX
 
 	    function incdec(e) {
 		switch (e.key || e.which) {
@@ -52,8 +54,8 @@
 
 	    function bagTotal() {
 		let total = 0;
-		TICKET.items.forEach( item => { total += asnum(item.totalCents); } );
-		TICKET.total( total );
+		TICKET.items.forEach( item => { total += parseInt(item.totalCents); } );
+		TICKET.total( redondeo(total) );
 	    }
 
 	    function precios(q) {
@@ -70,7 +72,7 @@
 	    }
 
 	    function israbatt(q, row, prev) {
-		let rabatt = asnum(q.rea) > 0 || q.precio != 'precio1';
+		let rabatt = parseFloat(q.rea) > 0 || q.precio != 'precio1';
 		if (rabatt ^ prev) {
 		    if (rabatt)
 			row.classList.add('rabatt');
@@ -85,7 +87,7 @@
 		row.dataset.clave = q.clave;
 		israbatt(q, row, false);
 		// DATOS
-		row.insertCell().appendChild( document.createTextNode( q.clave ) );
+		row.insertCell().appendChild( document.createTextNode( q.id ) ); // q.clave XXX
 		row.insertCell().appendChild( inputE( [['type', 'number'], ['size', 2], ['min', 0], ['name', 'qty'], ['value', q.qty]] ) ).select();
 		let desc = row.insertCell();
 		if (q.faltante) { desc.classList.add('faltante'); }
@@ -101,6 +103,7 @@
 	    function showItem(q) {
 		let row = TICKET.bag.insertRow();
 		row.dataset.clave = q.clave;
+		row.classList.add('basura');
 		israbatt(q, row, false);
 		// DATOS
 		q.subTotal = tocents(q.totalCents);

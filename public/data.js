@@ -12,11 +12,10 @@
 
 	    DATA.close = e => e.target.closest('dialog').close();
 
-
 	    DATA.asstr = function asstr( obj ) {
 		if (Array.isArray(obj))
 		    return obj.join('&');
-// 	   ppties could be use instead XXX 
+// 	   fn ppties could be use instead XXX 
 		let props = [];
 		for (var prop in obj) { props.push( prop + '=' + obj[prop] ) }
 		return props.join('&');

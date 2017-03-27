@@ -61,10 +61,17 @@
 		persona.dataset.id = 0;
 //		const tag = document.getElementById('tag');
 
-		function asnum(s) { let n = Number(s); return Number.isNaN(n) ? s : n; };
+		function asnum(s) { let n = Number(s); return Number.isNaN(n) ? s : n; }; // UNIFY XXX
 		function uptoCents(q) { return Math.round( 100 * q[q.precio] * q.qty * (1-q.rea/100) ); };
 
-		TICKET.total = cents => { ttotal.textContent = ' $' + (cents / 100).toFixed(2); tcount.textContent = TICKET.items.size;};
+		function getPrice( o ) {
+		    let clave = asnum(o.clave);
+		    return IDB.readDB( PRICE )
+			.get( clave )
+			.then( w => { if (w) { return Object.assign( o, w, {id: clave} ) } else { return Promise.reject('Item not found in DB: ' + clave) } } ) // ITEM NOT FOUND or REMOVED
+		}
+
+		TICKET.total = cents => { ttotal.textContent = (cents / 100).toFixed(2); tcount.textContent = TICKET.items.size;}; //' $' + 
 
 		TICKET.extraEmpty = () => { ttotal.textContent = ''; tcount.textContent = ''; };
 
@@ -79,9 +86,10 @@
 		ferre.add2bag = function() {
 		    diagI.close();
 		    if (TICKET.items.has( clave )) { console.log('Item is already in the bag.'); return false; }
-		    return IDB.readDB( PRICE ).get( clave )
-			.then( w => { w.qty=1; w.precio='precio1'; w.rea=0; w.totalCents=uptoCents(w); return w; } )
+		    return getPrice( {clave: clave, qty: 1, precio: 'precio1', rea: 0} )
+			.then( w => Object.assign(w, {totalCents: uptoCents(w)}) )
 			.then( TICKET.add );
+//			.catch( e => console.log(e) )
 		};
 
 	    ferre.print = function(a) {
@@ -91,10 +99,8 @@
 
 		if (pid == 0) { TICKET.empty(); return Promise.resolve(); } // it should NEVER happen XXX
 
-		let objs = ['id_tag='+id_tag, 'pid='+pid]; // , 'rfc='+rfc // 'person='+(PEOPLE.id[pid] || 'NAP'), // 'tag='+a, // , 'count='+TICKET.items.size
-
+		let objs = ['id_tag='+id_tag, 'pid='+pid];
 		TICKET.myticket.style.visibility = 'hidden';
-
 		TICKET.items.forEach( item => objs.push( 'args=' + TICKET.plain(item) ) );
 
 		return xget('print', objs ).then( TICKET.empty, () => {TICKET.myticket.style.visibility = 'visible'} );
@@ -106,11 +112,9 @@
 
 	    // PEOPLE - Multi-User support
 
-		function data( o ) { return IDB.readDB( PRICE ).get( asnum(o.clave) ).then( w => Object.assign( o, w ) ).then( TICKET.add ); }
-		function a2obj( a ) { const M = a.length/2; let o = {}; for (let i=0; i<M; i++) { o[a[i*2]] = a[i*2+1]; } return o; }
-//		function recreate(q) { return  q.split('&').reduce( (p, s) => p.then( () => data(a2obj(s.split('+'))) ), Promise.resolve() ); }
-		let recreate = q => Promise.all( q.split('&').map(s => data(a2obj(s.split('+')))) ).then( () => Promise.resolve() ).then( () => {tcount.textContent = TICKET.items.size;} );
-		function tabs(k) { persona.dataset.id = k; if (PEOPLE.tabs.has(k)) { recreate(PEOPLE.tabs.get(k).query); } }
+		let fetchMe = o => getPrice( o ).then( TICKET.add );
+		let recreate = a => Promise.all( a.map( fetchMe ) ).then( () => Promise.resolve() ).then( () => {tcount.textContent = TICKET.items.size;} );
+		function tabs(k) { persona.dataset.id = k; if (PEOPLE.tabs.has(k)) { recreate(PEOPLE.tabs.get(k)); } }
 
 		ferre.tab = () => {
 		    const pid = Number(persona.value);
@@ -164,12 +168,16 @@
 	    // SERVER-SIDE EVENT SOURCE
 
 	    (function() {
+
+		function a2obj( a ) { const M = a.length/2; let o = {}; for (let i=0; i<M; i++) { o[a[i*2]] = a[i*2+1]; } return o; }
+
 		function addEvents() {
 		    let esource = new EventSource(document.location.origin + ":8080");
 		    DATA.onLoaded(esource);
 		    esource.addEventListener("tabs", function(e) {
 		 	console.log("tabs event received.");
-		    	JSON.parse( e.data ).forEach( o => PEOPLE.tabs.set(o.pid, o) );
+		    	JSON.parse( e.data ).forEach( o => PEOPLE.tabs.set(o.pid, o.query.split('&').map(s => a2obj(s.split('+')))) );  //data(a2obj(s.split('+'))))
+
 		    }, false);
 		    esource.addEventListener("delete", function(e) {
 			const pid = Number(e.data);
