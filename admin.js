@@ -61,7 +61,7 @@
 		let udiag = document.getElementById('dialogo-cambios');
 
 		let fields = new Set();
-		let costos = new Set(['costo', 'impuesto', 'descuento', 'prc1', 'prc2', 'prc3']);
+		let costos = new Set(['costo', 'impuesto', 'descuento', 'rebaja', 'prc1', 'prc2', 'prc3']);
 
 		let records = new Map();
 
@@ -131,7 +131,7 @@
 
 		admin.cancelar = () => { records.clear(); CHANGES.clear(); udiag.close(); };
 
-		function costol(o) {o.costol = o.costo*(100+(Number(o.impuesto)||0))*(100-(Number(o.descuento)||0));}
+		function costol(o) {o.costol = o.costo*(100+(Number(o.impuesto)||0))*(100-(Number(o.descuento)||0))*(1-(Number(o.rebaja)||0)/100);}
 
 		function compute(clave, k) {
 		    if (k.startsWith('prc'))

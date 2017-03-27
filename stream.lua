@@ -65,7 +65,8 @@ local function cambios( conn )
 
     assert( conn.exec( string.format(sql.newTable, 'updates', schema) ) )
 
-    local costol = 'UPDATE datos SET costol = costo*(100+impuesto)*(100-descuento), fecha = %q %s'
+    local costol = 'UPDATE datos SET costol = costo*(100+impuesto)*(100-descuento)*(1-rebaja/100), fecha = %q %s'
+
     local isstr = {desc=true, fecha=true, obs=true, proveedor=true, gps=true, u1=true, u2=true, u3=true}
 
     local function reformat(v, k)
@@ -107,7 +108,7 @@ local function cambios( conn )
 	local qry = string.format('UPDATE %q SET %s %s', tbname, table.concat(ret, ', '), clause)
 	assert( conn.exec( qry ), qry )
 
-	if w.costo or w.impuesto or w.descuento then up_costos(w, clause) end
+	if w.costo or w.impuesto or w.descuento or w.rebaja then up_costos(w, clause) end
 
 	if w.prc1 or w.prc2 or w.prc3 then up_precios(w, clause) end
 
@@ -165,7 +166,7 @@ local function tickets( conn )
     local schema = 'uid, id_tag, clave, precio, qty INTEGER, rea INTEGER, totalCents INTEGER'
     local keys = { uid=1, id_tag=2, clave=3, precio=4, qty=5, rea=6, totalCents=7 }
     local clause = string.format("WHERE uid LIKE '%s%%'", today)
-    local query = "SELECT uid, SUM(qty) count, SUM(totalCents) totalCents, id_tag FROM %q WHERE uid LIKE '%s%%' GROUP BY uid||id_tag" -- id_tag CHANGES
+    local query = "SELECT uid, SUM(qty) count, SUM(totalCents) totalCents, id_tag FROM %q WHERE uid LIKE '%s%%' GROUP BY uid||id_tag" -- id_tag CHANGES XXX GOOD!!!
     local QRY = string.format('SELECT uid, SUM(qty) count, SUM(totalCents) totalCents, id_tag FROM %q %s GROUP BY uid', tbname, clause)
 
     assert( conn.exec( string.format(sql.newTable, tbname, schema) ) )
