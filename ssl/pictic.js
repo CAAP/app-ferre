@@ -12,51 +12,66 @@
 	    let video = document.createElement('video');
 	    let canvas = document.createElement('canvas');
 	    let photo = document.createElement('img');
-//	    let takepic = document.createElement('button');
+
+	    video.classList.add('snapshot');
 
 	    let row = tbody.insertRow();
 	    row.insertCell().appendChild(video);
 	    row.insertCell().appendChild(photo);
-
-	    canvas.style.display = 'hidden';
-	    document.body.appendChild(canvas);
-
-	    navigator.mediaDevices.getUserMedia({ video: {facingMode: "environment" } })
-	    .then(stream => {
-		video.srcObject = stream;
-		video.onloadedmetadata = e => {
-		    height = width * video.videoHeight / video.videoWidth;
-		    video.width = width;
-		    video.height = height;
-		    canvas.width = width;
-		    canvas.height = height;
-		}
-	    }).catch( e => console.log );
-
-/*	    video.addEventListener('canplay', e => {
-		if (!streaming) {
-		    height = width * video.videoHeight / videoWidth;
-		    video.width = width;
-		    video.height = height;
-		    canvas.width = width;
-		    canvas.height = height;
-		    streaming = true;
-		}
-	    }, false); */
 
 	    function clearphoto() {
 		let context = canvas.getContext('2d');
 		context.fillStyle = '#AAA';
 		context.fillRect(0, 0, width, height);
 		let data = canvas.toDataURL('image/png');
-		photo.setAttribute('src', data);
+		photo.src = data;
 	    }
 
 	    function takepic() {
 		let context = canvas.getContext('2d');
 		context.drawImage(video, 0, 0, width, height);
 		let data = canvas.toDataURL('image/jpeg');
+		photo.src = data;
 	    }
+
+	    video.addEventListener('click', takepic, false);
+
+	    function getStream(args) {
+		return navigator.mediaDevices.getUserMedia(args)
+		.then(stream => {
+		    video.srcObject = stream;
+		    video.onloadedmetadata = e => {
+			height = width * video.videoHeight / video.videoWidth;
+			video.width = width;
+			video.height = height;
+			canvas.width = width;
+			canvas.height = height;
+			clearphoto();
+		    };
+		    return stream;
+		}).catch( e => console.log );
+	    }
+
+	    // INTIALIZATION
+
+	    (function() {
+		let dvcs = [];
+		let vstream = null;
+		let cnt = 0;
+
+		navigator.mediaDevices.enumerateDevices().then( ds => ds.filter( d => d.kind.startsWith('video') ).forEach( d => dvcs.push(d) ) );
+
+		getStream({video: true}).then( stream => { vstream = stream; } );
+
+		pictic.flip = () => {
+		    video.pause();
+		    cnt = (1+cnt) % dvcs.length;
+		    let id = dvcs[cnt].deviceId;
+		    vstream.getTracks().forEach( track => track.stop() );
+		    return getStream({audio: false, video: {deviceId: {exact: id}}}).then( stream => { vstream = stream; } ).then( pictic.start );
+		};
+
+	    })();
 
 	    pictic.start = () => video.play();
 
