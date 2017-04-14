@@ -15,24 +15,125 @@
 
 	    BROWSE.DBget = s => IDB.readDB( PRICE ).get( s );
 
-	    BROWSE.DBindex = (a, b, f) => IDB.readDB( PRICE ).index( a, b, f );
-
 	    app.keyPressed = BROWSE.keyPressed;
 
 	    app.startSearch = BROWSE.startSearch;
 
 	    app.scroll = BROWSE.scroll;
 
-	    //
-/*
-	    let mfs = [];
-	    IDB.readDB( FALT ).index(  1, 'next', cursor => {
-		if (cursor) {
-		    mfs.push(cursor.value);
-	    	    cursor.continue();
-		} else { mfs.sort(); }
-	    });
-*/
+	    // Efficient LOOK UP
+	    (function() {
+		let mfs; // will be rewritten
+		let all = [];
+		let N = 0;
+		let provs = new Map();
+		let tmp = [];
+		let nopedido = [];
+		const cnt = document.getElementById('falts-cnt');
+		const lista = document.getElementById('lista-provs');
+		const ckbox = document.querySelector('input[name=pedido]');
+		const alpha = /\w/;
+
+		let rewind = () => BROWSE.startSearch({target: {value: mfs[0].desc}});
+
+		function sortDescAlpha(a,b) { return +(a.desc > b.desc) || +(a.desc === b.desc) - 1; }
+//		let sortDescAlpha = (a,b) => a.desc.localeCompare(b.desc);
+
+		function groupByProv( o ) {
+		    let p = o.proveedor;
+		    if (!alpha.test(p)) { p = '000'; }
+		    if (provs.has(p))
+			provs.get(p).push(o.clave);
+		    else
+			provs.set(p, [o.clave]);
+		}
+
+		function addProvs() {
+		    let ret = [];
+		    provs.forEach((a,p) => ret.push({desc: p, n: a.length}));
+		    ret.sort(sortDescAlpha);
+		    let row = lista.insertRow();
+		    ret.forEach((o,i) => {
+			if (i%4 == 0) { row = lista.insertRow(); }
+			row.insertCell().appendChild( document.createTextNode(o.desc) ); //  add o.n as in element.title =  XXX
+		    });
+		}
+
+		app.pedido = e => {
+		    if (e.target.checked) {
+			N = tmp.length;
+			mfs = tmp;
+		    } else {
+			N = nopedido.length;
+			mfs = nopedido;
+		    }
+		    cnt.textContent = N;
+		    rewind();
+		};
+
+		app.toggleProv= e => e.target.classList.toggle('activo');
+
+		app.doProvs = () => {
+		    let selected = new Set( Array.from(lista.querySelectorAll('.activo')).map(o => provs.get(o.textContent)).reduce((a,o) => a.concat(o) ) );
+		    tmp = all.filter(o => selected.has(o.clave));
+		    tmp.sort(sortDescAlpha);
+		    reset();
+		}
+
+		function reset() {
+		    N = tmp.length;
+		    mfs = tmp;
+		    nopedido = tmp.filter(o => { return (o.faltante === 1); });
+		    ckbox.checked = true;
+		    cnt.textContent = N;
+		    rewind();
+	 	}
+
+		app.onLoaded = () => IDB.readDB( FALT ).index(  IDBKeyRange.lowerBound(1), 'next', cursor => {
+		    if (cursor) {
+			all.push(cursor.value);
+	    		cursor.continue();
+		    } else {
+			all.sort(sortDescAlpha);
+			all.forEach( groupByProv );
+			addProvs();
+			tmp = all.slice();
+			reset();
+		    }
+		});
+
+		function findDesc(s) { return mfs.findIndex(o => { return (o.desc >= s) }) }
+
+// Cuold be done more efficient by using retrieve from browse.js from in-memory array
+
+		function iter(j, b, f, o) {
+		    let k = j;
+		    const d = b ? 1 : -1;
+		    function getNext() {
+			const i = k+d;
+			if ((i >= 0)&&(i < N)) {
+			    k = i;
+			    o.value = mfs[i];
+			    return f(o);
+			} else { return f(); }
+		    }
+		   return getNext;
+		}
+
+		function getCursor(a, b, f) {
+		    let pred = (b != 'prev'); // lower := next -> true
+		    let j = findDesc( a.lower || a.upper );
+		    if (j === -1) { return Promise.reject('Nothing found!'); }
+		    let o = {value: mfs[j]};
+		    o.continue = iter(j, pred, f, o);
+		    if (a.lower ? a.lowerOpen : a.upperOpen) { return Promise.resolve( o.continue() ); } // FALSE by default; TRUE -> not include self
+		    return Promise.resolve( f(o) );
+		}
+
+		BROWSE.DBindex = (a, b, f) => getCursor(a, b, f);
+	    })();
+
+
 	    app.print = () => window.open('/milista.html','lista-falts');
 
 	    (function() {
@@ -60,14 +161,6 @@
 			XHR.get(xhro + encPpties({clave: clave, tbname: 'datos', desc: 'VVVVV'}))
 			.then( () => DATA.inplace({clave: clave}) );
 		};
-
-		function isfalt(o) { return (o.faltante > 0) } // XXX == 1
-
-		function faltnoprov(o) { return (o.faltante == 1) && !(Number(o.proveedor) || o.proveedor) }
-
-		app.filtro = e => { BROWSE.OK = (e.target.checked ? faltnoprov : isfalt); };
-
-		BROWSE.OK = isfalt;
 
 		BROWSE.rows = function( a, row ) {
 		    row.insertCell().appendChild( document.createTextNode( a.fecha ) );
@@ -109,7 +202,7 @@
 		function addEvents() {
 		    let esource = new EventSource(document.location.origin + ":8080");
 		    DATA.onLoaded(esource);
-		    IDB.readDB( FALT ).countIndex( IDBKeyRange.only(1) ).then( q => { document.getElementById('falts-cnt').textContent = q; });
+		    app.onLoaded();
 		}
 
     // LOAD DBs

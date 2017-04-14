@@ -71,6 +71,10 @@
 		    let request = os.index( k.INDEX ).count(range);
 		    request.onsuccess = () => resolve( request.result );
 		    request.onerror = () => reject( request.errorCode ); })};
+		this.getIndex = function(v) {return new Promise( (resolve, reject) => {
+		    let request = os.index( k.INDEX ).get(v);
+		    request.onsuccess = () => resolve( request.result );
+		    request.onerror = () => reject( request.errorCode ); })};
 		this.index = function(range, type, f) { return new Promise( (resolve, reject) => {
 		    let request = os.index( k.INDEX ).openCursor(range, type);
 		    request.onsuccess = () => resolve( f(request.result) );

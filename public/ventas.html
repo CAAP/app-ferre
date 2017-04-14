@@ -13,7 +13,6 @@
     <script type="text/javascript" src="ticket.js"></script>
     <script type="text/javascript" src="browse.js"></script>
     <script type="text/javascript" src="people.js"></script>
-    <script type="text/javascript" src="ticpic.js"></script>
     <script type="text/javascript" src="app.js"></script>
 </head>
 
@@ -69,8 +68,6 @@
     </dialog></section>
 
     <section><dialog id="dialogo-factura"><table><caption>DATOS DE LA FACTURA</caption><tbody id="tabla-rfc" onchange="admin.anUpdate(event)"></tbody><tfoot><tr><th colspan=2 align="right"><button onclick="ferre.enviarF()">FACTURAR</button></th></tr></tfoot></table><table><tbody id="tabla-cp"></tbody></table></dialog></section>
-
-    <section><dialog id="dialogo-ticpic"><table><tbody id="pic-body"></tbody><tfoot><tr><td colspan="2"><button name="cerrar" onclick="ferre.shutme(event)">Cerrar</button></td></tr></tfoot></table></dialog>
 
     <section><dialog id="dialogo-item"><table><tbody>
 	<tr><td><button onclick="ferre.add2bag()">Agregar</button></td></tr>

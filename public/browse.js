@@ -10,6 +10,8 @@
 	    const IDBKeyRange =  window.IDBKeyRange || window.webkitIDBKeyRange || window.msIDBKeyRange;
 	    const N = 11;
 
+	    BROWSE.N = N;
+
 	    function asnum(s) { let n = Number(s); return Number.isNaN(n) ? s : n; }
 
 	    function clearTable(tb) { while (tb.firstChild) { tb.removeChild( tb.firstChild ); } }
@@ -42,13 +44,14 @@
 		let k = 0;
 		return function(cursor) {
 		    if (!cursor) { return Promise.reject('Not suitable value found!'); } // XXX STILL necessary ????
+//		    if (*iiii/BROWSE.OK(cursor.value)) { newItem(cursor.value, j); k++; }
+		    newItem(cursor.value, j); k++;
 		    if (k == M) { return true; }
-		    if (BROWSE.OK(cursor.value)) { newItem(cursor.value, j); k++; }
 		    cursor.continue();
 		};
 	    }
 
-	    BROWSE.OK = x => true;
+//	    BROWSE.OK = x => true;
 
 	    function searchIndex(type, s, M) {
 		let NN = M || N;
@@ -60,7 +63,7 @@
 
 	    function searchByDesc(s) {
 		console.log('Searching by description:' + s); sstr = s;
-		return searchIndex('next', s);
+		return searchIndex('next', s).catch(e => console.log('Error searching by desc: ' + e));
 	    }
 
 	    function searchByClave(s) {
@@ -73,13 +76,16 @@
 		const pred = (t == 'prev');
 		let s = ans[pred ? 'firstChild' : 'lastChild'].querySelector('.desc').textContent;
 
+		searchIndex(t, s, 1).then(() => ans.removeChild(pred ? ans.lastChild : ans.firstChild), e => console.log('Error getting next item: ' + e));
+/*
 		let range = pred ? IDBKeyRange.upperBound(s, true) : IDBKeyRange.lowerBound(s, true);
 		let j = pred ? 0 : -1;
 		BROWSE.DBindex( range, t, cursor => {
 		    if (!cursor) { return false; }
-		    if (BROWSE.OK(cursor.value)) { newItem(cursor.value, j); ans.removeChild(pred ? ans.lastChild : ans.firstChild ); return true; }
-		    cursor.continue();
-		} );
+//		    if (BROWSE.OK(cursor.value)) { newItem(cursor.value, j); ans.removeChild(pred ? ans.lastChild : ans.firstChild ); return true; }
+		    newItem(cursor.value, j); ans.removeChild(pred ? ans.lastChild : ans.firstChild ); return true;
+//		    cursor.continue();
+		} ); */
 	    }
 
  	    BROWSE.startSearch = function startSearch(e) {

@@ -1,6 +1,8 @@
 #!/usr/local/bin/lua
 
 local socket = require"socket"
+local ssl = require"ssl"
+
 local fd = require'carlos.fold'
 local hd = require'ferre.header'
 local sql = require'carlos.sqlite'
@@ -224,6 +226,8 @@ local function streaming()
 
     local cts = {}
 
+    local ctx = {mode='server', protocol='any', key="/usr/local/etc/ssl/server.key", certificate='/usr/local/etc/ssl/server.crt', verify={'peer'}, options='all'}
+
     local function initFeed( c )
 	local ret = true -- c:send(string.format('event: week\ndata: %q\n\n', week))
 	for _,feed in pairs(MM) do
@@ -232,12 +236,22 @@ local function streaming()
 	return ret
     end
 
+    local function secured(c)
+	local peer = assert(ssl.wrap(c, ctx))
+	if peer then
+	    local _, e = peer:dohandshake()
+	    if e then return c
+	    else return peer end
+	end
+    end
+
     local function connect2stream()
 	local c = srv:accept()
 	if c then
 	c:settimeout(1)
 	local ip = c:getpeername():match'%g+' --XXX ip should be used
 	print(ip, 'connected on port 8080 to', skt)
+	c = secured(c)
 	local response = hd.response({content='stream', body='retry: 60'}).asstr()
 	if c:send( response ) and initFeed(c) then cts[#cts+1] = c
 	else c:close() end

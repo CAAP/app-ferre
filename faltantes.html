@@ -15,7 +15,15 @@
 
 <body lang="es-MX">
 
-    <header onchange="app.filtro(event)"> <label id="notifications"></label> <button onclick="app.print()"> IMPRIMIR </button>  <a>Faltantes: <label id="falts-cnt"></label></a> <label><input type="checkbox" name="filtro" /> Filtrar </label> </header>
+    <header>
+ 	<label id="notifications"></label> <a>Faltantes: <label id="falts-cnt"></label></a> <label><input type="checkbox" name="pedido" onchange="app.pedido(event)" checked /> Pedido </label>
+<!--
+ <label id="notifications"></label> <button onclick="app.print()"> IMPRIMIR </button>  <a>Faltantes: <label id="falts-cnt"></label></a> <label><input type="checkbox" name="pedido" onchange="app.pedido(event)" checked /> Pedido </label>
+--!>
+	<section class="dialogos proveedores"><button onclick="app.doProvs()"> Filtrar </button><label> Proveedor </label>
+	<div class="embiggen"><table><tbody id="lista-provs" onclick="app.toggleProv(event)"><tbody></table></div>
+	</section>
+    </header>
 
     <section id="buscar">
         <div> <input type="search" size=40 placeholder="Art&iacute;culo o Clave" onchange="app.startSearch(event)" onkeyup="app.keyPressed(event)"> <button>Buscar</button> </div>
