@@ -117,7 +117,7 @@
 			all.push(cursor.value);
 	    		cursor.continue();
 		    } else {
-//			reload.style.display = '';
+			reload.style.visibility = 'hidden';
 		        provs = new Map();
 			all.sort(sortDescAlpha);
 			all.forEach( groupByProv );
@@ -127,6 +127,17 @@
 			rewind();
 		    }
 		});
+
+		app.save = function temporal(s) {
+		    let ret = Array.from(lfs.children).map(row => Array.from(row.children).map(x => x.textContent).join('\t'));
+		    let b = new Blob([ret.join('\n')], {type: 'text/html'});
+		    let a = document.createElement('a');
+		    let url = URL.createObjectURL(b);
+		    a.href = url;
+		    a.download = 'ListaFaltantes.tsv'
+		    a.click();
+		    URL.revokeObjectURL(url);
+		};
 
 		app.pedido = () => { setCount(); rewind(); }
 
@@ -143,7 +154,7 @@
 		DATA.inplace = q => {
 		    let r = document.body.querySelector('tr[data-clave="'+q.clave+'"]');
 		    if (r) { r.classList.add('modificado'); }
-//		    reload.style.display = 'block';
+		    reload.style.visibility = 'visible';
 		    return q;
 		};
 
