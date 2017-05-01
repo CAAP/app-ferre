@@ -90,14 +90,6 @@ dialog { font: 100% arial; }
     background-color: #ffffff;
 }
 
-.proveedores {
-    position: fixed;
-    top: 1%;
-    max-height: 30%;
-    background-color: #ffffcc;
-    padding: 5px;
-}
-
 .carrito {
     display: block;
     position: fixed;
@@ -112,6 +104,12 @@ dialog { font: 100% arial; }
 
 @media print {
     .no-print { display: none; }
+}
+
+#proveedores {
+    max-height: 30%;
+    background-color: #ffffcc;
+    padding: 5px;
 }
 
 #ticket-count {

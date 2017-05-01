@@ -16,17 +16,22 @@
 <body lang="es-MX">
 
     <header>
- 	<label id="notifications"></label> <a>Faltantes: <label id="falts-cnt"></label></a> <label><input type="checkbox" name="pedido" onchange="app.pedido(event)" checked /> Pedido </label>
+	    <label id="notifications"></label>
+	    <a> | Faltantes: <label id="falts-cnt"></label> | </a>
+	    <label><input type="checkbox" name="pedido" onchange="app.pedido(event)" checked /> Pedido | </label>
+	    <img src="filtro.svg" height="20px" onclick="app.doProvs()" >
+	    <img id="recargar" src="recargar.svg" height="20px" style="display: none" onclick="app.onLoaded()" >
+	    <section id="buscar" class="dialogos query"> <input type="search" size=40 placeholder="Art&iacute;culo o Clave" onchange="app.startSearch(event)" onkeyup="app.keyPressed(event)"> </section>
+    </header>
+	    
 <!--
  <label id="notifications"></label> <button onclick="app.print()"> IMPRIMIR </button>  <a>Faltantes: <label id="falts-cnt"></label></a> <label><input type="checkbox" name="pedido" onchange="app.pedido(event)" checked /> Pedido </label>
 --!>
-	<section class="dialogos proveedores"><button onclick="app.doProvs()"> Filtrar </button><label> Proveedor </label>
-	<div class="embiggen"><table><tbody id="lista-provs" onclick="app.toggleProv(event)"><tbody></table></div>
-	</section>
-    </header>
 
-    <section id="buscar">
-        <div> <input type="search" size=40 placeholder="Art&iacute;culo o Clave" onchange="app.startSearch(event)" onkeyup="app.keyPressed(event)"> <button>Buscar</button> </div>
+    <section id="proveedores" class="embiggen">
+	<button name="cerrar" onclick="app.clearProvs()">Reset</button>
+	<table><tbody class="marcado" id="lista-provs" onclick="app.toggleProv(event)"><tbody></table>
+    </section>
 
     <section id="resultados" class="tablas" style="overflow-x:auto">
         <table onwheel="app.scroll(event)">
@@ -38,8 +43,6 @@
 	    <tbody id="tabla-resultados" class="amarillo" ondblclick="app.remove(event)"></tbody>
 	    <tfoot><tr><th colspan=7><button onclick="app.scroll({deltaY:0})">&larr;Anterior</button> <label> | </label> <button onclick="app.scroll({deltaY:1})">Siguiente&rarr;</button></th></tr></tfoot>
 	</table>
-    </section>
-
     </section>
 
 <!---

@@ -6,8 +6,6 @@
 	    const PRICE = DATA.STORES.PRICE;
 	    const FALT = DATA.STORES.FALT;
 
-	    DATA.inplace = q => {let r = document.body.querySelector('tr[data-clave="'+q.clave+'"]'); if (r) {r.classList.add('modificado');} return q;};
-
 	    // BROWSE
 
 	    BROWSE.tab = document.getElementById('resultados');
@@ -24,83 +22,29 @@
 	    // Efficient LOOK UP
 	    (function() {
 		let mfs; // will be rewritten
-		let all = [];
+		let all; // = [];
 		let N = 0;
-		let provs = new Map();
-		let tmp = [];
-		let nopedido = [];
+		let provs; //= new Map();
+		let tmp; // = [];
+		let nopedido; // = [];
 		const cnt = document.getElementById('falts-cnt');
 		const lista = document.getElementById('lista-provs');
+		const diagp = document.getElementById('proveedores');
 		const ckbox = document.querySelector('input[name=pedido]');
+		const reload = document.getElementById('recargar');
 		const alpha = /\w/;
-
-		let rewind = () => BROWSE.startSearch({target: {value: mfs[0].desc}});
 
 		function sortDescAlpha(a,b) { return +(a.desc > b.desc) || +(a.desc === b.desc) - 1; }
 //		let sortDescAlpha = (a,b) => a.desc.localeCompare(b.desc);
 
 		function groupByProv( o ) {
 		    let p = o.proveedor;
-		    if (!alpha.test(p)) { p = '000'; }
+		    p = alpha.test(p) ? p.toString() : '000';
 		    if (provs.has(p))
 			provs.get(p).push(o.clave);
 		    else
 			provs.set(p, [o.clave]);
 		}
-
-		function addProvs() {
-		    let ret = [];
-		    provs.forEach((a,p) => ret.push({desc: p, n: a.length}));
-		    ret.sort(sortDescAlpha);
-		    let row = lista.insertRow();
-		    ret.forEach((o,i) => {
-			if (i%4 == 0) { row = lista.insertRow(); }
-			row.insertCell().appendChild( document.createTextNode(o.desc) ); //  add o.n as in element.title =  XXX
-		    });
-		}
-
-		app.pedido = e => {
-		    if (e.target.checked) {
-			N = tmp.length;
-			mfs = tmp;
-		    } else {
-			N = nopedido.length;
-			mfs = nopedido;
-		    }
-		    cnt.textContent = N;
-		    rewind();
-		};
-
-		app.toggleProv= e => e.target.classList.toggle('activo');
-
-		app.doProvs = () => {
-		    let selected = new Set( Array.from(lista.querySelectorAll('.activo')).map(o => provs.get(o.textContent)).reduce((a,o) => a.concat(o) ) );
-		    tmp = all.filter(o => selected.has(o.clave));
-		    tmp.sort(sortDescAlpha);
-		    reset();
-		}
-
-		function reset() {
-		    N = tmp.length;
-		    mfs = tmp;
-		    nopedido = tmp.filter(o => { return (o.faltante === 1); });
-		    ckbox.checked = true;
-		    cnt.textContent = N;
-		    rewind();
-	 	}
-
-		app.onLoaded = () => IDB.readDB( FALT ).index(  IDBKeyRange.lowerBound(1), 'next', cursor => {
-		    if (cursor) {
-			all.push(cursor.value);
-	    		cursor.continue();
-		    } else {
-			all.sort(sortDescAlpha);
-			all.forEach( groupByProv );
-			addProvs();
-			tmp = all.slice();
-			reset();
-		    }
-		});
 
 		function findDesc(s) { return mfs.findIndex(o => { return (o.desc >= s) }) }
 
@@ -130,9 +74,82 @@
 		    return Promise.resolve( f(o) );
 		}
 
-		BROWSE.DBindex = (a, b, f) => getCursor(a, b, f);
+		function rewind() { if (mfs.length) { return BROWSE.startSearch({target: {value: mfs[0].desc}}); } }
+
+		function addProvs() {
+		    let ret = [];
+		    DATA.clearTable(lista);
+		    provs.forEach((a,p) => ret.push({desc: p, n: a.length}));
+		    ret.sort(sortDescAlpha);
+		    let row = lista.insertRow();
+		    ret.forEach((o,i) => {
+			if (i%10 == 0) { row = lista.insertRow(); }
+			row.insertCell().appendChild( document.createTextNode(o.desc) ); //  add o.n as in element.title = o.n  XXX
+		    });
+		}
+
+		function setCount() {
+		    mfs = (ckbox.checked ? tmp : nopedido);
+		    N = mfs.length;
+		    cnt.textContent = N;
+		}
+
+		function reset() {
+		    nopedido = tmp.filter(o => { return (o.faltante === 1); });
+		    setCount();
+	 	}
+
+		function getProvs() {
+		    let selected = Array.from(lista.querySelectorAll('.activo'));
+		    if (!selected.length)
+			tmp = all.slice(); // DO NOTHING!!!
+		    else {
+			selected = new Set( selected.map(o => provs.get(o.textContent)).reduce((a,o) => a.concat(o)) );
+			tmp = all.filter(o => selected.has(o.clave));
+			tmp.sort(sortDescAlpha);
+		    }
+		    reset();
+		    rewind();
+		}
+
+		let loadFalts = () => IDB.readDB( FALT ).index(  IDBKeyRange.lowerBound(1), 'next', cursor => {
+		    if (cursor) {
+			all.push(cursor.value);
+	    		cursor.continue();
+		    } else {
+//			reload.style.display = '';
+		        provs = new Map();
+			all.sort(sortDescAlpha);
+			all.forEach( groupByProv );
+			addProvs();
+			tmp = all.slice();
+			reset();
+			rewind();
+		    }
+		});
+
+		app.pedido = () => { setCount(); rewind(); }
+
+		app.toggleProv= e => e.target.classList.toggle('activo');
+
+		app.doProvs = () => { if (diagp.style.display === '') { diagp.style.display = 'block'; } else { diagp.style.display = ''; getProvs(); } }
+
+		app.onLoaded = () => { all = []; return loadFalts(); }
+
+		app.clearProvs = () => lista.querySelectorAll('.activo').forEach(o => o.classList.toggle('activo'));
+
+		BROWSE.DBindex = getCursor;
+
+		DATA.inplace = q => {
+		    let r = document.body.querySelector('tr[data-clave="'+q.clave+'"]');
+		    if (r) { r.classList.add('modificado'); }
+//		    reload.style.display = 'block';
+		    return q;
+		};
+
 	    })();
 
+		// // // //
 
 	    app.print = () => window.open('/milista.html','lista-falts');
 
@@ -168,7 +185,7 @@
 		    clave.classList.add('pesos'); clave.appendChild( document.createTextNode( a.clave ) );
 		    let desc = row.insertCell();
 		    desc.classList.add('desc');
-		    if (a.faltante == 2) { desc.classList.add('faltante'); } // ccs 4 PEDIDO
+		    if (a.faltante == 2) { desc.classList.add('faltante'); } // app.css 4 PEDIDO
 		    desc.appendChild( document.createTextNode( a.desc ) );
 		    let costol = row.insertCell();
 		    costol.classList.add('total');
