@@ -136,7 +136,7 @@
 
 		app.getGroups = function() {
 		    let gps = Array.from(lista.querySelectorAll('.activo'));
-		    if (!gps.length) { return false; } // DO NOTHING
+		    if (!gps.length) { return mfs; } // DO NOTHING
 		    else {
 			let selected = new Map( mfs.map( o => [o.clave, o] ) ); // Maybe do it for mfs always XXX
 			gps = gps.map(o => provs.get(o.textContent)).reduce((a,o) => a.concat(o)).filter(k => selected.has(k)).map(k => selected.get(k));
@@ -155,6 +155,7 @@
 		app.getSelection = () => {
 		    tmp = all.filter(o => selection.has(o.clave));
 		    tmp.forEach( o => { o.selected = true } );
+		    app.clearProvs();
 		    reset();
 		    rewind();
 		};
