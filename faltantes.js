@@ -153,6 +153,7 @@
 		};
 
 		app.getSelection = () => {
+		    if (selection.size === 0) { return false; }
 		    tmp = all.filter(o => selection.has(o.clave));
 		    tmp.forEach( o => { o.selected = true } );
 		    app.clearProvs();
