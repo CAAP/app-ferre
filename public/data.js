@@ -68,10 +68,11 @@
 		    const upd = data.find(o => {return o.store == 'VERS'});
 
 //		    Promise.all( data.map( DATA.inplace ) ); XXX Need to address issue of already registered from admin et al.
-
+		// XXX What happends if upd.prev < localStorage.vers ?????? XXX
 		    if (localStorage.week && upd.week == localStorage.week && upd.prev == localStorage.vers) {
 			console.log(upd.vers == localStorage.vers?'Already up-to-date.':'Update event ongoing!');
-			updateMe( data );
+//			if (upd.vers != localStorage.vers) // gets me the version on the footer XXX
+			    updateMe( data );
 		    } else {
 			console.log('Update mismatch error: ' + localStorage.week + '(' + upd.week + ') V' + localStorage.vers + '(V' + upd.vers + ')');
 			XHR.getJSON('/app/updates.lua?oweek='+localStorage.week+'&overs='+localStorage.vers+'&nweek='+upd.week).then( updateMe );

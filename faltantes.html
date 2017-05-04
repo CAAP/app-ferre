@@ -16,12 +16,13 @@
 <body lang="es-MX">
 
     <header>
+	    <img src="filtro.svg" height="20px" onclick="app.doProvs()" >
+	    <img id="recargar" src="recargar.svg" height="20px" onclick="app.onLoaded()" >
 	    <label id="notifications"></label>
 	    <a> | Faltantes: <label id="falts-cnt"></label> | </a>
 	    <label><input type="checkbox" name="pedido" onchange="app.pedido(event)" checked /> Pedido | </label>
-	    <img src="filtro.svg" height="20px" onclick="app.doProvs()" >
-	    <img id="recargar" src="recargar.svg" height="20px" onclick="app.onLoaded()" >
-	    <section id="buscar" class="dialogos query"> <input type="search" size=40 placeholder="Art&iacute;culo o Clave" onchange="app.startSearch(event)" onkeyup="app.keyPressed(event)"> </section>
+	    <a onclick="app.getSelection()">Selecci&oacute;n: <label id="sel-count" style="font-weight: bold"></label> | </a>
+	    <img src="public/receipt.svg" height="20px" onclick="app.print()" >
     </header>
 	    
 <!--
@@ -32,6 +33,9 @@
 	<button name="cerrar" onclick="app.clearProvs()">Reset</button>
 	<table><tbody class="marcado" id="lista-provs" onclick="app.toggleProv(event)"><tbody></table>
     </section>
+
+    <section id="buscar">
+	<div> <input type="search" size=40 placeholder="Art&iacute;culo o Clave" onchange="admin.startSearch(event)" onkeydown="admin.keyPressed(event)"> <button>Buscar</button> </div>
 
     <section id="resultados" class="tablas" style="overflow-x:auto">
         <table onwheel="app.scroll(event)">
@@ -45,18 +49,7 @@
 	</table>
     </section>
 
-<!---
-    <section id="resultados" class="scrollable">
-        <table>
-	    <dt>
-            <thead>
-                <tr><th> Fecha </th><th> Clave </th><th> Descripci&oacute;n </th><th> Costo </th><th> Observaciones </th><th> Proveedor </th><th> Pedido </th></tr>
-            </thead>
-	    </dt>
-	    <tbody id="tabla-resultados" class="amarillo"></tbody>
-	</table>
     </section>
--->
 
     <footer> <label id="copyright"></label> <label id="db-vers"></label> </footer>
 

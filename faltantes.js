@@ -25,11 +25,13 @@
 		let all; // = [];
 		let N = 0;
 		let provs; //= new Map();
+		let selection;
 		let tmp; // = [];
 		let nopedido; // = [];
 		const cnt = document.getElementById('falts-cnt');
 		const lista = document.getElementById('lista-provs');
 		const diagp = document.getElementById('proveedores');
+		const scnt = document.getElementById('sel-count');
 		const ckbox = document.querySelector('input[name=pedido]');
 		const reload = document.getElementById('recargar');
 		const alpha = /\w/;
@@ -79,7 +81,7 @@
 		function addProvs() {
 		    let ret = [];
 		    DATA.clearTable(lista);
-		    provs.forEach((a,p) => ret.push({desc: p, n: a.length}));
+		    provs.forEach((a,p) => ret.push({desc: p, n: a.length})); // do i still need length?? XXX
 		    ret.sort(sortDescAlpha);
 		    let row = lista.insertRow();
 		    ret.forEach((o,i) => {
@@ -106,11 +108,13 @@
 		    else {
 			selected = new Set( selected.map(o => provs.get(o.textContent)).reduce((a,o) => a.concat(o)) );
 			tmp = all.filter(o => selected.has(o.clave));
-			tmp.sort(sortDescAlpha);
+//			tmp.sort(sortDescAlpha); // necessary???  XXX
 		    }
 		    reset();
 		    rewind();
 		}
+
+		function asnum(s) { let n = Number(s); return Number.isNaN(n) ? s : n; }; // UNIFY XXX
 
 		let loadFalts = () => IDB.readDB( FALT ).index(  IDBKeyRange.lowerBound(1), 'next', cursor => {
 		    if (cursor) {
@@ -119,6 +123,8 @@
 		    } else {
 			reload.style.visibility = 'hidden';
 		        provs = new Map();
+			selection = new Set();
+			scnt.textContent = 0;
 			all.sort(sortDescAlpha);
 			all.forEach( groupByProv );
 			addProvs();
@@ -128,24 +134,38 @@
 		    }
 		});
 
-		app.save = function temporal(s) {
-		    let ret = Array.from(lfs.children).map(row => Array.from(row.children).map(x => x.textContent).join('\t'));
-		    let b = new Blob([ret.join('\n')], {type: 'text/html'});
-		    let a = document.createElement('a');
-		    let url = URL.createObjectURL(b);
-		    a.href = url;
-		    a.download = 'ListaFaltantes.tsv'
-		    a.click();
-		    URL.revokeObjectURL(url);
+		app.getGroups = function() {
+		    let gps = Array.from(lista.querySelectorAll('.activo'));
+		    if (!gps.length) { return false; } // DO NOTHING
+		    else {
+			let selected = new Map( mfs.map( o => [o.clave, o] ) ); // Maybe do it for mfs always XXX
+			gps = gps.map(o => provs.get(o.textContent)).reduce((a,o) => a.concat(o)).filter(k => selected.has(k)).map(k => selected.get(k));
+			return gps;
+		    }
 		};
 
-		app.pedido = () => { setCount(); rewind(); }
+		app.selectme = e => {
+		    const clave = asnum( e.target.textContent );
+		    const pred = !selection.has(clave);
+		    e.target.classList.toggle('gold', pred);
+		    scnt.textContent = parseInt(scnt.textContent) + (pred ? 1 : -1);
+		    if (pred) { selection.add( clave ); } else { selection.delete( clave ); }
+		};
+
+		app.getSelection = () => {
+		    tmp = all.filter(o => selection.has(o.clave));
+		    tmp.forEach( o => { o.selected = true } );
+		    reset();
+		    rewind();
+		};
+
+		app.pedido = () => { setCount(); rewind(); };
 
 		app.toggleProv= e => e.target.classList.toggle('activo');
 
-		app.doProvs = () => { if (diagp.style.display === '') { diagp.style.display = 'block'; } else { diagp.style.display = ''; getProvs(); } }
+		app.doProvs = () => { if (diagp.style.display === '') { diagp.style.display = 'block'; } else { diagp.style.display = ''; getProvs(); } };
 
-		app.onLoaded = () => { all = []; return loadFalts(); }
+		app.onLoaded = () => { all = []; return loadFalts(); };
 
 		app.clearProvs = () => lista.querySelectorAll('.activo').forEach(o => o.classList.toggle('activo'));
 
@@ -160,9 +180,57 @@
 
 	    })();
 
+/*/		app.save = function temporal(s) {
+		    let ret = Array.from(lfs.children).map(row => Array.from(row.children).map(x => x.textContent).join('\t'));
+		    let b = new Blob([ret.join('\n')], {type: 'text/html'});
+		    let a = document.createElement('a');
+		    let url = URL.createObjectURL(b);
+		    a.href = url;
+		    a.download = 'ListaFaltantes.tsv'
+		    a.click();
+		    URL.revokeObjectURL(url);
+		}; */
+
 		// // // //
 
-	    app.print = () => window.open('/milista.html','lista-falts');
+	    (function() {
+		const body = document.body;
+		let TXT = ['<html><head><link rel="stylesheet" href="public/app.css" media="print"></head>',
+			'<body><table><tbody>',
+			'',
+			'</tbody></table></body></html>'];
+		let ps;
+
+		function asrow( o ) {
+		    let ret = '';
+		    const prov = o.proveedor;
+		    if (!ps.has(prov)) { ps.add(prov); ret = '<tr><td colspan="3" class="activo">'+o.proveedor+'</td></tr>'; }
+		    ret += '<tr><td>'+o.desc+'</td><td>'+(o.costol/1e4).toFixed(2)+'</td><td>'+o.obs+'</td></tr>';
+		    return ret;
+		}
+
+		function newiframe() {
+		    return new Promise( (resolve, reject) => {
+			let iframe = document.createElement('iframe');
+			iframe.style.visibility = "hidden";
+			iframe.width = 400;
+			body.appendChild( iframe );
+			iframe.onload = resolve(iframe.contentWindow);
+		    });
+		}
+
+		app.print = () => {
+		    ps = new Set();
+		    TXT[3] = app.getGroups().map( asrow ).join('\n');
+		    return newiframe()
+			.then( win => { let doc = win.document; doc.open(); doc.write(TXT.join('\n')); doc.close(); return win} )
+			.then( win => win.print() )
+			.then( () => body.removeChild(body.lastChild) );
+		};
+
+	    })();
+
+		////////
 
 	    (function() {
 		const bus = document.getElementById('buscar');
@@ -193,6 +261,8 @@
 		BROWSE.rows = function( a, row ) {
 		    row.insertCell().appendChild( document.createTextNode( a.fecha ) );
 		    let clave = row.insertCell();
+		    clave.addEventListener('click', app.selectme);
+		    if (a.selected) { clave.classList.add('gold'); }
 		    clave.classList.add('pesos'); clave.appendChild( document.createTextNode( a.clave ) );
 		    let desc = row.insertCell();
 		    desc.classList.add('desc');

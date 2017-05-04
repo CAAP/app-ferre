@@ -11,6 +11,15 @@ button[name=cerrar] { color: white; background-color: red; }
 
 button[name=guardar] { color: white; background-color: blue; }
 
+header, footer {
+    display: block;
+    margin: 4px;
+    padding: 5px;
+    background-color: #ccffcc;
+}
+
+dialog { font: 100% arial; }
+
 .azul { background-color: white; filter: drop-shadow(4px 4px 2px black); }
 
 .azul:hover { transform: scale(1.2); }
@@ -25,8 +34,6 @@ button[name=guardar] { color: white; background-color: blue; }
 
 .amarillo tr:hover > td { background-color: #ffff97; }
 
-dialog { font: 100% arial; }
-
 .activo {
     font: bold 100% arial;
     color: white;
@@ -37,6 +44,12 @@ dialog { font: 100% arial; }
 .total {
     font: bold italic 100% arial;
     text-align: right;
+}
+
+.gold {
+    font: bold 100% arial;
+    background-color: #cbaf59;
+    padding: 3px;
 }
 
 .faltante { color: red; text-decoration: line-through; }
@@ -132,13 +145,6 @@ dialog { font: 100% arial; }
 #buscar {
     margin: 4px;
     padding: 5px;
-}
-
-header, footer {
-    display: block;
-    margin: 4px;
-    padding: 5px;
-    background-color: #ccffcc;
 }
 
 #main {
