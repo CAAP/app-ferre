@@ -40,7 +40,7 @@
 //		let sortDescAlpha = (a,b) => a.desc.localeCompare(b.desc);
 
 		function groupByProv( o ) {
-		    let p = o.proveedor;
+		    let p = o.proveedor || '';
 		    p = alpha.test(p) ? p.toString() : '000';
 		    if (provs.has(p))
 			provs.get(p).push(o.clave);
