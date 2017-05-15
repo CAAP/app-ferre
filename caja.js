@@ -101,6 +101,8 @@
 
 	    TICKET.extraEmpty = () => true;
 
+	    TICKET.redondeo = x => x; // TEMPORAL x FACTURAR
+
 	    caja.updateItem = TICKET.update;
 
 	    caja.clickItem = e => TICKET.remove( e.target.parentElement );
@@ -146,7 +148,7 @@
 		function data( o ) {
 		    return IDB.readDB( PRICE )
 			.get( asnum(o.clave) )
-			.then( w => { if (w) { return Object.assign( o, w ) } else { return Promise.reject() } } )
+			.then( w => { if (w) { return Object.assign( o, w, {id: o.clave} ) } else { return Promise.reject() } } )
 			.then( TICKET.show )
 			.then( () => { mybag.lastChild.dataset.uid = o.uid } )
 			.catch( e => console.log(e) )
