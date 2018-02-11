@@ -79,6 +79,14 @@
 		    return ie;
 		}
 
+		// SHOULD BE CHANGED asap XXX
+		function outputsAux(row, k) {
+		    let ie = document.createElement('input');
+		    ie.type = 'text'; ie.size = 8; ie.name = k; ie.disabled = false;
+		    row.insertCell().appendChild( ie );
+		    return ie;
+		}
+
 		function addfield( k ) {
 		    if (k.startsWith('u')) { return; }
 		    let row = tabla.insertRow();
@@ -89,7 +97,7 @@
 		    let ie = document.createElement('input');
 		    ie.type = 'text'; ie.size = 5; ie.name = k;
 		    if (k == 'desc') { ie.size = 40; cell.colSpan = 3; }
-		    if (k == 'clave') { ie.disabled = true; outputs(row, 'uidSAT').disabled = false; }
+		    if (k == 'clave') { ie.disabled = true; outputsAux(row, 'uidSAT'); }
 		    if (k.startsWith('prc')) { outputs(row, k.replace('prc', 'u')).disabled = false; outputs(row, k.replace('prc', 'precio')); }
 		    if (k == 'costo') { outputs(row, 'costol'); }
 		    if (costos.has(k)) { ie.type = 'number'; }
