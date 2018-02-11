@@ -97,7 +97,7 @@
 		    let ie = document.createElement('input');
 		    ie.type = 'text'; ie.size = 5; ie.name = k;
 		    if (k == 'desc') { ie.size = 40; cell.colSpan = 3; }
-		    if (k == 'clave') { ie.disabled = true; outputsAux(row, 'uidSAT'); }
+		    if (k == 'clave') { ie.disabled = true; outputs(row, 'uidSAT').disabled = false; }
 		    if (k.startsWith('prc')) { outputs(row, k.replace('prc', 'u')).disabled = false; outputs(row, k.replace('prc', 'precio')); }
 		    if (k == 'costo') { outputs(row, 'costol'); }
 		    if (costos.has(k)) { ie.type = 'number'; }

@@ -10,6 +10,8 @@
 
 	    caja.print = () => Promise.all(Array.from(TICKET.bagUID).map( encodeURIComponent ).map( k => XHR.get('/caja/print.lua?uid='+k) )); // XXX should be POST;
 
+	    caja.facturar = () => Promise.all(Array.from(TICKET.bagUID).map( encodeURIComponent ).map( k => XHR.get('/caja/facturar.lua?uid='+k) )); // XXX should be POST;
+
 	    // PAGAR
 
 	    (function() {
@@ -61,7 +63,7 @@
 		};
 
 	    // FACTURAR
-
+/*
 		const hoy = new Date().toLocaleDateString('es-MX');
 
 		let rmamp = s => s.replace('&', '');
@@ -87,6 +89,7 @@
 		}
 
 		caja.timbrar = () => XHR.get('/caja/pesos.lua?pesos='+ttotal.textContent).then( temporal )
+*/
 	    })();
 
 	    // TICKET
