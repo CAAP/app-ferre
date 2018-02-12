@@ -79,14 +79,6 @@
 		    return ie;
 		}
 
-		// SHOULD BE CHANGED asap XXX
-		function outputsAux(row, k) {
-		    let ie = document.createElement('input');
-		    ie.type = 'text'; ie.size = 8; ie.name = k; ie.disabled = false;
-		    row.insertCell().appendChild( ie );
-		    return ie;
-		}
-
 		function addfield( k ) {
 		    if (k.startsWith('u')) { return; }
 		    let row = tabla.insertRow();

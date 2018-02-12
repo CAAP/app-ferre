@@ -98,7 +98,7 @@
 
 	    TICKET.bag = document.getElementById( TICKET.bagID );
 	    TICKET.myticket = document.getElementById( TICKET.myticketID );
-	    TICKET.timbre = TICKET.myticket.querySelector('button[name="timbrar"]');
+	    TICKET.timbre = TICKET.myticket.querySelector('button[name="facturar"]');
 	    TICKET.bagRFC = false;
 	    TICKET.bagUID = new Set(); // XXX Ordered Set instead?
 
