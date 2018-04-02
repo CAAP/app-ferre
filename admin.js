@@ -34,7 +34,7 @@
 
 	    admin.scroll = BROWSE.scroll;
 
-	/*
+// XXX Temporal	
 	    admin.guardar = function temporal(s) {
 		let ret = [];
 		IDB.readDB( PRICE ).openCursor(cursor => {
@@ -52,7 +52,7 @@
 		    URL.revokeObjectURL(url);
 		} });
 	    };
-	*/
+	
 
 	    // UPDATES
 
