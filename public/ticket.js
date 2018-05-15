@@ -4,7 +4,7 @@
 
 	(function() {
 	    const VARS = ['id', 'clave', 'qty', 'rea', 'precio', 'totalCents'];
-	    const EVARS = ['id', 'qty', 'desc', 'rea', 'prc', 'subTotal' ]; // clave
+	    const EVARS = ['id', 'desc', 'qty', 'rea', 'prc', 'subTotal' ]; // clave
 	    const TAGS = {none: 'x'}; // { presupuesto: 'a', ticket: 'b', facturar: 'c', guardar: 'g', impreso: 'I', pagado: 'P', facturado: 'F'};
 	    TAGS.ID = {x: 'none'};
 
@@ -112,6 +112,25 @@
 		row.lastChild.classList.add('total');
 	    }
 
+	    function showTaxes(q) {
+		let row = TICKET.bag.insertRow();
+		row.dataset.clave = q.clave;
+		row.classList.add('basura');
+		israbatt(q, row, false);
+		// DATOS
+		q.subTotal = tocents(q.totalCents/1.16);
+		q.prc = q.precios[q.precio].replace(/[\d\.]+/, n => (n/1.16).toFixed(2));
+		EVARS.forEach( v => row.insertCell().appendChild( document.createTextNode( q[v] ) ) );
+		row.lastChild.classList.add('total');
+		if (q.uidSAT) {
+		    let row = TICKET.bag.insertRow();
+		    row.dataset.clave = q.clave;
+		    let satinfo = row.insertCell();
+		    satinfo.appendChild( document.createTextNode(q.uidSAT) );
+		    satinfo.colSpan = 2;
+		}
+	    }
+
 	    TICKET.plain = o => VARS.map( v => { return (v + '+' + o[v] || '') } ).join('+');
 
 	    TICKET.update = function(e) {
@@ -151,6 +170,12 @@
 		TICKET.items.set( w.clave, w );
 		showItem( w );
 		bagTotal();
+	    };
+
+	    TICKET.taxes = function(w) {
+		TICKET.myticket.style.visibility = 'visible';
+		TICKET.items.set( w.clave, w );
+		showTaxes( w );
 	    };
 
 	    TICKET.remove = function(tr) {

@@ -51,11 +51,13 @@
 
     <section id="ticket" class="tablas" style="overflow-x:auto">
 	<table>
-
-           <caption> TICKET </caption>
+           <caption>
+		<input type="checkbox" id="switchSAT" onchange="caja.flipMe(this)" checked />
+		<label class="flipswitch" for="switchSAT">TICKET</label>
+	   </caption>
 	    <dt>
             <thead>
-                <tr> <th> Clave </th><th> # </th><th class="desc"> Descripci&oacute;n </th><th> % </th><th> Precio </th><th> Total </th> </tr> 
+                <tr> <th> Clave </th><th class="desc"> Descripci&oacute;n </th><th> # </th><th> % </th><th> Precio </th><th> Total </th> </tr> 
             </thead>
 	    </dt>
 	    <tfoot>

@@ -20,6 +20,8 @@
 		row.insertCell().appendChild( document.createTextNode( a.fecha ) );
 		let clave = row.insertCell();
 		clave.classList.add('pesos'); clave.appendChild( document.createTextNode( a.clave ) );
+		let sat = row.insertCell();
+		clave.classList.add('pesos'); sat.appendChild( document.createTextNode( a.uidSAT || '' ) );
 		let desc = row.insertCell(); // class 'desc' necessary for scrolling
 		if (a.faltante) { desc.classList.add('faltante'); }
 		desc.classList.add('desc'); desc.appendChild( document.createTextNode( a.desc ) );

@@ -167,3 +167,19 @@ dialog { font: 100% arial; }
     order: 2;
 }
 
+#switchSAT { visibility: hidden; }
+
+.flipswitch {
+    text-align: center;
+    line-height: 30px;
+    cursor: pointer;
+    width: 200px;
+    height: 30px;
+    background: #bada55;
+    display: block;
+    border-radius: 100px;
+    position: relative;
+}
+
+input:checked + label { background: #ccffcc; }
+
