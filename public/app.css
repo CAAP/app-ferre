@@ -167,19 +167,34 @@ dialog { font: 100% arial; }
     order: 2;
 }
 
-#switchSAT { visibility: hidden; }
 
-.flipswitch {
-    text-align: center;
-    line-height: 30px;
-    cursor: pointer;
-    width: 200px;
-    height: 30px;
-    background: #bada55;
-    display: block;
-    border-radius: 100px;
-    position: relative;
+.onoff-checkbox { display: none; }
+
+.onoff-label {
+    display:block; overflow: hidden; cursor: pointer;
+    border: 2px solid #999999; border-radius: 20px;
 }
 
-input:checked + label { background: #ccffcc; }
+.onoff-inner {
+    display: block; width: 200%; margin-left: -100%;
+    transition: margin 0.3s ease-in 0s;
+}
+
+.onoff-inner:before, .onoff-inner:after {
+    diplay: block; float: left; width: 50%; height: 30px; padding: 0; line-height: 30px;
+    font-size: 14px; color: white; font-weight: bold; box-sizing: border-box;
+}
+
+.onoff-inner:before {
+    content: "TICKET";
+    padding-left: 10px;
+    color: black;
+}
+
+.onoff-inner:after {
+    content: "Clave SAT - IVA";
+    background-color: #34A7C1; color: #FFFFFF;
+}
+
+.onoff-checkbox:checked + .onoff-label .onoff-inner { margin-left: 0; }
 

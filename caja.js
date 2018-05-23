@@ -110,7 +110,10 @@
 
 	    caja.clickItem = e => TICKET.remove( e.target.parentElement );
 // TICKET.timbre.disabled = true; 
-	    caja.emptyBag = () => { TICKET.empty(); TICKET.bagUID.clear(); TICKET.bagRFC = false; caja.cleanCaja(); }
+	    const flipSAT = document.getElementById('switchSAT');
+	    caja.emptyBag = () => { TICKET.empty(); TICKET.bagUID.clear(); TICKET.bagRFC = false; caja.cleanCaja(); flipSAT.checked = true; }
+		//		const flipSAT = document.getElementById('switchSAT');
+
 
 		// XXX Temporal
 /*
@@ -141,7 +144,6 @@
 	    (function() {
 		const cajita = document.getElementById('tabla-caja');
 		const cajaOld = document.getElementById('tabla-caja-old');
-		const flipSAT = document.getElementById('switchSAT');
 		const mybag = TICKET.bag;
 		const clearTable = DATA.clearTable;
 
