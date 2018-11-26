@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title> FALTANTES </title>
+    <link rel="stylesheet" href="public/app.css">
+    <script type="text/javascript" src="public/xhr.js"></script>
+    <script type="text/javascript" src="public/idb.js"></script>
+    <script type="text/javascript" src="public/browse.js"></script>
+    <script type="text/javascript" src="public/data.js"></script>
+    <script type="text/javascript" src="faltantes.js"></script>
+</head>
+
+<body lang="es-MX">
+
+    <header>
+	    <img src="filtro.svg" height="20px" onclick="app.doProvs()" >
+	    <img id="recargar" src="recargar.svg" height="20px" onclick="app.onLoaded()" >
+	    <label id="notifications"></label>
+	    <a> | Faltantes: <label id="falts-cnt"></label> | </a>
+	    <label><input type="checkbox" name="pedido" onchange="app.pedido(event)" checked /> Pedido | </label>
+	    <a onclick="app.getSelection()">Selecci&oacute;n: <label id="sel-count" style="font-weight: bold"></label> | </a>
+	    <img src="public/receipt.svg" height="20px" onclick="app.print()" >
+    </header>
+	    
+<!--
+ <label id="notifications"></label> <button onclick="app.print()"> IMPRIMIR </button>  <a>Faltantes: <label id="falts-cnt"></label></a> <label><input type="checkbox" name="pedido" onchange="app.pedido(event)" checked /> Pedido </label>
+--!>
+
+    <section id="proveedores" class="embiggen">
+	<button name="cerrar" onclick="app.clearProvs()">Reset</button>
+	<table><tbody class="marcado" id="lista-provs" onclick="app.toggleProv(event)"><tbody></table>
+    </section>
+
+    <section id="buscar">
+	<div> <input type="search" size=40 placeholder="Art&iacute;culo o Clave" onchange="app.startSearch(event)" onkeydown="app.keyPressed(event)"> <button>Buscar</button> </div>
+
+    <section id="resultados" class="tablas" style="overflow-x:auto">
+        <table onwheel="app.scroll(event)">
+	    <dt>
+            <thead>
+                <tr><th> Fecha </th><th> Clave </th><th> Descripci&oacute;n </th><th> Costo </th><th> Observaciones </th><th> Proveedor </th><th> PEDIDO </th></tr>
+            </thead>
+	    </dt>
+	    <tbody id="tabla-resultados" class="amarillo" ondblclick="app.remove(event)"></tbody>
+	    <tfoot><tr><th colspan=7><button onclick="app.scroll({deltaY:0})">&larr;Anterior</button> <label> | </label> <button onclick="app.scroll({deltaY:1})">Siguiente&rarr;</button></th></tr></tfoot>
+	</table>
+    </section>
+
+    </section>
+
+    <footer> <label id="copyright"></label> <label id="db-vers"></label> </footer>
+
+</body>
+</html>

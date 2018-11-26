@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title> CAJA </title>
+    <link rel="stylesheet" href="public/app.css">
+    <script type="text/javascript" src="public/xhr.js"></script>
+<!--    <script type="text/javascript" src="public/sql.js"></script> --!>
+    <script type="text/javascript" src="public/idb.js"></script>
+    <script type="text/javascript" src="public/data.js"></script>
+    <script type="text/javascript" src="public/ticket.js"></script>
+    <script type="text/javascript" src="public/people.js"></script>
+    <script type="text/javascript" src="caja.js"></script>
+</head>
+
+<body lang="es-MX">
+
+    <header>
+	<label id="notifications"></label>
+	<section class="dialogos fechas">
+	    <input type="date" onchange="caja.getByDate(event)"/>
+	    <section class="embiggen">
+		<table>
+		    <dt>
+		    <thead><tr><th> </th><th> Hora </th><th> Nombre </th><th> Art&iacute;culos </th><th> Total </th><th> </th></tr></thead>
+		    </dt>
+		<tbody id="tabla-caja-old"></tbody>
+		</table>
+	    </section>
+	</section>
+    </header>
+
+<!-- <select name="persona" id="personas" onchange="caja.tab()"></select> <label id="tag" onclick="caja.showD()"></label> -->
+
+    <div id='main'>
+    <section id="feed">
+
+    <section id="caja" class="scrollable">
+	<table>
+	    <caption>CAJA</caption>
+	    <dt><thead>
+		<tr><th> </th><th> Hora </th><th> Nombre </th><th> Art&iacute;culos </th><th> Total </th><th> </th></tr>
+	    </dt></thead>
+	    <tbody id="tabla-caja"></tbody>
+	</table>
+    </section>
+
+    </section>
+
+    <section id="ticket" class="tablas" style="overflow-x:auto">
+	<table>
+	    <caption>
+		<input type="checkbox" name="onoff" class="onoff-checkbox" id="switchSAT" onchange="caja.flipMe(this)" checked />
+		<label class="onoff-label" for="switchSAT">
+		    <span class="onoff-inner"></span>
+		</label>
+	    </caption>
+	    <dt>
+            <thead>
+                <tr> <th> Clave </th><th class="desc"> Descripci&oacute;n </th><th> # </th><th> % </th><th> Precio </th><th> Total </th> </tr> 
+            </thead>
+	    </dt>
+	    <tfoot>
+		<tr><th colspan=4><button name="cerrar" onclick="caja.emptyBag()">Cerrar</button>&emsp;<button name="facturar" onclick="caja.facturar()">Facturar</button>&emsp;<button onclick="caja.print()">Imprimir</button>&emsp;<button onclick="caja.pagar()">Pagar</button></th><th align="right">TOTAL</th><th class="total"><label id="ticket-total"></label></th></tr>
+		<tr><td colspan=5 align="right">Sub Total</td><td class="pesos"><label id="ticket-bruto"></label></td></tr>
+		<tr><td colspan=5 align="right">I.V.A.</td><td class="pesos"><label id="ticket-iva"></label></td></tr>
+	    </tfoot>
+
+	    <tbody id="ticket-compra" class="amarillo" onchange="caja.updateItem(event)" ondblclick="caja.clickItem(event)">
+	    </tbody>
+
+	</table>
+    </section>
+
+    </div>
+
+<!--
+   <section><dialog id="dialogo-schedule"><p>Marcar</p><p><button name="action" onclick="caja.marcar(event)"></button></p><p></p><button name="cerrar" onclick="caja.cerrar(event)">Cerrar</button></dialog></section>
+-->
+
+    <section><dialog id="dialogo-rfc"><table><caption>FACTURA</caption><thead><th></th><th></th></thead><tbody id="tabla-rfc" onchange="admin.anUpdate(event)"></tbody><tfoot><tr><th colspan=2 align="right"><button onclick="ferre.enviarF()">FACTURAR</button></th></tr></tfoot></table></dialog></section>
+
+    <section><dialog id="dialogo-pagar">
+	<form oninput="cambio.value=(parseFloat(recibo.value)-parseFloat(cuenta.value)).toFixed(2)">
+	    <table>
+		<tr><td><label>Por Pagar: </td><td><input type="text" name="cuenta" size=5 disabled="true" /></td></label></tr>
+		<tr><td><label>Recibo: </td><td><input type="number" name="recibo" size=5 /></label></td></tr>
+		<tr><td><label>Cambio: </td><td><output name="cambio"></label></td></tr>
+		<tr><td colspan=2><input type="search" name="rfc" size=20 placeholder="RFC o Nombre" /></td></tr>
+<!--		<tr><td><input type="checkbox" value="registrar" /><a>Registrar</a></td></tr> -->
+		<tr><td><button name="credito" onclick="caja.acreditar(event)">CREDITO</button></td><td><button name="efectivo" onclick="caja.acreditar(event); return false;">EFECTIVO</button></td></tr>
+	    </table></form></dialog></section>
+
+    <footer> <label id="copyright"></label> <label id="db-vers"></label> </footer>
+
+</body>
+</html>

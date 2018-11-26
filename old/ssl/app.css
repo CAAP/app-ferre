@@ -1,0 +1,10 @@
+td { font: 100% arial; }
+
+table { border-spacing: 6px 6px; }
+
+button[name=cerrar] { color: white; background-color: red; }
+
+button[name=guardar] { color: white; background-color: blue; }
+
+.snapshot { cursor: url(camera.png), default; }
+

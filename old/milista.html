@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title> LISTA-F </title>
+    <link rel="stylesheet" href="public/app.css">
+    <script type="text/javascript" src="public/xhr.js"></script>
+    <script type="text/javascript" src="public/idb.js"></script>
+    <script type="text/javascript" src="public/data.js"></script>
+    <script type="text/javascript" src="milista.js"></script>
+</head>
+
+<body lang="es-MX">
+
+    <section>
+
+    <section class="dialogos proveedores no-print">
+        <button onclick="app.reset()" name="cerrar">Reset</button><button onclick="app.save()" name="guardar">Guardar</button><label style="margin-left:10px">PROVEEDORES</label>
+	<div class="embiggen"><table><tbody id="lista-provs" class="amarillo" onclick="app.toggleProv(event)"><tbody></table></div>
+    </section>
+
+    <table style="margin-top:3%"><tbody id="lista-falts"></tbody></table>
+
+<!---    <dialog><table><caption>MODIFICAR</caption><tbody></tbody></table></dialog> --!>
+
+    </section>
+
+</body>
+</html>

@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title> ADMIN </title>
+    <link rel="stylesheet" href="public/app.css">
+    <script type="text/javascript" src="public/xhr.js"></script>
+    <script type="text/javascript" src="public/idb.js"></script>
+    <script type="text/javascript" src="public/browse.js"></script>
+    <script type="text/javascript" src="public/data.js"></script>
+    <script type="text/javascript" src="public/changes.js"></script>
+    <script type="text/javascript" src="admin.js"></script>
+</head>
+
+<body lang="es-MX">
+
+    <header> <label id="notifications"></label> <button onclick="admin.nuevo()">Nuevo</button> <button name="guardar" onclick="admin.guardar()">Guardar</button> </header>
+    <!-- <button name="guardar" onclick="admin.guardar()">Guardar</button> --!>
+
+	<section id="buscar">
+
+        <div> <input type="search" size=40 placeholder="Art&iacute;culo o Clave" onchange="admin.startSearch(event)" onkeydown="admin.keyPressed(event)"> <button>Buscar</button> </div>
+
+	<section id="resultados" class="tablas">
+        <table onwheel="admin.scroll(event)">
+	    <dt>
+            <thead>
+	    <tr><th> Fecha </th><th> Clave </th><th> SAT </th><th> Descripci&oacute;n </th><th> Costo </th></tr>
+            </thead>
+	    </dt>
+	    <tbody id="tabla-resultados" class="amarillo" onclick="admin.getRecord(event)"></tbody>
+	    <tfoot><tr><th colspan=6><button onclick="admin.scroll({deltaY:0})">&larr;Anterior</button> <label> | </label> <button onclick="admin.scroll({deltaY:1})">Siguiente&rarr;</button></th></tr></tfoot>
+	</table>
+	</section>
+
+	</section>
+
+<!--<thead><th></th><th></th><th></th><th></th></thead>--!>
+    <section><dialog id="dialogo-cambios"><table><caption>PRODUCTO</caption><tbody id="tabla-cambios" onchange="admin.anUpdate(event)"></tbody><tfoot><tr><td><button align="right" name="cerrar" onclick="admin.cancelar()">Cancelar</button></td><td><button name="guardar" onclick="admin.enviar()">Guardar</button></td><td colspan="2" align="right"><button onclick="admin.actualizar()">Actualizar</button></td></tr></tfoot></table></dialog></section>
+
+    <footer> <label id="copyright"></label> <label id="db-vers"></label> </footer>
+
+</body>
+</html>

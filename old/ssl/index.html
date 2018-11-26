@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title> TICPIC </title>
+    <link rel="stylesheet" href="app.css">
+    <script type="text/javascript" src="pictic.js"></script>
+</head>
+
+<body lang="es-MX">
+
+    <header> </header>
+
+    <button name="guardar" onclick="pictic.roll()">START</button>
+
+        <section><dialog id="dialogo-pictic"><table><tbody id="pic-body"></tbody><tfoot><tr><td colspan="2"><button name="cerrar" onclick="pictic.shutme(event)">Cerrar</button><img height="20px" align="right" onclick="pictic.flip()" src="flip-cam.png"></td></tr></tfoot></table></dialog>
+
+    <footer> <label id="copyright"></label> <label id="db-vers"></label> </footer>
+
+</body>
+</html>

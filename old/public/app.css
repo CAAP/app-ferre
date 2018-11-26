@@ -1,0 +1,200 @@
+td { font: 100% arial; }
+
+table { border-spacing: 6px 6px; }
+
+input[type=number] {
+    text-align: right;
+    width: 50px;
+}
+
+button[name=cerrar] { color: white; background-color: red; }
+
+button[name=guardar] { color: white; background-color: blue; }
+
+header, footer {
+    display: block;
+    margin: 4px;
+    padding: 5px;
+    background-color: #ccffcc;
+}
+
+dialog { font: 100% arial; }
+
+.azul { background-color: white; filter: drop-shadow(4px 4px 2px black); }
+
+.azul:hover { transform: scale(1.2); }
+
+.entrada { color: white; background-color: blue; }
+
+.encontrado { background-color: #aaeedd; }
+
+.modificado { background-color: #00cc44; }
+
+.precio1 { background-color: #e6ccff; }
+
+.amarillo tr:hover > td { background-color: #ffff97; }
+
+.activo {
+    font: bold 100% arial;
+    color: white;
+    background-color: black;
+    padding: 3px;
+}
+
+.total {
+    font: bold italic 100% arial;
+    text-align: right;
+}
+
+.gold {
+    font: bold 100% arial;
+    background-color: #cbaf59;
+    padding: 3px;
+}
+
+.faltante { color: red; text-decoration: line-through; }
+
+.pesos { text-align: right; }
+
+.rabatt .total { background-color: #e6ccff; }
+
+.marcado td:hover {
+    cursor:default;
+    font: bold italic 100% arial;
+}
+
+.scrollable {
+    max-height: 300px;
+    overflow: auto;
+}
+
+.tablas {
+    visibility: hidden;
+    cursor: default;
+}
+
+.tablas th {
+    border-bottom: 2px solid black;
+    border-top: 2px solid black;
+}
+
+.dialogos {
+    z-index: 3;
+    display: inline-block;
+    overflow: auto;
+}
+
+.embiggen { display: none; }
+
+.dialogos:hover .embiggen { display: block; }
+
+.fechas {
+    padding-left: 50px;
+    position: fixed;
+    top: 10px;
+    max-height: 30%;
+    background-color: #ccffcc;
+}
+
+.query {
+    padding-left: 30px;
+    position: fixed;
+    top: 4px;
+    background-color: #ffffff;
+}
+
+.carrito {
+    display: block;
+    position: fixed;
+    top: 1%;
+    max-height: 60%;
+    z-index: 2;
+    padding: 5px;
+    overflow: auto;
+}
+
+.basura { cursor: url(bin-icon.png), default; }
+
+@media print {
+    .no-print { display: none; }
+}
+
+#proveedores {
+    max-height: 30%;
+    background-color: #ffffcc;
+    padding: 5px;
+}
+
+#ticket-count {
+    position: absolute;
+    padding-left: 12px;
+    font-weight: bold;
+}
+
+#ticket-total { font: 200% arial; }
+
+#personas td:hover {
+    cursor:default;
+    font: bold italic 100% arial;
+}
+
+#resultados td { cursor: copy; }
+
+#keys-resultados { visibility: hidden; }
+
+#buscar {
+    margin: 4px;
+    padding: 5px;
+}
+
+#main {
+    line-style: none;
+    -webkit-display: flex;
+    display: flex;
+    -webkit-flex-flow: row;
+    flex-flow: row;
+}
+
+#feed {
+    margin: 4px;
+    padding: 5px;
+    order: 1;
+}
+
+#ticket {
+    margin: 4px;
+    padding: 5px;
+    order: 2;
+}
+
+
+.onoff-checkbox { display: none; }
+
+.onoff-label {
+    display:block; overflow: hidden; cursor: pointer;
+    border: 2px solid #999999; border-radius: 20px;
+}
+
+.onoff-inner {
+    display: block; width: 200%; margin-left: -100%;
+    transition: margin 0.3s ease-in 0s;
+}
+
+.onoff-inner:before, .onoff-inner:after {
+    diplay: block; float: left; width: 50%; height: 30px; padding: 0; line-height: 30px;
+    font-size: 14px; color: white; font-weight: bold; box-sizing: border-box;
+}
+
+.onoff-inner:before {
+    content: "TICKET";
+    padding-left: 10px;
+    color: black;
+}
+
+.onoff-inner:after {
+    content: "Clave SAT - IVA";
+    background-color: #34A7C1; color: #FFFFFF;
+}
+
+.onoff-checkbox:checked + .onoff-label .onoff-inner { margin-left: 0; }
+

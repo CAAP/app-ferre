@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title> VENTAS </title>
+    <link rel="stylesheet" href="app.css">
+    <script type="text/javascript" src="xhr.js"></script>
+    <script type="text/javascript" src="idb.js"></script>
+    <script type="text/javascript" src="sql.js"></script>
+    <script type="text/javascript" src="data.js"></script>
+    <script type="text/javascript" src="ticket.js"></script>
+    <script type="text/javascript" src="browse.js"></script>
+    <script type="text/javascript" src="people.js"></script>
+    <script type="text/javascript" src="app.js"></script>
+</head>
+
+<body lang="es-MX">
+
+    <header> <label id="notifications"></label> <select name="persona" id="personas" accesskey="c" onchange="ferre.tab()"></select> <label id="tag"></label> <span><label id="ticket-count"></label><img src="empty-cart.svg" height="25px"> <label id="ticket-total" class="total"></label></span> </header>
+
+    <section id="buscar">
+        <div> <input type="search" size=40 accesskey="b" placeholder="Art&iacute;culo o Clave" onchange="ferre.startSearch(event)" onkeyup="ferre.keyPressed(event)"> <button>Buscar</button> </div>
+
+    <section id="resultados" class="tablas">
+        <table>
+	    <dt>
+            <thead>
+                <tr><th> Fecha </th><th> Clave </th><th> Descripci&oacute;n </th><th colspan=3> Precios </th></tr>
+            </thead>
+	    </dt>
+	    <tbody id="tabla-resultados" class="amarillo" onclick="ferre.menu(event)" onwheel="ferre.scroll(event)"></tbody>
+	    <tfoot><tr><th colspan=6><button accesskey="a" onclick="ferre.scroll({deltaY:0})">&larr;Anterior</button> <label> | </label> <button accesskey="s" onclick="ferre.scroll({deltaY:1})">Siguiente&rarr;</button></th></tr></tfoot>
+	</table>
+    </section>
+
+    </section>
+
+    <section id="ticket" class="tablas" style="overflow-x:auto">
+	<table>
+           <caption> TICKET </caption>
+	    <dt>
+            <thead>
+                <tr> <th> Clave </th><th> Cantidad </th><th class="desc"> Descripci&oacute;n </th><th> Precio </th><th> Descuento </th><th> Total </th> </tr> 
+            </thead>
+	    </dt>
+	    <tfoot><tr><th colspan=6 align="right"><button name="cerrar" onclick="ferre.emptyBag()">Cancelar</button>&emsp;<button name="guardar" onclick="ferre.saveme()">Guardar</button>&emsp;<button onclick="ferre.surtir()">Surtir</button>&emsp;<button onclick="ferre.print('presupuesto')">Presupuesto</button>&emsp;<button onclick="ferre.print('ticket')">Caja</button></th></tr></tfoot>
+
+<!-- &emsp;<label id="ticket-total" class="total"></label> --!>
+
+	    <tbody id="ticket-compra" class="amarillo" onchange="ferre.updateItem(event)" ondblclick="ferre.clickItem(event)"></tbody>
+	</table>
+    </section>
+
+    <section><dialog id="dialogo-rfc">
+	<label><input type="radio" name="buscar" value="rfc" checked="true" />RFC</label><label><input type="radio" name="buscar" value="razonSocial" />Razon social</label><br>
+	<input type="search" placeholder="XAXX010101000" pattern="^\w{3,4}\d{6}\w{3}$" /><br>
+	<button>Buscar</button><button name="cerrar" onclick="ferre.cerrar(event)">Cerrar</button>
+    </dialog></section>
+
+    <section><dialog id="dialogo-factura"><table><caption>DATOS DE LA FACTURA</caption><tbody id="tabla-rfc" onchange="admin.anUpdate(event)"></tbody><tfoot><tr><th colspan=2 align="right"><button onclick="ferre.enviarF()">FACTURAR</button></th></tr></tfoot></table><table><tbody id="tabla-cp"></tbody></table></dialog></section>
+
+    <section><dialog id="dialogo-item"><table><tbody>
+	<tr><td><button onclick="ferre.add2bag()">Agregar</button></td></tr>
+	<tr><td><button onclick="ferre.faltante(event)">Faltante</button></td></tr>
+	<tr><td><button name="cerrar" onclick="ferre.cerrar(event)">Cerrar</button></tr></tr>
+    </tbody></table></dialog></section>
+
+    <section><dialog id="dialogo-faltante"><label></label><label>Observaciones:</label><p><input name='obs'/></p><button name="guardar" onclick="ferre.enviarF(event)"> OK </button><button name="cerrar" onclick="ferre.cerrar(event)">Cerrar</button></dialog></section>
+
+    <footer> <label id="copyright"></label> <label id="db-vers"></label> </footer>
+
+</body>
+</html>
