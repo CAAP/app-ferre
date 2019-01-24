@@ -1,0 +1,102 @@
+input[type="number"] { text-align: right; }
+
+a[href^="tel:"] { color: black; }
+
+a[href^="tel:"]:before {
+    content: "\260e";
+    margin-right: 0.5em;
+}
+
+td { font-size: 18px; }
+
+a, p, label {
+    font-family: "Cutive Mono", "Average Sans", fantasy, sans-serif, Serif;
+    font-size: 20px;
+    text-decoration: none;
+}
+
+a:hover { color: #7db1e5; }
+
+#head {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 60px;
+    background: #3f3f3f;
+}
+
+a.a_white { color: white; }
+
+.header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 60px;
+    display: flex;
+    flex-flow: row;
+    align-content: space-between;
+    align-items: center;
+    justify-content: flex-end;
+    background: #3f3f3f;
+}
+
+.header > div { margin-right: 10%; }
+
+.icon {
+    margin: 15px;
+    height: 30px;
+}
+
+#brand {
+    position: fixed;
+    left: 130px;
+    top: 20px;
+}
+
+#menu {
+    position: fixed;
+    left: 5px;
+    top: 0;
+    padding-bottom: 31px;
+    margin-left: 10px;
+}
+
+#menu > img {
+    height: 15px;
+}
+
+#mylogo {
+    position: fixed;
+    left: 60px;
+    top: 0;
+    margin-left: 25px;
+}
+
+#mylogo > a > img {
+    height: 50px;
+    margin: 0;
+    margin-top: 5px;
+}
+
+@media all and (max-width: 800px) {
+    p,h1,a,label { font-size: 90%; }
+    .header {
+	flex-flow: column;
+	align-content: flex-start;
+	align-items: flex-start;
+	margin-top: 40px;
+	z-index: -2;
+	visibility: hidden;
+    }
+    .header > div {
+	margin-bottom: 15px;
+    }
+    #menu:hover > .header {
+	visibility: visible;
+	padding-top: 90px;
+    }
+}
+
+
