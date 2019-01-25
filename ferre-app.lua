@@ -20,17 +20,12 @@ local PEERS = {}
 -- Local function for module-only access
 local function handshake(srv, k)
     local id, more = srv.receive()
-    if more then
+    if #more == 0 then
 	PEERS[id] = true
-	print(id, '\n', concat(more, '\n'))
-	return id
-    else
-	if k == 5 then
-	    return false
-	else
-	    return handshake(srv, k+1)
-	end
+	id, more = srv.receive()
     end
+    print(id, '\t', #more, '\n', concat(more, '\n'), '\n')
+    return id
 end
 
 ---------------------------------
