@@ -1,13 +1,15 @@
 
 -- Import Section
 local bsd  = require'carlos.bsd'
-local zmq  = require'carlos.zmq'
 local fd   = require'carlos.fold'
 local sql  = require'carlos.sqlite'
 local json = require'carlos.json'
 
 local iopen = require'carlos.io'.open
 local dump = require'carlos.files'.dump
+local socket = require'carlos.zmq'.socket
+local poll = require 'lzmq'.pollin
+local context = require'lzmq'.context
 local time = os.time
 local date = os.date
 
@@ -21,6 +23,7 @@ _ENV = nil -- or M
 
 -- Local Variables for module-only access
 --
+local TIMEOUT = 2000 -- 2 secs
 local VERS = {} -- week, vers
 local TABS = {tickets = 'uid, id_tag, clave, desc, costol NUMBER, unidad, precio NUMBER, qty INTEGER, rea INTEGER, totalCents INTEGER',
 	      updates = 'vers INTEGER PRIMARY KEY, clave, campo, valor'}
@@ -47,6 +50,8 @@ local function dbconn(path, create)
 	return false, format('ERROR: File %q does not exists!', f)
     end
 end
+
+local function connexec( conn, s ) return assert( conn.exec(s) ) end
 
 -- if db file exists and 'updates' tb exists then returns count
 local function which( db )
@@ -83,9 +88,9 @@ local function newTicket( w )
 
 end
 
-local function asJSON() return format('data: %s', json.asJSON()) end -- XXX
+local function asJSON() return format('data: %s', json.asJSON()) end -- XXX used only once in next fn
 
-local function sse( w ) -- XXX
+local function sse( w ) -- XXX not used even once
     if not(w) then return ':empty' end
     local event = w.event
     w.event = nil
@@ -100,24 +105,71 @@ local function sse( w ) -- XXX
     return table.concat( ret, '\n')
 end
 
--- Let's build a REP socket using inproc protocol XXX
+-- Let's build a ROUTER socket and use the 'inproc' protocol
+--
+-- this is a complex fn that depends on calling a second process that writes to the 'ferre.db',
+-- after completion, it writes the changed values to current WEEK's database and updates
+-- the running version
+--
+
+
+local function updates(skt)
+    local rtr = socket('ROUTER', ctx)
+    assert(rtr.bind'ipc://updates.ipc')
+
+end
+
+local function tickets(ctx)
+    local rtr = socket('ROUTER', ctx)
+    assert(rtr.bind'ipc://tickets.ipc')
+
+end
 
 
 ---------------------------------
--- Public function definitions --
+-- Program execution statement --
 ---------------------------------
-
+--
+-- Database connection
+--
 local conn = assert( dbconn(asweek(now()), true) )
+fd.reduce(fd.keys(TABS), function(schema, tbname) connexec(format(sql.newTable, tbname, schema)) end)
 
-local QUERY  = format(sql.newTable, TBNAME, SCHEMA)
-
-assert( conn.exec(QUERY) )
-
+-- Compute latest version
+--
 version(VERS) -- latest version for UPDATES
 
-print('\n\tWeek:', VERS.week, '\n\tVers:', VERS.vers)
+print('\n\tWeek:', VERS.week, '\n\tVers:', VERS.vers) -- print latest version
 
 updateVERS(VERS) -- write to hard-disk latest version for UPDATES
 
+-- ZMQ server sockets
+--
+local ctx = context()
 
+local tickets = socket('ROUTER', ctx)
+assert(tickets.bind'ipc://tickets.ipc') -- changes are distributed to 'selected' peers
+
+local updates = socket('REP', ctx)
+assert(updates.bind'ipc://updates.ipc') -- changes are distributed to 'all' peers
+
+local pub = socket('XPUB', ctx)
+assert(pub.bind'ipc://week.ipc') -- every change to the underlying DB is distributed here
+
+-- Initialize the server
+-- There are two types of subscriptions to events on 'tkts' or 'vers'
+-- Replies are sent in JSON format
+--
+assert( pub.send( format('vers %s', json.asJSON(VERS)) ) )
+
+local events = poll{tickets, updates}
+
+while true do
+    local j = events(TIMEOUT)
+    if j == 1 then
+	tickets.recv
+    elseif j == 2 then
+	updates.recv
+    end
+end
 
