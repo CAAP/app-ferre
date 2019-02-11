@@ -6,6 +6,7 @@ local format  = require'string'.format
 local sse     = require'carlos.html'.response
 local pollin  = require'lzmq'.pollin
 local context = require'lzmq'.context
+local fd      = require'carlos.fold'
 
 local concat = table.concat
 local assert = assert
@@ -39,8 +40,9 @@ local function handshake(server)
     return id
 end
 
-local function broadcast(sub)
-    local msg = sub.receive()
+local function broadcast(sub, server)
+    local msg = sub.receive():gmatch'%a+ ([^|]+)'
+    print(msg)
     fd.reduce(fd.keys(PEERS), function(_,id) server.send(id, msg) end)
 end
 
@@ -53,22 +55,23 @@ local ctx = context()
 local server = stream(ENDPOINT, ctx)
 
 print('Successfully bound to:', ENDPOINT, '\n')
---
-local sub = socket('XSUB', ctx)
+-- -- -- -- -- --
+local sub = socket('SUB', ctx)
 
 assert(sub.connect(TICKETS))
 fd.reduce(SUBS, function(x) assert(sub.subscribe(x)) end)
 
 print(format('Successfully connected to %q and subscribed to %s\n', TICKETS, concat(SUBS,', ')))
---
-local poll = pollin{server, sub}
+-- -- -- -- -- --
+local poll = pollin{server.socket(), sub.socket()}
 
 while true do
     local j = poll(TIMEOUT)
+    print(j, '\n\n')
     if j == 1 then
 	if not handshake(server) then print'Bye bye ...\n' end
     elseif j == 2 then
-	broadcast(sub)
+	broadcast(sub, server)
     end
 end
 
