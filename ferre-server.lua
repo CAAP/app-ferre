@@ -18,11 +18,11 @@ _ENV = nil -- or M
 -- Local Variables for module-only access
 --
 local ENDPOINT  = 'tcp://*:5050'
-local TICKETS   = 'ipc://tickets.ipc'
+local UPDATES   = 'ipc://updates.ipc'
 local PEERS     = {}
 local HELLO     = sse{content='stream'}
 local TIMEOUT   = 5000 -- 5 secs
-local SUBS	= {'vers', 'tkts'}
+local SUBS	= {'vers', 'ups'}
 
 --------------------------------
 -- Local function definitions --
@@ -41,7 +41,7 @@ local function handshake(server)
 end
 
 local function broadcast(sub, server)
-    local msg = sub.receive():gmatch'%a+ ([^|]+)'
+    local msg = sub.receive():match'%a+ ([^|]+)'
     print(msg)
     fd.reduce(fd.keys(PEERS), function(_,id) server.send(id, msg) end)
 end
@@ -58,10 +58,10 @@ print('Successfully bound to:', ENDPOINT, '\n')
 -- -- -- -- -- --
 local sub = socket('SUB', ctx)
 
-assert(sub.connect(TICKETS))
+assert(sub.connect(UPDATES))
 fd.reduce(SUBS, function(x) assert(sub.subscribe(x)) end)
 
-print(format('Successfully connected to %q and subscribed to %s\n', TICKETS, concat(SUBS,', ')))
+print(format('Successfully connected to %q and subscribed to %s\n', UPDATES, concat(SUBS,', ')))
 -- -- -- -- -- --
 local poll = pollin{server.socket(), sub.socket()}
 

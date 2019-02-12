@@ -83,7 +83,7 @@ end
 --
 local pub = socket'PUB'
 
-assert( pub.bind(UPDATES) )
+assert( pub.bind(TICKETS) )
 --
 -- Database connection
 --
