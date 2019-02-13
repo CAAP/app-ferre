@@ -8,8 +8,6 @@ local file_exists = require'lbsd'.file_exists
 local sql 	  = require'carlos.sqlite'
 local asJSON	  = require'carlos.json'.asJSON
 
-local time = os.time
-local date = os.date
 local rand = math.random
 
 local assert = assert
@@ -20,8 +18,7 @@ _ENV = nil -- or M
 
 -- Local Variables for module-only access
 --
-local UPDATES   = 'ipc://updates.ipc'
-local TICKETS   = 'ipc://tickets.ipc'
+local TICKETS   = 'ipc://ventas.ipc'
 local TIMEOUT   = 5000 -- 5 secs
 local SUBS	= {'vers', 'tkts'}
 local VERS      = {} -- week, vers
