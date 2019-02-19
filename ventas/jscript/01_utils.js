@@ -1,4 +1,6 @@
 	var UTILS = {
+	    origin: document.location.origin;
+
 	    asnum: s => { let n = Number(s); return Number.isNaN(n) ? s : n; },
 
 	    redondeo: x => { return 50 * Math.floor( (x + 25) / 50 ) },

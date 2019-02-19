@@ -1,21 +1,22 @@
 -- Import Section
 --
-local stream  = require'carlos.zmq'.stream
-local socket  = require'carlos.zmq'.socket
-local format  = require'string'.format
-local sse     = require'carlos.html'.response
-local pollin  = require'lzmq'.pollin
-local context = require'lzmq'.context
-local fd      = require'carlos.fold'
-local asJSON  = require'carlos.json'.asJSON
+local stream	  = require'carlos.zmq'.stream
+local socket	  = require'carlos.zmq'.socket
+local format	  = require'string'.format
+local sse	  = require'carlos.html'.response
+local pollin	  = require'lzmq'.pollin
+local context	  = require'lzmq'.context
+local fd	  = require'carlos.fold'
+local asJSON	  = require'carlos.json'.asJSON
 local file_exists = require'carlos.bsd'.file_exists
+local sleep	  = require'lbsd'.sleep
 local sql 	  = require'carlos.sqlite'
-local env	  = os.getenv
 
-local rand    = math.random
-local concat = table.concat
-local assert = assert
-local print = print
+local env	  = os.getenv
+local rand	  = math.random
+local concat	  = table.concat
+local assert	  = assert
+local print	  = print
 
 -- No more external access after this point
 _ENV = nil -- or M
@@ -30,26 +31,34 @@ local TIMEOUT   = 5000 -- 5 secs
 local SUBS	= {'vers', 'ups'}
 local PRECIOS   = env'HOME' .. '/db/ferre.db'
 
-local CTX 	= context()
-
 --------------------------------
 -- Local function definitions --
 --------------------------------
 --
 local function sse( event, data ) return format('event: %s\ndata: %s\n\n', event, data) end
 
+local function chunks(f)
+    local k = 1
+    return function(x)
+	f(x)
+	if k%100 == 0 then sleep(2); print(k, 'successfully sent!\n') end
+	k = k + 1
+    end
+end
+
 local function upSSE( port )
     local peer = 'tcp://*:'..port
-    local srv = stream( peer, CTX )
+    local srv = stream(peer)
     print('Successfully bound to:', peer, '\n')
 
     local id, msg = srv.receive()
     id, msg = srv.receive() -- receive salutation
     srv.send(id, HELLO)
 
-    fd.reduce(PRECIOS, function(x) srv.send(id, sse('update', asJSON(x))) end)
-
+    fd.reduce(PRECIOS, chunks(function(x) srv.send(id, sse('update', asJSON(x))) end))
     srv.send(id, '')
+
+    print'Data successfully sent to peer!'
 end
 
 local function handshake(server)
@@ -58,8 +67,8 @@ local function handshake(server)
     if peer then PEERS[id] = nil; return false; else PEERS[id] = true; end
     id, msg = server.receive() -- receive salutation
     if #msg > 0 then
-	if msg:match'GET / ' then server.send(id, HELLO)
-	elseif msg:match'GET /upgrade' then upSSE( rand(5051, 6051) ) end
+	if msg[1]:match'GET / ' then server.send(id, HELLO)
+	elseif msg[1]:match'GET /upgrade' then upSSE( rand(5051, 6051) ) end
     end
     return id
 end
@@ -83,6 +92,8 @@ end
 -- Program execution statement --
 ---------------------------------
 --
+local CTX = context()
+
 local server = stream(ENDPOINT, CTX)
 
 print('Successfully bound to:', ENDPOINT, '\n')
