@@ -8,7 +8,6 @@ local asJSON	= require'carlos.json'.asJSON
 local dbconn	= require'carlos.ferre'.dbconn
 local connexec	= require'carlos.ferre'.connexec
 local dump	¡= require'carlos.files'.dump
-local socket	= require'carlos.zmq'.socket
 local poll	= require'lzmq'.pollin
 local context	= require'lzmq'.context
 
@@ -71,20 +70,11 @@ local function version(w)
     return w
 end
 
-local function dumpVERS(w)  end
-
 local function newTicket( w )
     local uid = date('%FT%TP', now()) .. w.pid
     fd.reduce( w.args, fd.map( hd.args(keys, uid, w.id_tag) ), sql.into( tbname ), conn ) -- ids( uid, w.id_tag ), 
 
 end
-
--- Let's build a ROUTER socket and use the 'inproc' protocol
---
--- this is a complex fn that depends on calling a second process that writes to the 'ferre.db',
--- after completion, it writes the changed values to current WEEK's database and updates
--- the running version
---
 
 ---------------------------------
 -- Program execution statement --
@@ -112,6 +102,8 @@ local CTX = context()
 local tasks = assert(CTX:socket'SUB')
 
 assert(tasks:connect( DOWNSTREAM ))
+
+tasks:subscribe''
 
 -- XXX SUBS messages should be sent
 

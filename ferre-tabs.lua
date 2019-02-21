@@ -5,8 +5,11 @@
 local asJSON	= require'carlos.json'.asJSON
 local poll	= require'lzmq'.pollin
 local context	= require'lzmq'.context
+local ssevent	= require'carlos.ferre'.ssevent
+local decode	= require'carlos.ferre'.decode
 
 local format	= require'string'.format
+local concat 	= table.concat
 local assert	= assert
 local env	= os.getenv
 
@@ -17,47 +20,57 @@ _ENV = nil -- or M
 
 -- Local Variables for module-only access
 --
-local CACHE	= {}
-local ENDPOINT	= 'ipc://tabs.ipc'
-local UPSTREAM  = 'ipc://stream.ipc' -- XXX
+local CACHE	 = {}
+local UPSTREAM	 = 'ipc://upstream.ipc'
+local DOWNSTREAM = 'ipc://downstream.ipc'
+local SUBS	 = {'rmv', 'add'}
 
 --------------------------------
 -- Local function definitions --
 --------------------------------
 --
-local function add(query, pid) CACHE[pid] = {pid=pid, query=query} end
+local function distill(msg)
+    local cmd, data = decode(msg)
+    return cmd, data.pid, data.query
+end
 
-local function remove( pid ) CACHE[pid] = nil end
+local function store(query, pid) CACHE[pid] = {pid=pid, query=query} end
 
-
+local function delete( pid ) CACHE[pid] = nil end
 
 ---------------------------------
 -- Program execution statement --
 ---------------------------------
 --
-local ctx = assert(context())
 -- Initialize server
+local CTX = context()
+
+local tasks = assert(CTX:socket'SUB')
+
+assert(tasks:connect( DOWNSTREAM ))
+
+fd.reduce(SUBS, function(s) assert(tasks:subscribe(s))  end)
+
+print('Successfully connected to:', DOWNSTREAM)
+print('And successfully subscribed to:', concat(SUBS, '\t'), '\n')
+-- -- -- -- -- --
 --
-local worker = assert(ctx:socket'REP')
-
-assert(worker:bind( ENDPOINT ))
-
 -- Connect to PUBlisher
---
-local msgr = assert(ctx:socket'PUSH')
+local msgr = assert(CTX:socket'PUSH')
 
 assert(msgr:connect( UPSTREAM ))
 
-assert(msgr:send_msg'Hi TABS')
+local function sndmsg(e, m) assert(msgr:send_msg(ssevent(e, m))) end
+
+sndmsg('Hi', 'TABS')
+
 
 -- Run loop
 --
 while true do
-    local cmd, pid, query = worker:recv_msg():match'%a+ %w+ [^!]*$'
-    worker:send_msg'OK'
-    if cmd == 'add' then assert(msgr:send_msg()) end
-    if cmd == 'rmv' then assert(msgr:send_msg()) end
-    if cmd == 'KILL' then assert(msgr:send_msg'Bye TABS'); break end
+    local cmd, pid, query = distill(tasks:recv_msg())
+    if cmd == 'add' then sndmsg('add', query) end
+    if cmd == 'rmv' then sndmsg('rmv', pid) end
+    if cmd == 'KILL' then sndmsg('Bye', 'TABS'); break end
 end
-
 
