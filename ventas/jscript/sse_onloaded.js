@@ -1,4 +1,3 @@
-
 	// Init & Load DBs
 	(function() {
 	    const STORES = DATA.STORES;
@@ -23,6 +22,7 @@
 		   .then(db => Promise.all( STORES.map(store => {store.CONN = db.CONN; return ifLoad(store);}) ));
 	})();
 
+/*
 	// fetch, update VERSION
 	(function() {
 	    const origin = UTILS.origin;
@@ -36,9 +36,11 @@
 			.then( updateMe );
 	    }
 	})();
+*/
 
+/*
 	// connect DATA's EVENT-SOURCE
-	(function(esource) {
+	(function() {
 	    const origin = UTILS.origin;
 	    const STORES = DATA.STORES;
 
@@ -56,10 +58,10 @@
 		    updateMe(data);
 	    }, false);
 	})();
+*/
 
-
+/*
 	(function() {
-
 	    function a2obj( a ) {
 		const M = a.length/2;
 		let o = {};
@@ -67,10 +69,6 @@
 		return o;
 	    }
 
-
-
-
-//		    DATA.onLoaded(esource);	XXX
 		esource.addEventListener("tabs", function(e) {
 		    console.log("tabs event received.");
 		    JSON.parse( e.data ).forEach( o => PEOPLE.tabs.set(o.pid, o.query.split('&').map(s => a2obj(s.split('+')))) );  //data(a2obj(s.split('+'))))
@@ -85,4 +83,5 @@
  		if (IDB.indexedDB)
 		    IDB.loadDB( DATA ).then( () => console.log('Success!') ).then( addEvents );
 	    })();
+*/
 

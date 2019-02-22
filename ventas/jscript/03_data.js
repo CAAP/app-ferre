@@ -23,7 +23,6 @@
 	};
 
 	(function() {
-
 	    function asprice(q) {
 		q.precios = {};
 		for (let i=1; i<4; i++) {
@@ -48,16 +47,5 @@
 		    return IDB.write2DB( PRICE ).delete( o.clave );
 		return upgrade( o ).then( DATA.inplace );
 	    };
-
 	})();
 
-/*
-	(function() {
-	    //  XXX New feature some browsers only
-	    DATA.ppties -> UTILS.ppties //XXX
-
-	    DATA.encPpties -> UTILS.encPpties // XXX
-
-	    DATA.close = e => e.target.closest('dialog').close(); // XXX where is it USED?
-	})();
-*/

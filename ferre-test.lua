@@ -4,6 +4,7 @@
 --
 local context	  = require'lzmq'.context
 
+local assert	  = assert
 local print	  = print
 
 -- No more external access after this point
@@ -11,7 +12,7 @@ _ENV = nil -- or M
 
 -- Local Variables for module-only access
 --
-local UPSTREAM = 'ipc://upstream.ipc'
+local DOWNSTREAM = 'ipc://downstream.ipc'
 
 --------------------------------
 -- Local function definitions --
@@ -27,6 +28,9 @@ local CTX = context()
 
 local ear = assert(CTX:socket'SUB')
 
-ear:subscribe''
+assert(ear:connect( DOWNSTREAM ))
 
+assert(ear:subscribe'')
+
+while true do print(ear:recv_msg(), '\n') end
 
