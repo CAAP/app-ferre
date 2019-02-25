@@ -10,13 +10,15 @@
 		    req.onupgradeneeded = function(e) {
 			let conn = e.target.result;
 			function upgrade( kk ) {
-			    let objStore = conn.createObjectStore(kk.STORE, { keyPath: kk.KEY });
-			    if (kk.INDEX) { kk.INDEX.forEach( idx => objStore.createIndex(idx.name||idx.key, idx.key, {unique: false}) ) }
-			    console.log('ObjectStore ' + kk.STORE + ' created successfully.');
+			    const oo = k.STORES[kk];
+			    if (oo.STORE == undefined) { return; }
+			    let objStore = conn.createObjectStore(oo.STORE, { keyPath: oo.KEY });
+			    if (oo.INDEX) { oo.INDEX.forEach( idx => objStore.createIndex(idx.name||idx.key, idx.key, {unique: false}) ) }
+			    console.log('ObjectStore ' + oo.STORE + ' created successfully.');
 			}
 
 			console.log('Upgrade ongoing.');
-			k.STORES.forEach(upgrade);
+			UTILS.forObj(k.STORES, upgrade) //k.STORES.forEach(upgrade);
 			k.CONN = conn;
 			conn.transaction.oncomplete = () => resolve( k );
 		    };
@@ -24,16 +26,20 @@
 	    },
 
 	    populateDB: function(k) {
-		function asobj(a, ks) {
+/*		function asobj(a, ks) {
 		    let ret = {};
 		    for (let i in ks) { ret[ks[i]] = a[i]; }
 		    return (k.MAP ? k.MAP(ret) : ret);
 		}
-
-		function store(objsto) {
+		function storeOrig(objsto) {
 		    let ks = objsto[0], datos = objsto[1];
 		    let os = IDB.write2DB(k);
-		    return UTIL.promiseAll( datos, dato => os.add(asobj(dato, ks)) );
+		    return UTILS.promiseAll( datos, dato => os.add(asobj(dato, ks)) );
+		}
+*/
+		function store(datos) {
+		    let os = IDB.write2DB(k);
+		    return Promise.all( datos.map( obj => os.add(k.MAP ? k.MAP(obj) : obj) ) );
 		}
 
 		return XHR.getJSON( k.FILE ).then( store ).then( () => console.log("Datos loaded to store " + k.STORE) );

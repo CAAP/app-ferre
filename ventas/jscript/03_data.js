@@ -1,15 +1,6 @@
 	var DATA = {
 	    VERSION: 1,
 	    DB: 'datos',
-	    clearTable: tb => { while (tb.firstChild) { tb.removeChild( tb.firstChild ); } },
-	    asstr: o => {
-		if (Array.isArray(o))
-		    return o.join('&');
-// 	   fn ppties could be use instead XXX 
-		let props = [];
-		for (var prop in o) { props.push( prop + '=' + o[prop] ); }
-		return props.join('&');
-	    },
 	    STORES: {
 		PRICE: {
 		    STORE: 'precios',

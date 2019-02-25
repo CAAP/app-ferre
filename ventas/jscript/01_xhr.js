@@ -34,7 +34,7 @@
 
 	    get: url => XHR.request(url, { responseType: 'text' }).then( console.log('Successful GET!') ),
 
-	    getJSON: url => XHT.request(url, { responseType: 'text' }).then( JSON.parse )
+	    getJSON: url => XHR.request(url, { responseType: 'text' }).then( JSON.parse )
 
 	};
 
