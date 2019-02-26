@@ -22,6 +22,7 @@
 
 	// TICKET
 	(function() {
+	    const PRICE = DATA.STORES.PRICE;
 	    TICKET.bag = document.getElementById( TICKET.bagID );
 	    TICKET.myticket = document.getElementById( TICKET.myticketID );
 
@@ -36,7 +37,6 @@
 		Array.from(TICKET.bag.children).forEach(prom);
 	    };
 
-		const diagI = document.getElementById('dialogo-item');
 		const tcount = document.getElementById(TICKET.tcountID);
 		const ttotal = document.getElementById( TICKET.ttotalID );
 		const persona = document.getElementById('personas');
@@ -60,13 +60,12 @@
 		ferre.emptyBag = () => { TICKET.empty(); return xget('print', {id_tag: 'd', pid: Number(persona.value)}) };
 
 		ferre.menu = e => {
-		    if (persona.value == 0) { return; }
+//		    if (persona.value == 0) { return; }
 		    clave = UTILS.asnum(e.target.parentElement.dataset.clave); // XXX one can use this instead: diagI.returnValue = clave;
-		    diagI.showModal();
+		    ferre.add2bag();
 		};
 
 		ferre.add2bag = function() {
-		    diagI.close();
 		    if (TICKET.items.has( clave )) { console.log('Item is already in the bag.'); return false; }
 		    return getPrice( {clave: clave, qty: 1, precio: 'precio1', rea: 0} )
 			.then( w => Object.assign(w, {totalCents: uptoCents(w)}) )
