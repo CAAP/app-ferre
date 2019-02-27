@@ -64,8 +64,6 @@ button[name=guardar] { color: white; background-color: blue; }
 
 .query {
     padding-left: 30px;
-    position: fixed;
-    top: 4px;
     background-color: #ffffff;
 }
 
@@ -99,6 +97,13 @@ button[name=guardar] { color: white; background-color: blue; }
 
 #ticket-total { font: 200% arial; }
 
+#personas {
+    width: 90px;
+    height: 20px;
+    padding: 0.5rem;
+    border-radius: 4px;
+}
+
 #personas td:hover {
     cursor:default;
     font: bold italic 100% arial;
@@ -108,35 +113,52 @@ button[name=guardar] { color: white; background-color: blue; }
 
 #keys-resultados { visibility: hidden; }
 
-#buscar {
-    margin-top: 90px;
-    padding: 5px;
-}
-
-#ticket {
-    margin-top: 140px;
-    padding: 5px;
-    order: 2;
-}
-
 #myhead {
-    display: block;
+    display: flex;
     margin: 4px;
     padding: 5px;
     background-color: #3d5a98;
+    align-items: center;
+    align-content: space-between;
+    justify-content: space-between;
 }
+
+#myhead > label { color: #ffffff; }
 
 #pacman {
     visibility: hidden;
-    padding: 5px;
+    padding: 3px;
     align: middle;
     z-index: 7;
 }
 
 #busq {
     padding: 0.5rem;
+    border-radius: 4px;
+    border: 3px solid #ddd;
     background-image: url("svg/search.svg");
     background-repeat: no-repeat;
-    padding-left: 40px;
+    background-position: top 50% right 30px;
+    padding-left: 5px;
 }
+
+#main { 
+    width: 95%;
+    padding: 5px;
+    margin-top: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-content: space-between;
+}
+
+#buscar {
+    padding: 5px;
+    order: 1;
+}
+
+#ticket {
+    padding: 5px;
+    order: 2;
+}
+
 

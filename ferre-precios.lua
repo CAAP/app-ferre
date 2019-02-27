@@ -47,6 +47,15 @@ print'\nWriting data to file ...\n'
 FIN:write'['
 FIN:write( concat(fd.reduce(conn.query(QRY), fd.map(nulls), fd.map(asJSON), fd.into, {}), ', ') )
 FIN:write']'
+FIN:close()
+
+-- PEOPLE
+QRY = 'SELECT id, nombre FROM empleados'
+DEST = DEST:gsub('precios', 'people')
+FIN = open(DEST, 'w')
+FIN:write'['
+FIN:write( concat(fd.reduce(conn.query(QRY), fd.map(asJSON), fd.into, {}), ', ') )
+FIN:write']'
 
 FIN:close()
 

@@ -33,8 +33,6 @@ local function distill(a) return format('%s %s', concat(a, ''):match'GET /(%a+)%
 
 local function handshake(server, tasks)
     local id, msg = server.receive()
-    local peer = PEERS[id]
-    if peer then PEERS[id] = nil; return false; else PEERS[id] = true; end
     id, msg = server.receive()
     if #msg > 0 then tasks:send_msg(distill(msg)); server.send(id, OK); server.close(id) end
     return id

@@ -12,8 +12,6 @@
 
 	    function asnum(s) { let n = Number(s); return Number.isNaN(n) ? s : n; } // XXX
 
-	    TICKET.redondeo = x => { return 50 * Math.floor( (x + 25) / 50 ) }; // TEMPORAL XXX Should be PRIVATE fn
-
 	    function clearTable(tb) { while (tb.firstChild) { tb.removeChild( tb.firstChild ); } } //recycle? XXX
 
 	    function incdec(e) {
@@ -47,7 +45,7 @@
 	    function bagTotal() {
 		let total = 0;
 		TICKET.items.forEach( item => { total += parseInt(item.totalCents); } );
-		TICKET.total( TICKET.redondeo(total) );
+		TICKET.total( UTILS.redondeo(total) );
 	    }
 
 	    function precios(q) {

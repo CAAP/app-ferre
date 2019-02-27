@@ -26,17 +26,6 @@
 	    },
 
 	    populateDB: function(k) {
-/*		function asobj(a, ks) {
-		    let ret = {};
-		    for (let i in ks) { ret[ks[i]] = a[i]; }
-		    return (k.MAP ? k.MAP(ret) : ret);
-		}
-		function storeOrig(objsto) {
-		    let ks = objsto[0], datos = objsto[1];
-		    let os = IDB.write2DB(k);
-		    return UTILS.promiseAll( datos, dato => os.add(asobj(dato, ks)) );
-		}
-*/
 		function store(datos) {
 		    let os = IDB.write2DB(k);
 		    return Promise.all( datos.map( obj => os.add(k.MAP ? k.MAP(obj) : obj) ) );

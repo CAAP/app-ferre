@@ -1,4 +1,5 @@
-    <section id="buscar" class="dialogos query">
+<section id="main">
+    <div id="buscar" class="dialogos query">
         <div> <input id="busq" type="search" size=40 accesskey="b" placeholder="Art&iacute;culo o Clave" onchange="ferre.startSearch(event)" onkeyup="ferre.keyPressed(event)"> </div>
 
 	<section id="resultados" class="tablas embiggen">
@@ -12,9 +13,9 @@
 	    <tfoot><tr><th colspan=6><button accesskey="a" onclick="ferre.scroll({deltaY:0})">&larr;Anterior</button> <label> | </label> <button accesskey="s" onclick="ferre.scroll({deltaY:1})">Siguiente&rarr;</button></th></tr></tfoot>
 	</table>
 	</section>
-    </section>
+    </div>
 
-    <section id="ticket" class="tablas">
+    <div id="ticket" class="tablas">
 	<table>
 	    <tbody>
 		<tr><td><button name="cerrar" onclick="ferre.emptyBag()">Cancelar</button>&emsp;<button onclick="ferre.print('presupuesto')">Presupuesto</button>&emsp;<button onclick="ferre.print('ticket')">Caja</button><td></td><td><label id="ticket-count"></label><img src="svg/empty-cart.svg" height="25px"></td><td><label id="ticket-total" class="total"></label></td><td></td></tr>
@@ -30,5 +31,5 @@
 	    <tbody id="ticket-compra" class="amarillo" onchange="ferre.updateItem(event)" ondblclick="ferre.clickItem(event)"></tbody>
 	</table>
 	</section>
-    </section>
-
+    </div>
+</section>

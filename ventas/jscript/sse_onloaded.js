@@ -1,8 +1,6 @@
+	// FERRE
 	(function() {
-	    var ferre = {
-		updateItem: TICKET.update,
-		clickItem: e => TICKET.remove( e.target.parentElement )
-	    };
+	    ferre.origin = document.location.origin+':5040/';
 	})();
 
 	// BROWSE
@@ -26,22 +24,10 @@
 	    TICKET.bag = document.getElementById( TICKET.bagID );
 	    TICKET.myticket = document.getElementById( TICKET.myticketID );
 
-	    ferre.rabatt = function() {
-		function prom(row) {
-		    if (!row.classList.contains('rabatt')) {
-			let i = row.querySelector('input[name=rea]');
-			i.value = 7;
-			TICKET.update({target: i});
-		    }
-		}
-		Array.from(TICKET.bag.children).forEach(prom);
-	    };
-
 		const tcount = document.getElementById(TICKET.tcountID);
 		const ttotal = document.getElementById( TICKET.ttotalID );
 		const persona = document.getElementById('personas');
 
-		let clave = -1;
 		persona.dataset.id = 0;
 
 		function uptoCents(q) { return Math.round( 100 * q[q.precio] * q.qty * (1-q.rea/100) ); };
@@ -53,55 +39,57 @@
 			.then( w => { if (w) { return Object.assign( o, w, {id: clave} ) } else { return Promise.reject('Item not found in DB: ' + clave) } } ) // ITEM NOT FOUND or REMOVED
 		}
 
-		TICKET.total = cents => { ttotal.textContent = (cents / 100).toFixed(2); tcount.textContent = TICKET.items.size;}; //' $' + 
-
-		TICKET.extraEmpty = () => { ttotal.textContent = ''; tcount.textContent = ''; };
-
-		ferre.emptyBag = () => { TICKET.empty(); return xget('print', {id_tag: 'd', pid: Number(persona.value)}) };
-
-		ferre.menu = e => {
-//		    if (persona.value == 0) { return; }
-		    clave = UTILS.asnum(e.target.parentElement.dataset.clave); // XXX one can use this instead: diagI.returnValue = clave;
-		    ferre.add2bag();
-		};
-
-		ferre.add2bag = function() {
+		function add2bag(clave) {
 		    if (TICKET.items.has( clave )) { console.log('Item is already in the bag.'); return false; }
 		    return getPrice( {clave: clave, qty: 1, precio: 'precio1', rea: 0} )
 			.then( w => Object.assign(w, {totalCents: uptoCents(w)}) )
 			.then( TICKET.add );
+		}
+
+		TICKET.total = cents => { ttotal.textContent = (cents / 100).toFixed(2); tcount.textContent = TICKET.items.size;}; //' $' + 
+
+		TICKET.extraEmpty = () => { ttotal.textContent = ''; tcount.textContent = ''; };
+
+		ferre.emptyBag = () => { TICKET.empty(); return ferre.xget('delete', {pid: Number(persona.value)}) };
+
+		ferre.menu = e => {
+		    if (persona.value == 0) { return; }
+		    const clave = UTILS.asnum(e.target.parentElement.dataset.clave);
+		    add2bag(clave);
 		};
 
 	    ferre.print = function(a) {
 		if (TICKET.items.size == 0) {return Promise.resolve();}
-		const id_tag = TICKET.TAGS[a] || TICKET.TAGS.none;
 		const pid = Number(persona.dataset.id);
 
 		if (pid == 0) { TICKET.empty(); return Promise.resolve(); } // it should NEVER happen XXX
 
-		let objs = ['id_tag='+id_tag, 'pid='+pid];
+		let objs = ['pid='+pid];
 		TICKET.myticket.style.visibility = 'hidden';
-		TICKET.items.forEach( item => objs.push( 'args=' + TICKET.plain(item) ) );
+		TICKET.items.forEach( item => objs.push( 'query=' + TICKET.plain(item) ) );
 
-		return xget('print', objs ).then( TICKET.empty, () => {TICKET.myticket.style.visibility = 'visible'} );
+		return ferre.xget(a, objs ).then(console.log); //.then( TICKET.empty, () => {TICKET.myticket.style.visibility = 'visible'} );
 	    };
 	})();
 
 
 	// PEOPLE - Multi-User support
 	(function() {
+	    var PEOPLE = {
+		id: [''],
+		nombre: {},
+		tabs: new Map()
+	    };
+
 	    const persona = document.getElementById('personas');
 	    let fetchMe = o => getPrice( o ).then( TICKET.add );
 	    let recreate = a => Promise.all( a.map( fetchMe ) ).then( () => Promise.resolve() ).then( () => {tcount.textContent = TICKET.items.size;} );
 	    function tabs(k) { persona.dataset.id = k; if (PEOPLE.tabs.has(k)) { recreate(PEOPLE.tabs.get(k)); } }
 
+		// XXX CHECK THIS OUT!!!
 	    ferre.tab = () => {
 		const pid = Number(persona.value);
-	/* message tag
-		    ferre.tag(); */
-		ferre.print('guardar').then( () => tabs(pid) );
-//		    if (TICKET.items.size > 0) { ferre.print('guardar').then( () => tabs(pid) ); }
-//		    else { tabs(pid); }
+		ferre.print('tabs').then( () => tabs(pid) );
 	    };
 
 	    ferre.saveme = () => { persona.value = 0; ferre.tab(); }
@@ -112,7 +100,7 @@
 	    opt.selected = true;
 	    persona.appendChild(opt);
 
-//	    PEOPLE.load().then( a => a.forEach( p => { let opt = document.createElement('option'); opt.value = p.id; opt.appendChild(document.createTextNode(p.nombre)); persona.appendChild(opt); } ) );
+	    XHR.getJSON('json/people.json').then(a => a.forEach( p => { let opt = document.createElement('option'); opt.value = p.id; opt.appendChild(document.createTextNode(p.nombre)); persona.appendChild(opt); } ) );
 	})();
 
 	// Init & Load DBs
@@ -125,36 +113,73 @@
 		lvers.textContent = ' | ' + o.week + 'V' + o.vers;
 	    };
 
+	    function isPriceless(store) {
+		if (store.STORE == 'precios')
+		    return XHR.getJSON(store.VERS)
+			      .then( STORES.VERS.update ); //o => {localStorage.vers = o.vers; localStorage.week = o.week;}
+		else
+		    return Promise.resolve(true);
+	    }
+
 	    function ifLoad(k) { return IDB.readDB(k).count().then(
 		q => { if (q == 0 && k.FILE)
-		    return IDB.populateDB(k)
-			      .then(() => XHR.getJSON(k.VERS))
-			      .then(o => {localStorage.vers = o.vers; localStorage.week = o.week;})
-			      .then(() => { STORES.PRICE.INDEX = 'desc'; });
+			    return IDB.populateDB(k).then(() => isPriceless(k) );
 			else
-		    STORES.PRICE.INDEX = 'desc';
+			    return Promise.resolve(true);
 		     }
 	        );
 	    }
 
-
+	    document.getElementById('pacman').style.visibility = 'visible';
 	    if (IDB.indexedDB)
 		IDB.loadDB( DATA )
 		   .then(db => Promise.all(UTILS.mapObj(STORES, k => {
 			const store = STORES[k];
-			if (store.INDEX == undefined)
+			if (store.INDEX == undefined) // case of STORES that have no actual DB on disk
 			    return Promise.resolve(true);
 			else {
 			    store.CONN = db.CONN;
 			    return ifLoad(store);
 			}
-		   })));
+		   })))
+		   .then(() => { document.getElementById('pacman').style.visibility = 'hidden'; STORES.PRICE.INDEX = 'desc'; });
 
 	})();
 
 /*
-	UTILS.origin = document.location.origin;
+	// SSE - ServerSentEvent's
+	(function() {
+	    let esource = new EventSource(document.location.origin+':5030');
 
+	    let elbl = document.getElementById("eventos");
+
+		esource.addEventListener("tabs", function(e) {
+		    console.log("tabs event received.");
+		    elbl.innerHTML = "tabs event";
+		    JSON.parse( e.data ).forEach( o => PEOPLE.tabs.set(o.pid, o.query.split('&').map(s => a2obj(s.split('+')))) );
+		}, false);
+		esource.addEventListener("delete", function(e) {
+		    const pid = Number(e.data);
+		    PEOPLE.tabs.delete(pid);
+		    console.log('Remove ticket for: ' + PEOPLE.id[pid]);
+		    elbl.innerHTML = "delete event";
+		}, false);
+
+	})();
+*/
+
+	    // HEADER
+	    (function() {
+	        const note = document.getElementById('notifications');
+		let FORMAT = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+		function now(fmt) { return new Date().toLocaleDateString('es-MX', fmt) }
+		note.appendChild( document.createTextNode( now(FORMAT) ) );
+		document.getElementById('copyright').innerHTML = 'versi&oacute;n ' + 3.0 + ' | cArLoS&trade; &copy;&reg;';
+	    })();
+
+
+
+/*
 	// fetch, update VERSION
 	(function() {
 	    const origin = UTILS.origin;
