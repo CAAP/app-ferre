@@ -98,8 +98,7 @@ button[name=guardar] { color: white; background-color: blue; }
 #ticket-total { font: 200% arial; }
 
 #personas {
-    width: 90px;
-    height: 20px;
+    width: 100px;
     padding: 0.5rem;
     border-radius: 4px;
 }

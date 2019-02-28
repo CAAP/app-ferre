@@ -62,13 +62,13 @@
 		if (TICKET.items.size == 0) {return Promise.resolve();}
 		const pid = Number(persona.dataset.id);
 
-		if (pid == 0) { TICKET.empty(); return Promise.resolve(); } // it should NEVER happen XXX
+		if (pid == 0) { TICKET.empty(); return Promise.resolve(); } // should NEVER happen XXX
 
 		let objs = ['pid='+pid];
 		TICKET.myticket.style.visibility = 'hidden';
 		TICKET.items.forEach( item => objs.push( 'query=' + TICKET.plain(item) ) );
 
-		return ferre.xget(a, objs ).then(console.log); //.then( TICKET.empty, () => {TICKET.myticket.style.visibility = 'visible'} );
+		return ferre.xget(a, objs ).then( TICKET.empty, () => {TICKET.myticket.style.visibility = 'visible'} );
 	    };
 	})();
 
@@ -86,13 +86,12 @@
 	    let recreate = a => Promise.all( a.map( fetchMe ) ).then( () => Promise.resolve() ).then( () => {tcount.textContent = TICKET.items.size;} );
 	    function tabs(k) { persona.dataset.id = k; if (PEOPLE.tabs.has(k)) { recreate(PEOPLE.tabs.get(k)); } }
 
-		// XXX CHECK THIS OUT!!!
 	    ferre.tab = () => {
 		const pid = Number(persona.value);
 		ferre.print('tabs').then( () => tabs(pid) );
 	    };
 
-	    ferre.saveme = () => { persona.value = 0; ferre.tab(); }
+//	    ferre.saveme = () => { persona.value = 0; ferre.tab(); }
 
 	    let opt = document.createElement('option');
 	    opt.value = 0;
@@ -146,7 +145,6 @@
 
 	})();
 
-/*
 	// SSE - ServerSentEvent's
 	(function() {
 	    let esource = new EventSource(document.location.origin+':5030');
@@ -164,9 +162,11 @@
 		    console.log('Remove ticket for: ' + PEOPLE.id[pid]);
 		    elbl.innerHTML = "delete event";
 		}, false);
+		esource.addEventListener("Hi", function(e) {
+		    elbl.innerHTML = "Hi from "+e.data;
+		}, false);
 
 	})();
-*/
 
 	    // HEADER
 	    (function() {

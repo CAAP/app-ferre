@@ -2,7 +2,7 @@
     <div id="buscar" class="dialogos query">
         <div> <input id="busq" type="search" size=40 accesskey="b" placeholder="Art&iacute;culo o Clave" onchange="ferre.startSearch(event)" onkeyup="ferre.keyPressed(event)"> </div>
 
-	<section id="resultados" class="tablas embiggen">
+	<section id="resultados" class="tablas">
         <table onwheel="ferre.scroll(event)">
 	    <dt>
             <thead>
@@ -18,7 +18,7 @@
     <div id="ticket" class="tablas">
 	<table>
 	    <tbody>
-		<tr><td><button name="cerrar" onclick="ferre.emptyBag()">Cancelar</button>&emsp;<button onclick="ferre.print('presupuesto')">Presupuesto</button>&emsp;<button onclick="ferre.print('ticket')">Caja</button><td></td><td><label id="ticket-count"></label><img src="svg/empty-cart.svg" height="25px"></td><td><label id="ticket-total" class="total"></label></td><td></td></tr>
+		<tr><td><button name="cerrar" onclick="ferre.emptyBag()">Cancelar</button>&emsp;<button onclick="ferre.print('presupuesto')">Presupuesto</button>&emsp;<button onclick="ferre.print('ticket')">Caja</button></td><td>&emsp;</td><td>&emsp;</td><td><label id="ticket-count"></label><img src="svg/empty-cart.svg" height="25px"><label id="ticket-total" class="total"></label></td></tr>
 	    </tbody>
 	</table>
 	<section class="scrollable">

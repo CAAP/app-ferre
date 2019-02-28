@@ -2,6 +2,8 @@
 
 -- Import Section
 --
+local fd	= require'carlos.fold'
+
 local asJSON	= require'carlos.json'.asJSON
 local poll	= require'lzmq'.pollin
 local context	= require'lzmq'.context
@@ -23,18 +25,15 @@ _ENV = nil -- or M
 local CACHE	 = {}
 local UPSTREAM	 = 'ipc://upstream.ipc'
 local DOWNSTREAM = 'ipc://downstream.ipc'
-local SUBS	 = {'rmv', 'add'}
+local SUBS	 = {'tabs', 'delete'}
 
 --------------------------------
 -- Local function definitions --
 --------------------------------
 --
-local function distill(msg)
-    local cmd, data = decode(msg)
-    return cmd, data.pid, data.query
-end
+local function distill(msg) return msg:match'(%a+)%s([^!]+)' end
 
-local function store(query, pid) CACHE[pid] = {pid=pid, query=query} end
+local function store(pid, msg) CACHE[pid] = msg end
 
 local function delete( pid ) CACHE[pid] = nil end
 
@@ -60,17 +59,24 @@ local msgr = assert(CTX:socket'PUSH')
 
 assert(msgr:connect( UPSTREAM ))
 
+print('Successfully connected to:', UPSTREAM)
+
 local function sndmsg(e, m) assert(msgr:send_msg(ssevent(e, m))) end
 
-sndmsg('Hi', 'TABS')
+msgr:send_msg('Hi TABS')
 
-
+--[[
 -- Run loop
 --
 while true do
-    local cmd, pid, query = distill(tasks:recv_msg())
-    if cmd == 'add' then sndmsg('add', query) end
-    if cmd == 'rmv' then sndmsg('rmv', pid) end
+--    local cmd, pid, query = tasks:recv_msg() -- distill
+    local msg = tasks:recv_msg()
+    local cmd, pid = msg:match'(%a+)%spid=(%d+)'
     if cmd == 'KILL' then sndmsg('Bye', 'TABS'); break end
+    if cmd == 'delete' then delete( pid )  end
+    if cmd == 'tabs' then store(pid, msg)  end
+    sndmsg(distill(msg))
 end
+--]]
+
 

@@ -6,7 +6,7 @@ local fd	  = require'carlos.fold'
 
 local stream	  = require'carlos.zmq'.stream
 local sse	  = require'carlos.html'.response
-local ssevent	  = require'carlor.ferre'.ssevent
+local ssevent	  = require'carlos.ferre'.ssevent
 local pollin	  = require'lzmq'.pollin
 local context	  = require'lzmq'.context
 
@@ -44,10 +44,10 @@ local function broadcast(server, msg)
 end
 
 local function switch(msgs, server)
-    local cmd, msg = msgs:recv_msg():match'(%a+) ([^!]+)'
-    print(msg)
-    if cmd == "Bye" or cmd == "Hi" then msg = ssevent(cmd, msg) end
-    broadcast(server, msg)
+    local cmd, msg = msgs:recv_msg():match'(%a+)%s([^!]+)'
+    print(cmd, msg)
+--    if cmd == "Bye" or cmd == "Hi" then msg = ssevent(cmd, msg) end
+--    broadcast(server, msg)
 end
 
 ---------------------------------
@@ -55,29 +55,37 @@ end
 ---------------------------------
 --
 -- Initialize servers
-local CTX = context()
-
-local server = stream(ENDPOINT, CTX)
-
-print('Successfully bound to:', ENDPOINT, '\n')
+--local server = stream(ENDPOINT, context())
+--
+--print('Successfully bound to:', ENDPOINT, '\n')
 -- -- -- -- -- --
 --
+local CTX = context()
+
 local msgs = assert(CTX:socket'PULL')
 
-assert(ups:bind( UPSTREAM ))
+assert(msgs:bind( UPSTREAM ))
 
 print('Successfully bound to:', UPSTREAM, '\n')
 -- -- -- -- -- --
 --
-local poll = pollin({server.socket(), msgs}, 2)
+
+local poll = pollin{msgs}
+
+poll(0)
+
+--print( msgs:recv_msg() )
+--[[
+local poll = pollin{msgs, server.socket()}
 
 while true do
     local j = poll(TIMEOUT)
     print(j, '\n\n')
-    if j == 1 then
+    if j == 2 then
 	if not handshake(server) then print'Bye bye ...\n' end
-    elseif j == 2 then
-	switch(msgs, server)
+    elseif j == 1 then
+	print( msgs:recv_msg() )
     end
 end
+--]]
 
