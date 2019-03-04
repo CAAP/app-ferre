@@ -50,7 +50,7 @@
 	    VERS.update = o => {
 		localStorage.vers = o.vers;
 		localStorage.week = o.week;
-		return Promise.resolved( o ).then( VERS.inplace );
+		return Promise.resolve( o ).then( VERS.inplace );
 	    };
 
 	})();

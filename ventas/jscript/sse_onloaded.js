@@ -165,6 +165,11 @@
 		esource.addEventListener("Hi", function(e) {
 		    elbl.innerHTML = "Hi from "+e.data;
 		}, false);
+		esource.addEventListener("fruit", function(e) {
+		    console.log(e.data);
+		    localStorage.fruit = e.data;
+		    document.getElementById('notifications').innerHTML += ' | ' + e.data;
+		}, false);
 
 	})();
 
@@ -174,6 +179,7 @@
 		let FORMAT = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
 		function now(fmt) { return new Date().toLocaleDateString('es-MX', fmt) }
 		note.appendChild( document.createTextNode( now(FORMAT) ) );
+//		note.innerHTML += ' | ' + localStorage.fruit;
 		document.getElementById('copyright').innerHTML = 'versi&oacute;n ' + 3.0 + ' | cArLoS&trade; &copy;&reg;';
 	    })();
 

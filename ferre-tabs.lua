@@ -71,7 +71,7 @@ while true do
     local msg = tasks:recv_msg()
 print(msg)
     local cmd, pid = msg:match'(%a+)%spid=(%d+)'
-    if cmd == 'CACHE' then sndkch( msgr ); goto ::FIN:: end
+    if cmd == 'CACHE' then sndkch( msgr ); goto FIN end
     if cmd == 'KILL' then sndmsg('Bye', 'TABS'); break end
     if cmd == 'delete' then delete( pid ) 
     elseif cmd == 'tabs' then store(pid, msg) end
