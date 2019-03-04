@@ -31,11 +31,11 @@ local SUBS	 = {'tabs', 'delete'}
 -- Local function definitions --
 --------------------------------
 --
-local function distill(msg) return msg:match'(%a+)%s([^!]+)' end
-
 local function store(pid, msg) CACHE[pid] = msg end
 
 local function delete( pid ) CACHE[pid] = nil end
+
+local function sndkch(msgr) fd.reduce(fd.keys(CACHE), function(m) msgr:send_msg( m ) end) end
 
 ---------------------------------
 -- Program execution statement --
@@ -61,21 +61,22 @@ assert(msgr:connect( UPSTREAM ))
 
 print('Successfully connected to:', UPSTREAM)
 
-local function sndmsg(e, m) assert(msgr:send_msg(ssevent(e, m))) end
-
 msgr:send_msg('Hi TABS')
 
---[[
+---[[
 -- Run loop
 --
 while true do
 --    local cmd, pid, query = tasks:recv_msg() -- distill
     local msg = tasks:recv_msg()
+print(msg)
     local cmd, pid = msg:match'(%a+)%spid=(%d+)'
+    if cmd == 'CACHE' then sndkch( msgr ); goto ::FIN:: end
     if cmd == 'KILL' then sndmsg('Bye', 'TABS'); break end
-    if cmd == 'delete' then delete( pid )  end
-    if cmd == 'tabs' then store(pid, msg)  end
-    sndmsg(distill(msg))
+    if cmd == 'delete' then delete( pid ) 
+    elseif cmd == 'tabs' then store(pid, msg) end
+    msgr:send_msg( msg )
+    ::FIN::
 end
 --]]
 

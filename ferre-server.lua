@@ -4,7 +4,6 @@
 --
 local fd	  = require'carlos.fold'
 
-local stream	  = require'carlos.zmq'.stream
 local sse	  = require'carlos.html'.response
 local ssevent	  = require'carlos.ferre'.ssevent
 local pollin	  = require'lzmq'.pollin
@@ -30,38 +29,44 @@ local TIMEOUT    = 5000 -- 5 secs
 -- Local function definitions --
 --------------------------------
 --
+local function distill(msg) return msg:match'(%a+)%s([^!]+)' end
+
+local function receive(srv)
+    local function msgs() return srv:recv_msgs() end -- returns iter, state & counter
+    local id, more = assert(srv:recv_msg())
+    if more then more = fd.reduce(msgs, fd.into, {}) end
+    return id, more
+end
+
 local function handshake(server)
-    local id, msg = server.receive()
+    local id, msg = receive(server)
     local peer = PEERS[id]
     if peer then PEERS[id] = nil; return false; else PEERS[id] = true; end
-    id, msg = server.receive() -- receive salutation
-    if #msg > 0 then server.send(id, HELLO) end -- if msg[1]:match'GET / ' then 
+    id, msg = receive(server) -- receive salutation
+    if #msg > 0 then server:send_msgs{id, HELLO} end
     return id
 end
 
 local function broadcast(server, msg)
-    fd.reduce(fd.keys(PEERS), function(_,id) server.send(id, msg) end)
+    fd.reduce(fd.keys(PEERS), function(_,id) server:send_msgs{id, msg} end)
 end
 
-local function switch(msgs, server)
-    local cmd, msg = msgs:recv_msg():match'(%a+)%s([^!]+)'
-    print(cmd, msg)
---    if cmd == "Bye" or cmd == "Hi" then msg = ssevent(cmd, msg) end
---    broadcast(server, msg)
-end
+local function switch(msgs, server) broadcast(server, ssevent(distill( msgs:recv_msg() ))) end
 
 ---------------------------------
 -- Program execution statement --
 ---------------------------------
 --
 -- Initialize servers
---local server = stream(ENDPOINT, context())
---
---print('Successfully bound to:', ENDPOINT, '\n')
--- -- -- -- -- --
---
 local CTX = context()
 
+local server = assert(CTX:socket'STREAM')
+
+assert(server:bind( ENDPOINT ))
+
+print('Successfully bound to:', ENDPOINT, '\n')
+-- -- -- -- -- --
+--
 local msgs = assert(CTX:socket'PULL')
 
 assert(msgs:bind( UPSTREAM ))
@@ -70,21 +75,18 @@ print('Successfully bound to:', UPSTREAM, '\n')
 -- -- -- -- -- --
 --
 
-local poll = pollin{msgs}
-
-poll(0)
-
 --print( msgs:recv_msg() )
---[[
-local poll = pollin{msgs, server.socket()}
+--local poll = pollin{msgs, server.socket()}
 
+---[[
 while true do
-    local j = poll(TIMEOUT)
-    print(j, '\n\n')
-    if j == 2 then
-	if not handshake(server) then print'Bye bye ...\n' end
-    elseif j == 1 then
-	print( msgs:recv_msg() )
+    if pollin{server, msgs} then
+	if server:events() then
+	    if not handshake(server) then print'Bye bye ...\n' end
+	end
+	if msgs:events() then
+	    print( msgs:recv_msg() )
+	end
     end
 end
 --]]

@@ -13,6 +13,7 @@
 	    }
 	};
 
+
 	(function() {
 	    function asprice(q) {
 		q.precios = {};
@@ -38,5 +39,19 @@
 		    return IDB.write2DB( PRICE ).delete( o.clave );
 		return upgrade( o ).then( DATA.inplace );
 	    };
+
+	    const VERS = DATA.STORES.VERS;
+	    VERS.check = o => {
+		if (localStorage.week == o.week && localStorage.vers == o.vers)
+		    return VERS.inplace(o);
+		if (localStorage.week == o.week && localStorage.vers < o.vers)
+		    f;
+	    };
+	    VERS.update = o => {
+		localStorage.vers = o.vers;
+		localStorage.week = o.week;
+		return Promise.resolved( o ).then( VERS.inplace );
+	    };
+
 	})();
 

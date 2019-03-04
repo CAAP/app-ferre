@@ -5,7 +5,6 @@
 local fd	  = require'carlos.fold'
 
 local response	  = require'carlos.html'.response
-local stream	  = require'carlos.zmq'.stream
 local context	  = require'lzmq'.context
 local asJSON	  = require'carlos.json'.asJSON
 
@@ -29,12 +28,19 @@ local PEERS	 = {}
 -- Local function definitions --
 --------------------------------
 --
+local function receive(srv)
+    local function msgs() return srv:recv_msgs() end -- returns iter, state & counter
+    local id, more = assert(srv:recv_msg())
+    if more then more = fd.reduce(msgs, fd.into, {}) end
+    return id, more
+end
+
 local function distill(a) return format('%s %s', concat(a, ''):match'GET /(%a+)%?([^%?]+) HTTP') end
 
 local function handshake(server, tasks)
-    local id, msg = server.receive()
-    id, msg = server.receive()
-    if #msg > 0 then tasks:send_msg(distill(msg)); server.send(id, OK); server.close(id) end
+    local id, msg = receive(server)
+    id, msg = receive(server)
+    if #msg > 0 then tasks:send_msg(distill(msg)); server:send_msgs{id, OK}; server:send_msgs{id, ''} end
     return id
 end
 
@@ -45,7 +51,9 @@ end
 -- Initilize server(s)
 local CTX = context()
 
-local server = stream(ENDPOINT, CTX)
+local server = assert(CTX:socket'STREAM')
+
+assert(server:bind( ENDPOINT ))
 
 print('Successfully bound to:', ENDPOINT, '\n')
 -- -- -- -- -- --

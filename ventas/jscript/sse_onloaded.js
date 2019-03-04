@@ -106,16 +106,12 @@
 	(function() {
 	    const STORES = DATA.STORES;
 	    let lvers = document.getElementById('db-vers');
-	    STORES.VERS.update = o => {
-		localStorage.vers = o.vers;
-		localStorage.week = o.week;
-		lvers.textContent = ' | ' + o.week + 'V' + o.vers;
-	    };
+	    STORES.VERS.inplace = o => { lvers.textContent = o.week + 'V' + o.vers; return true; };
 
 	    function isPriceless(store) {
 		if (store.STORE == 'precios')
 		    return XHR.getJSON(store.VERS)
-			      .then( STORES.VERS.update ); //o => {localStorage.vers = o.vers; localStorage.week = o.week;}
+			      .then( STORES.VERS.update );
 		else
 		    return Promise.resolve(true);
 	    }
@@ -161,6 +157,10 @@
 		    PEOPLE.tabs.delete(pid);
 		    console.log('Remove ticket for: ' + PEOPLE.id[pid]);
 		    elbl.innerHTML = "delete event";
+		}, false);
+		esource.addEventListener("version", function(e) {
+		    const o = JSON.parse(e.data);
+		    elbl.innerHTML = "version event";
 		}, false);
 		esource.addEventListener("Hi", function(e) {
 		    elbl.innerHTML = "Hi from "+e.data;
