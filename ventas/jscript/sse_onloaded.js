@@ -151,7 +151,7 @@
 		esource.addEventListener("tabs", function(e) {
 		    console.log("tabs event received.");
 		    elbl.innerHTML = "tabs event";
-		    JSON.parse( e.data ).forEach( o => PEOPLE.tabs.set(o.pid, o.query.split('&').map(s => a2obj(s.split('+')))) );
+		    JSON.parse( e.data ).forEach( o => PEOPLE.tabs.set(o.pid, o.query.split('&').map(s => a2obj(s.split('+')))) ); // XXX mega super ERROR
 		}, false);
 		esource.addEventListener("delete", function(e) {
 		    const pid = Number(e.data);

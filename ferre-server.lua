@@ -64,7 +64,7 @@ local function broadcast(server, msg, fruit)
     local function send2fruit(id) if not(server:send_msgs{id, msg}) then FRUITS[id] = false end end
 
     if fruit then send2fruit(fruit)
-    else for id in pairs(FRUITS) do send2fruit(id) end
+    else for id in pairs(FRUITS) do send2fruit(id) end end
 
     return 'Broadcast: '..msg
 end
@@ -72,7 +72,7 @@ end
 local function switch(msgs, server)
     local m = msgs:recv_msg()
     local fruit = m:match'%a+'
-    if fruit then
+    if FRUITS[fruit] then
 	fruit, m = distill(m)
 	broadcast(server, ssevent(distill( m )), fruit)
 	return 'Broadcast CACHE to '..fruit

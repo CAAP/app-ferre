@@ -25,7 +25,7 @@ _ENV = nil -- or M
 local CACHE	 = {}
 local UPSTREAM	 = 'ipc://upstream.ipc'
 local DOWNSTREAM = 'ipc://downstream.ipc'
-local SUBS	 = {'tabs', 'delete'}
+local SUBS	 = {'tabs', 'delete', 'CACHE', 'KILL'}
 
 --------------------------------
 -- Local function definitions --
@@ -61,7 +61,7 @@ local msgr = assert(CTX:socket'PUSH')
 
 assert(msgr:connect( UPSTREAM ))
 
-print('Successfully connected to:', UPSTREAM)
+print('Successfully connected to:', UPSTREAM, '\n')
 
 msgr:send_msg('Hi TABS')
 
@@ -69,19 +69,26 @@ msgr:send_msg('Hi TABS')
 -- Run loop
 --
 while true do
---    local cmd, pid, query = tasks:recv_msg() -- distill
+print'+\n'
     local msg = tasks:recv_msg()
-print(msg, '\n')
     local cmd = msg:match'%a+'
-    if cmd == 'KILL' then msgr:send_msg('Bye TABS'); break; end
+    if cmd == 'KILL' then
+	if msg:match'%s(%a+)' == 'TABS' then
+	    msgr:send_msg('Bye TABS')
+	    break
+	end
+    end
     if cmd == 'CACHE' then
 	local fruit = msg:match'%s(%a+)'
-	sndkch( msgr, fruit ); goto FIN
+	sndkch( msgr, fruit )
+	print('CACHE sent to', fruit, '\n')
+	goto FIN
     end
     local pid = msg:match'pid=(%d+)'
     if cmd == 'delete' then delete( pid ) 
     elseif cmd == 'tabs' then store(pid, msg) end
     msgr:send_msg( msg )
+    print(msg, '\n')
     ::FIN::
 end
 --]]

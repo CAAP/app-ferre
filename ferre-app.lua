@@ -38,12 +38,11 @@ local function distill(a) return format('%s %s', concat(a, ''):match'GET /(%a+)%
 
 local function handshake(server, tasks)
     local id, msg = receive(server)
---    id, msg = receive(server)
     if #msg > 0 then
 	tasks:send_msg(distill(msg))
 	server:send_msgs{id, OK}
 	server:send_msgs{id, ''}
-	return msg
+	return msg[1]:match'([^%c]+)%c'
     else
 	return 'Received empty message ;-('
     end
