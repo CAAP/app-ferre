@@ -35,7 +35,9 @@ local function store(pid, msg) CACHE[pid] = msg end
 
 local function delete( pid ) CACHE[pid] = nil end
 
-local function sndkch(msgr) fd.reduce(fd.keys(CACHE), function(m) msgr:send_msg( m ) end) end
+local function tofruit( fruit, m ) return format('%s %s', fruit, m) end
+
+local function sndkch(msgr, fruit) fd.reduce(fd.keys(CACHE), function(m) msgr:send_msg(tofruit(fruit, m)) end) end
 
 ---------------------------------
 -- Program execution statement --
@@ -69,15 +71,18 @@ msgr:send_msg('Hi TABS')
 while true do
 --    local cmd, pid, query = tasks:recv_msg() -- distill
     local msg = tasks:recv_msg()
-print(msg)
-    local cmd, pid = msg:match'(%a+)%spid=(%d+)'
-    if cmd == 'CACHE' then sndkch( msgr ); goto FIN end
-    if cmd == 'KILL' then sndmsg('Bye', 'TABS'); break end
+print(msg, '\n')
+    local cmd = msg:match'%a+'
+    if cmd == 'KILL' then msgr:send_msg('Bye TABS'); break; end
+    if cmd == 'CACHE' then
+	local fruit = msg:match'%s(%a+)'
+	sndkch( msgr, fruit ); goto FIN
+    end
+    local pid = msg:match'pid=(%d+)'
     if cmd == 'delete' then delete( pid ) 
     elseif cmd == 'tabs' then store(pid, msg) end
     msgr:send_msg( msg )
     ::FIN::
 end
 --]]
-
 

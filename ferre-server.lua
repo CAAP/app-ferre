@@ -22,18 +22,16 @@ _ENV = nil -- or M
 --
 local ENDPOINT	 = 'tcp://*:5030'
 local UPSTREAM   = 'ipc://upstream.ipc'
-local PEERS      = {}
 local HELLO      = sse{content='stream'}
 local TIMEOUT    = 100 -- 100 msecs
-local FRUITS	 = {apple=false, apricot=false, avocado=false, banana=false, berry=false, cherry=false, coconut=false, cucumber=false, fig=false, grape=false, raisin=false, guava=false, pepper=false, corn=false, plum=false, kiwi=false, lemon=false, lime=false, lychee=false, mango=false, melon=false, nectarine=false, orange=false, clementine=false, tangerine=false, pea=false, peach=false, pear=false, prune=false, pine=false, pomelo=false, tamarindo=false, sapote=false}
+local FRUITS	 = {apple=false, apricot=false, avocado=false, banana=false, berry=false, cherry=false, coconut=false, cucumber=false, fig=false, grape=false, raisin=false, guava=false, pepper=false, corn=false, plum=false, kiwi=false, lemon=false, lime=false, lychee=false, mango=false, melon=false, olive=false, orange=false, durian=false, longan=false, pea=false, peach=false, pear=false, prune=false, pine=false, pomelo=false, pome=false, quince=false, rhubarb=false, mamey=false, soursop=false, granate=false, sapote=false}
 
 --------------------------------
 -- Local function definitions --
 --------------------------------
 --
-local function getFruit(id)
+local function getFruit()
     local _,k = fd.first(fd.keys(FRUITS), function(x) return not(x) end)
-    FRUITS[k] = id
     return k
 end
 
@@ -48,31 +46,39 @@ end
 
 local function handshake(server)
     local id, msg = receive(server)
---    if not id then return false end -- ERROR maybe due to NOWAIT
-    local peer = PEERS[id]
-    if peer then FRUITS[peer] = false; PEERS[id] = nil; return false; else PEERS[id] = getFruit(id); end
+    local peer = FRUITS[id]
+    if peer then FRUITS[id] = false; return 'Bye '..id; else FRUITS[id] = true end
+
     id, msg = receive(server) -- receive salutation
     if id and #msg > 0 then
-	server:send_msgs{id, HELLO, ssevent('fruit', PEERS[id])} -- format('%q', PEERS[id])
-	print('New peer:', PEERS[id], '\n')
-	return id
+	server:send_msgs{id, HELLO}
+	server:send_msgs{id, ssevent('fruit', id)}
+	return 'New id: '..id
     end
-    return false
+    return 'Null message'
 end
 
-local function broadcast(server, msg)
-    for id, peer in pairs(PEERS) do
-	if not(server:send_msgs{id, msg}) then
-	    PEERS[id] = nil; FRUITS[peer] = false
-	end
-    end
-    return true
+
+-- XXX Maybe count the number of fails
+local function broadcast(server, msg, fruit)
+    local function send2fruit(id) if not(server:send_msgs{id, msg}) then FRUITS[id] = false end end
+
+    if fruit then send2fruit(fruit)
+    else for id in pairs(FRUITS) do send2fruit(id) end
+
+    return 'Broadcast: '..msg
 end
 
 local function switch(msgs, server)
-    local m = msgs:recv_msg'NOWAIT'
-    if m then return broadcast(server, ssevent(distill( m )))
-    else return false end
+    local m = msgs:recv_msg()
+    local fruit = m:match'%a+'
+    if fruit then
+	fruit, m = distill(m)
+	broadcast(server, ssevent(distill( m )), fruit)
+	return 'Broadcast CACHE to '..fruit
+    else
+	return broadcast(server, ssevent(distill( m )))
+    end
 end
 
 ---------------------------------
@@ -84,25 +90,29 @@ local CTX = context()
 
 local server = assert(CTX:socket'STREAM')
 
-assert(server:recv_tout(TIMEOUT))
-
 assert(server:bind( ENDPOINT ))
 
-assert(server:recv_tout(TIMEOUT))
-
-print('Successfully bound to:', ENDPOINT, '\n')
+print('\nSuccessfully bound to:', ENDPOINT, '\n')
 -- -- -- -- -- --
 --
+local msgs = assert(CTX:socket'PULL')
+
+assert(msgs:bind( UPSTREAM ))
+
+print('\nSuccessfully bound to:', UPSTREAM, '\n')
 
 ---[[
 while true do
     print'+\n'
-    if pollin{server} then
-	if server:events() then
-	    if not handshake(server) then print'Bye bye ...\n' end
+    server:set_rid( getFruit() )
+    if pollin{server, msgs} then
+	if server:events() == 'POLLIN' then
+	    print( handshake(server), '\n' )
+	end
+	if msgs:events() == 'POLLIN' then
+	    print( switch(msgs, server) )
 	end
     end
-    print'*\n'
 end
 --]]
 

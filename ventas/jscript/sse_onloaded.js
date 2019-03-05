@@ -145,7 +145,8 @@
 	(function() {
 	    let esource = new EventSource(document.location.origin+':5030');
 
-	    let elbl = document.getElementById("eventos");
+	    const elbl = document.getElementById("eventos");
+	    const flbl = document.getElementById('frutas');
 
 		esource.addEventListener("tabs", function(e) {
 		    console.log("tabs event received.");
@@ -162,24 +163,33 @@
 		    const o = JSON.parse(e.data);
 		    elbl.innerHTML = "version event";
 		}, false);
+		esource.addEventListener("precios", function(e) {
+		    const o = JSON.parse(e.data);
+		    elbl.innerHTML = "precios event";
+		}, false);
 		esource.addEventListener("Hi", function(e) {
 		    elbl.innerHTML = "Hi from "+e.data;
+		    console.log(e.data);
+		}, false);
+		esource.addEventListener("Bye", function(e) {
+		    elbl.innerHTML = "Bye from "+e.data;
+		    console.log(e.data);
 		}, false);
 		esource.addEventListener("fruit", function(e) {
 		    console.log(e.data);
 		    localStorage.fruit = e.data;
-		    document.getElementById('notifications').innerHTML += ' | ' + e.data;
+		    flbl.innerHTML = e.data;
+		    XHR.get( ferre.origin + 'CACHE?' + e.data );
 		}, false);
 
 	})();
 
 	    // HEADER
 	    (function() {
-	        const note = document.getElementById('notifications');
 		let FORMAT = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
 		function now(fmt) { return new Date().toLocaleDateString('es-MX', fmt) }
-		note.appendChild( document.createTextNode( now(FORMAT) ) );
-//		note.innerHTML += ' | ' + localStorage.fruit;
+		document.getElementById('notifications').innerHTML = now(FORMAT);
+		document.getElementById("eventos").innerHTML = 'Loading ...'
 		document.getElementById('copyright').innerHTML = 'versi&oacute;n ' + 3.0 + ' | cArLoS&trade; &copy;&reg;';
 	    })();
 

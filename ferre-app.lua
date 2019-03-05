@@ -22,7 +22,6 @@ _ENV = nil -- or M
 local ENDPOINT	 = 'tcp://*:5040'
 local DOWNSTREAM = 'ipc://downstream.ipc'
 local OK	 = response{status='ok'}
-local PEERS	 = {}
 
 --------------------------------
 -- Local function definitions --
@@ -39,9 +38,15 @@ local function distill(a) return format('%s %s', concat(a, ''):match'GET /(%a+)%
 
 local function handshake(server, tasks)
     local id, msg = receive(server)
-    id, msg = receive(server)
-    if #msg > 0 then tasks:send_msg(distill(msg)); server:send_msgs{id, OK}; server:send_msgs{id, ''} end
-    return id
+--    id, msg = receive(server)
+    if #msg > 0 then
+	tasks:send_msg(distill(msg))
+	server:send_msgs{id, OK}
+	server:send_msgs{id, ''}
+	return msg
+    else
+	return 'Received empty message ;-('
+    end
 end
 
 ---------------------------------
@@ -52,6 +57,8 @@ end
 local CTX = context()
 
 local server = assert(CTX:socket'STREAM')
+
+assert( server:notify(false) )
 
 assert(server:bind( ENDPOINT ))
 
@@ -65,5 +72,5 @@ assert(tasks:bind( DOWNSTREAM ))
 print('Successfully bound to:', DOWNSTREAM, '\n')
 -- -- -- -- -- --
 --
-while true do handshake(server, tasks) end
+while true do print(handshake(server, tasks), '\n') end
 
