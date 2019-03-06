@@ -1,28 +1,34 @@
+#! /usr/bin/env lua53
+
 -- Import Section
 --
-local socket	  = require'carlos.zmq'.socket
-local server	  = require'carlos.zmq'.server
-local format	  = require'string'.format
-local sleep	  = require'lbsd'.sleep
-local file_exists = require'lbsd'.file_exists
+local fd	= require'carlos.fold'
+
+local asJSON	= require'carlos.json'.asJSON
+local context	= require'lzmq'.context
+local dbconn	= require'carlos.ferre'.dbconn
+local connexec  = require'carlos.ferre'.connexec
+local decode	= require'carlos.ferre'.decode
+
 local sql 	  = require'carlos.sqlite'
-local asJSON	  = require'carlos.json'.asJSON
 
-local rand = math.random
+local format	= require'string'.format
+local concat 	= table.concat
+local assert	= assert
 
-local assert = assert
-local print = print
+local print	= print
 
 -- No more external access after this point
 _ENV = nil -- or M
 
 -- Local Variables for module-only access
 --
-local TICKETS   = 'ipc://ventas.ipc'
-local TIMEOUT   = 5000 -- 5 secs
-local SUBS	= {'vers', 'tkts'}
+local CACHE	 = {}
+local UPSTREAM	 = 'ipc://upstream.ipc'
+local DOWNSTREAM = 'ipc://downstream.ipc'
+local SUBS	 = {'ticket', 'presupuesto', 'CACHE', 'KILL'}
 local VERS      = {} -- week, vers
-local TABS	= {tickets = 'uid, id_tag, clave, desc, costol NUMBER, unidad, precio NUMBER, qty INTEGER, rea INTEGER, totalCents INTEGER',
+local TABS	= {tickets = 'uid, tag, clave, desc, costol NUMBER, unidad, precio NUMBER, qty INTEGER, rea INTEGER, totalCents INTEGER',
 		   updates = 'vers INTEGER PRIMARY KEY, clave, campo, valor'}
 
 
@@ -30,18 +36,13 @@ local TABS	= {tickets = 'uid, id_tag, clave, desc, costol NUMBER, unidad, precio
 -- Local function definitions --
 --------------------------------
 --
-local function sse( event, data )
-    return format('%s event: %s\ndata: %s\n\n\n', event, event, data)
-end
+local function store(pid, msg) CACHE[pid] = msg end
 
-local function dbconn(path, create)
-    local f = format('$HOME/db/%s.db', path)
-    if create or file_exists(f) then
-	return sql.connect(f)
-    else
-	return false, format('ERROR: File %q does not exists!', f)
-    end
-end
+local function delete( pid ) CACHE[pid] = nil end
+
+local function tofruit( fruit, m ) return format('%s %s', fruit, m) end
+
+--local function sndkch(msgr, fruit) fd.reduce(fd.keys(CACHE), function(m) msgr:send_msg(tofruit(fruit, m)) end) end
 
 local function now() return time()-21600 end
 
@@ -54,8 +55,6 @@ local function which( db )
 	return conn.count'updates'
     else return 0 end
 end
-
-local function connexec( conn, s ) return assert( conn.exec(s) ) end
 
 local function version(w)
     local hoy = now()
@@ -76,24 +75,48 @@ end
 -- Program execution statement --
 ---------------------------------
 --
--- Run the PUBlisher(s)
---
-local pub = socket'PUB'
-
-assert( pub.bind(UPDATES) )
---
 -- Database connection
 --
 local conn = assert( dbconn( asweek(now()), true ) )
+
+-- XXX attach ferre.db to read 'desc'
+
 fd.reduce(fd.keys(TABS), function(schema, tbname) connexec(format(sql.newTable, tbname, schema)) end)
+
+--
+-- Initialize server
+--
+local CTX = context()
+
+local tasks = assert(CTX:socket'SUB')
+
+assert(tasks:connect( DOWNSTREAM ))
+
+fd.reduce(SUBS, function(s) assert(tasks:subscribe(s))  end)
+
+print('Successfully connected to:', DOWNSTREAM)
+print('And successfully subscribed to:', concat(SUBS, '\t'), '\n')
+-- -- -- -- -- --
+--
+-- Connect to PUBlisher
+local msgr = assert(CTX:socket'PUSH')
+
+assert(msgr:connect( UPSTREAM ))
+
+print('Successfully connected to:', UPSTREAM, '\n')
+
+msgr:send_msg('Hi TABS')
 --
 -- Compute latest version
 --
 version(VERS) -- latest version for UPDATES
 
-pub.send( sse('vers', asJSON(VERS)) ) -- publish latest version
+msgr:send_msg('version '..asJSON(VERS))
 
-print('\n\tWeek:', VERS.week, '\n\tVers:', VERS.vers) -- print latest version
-
+print('\n\tWeek:', VERS.week, '\n\tVers:', VERS.vers, '\n') -- print latest version
 --updateVERS(VERS) -- write to hard-disk latest version for UPDATES
+--
+-- Run loop
+--
+
 

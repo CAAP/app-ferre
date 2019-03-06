@@ -5,15 +5,12 @@
 local fd	= require'carlos.fold'
 
 local asJSON	= require'carlos.json'.asJSON
-local poll	= require'lzmq'.pollin
 local context	= require'lzmq'.context
-local ssevent	= require'carlos.ferre'.ssevent
 local decode	= require'carlos.ferre'.decode
 
 local format	= require'string'.format
 local concat 	= table.concat
 local assert	= assert
-local env	= os.getenv
 
 local print	= print
 
@@ -65,7 +62,6 @@ print('Successfully connected to:', UPSTREAM, '\n')
 
 msgr:send_msg('Hi TABS')
 
----[[
 -- Run loop
 --
 while true do
@@ -91,5 +87,4 @@ print'+\n'
     print(msg, '\n')
     ::FIN::
 end
---]]
 
