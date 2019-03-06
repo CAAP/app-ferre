@@ -4,14 +4,11 @@
 --
 local fd	= require'carlos.fold'
 
-local asJSON	= require'carlos.json'.asJSON
-local context	= require'lzmq'.context
-local dbconn	= require'carlos.ferre'.dbconn
-local connexec  = require'carlos.ferre'.connexec
-local cache	= require'carlos.ferre'.cache
-local urldecode	= require'carlos.ferre'.urldecode
-
-local sql 	  = require'carlos.sqlite'
+local asJSON		= require'carlos.json'.asJSON
+local context		= require'lzmq'.context
+local dbconn		= require'carlos.ferre'.dbconn
+local connexec		= require'carlos.ferre'.connexec
+local newTable    	= require'carlos.sqlite'.newTable
 
 local format	= require'string'.format
 local concat 	= table.concat
@@ -24,9 +21,9 @@ _ENV = nil -- or M
 
 -- Local Variables for module-only access
 --
-local CACHE	 = cache'Hi VENTAS'
 local UPSTREAM	 = 'ipc://upstream.ipc'
 local DOWNSTREAM = 'ipc://downstream.ipc'
+
 local SUBS	 = {'ticket', 'presupuesto', 'CACHE', 'KILL'}
 local VERS      = {} -- week, vers
 local TABS	= {tickets = 'uid, tag, clave, desc, costol NUMBER, unidad, precio NUMBER, qty INTEGER, rea INTEGER, totalCents INTEGER',
@@ -36,6 +33,8 @@ local INDEX	= {'uid', 'tag', 'clave', 'desc', 'costol', 'unidad', 'precio', 'qty
 	    const VARS = ['id', 'clave', 'qty', 'rea', 'precio', 'totalCents'];
 
 	    desc, costol, unidad
+
+local UP_QUERY = 'SELECT * FROM updates WHERE vers > %d'
 
 --------------------------------
 -- Local function definitions --
@@ -68,30 +67,32 @@ local function version(w)
     return w
 end
 
-local function astab(s)
-    local t = []
-    for k,v in s:gmatch'([^|]+)|([^|]+)' do t[INDEX[k]] = v end
-    return t
+local function fromWeek(vers, conn)
+    local conn = conn or dbconn(week)
+    return fd.reduce(conn.query(format(UP_QUERY, vers)), fd.map(asJSON), fd.into, {})
 end
 
-local function backup(msg)
-    local pid = msg:match'pid=(%d+)'
-    local iter = msg:gmatch'query=([^&]+)'
-    fd.reduce(fd.wrap(iter), fd.map(urldecode), fd.map(), fd.into, {})
+-- MUST be RECURSIVE
+local function adjust(conn, w)
+    if w.week == VERS.week then
+	return fromWeek(w.vers, conn)
+    end
+
 end
+
 ---------------------------------
 -- Program execution statement --
 ---------------------------------
 --
 -- Database connection
 --
-local conn = assert( dbconn( asweek(now()), true ) )
+local PRECIOS = assert( dbconn'ferre' )
 
-assert( conn.exec'ATTACH DATABASE "ferre.db" AS FERRE' ) -- to read: desc, ...
+local WEEK = assert( dbconn( asweek(now()), true ) )
 
-fd.reduce(fd.keys(TABS), function(schema, tbname) connexec(format(sql.newTable, tbname, schema)) end)
+fd.reduce(fd.keys(TABS), function(schema, tbname) connexec(WEEK, format(newTable, tbname, schema)) end)
 
-print("This week's DB was successfully open\n")
+print("ferre and this week DBs were successfully open\n")
 -- -- -- -- -- --
 --
 -- Initialize server
@@ -124,34 +125,8 @@ CACHE.vers = 'version '..asJSON(VERS)
 
 print('\n\tWeek:', VERS.week, '\n\tVers:', VERS.vers, '\n') -- print latest version
 --updateVERS(VERS) -- write to hard-disk latest version for UPDATES
+--updatePRECIOS()  -- write to hard-disk latest version for PRECIOS - ferre.db
 --
 -- Run loop
 --
-while true do
-print'+\n'
-    local msg = tasks:recv_msg()
-    local cmd = msg:match'%a+'
-    if cmd == 'KILL' then
-	if msg:match'%s(%a+)' == 'VENTAS' then
-	    msgr:send_msg('Bye VENTAS')
-	    break
-	end
-    end
-    if cmd == 'CACHE' then
-	local fruit = msg:match'%s(%a+)'
-	CACHE.sndkch( msgr, fruit )
-	print('CACHE sent to', fruit, '\n')
-	goto FIN
-    end
-    -- presupuesto | ticket
-    backup( msg )
---
-    local pid = msg:match'pid=(%d+)'
-    if cmd == 'presupuesto' then cache.delete( pid )
-    elseif cmd == 'ticket' then cache.store(pid, msg) end
---
-    msgr:send_msg( msg )
-    print(msg, '\n')
-    ::FIN::
-end
 

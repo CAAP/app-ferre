@@ -45,7 +45,7 @@
 		if (localStorage.week == o.week && localStorage.vers == o.vers)
 		    return VERS.inplace(o);
 		if (localStorage.week == o.week && localStorage.vers < o.vers)
-		    f;
+		    return false;
 	    };
 	    VERS.update = o => {
 		localStorage.vers = o.vers;

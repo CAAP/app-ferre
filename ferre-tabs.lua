@@ -6,6 +6,7 @@ local fd	= require'carlos.fold'
 
 local asJSON	= require'carlos.json'.asJSON
 local context	= require'lzmq'.context
+local cache	= require'carlos.ferre'.cache
 local decode	= require'carlos.ferre'.decode
 
 local format	= require'string'.format
@@ -19,7 +20,7 @@ _ENV = nil -- or M
 
 -- Local Variables for module-only access
 --
-local CACHE	 = {}
+local CACHE	 = cache'Hi TABS' -- {carl='Hi TABS'}
 local UPSTREAM	 = 'ipc://upstream.ipc'
 local DOWNSTREAM = 'ipc://downstream.ipc'
 local SUBS	 = {'tabs', 'delete', 'CACHE', 'KILL'}
@@ -28,14 +29,7 @@ local SUBS	 = {'tabs', 'delete', 'CACHE', 'KILL'}
 -- Local function definitions --
 --------------------------------
 --
-local function store(pid, msg) CACHE[pid] = msg end
-
-local function delete( pid ) CACHE[pid] = nil end
-
-local function tofruit( fruit, m ) return format('%s %s', fruit, m) end
-
-local function sndkch(msgr, fruit) fd.reduce(fd.keys(CACHE), function(m) msgr:send_msg(tofruit(fruit, m)) end) end
-
+CACHE.tabs = CACHE.store
 ---------------------------------
 -- Program execution statement --
 ---------------------------------
@@ -60,8 +54,6 @@ assert(msgr:connect( UPSTREAM ))
 
 print('Successfully connected to:', UPSTREAM, '\n')
 
-msgr:send_msg('Hi TABS')
-
 -- Run loop
 --
 while true do
@@ -76,13 +68,14 @@ print'+\n'
     end
     if cmd == 'CACHE' then
 	local fruit = msg:match'%s(%a+)'
-	sndkch( msgr, fruit )
+	CACHE.sndkch( msgr, fruit )
 	print('CACHE sent to', fruit, '\n')
 	goto FIN
     end
     local pid = msg:match'pid=(%d+)'
-    if cmd == 'delete' then delete( pid ) 
-    elseif cmd == 'tabs' then store(pid, msg) end
+    CACHE[cmd]( pid, msg )
+--    if cmd == 'delete' then cache.delete( pid )
+--    elseif cmd == 'tabs' then cache.store(pid, msg) end
     msgr:send_msg( msg )
     print(msg, '\n')
     ::FIN::
