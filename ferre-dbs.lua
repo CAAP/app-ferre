@@ -21,12 +21,14 @@ _ENV = nil -- or M
 
 -- Local Variables for module-only access
 --
+local SEMANA	 = 3600 * 24 * 7
+
 local UPSTREAM	 = 'ipc://upstream.ipc'
 local DOWNSTREAM = 'ipc://downstream.ipc'
 
 local SUBS	 = {'ticket', 'presupuesto', 'CACHE', 'KILL'}
-local VERS      = {} -- week, vers
-local TABS	= {tickets = 'uid, tag, clave, desc, costol NUMBER, unidad, precio NUMBER, qty INTEGER, rea INTEGER, totalCents INTEGER',
+local VERS	 = {} -- week, vers
+local TABS	 = {tickets = 'uid, tag, clave, desc, costol NUMBER, unidad, precio NUMBER, qty INTEGER, rea INTEGER, totalCents INTEGER',
 		   updates = 'vers INTEGER PRIMARY KEY, clave, campo, valor'}
 local INDEX	= {'uid', 'tag', 'clave', 'desc', 'costol', 'unidad', 'precio', 'qty', 'rea', 'totalCents'}
 
@@ -34,7 +36,7 @@ local INDEX	= {'uid', 'tag', 'clave', 'desc', 'costol', 'unidad', 'precio', 'qty
 
 	    desc, costol, unidad
 
-local UP_QUERY = 'SELECT * FROM updates WHERE vers > %d'
+local UP_QUERY = 'SELECT * FROM updates %s'
 
 --------------------------------
 -- Local function definitions --
@@ -56,9 +58,8 @@ local function version(w)
     local hoy = now()
     local week = asweek( hoy )
     local vers = which( week )
-    local semana = 3600 * 24 * 7
     while vers == 0 do -- change in YEAR XXX
-	hoy = hoy - semana
+	hoy = hoy - SEMANA
 	week = asweek( hoy )
 	vers = which( week )
 --	if week:match'W00' then break end
@@ -67,17 +68,33 @@ local function version(w)
     return w
 end
 
-local function fromWeek(vers, conn)
-    local conn = conn or dbconn(week)
-    return fd.reduce(conn.query(format(UP_QUERY, vers)), fd.map(asJSON), fd.into, {})
+local function fromWeek(vers, week)
+    local conn =  dbconn(week)
+    local clause = format('WHERE vers > %d', vers)
+
+    if conn.count('updates', clause) > 0 then
+	return fd.reduce(conn.query(format(UP_QUERY, clause)), fd.map(asJSON), fd.into, {})
+    else
+	return ':empty'
+    end
 end
 
--- MUST be RECURSIVE
+local function nextWeek(w) return {week=w.week + SEMANA, vers=0} end
+
+-- MUST be ITERATIVE
 local function adjust(conn, w)
-    if w.week == VERS.week then
-	return fromWeek(w.vers, conn)
+    local WEEK = VERS.week
+
+    local function iter(w, i)
+	local week = w.week
+	local vers = w.vers
+	if week <= WEEK then
+	    return i+1, nextWeek(w), fromWeek(vers, week)
+	end
+	return nil
     end
 
+    return iter, w, 0
 end
 
 ---------------------------------

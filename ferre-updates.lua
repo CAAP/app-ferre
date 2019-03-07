@@ -23,11 +23,6 @@ _ENV = nil -- or M
 local UPDATES   = 'ipc://updates.ipc'
 local TICKETS   = 'ipc://tickets.ipc'
 local TIMEOUT   = 5000 -- 5 secs
-local SUBS	= {'vers', 'tkts'}
-local VERS      = {} -- week, vers
-local TABS	= {tickets = 'uid, id_tag, clave, desc, costol NUMBER, unidad, precio NUMBER, qty INTEGER, rea INTEGER, totalCents INTEGER',
-		   updates = 'vers INTEGER PRIMARY KEY, clave, campo, valor'}
-
 
 --------------------------------
 -- Local function definitions --
