@@ -12,6 +12,8 @@ local newTable    	= require'carlos.sqlite'.newTable
 
 local format	= require'string'.format
 local concat 	= table.concat
+local time	= os.time
+local date	= os.date
 local assert	= assert
 
 local print	= print
@@ -68,35 +70,46 @@ local function version(w)
     return w
 end
 
-local function fromWeek(vers, week)
+local function prepare(w)
+    w.vers = nil
+    w.store = 'PRECIOS'
+    return w
+end
+
+local function asDATA(w) return format('event: update\ndata: %s\n', asJSON(w)) end
+
+local function fromWeek(week, vers)
     local conn =  dbconn(week)
     local clause = format('WHERE vers > %d', vers)
+    local N = conn.count('updates', clause)
 
-    if conn.count('updates', clause) > 0 then
-	return fd.reduce(conn.query(format(UP_QUERY, clause)), fd.map(asJSON), fd.into, {})
+    if N > 0 then
+	local data = fd.reduce(conn.query(format(UP_QUERY, clause)), fd.map(prepare), fd.map(asDATA), fd.into, {})
+	data[#data+1] = format('event: update\ndata: %s\n\n', asJSON{vers=N, week=week, store='VERS'})
+	return concat(data, '\n')
     else
-	return ':empty'
+	return ':empty\n\n'
     end
 end
 
-local function nextWeek(w) return {week=w.week + SEMANA, vers=0} end
+-- ITERATIVE procedure AWESOME
+local function nextWeek(t) return {t=t + SEMANA, vers=0} end
 
--- MUST be ITERATIVE
-local function adjust(conn, w)
-    local WEEK = VERS.week
+local function backintime(week, t) while week < asweek(t) do t = t - 3600*24*7 end; return t end
 
-    local function iter(w, i)
-	local week = w.week
-	local vers = w.vers
-	if week <= WEEK then
-	    return i+1, nextWeek(w), fromWeek(vers, week)
-	end
-	return nil
+local function stream(week, vers)
+    local function iter(WEEK, o)
+	local w = asweek( o.t )
+	if w > WEEK then return nil
+	else return nextWeek(o.t), fromWeek(week, o.vers) end
     end
-
-    return iter, w, 0
+    return function() return iter, VERS.week, {t=backintime(week, now()), vers=vers} end
 end
 
+local function adjust(msgr, fruit, week, vers)
+    fd.reduce(stream(week, vers), function(s) msgr:msg_send(format('%s update %s', fruit, s)) end)
+    return 'Updates sent'
+end
 ---------------------------------
 -- Program execution statement --
 ---------------------------------
@@ -146,4 +159,12 @@ print('\n\tWeek:', VERS.week, '\n\tVers:', VERS.vers, '\n') -- print latest vers
 --
 -- Run loop
 --
+while true do
+print'+\n'
+    local cmd = msg:match'%a+'
+    if cmd == 'adjust' then
+	fruit, week, vers = msg:match'(%a+)%s(%a+)%s(%a+)$'
+	print( adjust(msgr, fruit, week, vers), '\n' )
+    end
+end
 
