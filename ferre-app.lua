@@ -71,5 +71,8 @@ assert(tasks:bind( DOWNSTREAM ))
 print('Successfully bound to:', DOWNSTREAM, '\n')
 -- -- -- -- -- --
 --
-while true do print(handshake(server, tasks), '\n') end
+while true do
+print'+\n'
+    print(handshake(server, tasks), '\n')
+end
 

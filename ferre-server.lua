@@ -6,6 +6,7 @@ local fd	  = require'carlos.fold'
 
 local sse	  = require'carlos.html'.response
 local ssevent	  = require'carlos.ferre'.ssevent
+local receive	  = require'carlos.ferre'.receive
 local pollin	  = require'lzmq'.pollin
 local context	  = require'lzmq'.context
 
@@ -36,13 +37,6 @@ local function getFruit()
 end
 
 local function distill(msg) return msg:match'(%a+)%s([^!]+)' end
-
-local function receive(srv)
-    local function msgs() return srv:recv_msgs() end -- returns iter, state & counter
-    local id, more = srv:recv_msg()
-    if id and more then more = fd.reduce(msgs, fd.into, {}) end
-    return id, more
-end
 
 local function handshake(server)
     local id, msg = receive(server)
@@ -110,7 +104,7 @@ while true do
 	    print( handshake(server), '\n' )
 	end
 	if msgs:events() == 'POLLIN' then
-	    print( switch(msgs, server) )
+	    print( switch(msgs, server), '\n' )
 	end
     end
 end

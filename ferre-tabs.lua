@@ -7,7 +7,6 @@ local fd	= require'carlos.fold'
 local asJSON	= require'carlos.json'.asJSON
 local context	= require'lzmq'.context
 local cache	= require'carlos.ferre'.cache
-local decode	= require'carlos.ferre'.decode
 
 local format	= require'string'.format
 local concat 	= table.concat
@@ -74,8 +73,6 @@ print'+\n'
     end
     local pid = msg:match'pid=(%d+)'
     CACHE[cmd]( pid, msg )
---    if cmd == 'delete' then cache.delete( pid )
---    elseif cmd == 'tabs' then cache.store(pid, msg) end
     msgr:send_msg( msg )
     print(msg, '\n')
     ::FIN::

@@ -17,25 +17,26 @@
 
 		esource.addEventListener("Hi", function(e) {
 		    elbl.innerHTML = "Hi from "+e.data;
-		    console.log(e.data);
+		    console.log('Hi from ' + e.data);
 		}, false);
 
 		esource.addEventListener("Bye", function(e) {
 		    elbl.innerHTML = "Bye from "+e.data;
-		    console.log(e.data);
+		    console.log('Bye from ' + e.data);
 		}, false);
 
 		esource.addEventListener("fruit", function(e) {
-		    console.log(e.data);
+		    console.log('I am ' + e.data);
 		    localStorage.fruit = e.data;
 		    flbl.innerHTML = e.data;
 		    XHR.get( ferre.origin + 'CACHE?' + e.data );
 		}, false);
 
 		esource.addEventListener("version", function(e) {
+		    elbl.innerHTML = "version event";
+		    console.log('version event ongoing');
 		    if (!DATA.STORES.VERS.check( JSON.parse(e.data) ))
 			ferre.xget('adjust', localStorage); // adjust version-time
-		    elbl.innerHTML = "version event";
 		}, false);
 
 		esource.addEventListener("delete", function(e) {
@@ -46,16 +47,17 @@
 		}, false);
 
 		esource.addEventListener("tabs", function(e) {
-		    console.log("tabs event received.");
 		    elbl.innerHTML = "tabs event";
+		    console.log("tabs event received");
 		    distill( e.data );
 		}, false);
 
 		esource.addEventListener("update", function(e) {
+		    elbl.innerHTML = "update event";
+		    console.log('update event ongoing');
 		    const o = JSON.parse(e.data);
 		    const store = o.store; delete o.store;
-		    elbl.innerHTML = "update event";
-		    return STORES[store].update(o);}
+		    return STORES[store].update(o);
 		}, false);
 
 	})();

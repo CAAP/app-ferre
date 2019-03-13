@@ -2,20 +2,16 @@
 
 -- Import Section
 local fd	= require'carlos.fold'
-local sql	= require'carlos.sqlite'
 
 local asJSON	= require'carlos.json'.asJSON
-local dbconn	= require'carlos.ferre'.dbconn
-local connexec	= require'carlos.ferre'.connexec
-local dump	¡= require'carlos.files'.dump
-local poll	= require'lzmq'.pollin
+local cache	= require'carlos.ferre'.cache
+local pollin	= require'lzmq'.pollin
 local context	= require'lzmq'.context
 
 local format	= require'string'.format
+local concat	= table.concat
 local assert	= assert
-local time	= os.time
 local date	= os.date
-local env	= os.getenv
 
 local print	= print
 
@@ -26,73 +22,33 @@ _ENV = nil -- or M
 --
 local UPSTREAM   = 'ipc://upstream.ipc'
 local DOWNSTREAM = 'ipc://downstream.ipc'
-local ROOT	 = env'HOME' .. '/db/%s.db'
-local DEST	 = '/var/www/htdocs/app-ferre/ventas/json/version.json'
-local TIMEOUT	 = 2000 -- 2 secs
-local VERS	 = {} -- week, vers
-local TABS	 = {tickets = 'uid, id_tag, clave, desc, costol NUMBER, unidad, precio NUMBER, qty INTEGER, rea INTEGER, totalCents INTEGER',
-		   updates = 'vers INTEGER PRIMARY KEY, clave, campo, valor'}
+local QUERIES	 = 'ipc://queries.ipc'
+local CACHE	 = cache'Hi WEEK'
 
---[[
-    local keys = { uid=1, id_tag=2, clave=3, precio=4, qty=5, rea=6, totalCents=7 }
-    local clause = string.format("WHERE uid LIKE '%s%%'", today)
-    local query = "SELECT uid, SUM(qty) count, SUM(totalCents) totalCents, id_tag FROM %q WHERE uid LIKE '%s%%' GROUP BY uid||id_tag" -- id_tag CHANGES
-    local QRY = string.format('SELECT uid, SUM(qty) count, SUM(totalCents) totalCents, id_tag FROM %q %s GROUP BY uid', tbname, clause)
---]]
+local DEST	 = '/var/www/htdocs/app-ferre/ventas/json/version.json'
+local SUBS	 = {'version', 'CACHE', 'KILL'}
 
 --------------------------------
 -- Local function definitions --
 --------------------------------
-
--- if db file exists and 'updates' tb exists then returns count
-local function which( db )
-    local conn = dbconn( db )
-    if conn and conn.exists'updates' then
-	return conn.count'updates'
-    else return 0 end
-end
-
-local function now() return time()-21600 end
-
-local function asweek(t) return date('Y%YW%U', t) end
-
-local function version(w)
-    local hoy = now()
-    local week = asweek( hoy )
-    local vers = which( week )
-    local semana = 3600 * 24 * 7
-    while vers == 0 do -- change in YEAR XXX
-	hoy = hoy - semana
-	week = asweek( hoy )
-	vers = which( week )
-    end
-    w.week = week; w.vers = vers
-    return w
-end
-
 local function newTicket( w )
     local uid = date('%FT%TP', now()) .. w.pid
-    fd.reduce( w.args, fd.map( hd.args(keys, uid, w.id_tag) ), sql.into( tbname ), conn ) -- ids( uid, w.id_tag ), 
-
 end
 
+local function enroute(msg, queues)
+    local cmd = msg:match'%a+'
+end
+
+local function switch(msg, msgr)
+    local cmd = msg:match'%a+'
+    if cmd == 'version' then
+	CACHE.store(cmd, msg)
+	return 'version data received'
+    end
+end
 ---------------------------------
 -- Program execution statement --
 ---------------------------------
---
--- Database connection
---
-local conn = assert( dbconn(asweek(now()), true) ) -- creates DB if not exists
-fd.reduce(fd.keys(TABS), function(schema, tbname) connexec(format(sql.newTable, tbname, schema)) end)
-
--- Compute latest version
---
-version(VERS) -- latest version for UPDATES
-
-print('\n\tWeek:', VERS.week, '\n\tVers:', VERS.vers) -- print latest version
-
-dump(DEST, asJSON(VERS)) -- write to hard-disk latest version for UPDATES
-
 -- ZMQ server sockets
 --
 local CTX = context()
@@ -103,33 +59,52 @@ local tasks = assert(CTX:socket'SUB')
 
 assert(tasks:connect( DOWNSTREAM ))
 
-tasks:subscribe''
-
--- XXX SUBS messages should be sent
+fd.reduce(SUBS, function(s) assert(tasks:subscribe(s))  end)
 
 print('Successfully connecto to:', DOWNSTREAM, '\n')
+print('And successfully subscribed to:', concat(SUBS, '\t'), '\n')
 -- -- -- -- -- --
 --
-local results = assert(CTX:socket'PUSH')
+local msgr = assert(CTX:socket'PUSH')
 
-assert(results:connect( UPSTREAM ))
+assert(msgr:connect( UPSTREAM ))
 
-print('Successfully connecto to:', UPSTREAM, '\n')
+print('Successfully connected to:', UPSTREAM, '\n')
 -- -- -- -- -- --
--- There are two types of subscriptions to events on 'tkts' or 'vers'
--- Replies are sent in JSON format
 --
-assert( pub.send( format('vers %s', asJSON(VERS)) ) )
+local queues = assert(CTX:socket'DEALER')
 
---[[
-local events = poll{tickets, updates}
+assert(queues:connect( QUERIES ))
+
+print('Successfully connected to:', QUERIES, '\n')
+-- -- -- -- -- --
+--
+
+queues:send_msg'Hi WEEK'
+
 while true do
-    local j = events(TIMEOUT)
-    if j == 1 then
-	tickets.recv
-    elseif j == 2 then
-	updates.recv
+print'+\n'
+    if pollin{tasks, queues} then
+	if tasks:events() == 'POLLIN' then
+	    local msg = tasks:recv_msg()
+	    local cmd = msg:match'%a+'
+	    if cmd == 'KILL' then
+		if msg:match'%s(%a+)' == 'WEEK' then
+		    msgr:send_msg('Bye WEEK')
+		    break
+		end
+	    end
+	    if cmd == 'CACHE' then
+		local fruit = msg:match'%s(%a+)'
+		CACHE.sndkch( msgr, fruit )
+		print(format('CACHE sent to %s\n', fruit))
+	    else print( enroute(msg, queues), '\n' ) end
+	end
+	if queues:events() == 'POLLIN' then
+	    local msg = queues:recv_msg()
+	    print( switch(msg, msgr), '\n' )
+	end
     end
 end
---]]
 
+--CACHE version
