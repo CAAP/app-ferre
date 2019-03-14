@@ -41,8 +41,6 @@ local TABS	 = {tickets = 'uid, tag, clave, desc, costol NUMBER, unidad, precio N
 		   updates = 'vers INTEGER PRIMARY KEY, clave, campo, valor'}
 local INDEX	= {'uid', 'tag', 'clave', 'desc', 'costol', 'unidad', 'precio', 'qty', 'rea', 'totalCents'}
 
-local UP_QUERY  = 'SELECT * FROM updates %s'
-
 --------------------------------
 -- Local function definitions --
 --------------------------------

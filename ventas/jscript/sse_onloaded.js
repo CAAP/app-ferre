@@ -15,6 +15,11 @@
 		    tabs.set(pid, chunks.map(s => a2obj(s.split('+'))));
 		}
 
+		function updateOne( o ) {
+		    const store = o.store; delete o.store;
+		    return STORES[store].update(o);
+		}
+
 		esource.addEventListener("Hi", function(e) {
 		    elbl.innerHTML = "Hi from "+e.data;
 		    console.log('Hi from ' + e.data);
@@ -55,9 +60,17 @@
 		esource.addEventListener("update", function(e) {
 		    elbl.innerHTML = "update event";
 		    console.log('update event ongoing');
-		    const o = JSON.parse(e.data);
-		    const store = o.store; delete o.store;
-		    return STORES[store].update(o);
+		    const data = JSON.parse(e.data);
+		    if (Array.isArray(data))
+			Promise.all( data.map( updateOne ) );
+		    else
+			updateOne( data );
+		}, false);
+
+		esource.addEventListener("adjust", function(e) {
+		    elbl.innerHTML = "adjust event";
+		    console.log('adjust event ongoing');
+		    XHR.getJSON( '/ventas/json/' + e.data ).then( data => Promise.all( data.map( updateOne ) ) );
 		}, false);
 
 	})();
