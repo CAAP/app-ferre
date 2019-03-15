@@ -11,13 +11,13 @@ local cache		= require'carlos.ferre'.cache
 local dbconn		= require'carlos.ferre'.dbconn
 local connexec		= require'carlos.ferre'.connexec
 local decode		= require'carlos.ferre'.decode
-local now		= require'carlos.ferre'.now
 local newTable    	= require'carlos.sqlite'.newTable
 local dump		= require'carlos.files'.dump
 
 local format	= require'string'.format
 local concat 	= table.concat
 local open	= io.open
+local time	= os.time
 local date	= os.date
 local assert	= assert
 
@@ -51,6 +51,8 @@ local CACHE	 = cache'Hi VERS'
 -- Functions to compute the current/ongoing version
 -- based on the latest WEEK file on existence
 --
+local function now() return time()-21600 end
+
 local function asweek(t) return date('Y%YW%U', t) end
 
 local function backintime(week, t) while week < asweek(t) do t = t - 3600*24*7 end; return t end
@@ -92,8 +94,10 @@ local function fromWeek(week, vers)
 
     if N > 0 then
 	local data = fd.reduce(conn.query(format(QUERY, clause)), fd.map(prepare), fd.map(asJSON), fd.into, {})
-	data[#data+1] = asJSON{vers=conn.count('updates'), week=week, store='VERS'}
-	return concat(data, ',\n')
+	data[#data+1] = asJSON{vers=N, week=week, store='VERS'}
+	return format('[%s]', concat(data, '\n')) -- XXX decision EITHER send an array or process this DOWN
+    else
+	return false -- :empty
     end
 end
 
@@ -104,19 +108,18 @@ local function stream(week, vers)
     local function iter(WEEK, o)
 	local w = asweek( o.t )
 	if w > WEEK then return nil
-	else return nextWeek(o.t), fromWeek(w, o.vers) end
+	else return nextWeek(o.t), fromWeek(week, o.vers) end
     end
     return function() return iter, asweek(now()), {t=backintime(week, now()), vers=vers} end
 end
 
+-- XXX ALTERNATIVELY one should send pieces in right order: event: update; data: [; data: {...}, ...
+-- XXX always using the SSE internal event ;-|
+-- XXX changes this accordingly XXX
 -- find all updates that need to be sent to a specific peer & send them all
-local function adjust(fruit, week, vers)
-    local FIN = open(format('%s/%s.json', ROOT, fruit), 'w')
-    FIN:write'['
-    FIN:write( concat(fd.reduce(stream(week, vers), fd.into, {}), ',\n') )
-    FIN:write']'
-    FIN:close()
-    return 'Updates stored and dumped'
+local function adjust(msgr, fruit, week, vers)
+    fd.reduce(stream(week, vers), function(s) if s then msgr:send_msg(format('%s SSE %s', fruit, s)) end end)
+    return 'Updates sent'
 end
 
 -- DUMP
@@ -182,10 +185,8 @@ print('Successfully connected to:', UPSTREAM, '\n')
 -- -- -- -- -- --
 --
 -- Compute latest version & Dump data
--- additionally sends SSE with latest version in case of UPGRADE!!!
--- could be solved otherwise XXX like in the admin-app
 --
-msgr:send_msg(format('version %s', getVersion()))
+getVersion()
 
 --
 -- -- -- -- -- --
@@ -211,7 +212,8 @@ print'+\n'
     end
     if cmd == 'adjust' then
 	local  cmd, o = decode(msg) -- fruit, week, vers
-	print( adjust(o.fruit, o.week, o.vers), '\n' )
+--	XXX process
+	print( adjust(msgr, o.fruit, o.week, o.vers), '\n' )
 	msgr:send_msg(format('%s adjust %s.json', o.fruit, o.fruit))
     end
 end

@@ -42,6 +42,8 @@
 
 	    const VERS = DATA.STORES.VERS;
 	    VERS.check = o => {
+		if (!localStorage.week)
+		    return true;
 		if (localStorage.week == o.week && localStorage.vers == o.vers)
 		    return VERS.inplace(o);
 		if (localStorage.week == o.week && localStorage.vers < o.vers)

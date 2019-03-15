@@ -5,6 +5,7 @@
 local fd	  = require'carlos.fold'
 
 local response	  = require'carlos.html'.response
+local urldecode   = require'carlos.ferre'.urldecode
 local context	  = require'lzmq'.context
 local asJSON	  = require'carlos.json'.asJSON
 
@@ -39,7 +40,7 @@ local function distill(a) return format('%s %s', concat(a, ''):match'GET /(%a+)%
 local function handshake(server, tasks)
     local id, msg = receive(server)
     if #msg > 0 then
-	tasks:send_msg(distill(msg))
+	tasks:send_msg(urldecode(distill(msg)))
 	server:send_msgs{id, OK}
 	server:send_msgs{id, ''}
 	return msg[1]:match'([^%c]+)%c'

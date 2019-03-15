@@ -1,17 +1,17 @@
 #! /usr/bin/env lua53
 
 -- Import Section
+--
 local fd	= require'carlos.fold'
 
 local asJSON	= require'carlos.json'.asJSON
-local cache	= require'carlos.ferre'.cache
-local pollin	= require'lzmq'.pollin
+local now	= require'carlos.ferre'.now
 local context	= require'lzmq'.context
 
 local format	= require'string'.format
-local concat	= table.concat
-local assert	= assert
+local concat 	= table.concat
 local date	= os.date
+local assert	= assert
 
 local print	= print
 
@@ -20,50 +20,37 @@ _ENV = nil -- or M
 
 -- Local Variables for module-only access
 --
-local UPSTREAM   = 'ipc://upstream.ipc'
+local UPSTREAM	 = 'ipc://upstream.ipc'
 local DOWNSTREAM = 'ipc://downstream.ipc'
 local QUERIES	 = 'ipc://queries.ipc'
-local CACHE	 = cache'Hi WEEK'
+local TBNAME	 = 'tickets'
 
-local SUBS	 = {'', 'CACHE', 'KILL'}
+local SUBS	 = {'ticket', 'presupuesto', 'KILL'} -- date, uid, utime, urtime
 
 --------------------------------
 -- Local function definitions --
 --------------------------------
-local function newTicket( w )
-    local uid = date('%FT%TP', now()) .. w.pid
-end
+--
+local function newUID() return date('%FT%TP', now()) end
 
-local function enroute(msg, queues)
-    local cmd = msg:match'%a+'
-end
-
-local function switch(msg, msgr)
-    local cmd = msg:match'%a+'
-    if cmd == 'version' then
-	CACHE.store(cmd, msg)
-	return 'version data received'
-    end
-end
 ---------------------------------
 -- Program execution statement --
 ---------------------------------
--- ZMQ server sockets
 --
+-- Initialize server
 local CTX = context()
 
--- Connect to the server(s)
---
 local tasks = assert(CTX:socket'SUB')
 
 assert(tasks:connect( DOWNSTREAM ))
 
 fd.reduce(SUBS, function(s) assert(tasks:subscribe(s))  end)
 
-print('Successfully connecto to:', DOWNSTREAM, '\n')
+print('Successfully connected to:', DOWNSTREAM)
 print('And successfully subscribed to:', concat(SUBS, '\t'), '\n')
 -- -- -- -- -- --
 --
+-- Connect to PUBlisher
 local msgr = assert(CTX:socket'PUSH')
 
 assert(msgr:connect( UPSTREAM ))
@@ -78,31 +65,34 @@ assert(queues:connect( QUERIES ))
 print('Successfully connected to:', QUERIES, '\n')
 -- -- -- -- -- --
 --
+-- NO CACHE
+msgr:send_msg'Hi TKTS'
 
-queues:send_msg'Hi WEEK'
-
+-- Run loop
+--
 while true do
 print'+\n'
-    if pollin{tasks, queues} then
-	if tasks:events() == 'POLLIN' then
-	    local msg = tasks:recv_msg()
-	    local cmd = msg:match'%a+'
-	    if cmd == 'KILL' then
-		if msg:match'%s(%a+)' == 'WEEK' then
-		    msgr:send_msg('Bye WEEK')
-		    break
-		end
+    pollin{tasks, queues}
+    if tasks:events() == 'POLLIN' then
+	local msg = tasks:recv_msg()
+	local cmd = msg:match'%a+'
+	if cmd == 'KILL' then
+	    if msg:match'%s(%a+)' == 'TKTS' then
+		msgr:send_msg('Bye TKTS')
+		break
 	    end
-	    if cmd == 'CACHE' then
-		local fruit = msg:match'%s(%a+)'
-		CACHE.sndkch( msgr, fruit )
-		print(format('CACHE sent to %s\n', fruit))
-	    else print( enroute(msg, queues), '\n' ) end
 	end
-	if queues:events() == 'POLLIN' then
-	    local msg = queues:recv_msg()
-	    print( switch(msg, msgr), '\n' )
+	if cmd == 'ticket' or cmd == 'presupuesto' then
+	    queues:msg_send(msg)
+	    print('Data forward to queue\n')
 	end
+	if cmd == 'uid' then
+	    local fruit = msg:match'%s(%a+)'
+	    msgr:send_msg(format('%s uid %s', fruit, newUID()))
+	    print('UID sent to', fruit, '\n')
+	end
+    end
+    if queues:events() == 'POLLIN' then
     end
 end
 
