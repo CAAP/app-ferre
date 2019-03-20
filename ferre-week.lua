@@ -5,13 +5,13 @@ local fd	= require'carlos.fold'
 
 local asJSON	= require'carlos.json'.asJSON
 local cache	= require'carlos.ferre'.cache
+local getUID	= require'carlos.ferre'.getUID
 local pollin	= require'lzmq'.pollin
 local context	= require'lzmq'.context
 
 local format	= require'string'.format
 local concat	= table.concat
 local assert	= assert
-local date	= os.date
 
 local print	= print
 
@@ -25,18 +25,37 @@ local DOWNSTREAM = 'ipc://downstream.ipc'
 local QUERIES	 = 'ipc://queries.ipc'
 local CACHE	 = cache'Hi WEEK'
 
-local SUBS	 = {'', 'CACHE', 'KILL'}
+local SUBS	 = {'ticket', 'presupuesto', 'CACHE', 'KILL'} -- uid
 
 --------------------------------
 -- Local function definitions --
 --------------------------------
-local function newTicket( w )
-    local uid = date('%FT%TP', now()) .. w.pid
+
+local function newTicket( msg )
+    local pid = msg:match'pid=([^!&]+)&'
+    return (getUID() .. pid)
 end
 
 local function enroute(msg, queues)
     local cmd = msg:match'%a+'
+
+    if cmd == 'ticket' or cmd == 'presupuesto' then
+	queues:send_msg(msg..'&uid='..newTicket(msg))
+    end
+
+    if cmd == 'feed' then end -- XXX only ask for certain time-duration tickets, e.g.
+
+    return msg
 end
+
+--[[
+    if cmd == 'uid' then
+	local uid = getUID()
+	print('Sending new UID', uid, '\n')
+	local fruit = msg:match'%s(%a+)'
+	msgr:send_msg(format('%s uid %s', fruit, uid))
+    end
+--]]
 
 local function switch(msg, msgr)
     local cmd = msg:match'%a+'
@@ -89,7 +108,7 @@ print'+\n'
 	    local cmd = msg:match'%a+'
 	    if cmd == 'KILL' then
 		if msg:match'%s(%a+)' == 'WEEK' then
-		    msgr:send_msg('Bye WEEK')
+		    msgr:send_msg'Bye WEEK'
 		    break
 		end
 	    end

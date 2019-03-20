@@ -4,6 +4,7 @@
 --
 local fd		= require'carlos.fold'
 
+local into		= require'carlos.sqlite'.into
 local asJSON		= require'carlos.json'.asJSON
 local context		= require'lzmq'.context
 local pollin		= require'lzmq'.pollin
@@ -19,6 +20,8 @@ local concat 	= table.concat
 local remove	= table.remove
 local date	= os.date
 local assert	= assert
+
+local pairs	= pairs
 
 local print	= print
 
@@ -36,6 +39,7 @@ local TABS	 = {tickets = 'uid, tag, clave, desc, costol NUMBER, unidad, precio N
 		   updates = 'vers INTEGER PRIMARY KEY, clave, campo, valor'}
 local INDEX	= {'uid', 'tag', 'clave', 'desc', 'costol', 'unidad', 'precio', 'qty', 'rea', 'totalCents'}
 
+local QRY	= 'SELECT * FROM precios WHERE clave LIKE %q LIMIT 1'
 --------------------------------
 -- Local function definitions --
 --------------------------------
@@ -51,13 +55,24 @@ print'\nWriting people to file ...\n'
     FIN:close()
 end
 
+local function process(uid, tag, conn2)
+    return function(q)
+	local o = {uid=uid, tag=tag}
+	for k,v in q:gmatch'([%a%d]+)|([^|]+)' do o[k] = v end
+	local lbl = 'u' .. o.precio:match'%d$'
+	local b = fd.first(conn2.query(format(QRY, o.clave)), function(x) return x end)
+	fd.reduce(fd.keys(o), fd.merge, b)
+	b.precio = b[o.precio]; b.unidad = b[lbl]
+	return fd.reduce(INDEX, fd.map(function(k) return b[k] or '' end), fd.into, {})
+    end
+end
+
 local function asweek(t) return date('Y%YW%U', t) end
 
-local function addTicket(conn, msg)
-    local tag, data = msg:match'(%a+)%s([^!]+)'
-    -- there're many 'query' elements to split
-    local uid =  ---XXX
-    fd.reduce(fd.wrap(data:gmatch'query=([^!])'), fd.map(decode), filterSOMEhow, sql.into'tickets', conn)
+local function addTicket(conn, conn2, msg)
+    local tag, data, uid = msg:match'(%a+)%spid=%d+&([^!]+)&uid=([^!]+)$'
+    fd.reduce(fd.wrap(data:gmatch'query=([^&]+)'), fd.map(process(uid, tag, conn2)), into'tickets', conn)
+    return 'Data received and stored!'
 end
 
 ---------------------------------
@@ -96,7 +111,7 @@ print'+\n'
     msg = msg[1]
     local cmd = msg:match'%a+'
     if cmd == 'ticket' or cmd == 'presupuesto' then
-	addTicket(WEEK, msg)
+	print(addTicket(WEEK, PRECIOS, msg), '\n')
     end
 end
 

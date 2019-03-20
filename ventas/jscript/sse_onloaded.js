@@ -57,6 +57,11 @@
 		    distill( e.data );
 		}, false);
 
+		esource.addEventListener("uid", function(e) {
+		    elbl.innerHTML = "uid event";
+		    console.log("uid event received");
+		}, false);
+
 		esource.addEventListener("update", function(e) {
 		    elbl.innerHTML = "update event";
 		    console.log('update event ongoing');

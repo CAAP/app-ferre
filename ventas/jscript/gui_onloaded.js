@@ -121,6 +121,12 @@
 
 		return ferre.xget(a, objs ).then( TICKET.empty, () => {TICKET.myticket.style.visibility = 'visible'} );
 	    };
+
+	    // XXX in case of mulitiple elements on the ticket, one should consider
+	    // dividing the load by splitting the elements to be sent XXX
+	    ferre.split = function() {
+	    };
+
 	})();
 
 
