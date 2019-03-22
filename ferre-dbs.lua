@@ -75,6 +75,15 @@ local function addTicket(conn, conn2, msg)
     return 'Data received and stored!'
 end
 
+local function dumpFEED(fruit, qry)
+    local ROOT = '/var/www/htdocs/app-ferre/ventas/json'
+    local FIN = open(format('%s/%s-feed.json', ROOT, fruit), 'w')
+    FIN:write'['
+    FIN:write( concat(fd.reduce(conn.query(qry), fd.map(asJSON), fd.into, {}), ',\n') )
+    FIN:write']'
+    FIN:close()
+    return 'Updates stored and dumped'
+end
 ---------------------------------
 -- Program execution statement --
 ---------------------------------
@@ -112,6 +121,13 @@ print'+\n'
     local cmd = msg:match'%a+'
     if cmd == 'ticket' or cmd == 'presupuesto' then
 	print(addTicket(WEEK, PRECIOS, msg), '\n')
+    end
+    if cmd == 'feed' then
+	local fruit, secs = msg:match'%s(%a+)%s(%d+)$'
+	local t = date('%FT%T', now()-secs)
+	local qry = format('SELECT * FROM tickets WHERE uid > %q', t)
+	print(dumpFEED( fruit, qry ), '\n')
+	tasks:send_msg(format('%s feed %s-feed.json', fruit, fruit))
     end
 end
 

@@ -6,6 +6,7 @@ local fd	= require'carlos.fold'
 local asJSON	= require'carlos.json'.asJSON
 local cache	= require'carlos.ferre'.cache
 local getUID	= require'carlos.ferre'.getUID
+local now	= require'carlos.ferre'.now
 local pollin	= require'lzmq'.pollin
 local context	= require'lzmq'.context
 
@@ -43,7 +44,8 @@ local function enroute(msg, queues)
 	queues:send_msg(msg..'&uid='..newTicket(msg))
     end
 
-    if cmd == 'feed' then end -- XXX only ask for certain time-duration tickets, e.g.
+-- XXX only ask for certain time-duration tickets, in secs
+    if cmd == 'feed' then queues:send_msg( msg ) end
 
     return msg
 end

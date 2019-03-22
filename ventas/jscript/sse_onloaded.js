@@ -12,7 +12,7 @@
 		function distill( s ) {
 		    let chunks = s.split('&query=');
 		    const pid = Number( chunks.shift().match(/\d+/) );
-		    tabs.set(pid, chunks.map(s => a2obj(s.split('+'))));
+		    tabs.set(pid, chunks.map(s => a2obj(s.split('|'))));
 		}
 
 		function updateOne( o ) {
