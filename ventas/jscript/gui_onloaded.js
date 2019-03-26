@@ -150,8 +150,6 @@
 		ferre.print('tabs').then( () => tabs(pid) );
 	    };
 
-//	    ferre.saveme = () => { persona.value = 0; ferre.tab(); }
-
 	    let opt = document.createElement('option');
 	    opt.value = 0;
 	    opt.label = '';

@@ -57,11 +57,13 @@
 		    distill( e.data );
 		}, false);
 
+		// XXX not in use YET
 		esource.addEventListener("uid", function(e) {
 		    elbl.innerHTML = "uid event";
 		    console.log("uid event received");
 		}, false);
 
+		// XXX not implemented YET
 		esource.addEventListener("update", function(e) {
 		    elbl.innerHTML = "update event";
 		    console.log('update event ongoing');
@@ -74,6 +76,13 @@
 
 		esource.addEventListener("adjust", function(e) {
 		    elbl.innerHTML = "adjust event";
+		    console.log('adjust event ongoing');
+		    XHR.getJSON( '/ventas/json/' + e.data ).then( data => Promise.all( data.map( updateOne ) ) );
+		}, false);
+
+		// XXX not implemented YET
+		esource.addEventListener("feed", function(e) {
+		    elbl.innerHTML = "feed event";
 		    console.log('adjust event ongoing');
 		    XHR.getJSON( '/ventas/json/' + e.data ).then( data => Promise.all( data.map( updateOne ) ) );
 		}, false);

@@ -50,14 +50,6 @@ print('Successfully connected to:', DOWNSTREAM)
 print('And successfully subscribed to:', concat(SUBS, '\t'), '\n')
 -- -- -- -- -- --
 --
--- Connect to PUBlisher
-local msgr = assert(CTX:socket'PUSH')
-
-assert(msgr:connect( UPSTREAM ))
-
-print('Successfully connected to:', UPSTREAM, '\n')
--- -- -- -- -- --
---
 local queues = assert(CTX:socket'DEALER')
 
 assert(queues:connect( QUERIES ))
@@ -65,34 +57,27 @@ assert(queues:connect( QUERIES ))
 print('Successfully connected to:', QUERIES, '\n')
 -- -- -- -- -- --
 --
--- NO CACHE
-msgr:send_msg'Hi TKTS'
 
 -- Run loop
 --
 while true do
 print'+\n'
-    pollin{tasks, queues}
-    if tasks:events() == 'POLLIN' then
-	local msg = tasks:recv_msg()
-	local cmd = msg:match'%a+'
-	if cmd == 'KILL' then
-	    if msg:match'%s(%a+)' == 'TKTS' then
-		msgr:send_msg('Bye TKTS')
-		break
-	    end
-	end
-	if cmd == 'ticket' or cmd == 'presupuesto' then
-	    queues:msg_send(msg)
-	    print('Data forward to queue\n')
-	end
-	if cmd == 'uid' then
-	    local fruit = msg:match'%s(%a+)'
-	    msgr:send_msg(format('%s uid %s', fruit, newUID()))
-	    print('UID sent to', fruit, '\n')
+    local msg = tasks:recv_msg()
+    local cmd = msg:match'%a+'
+    if cmd == 'KILL' then
+	if msg:match'%s(%a+)' == 'TKTS' then
+	    msgr:send_msg('Bye TKTS')
+	    break
 	end
     end
-    if queues:events() == 'POLLIN' then
+    if cmd == 'ticket' or cmd == 'presupuesto' then
+	queues:send:msg(msg)
+	print('Data forward to queue\n')
+    end
+    if cmd == 'uid' then -- UNUSED not YET XXX
+	local fruit = msg:match'%s(%a+)'
+	msgr:send_msg(format('%s uid %s', fruit, newUID()))
+	print('UID sent to', fruit, '\n')
     end
 end
 

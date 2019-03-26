@@ -18,6 +18,7 @@ local newTable    	= require'carlos.sqlite'.newTable
 local format	= require'string'.format
 local concat 	= table.concat
 local remove	= table.remove
+local open	= io.open
 local date	= os.date
 local assert	= assert
 
@@ -34,7 +35,6 @@ local SEMANA	 = 3600 * 24 * 7
 local QUERIES	 = 'ipc://queries.ipc'
 
 local PEERS	 = {}
-local SUBS	 = {'ticket', 'presupuesto', 'version', 'KILL'} -- CACHE
 local TABS	 = {tickets = 'uid, tag, clave, desc, costol NUMBER, unidad, precio NUMBER, qty INTEGER, rea INTEGER, totalCents INTEGER',
 		   updates = 'vers INTEGER PRIMARY KEY, clave, campo, valor'}
 local INDEX	= {'uid', 'tag', 'clave', 'desc', 'costol', 'unidad', 'precio', 'qty', 'rea', 'totalCents'}
@@ -44,6 +44,7 @@ local QRY	= 'SELECT * FROM precios WHERE clave LIKE %q LIMIT 1'
 -- Local function definitions --
 --------------------------------
 --
+--[[
 local function dumpPEOPLE(conn)
     local QRY = 'SELECT id, nombre FROM empleados'
     local FIN = open(DEST, 'w')
@@ -54,6 +55,7 @@ print'\nWriting people to file ...\n'
     FIN:write']'
     FIN:close()
 end
+--]]
 
 local function process(uid, tag, conn2)
     return function(q)
@@ -75,8 +77,8 @@ local function addTicket(conn, conn2, msg)
     return 'Data received and stored!'
 end
 
-local function dumpFEED(fruit, qry)
-    local ROOT = '/var/www/htdocs/app-ferre/ventas/json'
+local function dumpFEED(conn, fruit, qry)
+    local ROOT = '/var/www/htdocs/app-ferre/caja/json'
     local FIN = open(format('%s/%s-feed.json', ROOT, fruit), 'w')
     FIN:write'['
     FIN:write( concat(fd.reduce(conn.query(qry), fd.map(asJSON), fd.into, {}), ',\n') )
@@ -103,9 +105,9 @@ print("ferre and this week DBs were successfully open\n")
 --
 local CTX = context()
 
-local tasks = assert(CTX:socket'ROUTER')
+local queues = assert(CTX:socket'ROUTER')
 
-assert(tasks:bind( QUERIES ))
+assert(queues:bind( QUERIES ))
 
 print('Successfully bound to:', QUERIES)
 --
@@ -114,20 +116,34 @@ print('Successfully bound to:', QUERIES)
 --
 while true do
 print'+\n'
-    pollin{tasks}
+    pollin{queues}
     print'message received!\n'
-    local id, msg = receive( tasks )
+    local id, msg = receive( queues )
     msg = msg[1]
     local cmd = msg:match'%a+'
+-- following replies are to be sent to WEEK 
     if cmd == 'ticket' or cmd == 'presupuesto' then
+	local uid, fruit = addTicket(WEEK, PRECIOS, msg)
+	queues:send_msgs{'WEEK', }
+
+
 	print(addTicket(WEEK, PRECIOS, msg), '\n')
     end
     if cmd == 'feed' then
-	local fruit, secs = msg:match'%s(%a+)%s(%d+)$'
-	local t = date('%FT%T', now()-secs)
-	local qry = format('SELECT * FROM tickets WHERE uid > %q', t)
-	print(dumpFEED( fruit, qry ), '\n')
-	tasks:send_msg(format('%s feed %s-feed.json', fruit, fruit))
+	local fruit = msg:match'%s(%a+)' -- secs = %s(%d+)$
+	local t = date('%FT%T', now())
+	local qry = format('SELECT uid, SUBSTR(uid, 12, 5) time, SUM(qty) count, ROUND(SUM(totalCents)/100, 2) total, tag FROM tickets GROUP BY uid WHERE uid > %q', t)
+	print(dumpFEED( WEEK, fruit, qry ), '\n')
+	queues:send_msgs{'WEEK', format('%s feed %s-feed.json', fruit, fruit)}
     end
 end
+
+--[[    
+    if cmd == 'KILL' then
+	if msg:match'%s(%a+)' == 'DB' then
+	    queues:send_msgs{id, 'Bye DB'}
+	    break
+	end
+    end
+--]]
 

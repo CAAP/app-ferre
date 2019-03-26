@@ -4,9 +4,9 @@
 local fd	= require'carlos.fold'
 
 local asJSON	= require'carlos.json'.asJSON
-local cache	= require'carlos.ferre'.cache
 local getUID	= require'carlos.ferre'.getUID
 local now	= require'carlos.ferre'.now
+local cache	= require'carlos.ferre'.cache
 local pollin	= require'lzmq'.pollin
 local context	= require'lzmq'.context
 
@@ -24,9 +24,9 @@ _ENV = nil -- or M
 local UPSTREAM   = 'ipc://upstream.ipc'
 local DOWNSTREAM = 'ipc://downstream.ipc'
 local QUERIES	 = 'ipc://queries.ipc'
-local CACHE	 = cache'Hi WEEK'
 
-local SUBS	 = {'ticket', 'presupuesto', 'CACHE', 'KILL'} -- uid
+local SUBS	 = {'feed', 'CACHE', 'KILL'} -- uid
+local CACHE	 = cache'Hi CACHE'
 
 --------------------------------
 -- Local function definitions --
@@ -37,35 +37,6 @@ local function newTicket( msg )
     return (getUID() .. pid)
 end
 
-local function enroute(msg, queues)
-    local cmd = msg:match'%a+'
-
-    if cmd == 'ticket' or cmd == 'presupuesto' then
-	queues:send_msg(msg..'&uid='..newTicket(msg))
-    end
-
--- XXX only ask for certain time-duration tickets, in secs
-    if cmd == 'feed' then queues:send_msg( msg ) end
-
-    return msg
-end
-
---[[
-    if cmd == 'uid' then
-	local uid = getUID()
-	print('Sending new UID', uid, '\n')
-	local fruit = msg:match'%s(%a+)'
-	msgr:send_msg(format('%s uid %s', fruit, uid))
-    end
---]]
-
-local function switch(msg, msgr)
-    local cmd = msg:match'%a+'
-    if cmd == 'version' then
-	CACHE.store(cmd, msg)
-	return 'version data received'
-    end
-end
 ---------------------------------
 -- Program execution statement --
 ---------------------------------
@@ -94,13 +65,13 @@ print('Successfully connected to:', UPSTREAM, '\n')
 --
 local queues = assert(CTX:socket'DEALER')
 
+assert(queues:set_id'WEEK')
+
 assert(queues:connect( QUERIES ))
 
 print('Successfully connected to:', QUERIES, '\n')
 -- -- -- -- -- --
 --
-
-queues:send_msg'Hi WEEK'
 
 while true do
 print'+\n'
@@ -116,13 +87,25 @@ print'+\n'
 	    end
 	    if cmd == 'CACHE' then
 		local fruit = msg:match'%s(%a+)'
+		queues:send_msg(format('feed %s', fruit))
 		CACHE.sndkch( msgr, fruit )
-		print(format('CACHE sent to %s\n', fruit))
-	    else print( enroute(msg, queues), '\n' ) end
+		print('CACHE sent to', fruit, '\n')
+	    end
+--[[
+	    if cmd == 'feed' then
+		local fruit = msg:match'%s(%a+)'
+		queues:send_msg(msg)
+		print('Data forward to queue\n')
+	    end
+--]]
 	end
+--  XXX must know which PEERs are connected to ME XXX	
 	if queues:events() == 'POLLIN' then
 	    local msg = queues:recv_msg()
-	    print( switch(msg, msgr), '\n' )
+	    if msg:match'feed' then
+		msgr:send_msg(msg)
+		print(format('feed sent to peer %s\n', msg:match'%a+'))
+	    end
 	end
     end
 end
