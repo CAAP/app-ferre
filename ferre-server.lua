@@ -26,6 +26,7 @@ local UPSTREAM   = 'ipc://upstream.ipc'
 local HELLO      = sse{content='stream'}
 local TIMEOUT    = 100 -- 100 msecs
 local FRUITS	 = {apple=false, apricot=false, avocado=false, banana=false, berry=false, cherry=false, coconut=false, cucumber=false, fig=false, grape=false, raisin=false, guava=false, pepper=false, corn=false, plum=false, kiwi=false, lemon=false, lime=false, lychee=false, mango=false, melon=false, olive=false, orange=false, durian=false, longan=false, pea=false, peach=false, pear=false, prune=false, pine=false, pomelo=false, pome=false, quince=false, rhubarb=false, mamey=false, soursop=false, granate=false, sapote=false}
+local PEERS	= {}
 
 --------------------------------
 -- Local function definitions --
@@ -51,7 +52,6 @@ local function handshake(server)
     end
     return 'Null message'
 end
-
 
 -- XXX Maybe count the number of fails
 local function broadcast(server, msg, fruit)

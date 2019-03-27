@@ -20,6 +20,14 @@
 		    return STORES[store].update(o);
 		}
 
+		// First message received after successful handshake
+		esource.addEventListener("fruit", function(e) {
+		    console.log('I am ' + e.data);
+		    localStorage.fruit = e.data;
+		    flbl.innerHTML = e.data;
+		    XHR.get( ferre.origin + 'CACHE?' + e.data );
+		}, false);
+
 		esource.addEventListener("Hi", function(e) {
 		    elbl.innerHTML = "Hi from "+e.data;
 		    console.log('Hi from ' + e.data);
@@ -30,18 +38,11 @@
 		    console.log('Bye from ' + e.data);
 		}, false);
 
-		esource.addEventListener("fruit", function(e) {
-		    console.log('I am ' + e.data);
-		    localStorage.fruit = e.data;
-		    flbl.innerHTML = e.data;
-		    XHR.get( ferre.origin + 'CACHE?' + e.data );
-		}, false);
-
 		esource.addEventListener("version", function(e) {
 		    elbl.innerHTML = "version event";
 		    console.log('version event ongoing');
 		    if (!DATA.STORES.VERS.check( JSON.parse(e.data) ))
-			ferre.xget('adjust', localStorage); // adjust version-time
+			ferre.xget('adjust', localStorage); // adjust version; sends fruit, week, vers
 		}, false);
 
 		esource.addEventListener("delete", function(e) {

@@ -6,7 +6,6 @@ local fd	= require'carlos.fold'
 local asJSON	= require'carlos.json'.asJSON
 local getUID	= require'carlos.ferre'.getUID
 local now	= require'carlos.ferre'.now
-local cache	= require'carlos.ferre'.cache
 local pollin	= require'lzmq'.pollin
 local context	= require'lzmq'.context
 
@@ -25,8 +24,7 @@ local UPSTREAM   = 'ipc://upstream.ipc'
 local DOWNSTREAM = 'ipc://downstream.ipc'
 local QUERIES	 = 'ipc://queries.ipc'
 
-local SUBS	 = {'feed', 'CACHE', 'KILL'} -- uid
-local CACHE	 = cache'Hi CACHE'
+local SUBS	 = {'feed', 'KILL'} -- uid
 
 --------------------------------
 -- Local function definitions --
@@ -65,7 +63,7 @@ print('Successfully connected to:', UPSTREAM, '\n')
 --
 local queues = assert(CTX:socket'DEALER')
 
-assert(queues:set_id'WEEK')
+assert(queues:set_id'WEEK') -- ID sent to DBs router
 
 assert(queues:connect( QUERIES ))
 
@@ -85,26 +83,27 @@ print'+\n'
 		    break
 		end
 	    end
-	    if cmd == 'CACHE' then
+--[[
+	    if cmd == 'CAJA' then
 		local fruit = msg:match'%s(%a+)'
 		queues:send_msg(format('feed %s', fruit))
 		CACHE.sndkch( msgr, fruit )
-		print('CACHE sent to', fruit, '\n')
+		print('CAJA sent to', fruit, '\n')
 	    end
---[[
+--]]
 	    if cmd == 'feed' then
-		local fruit = msg:match'%s(%a+)'
+--		local fruit = msg:match'%s(%a+)'
+--		PEER[#PEER+1] = fruit
 		queues:send_msg(msg)
 		print('Data forward to queue\n')
 	    end
---]]
 	end
 --  XXX must know which PEERs are connected to ME XXX	
 	if queues:events() == 'POLLIN' then
 	    local msg = queues:recv_msg()
 	    if msg:match'feed' then
 		msgr:send_msg(msg)
-		print(format('feed sent to peer %s\n', msg:match'%a+'))
+		print(format('feed event sent'))
 	    end
 	end
     end

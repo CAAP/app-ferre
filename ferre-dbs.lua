@@ -34,12 +34,15 @@ _ENV = nil -- or M
 local SEMANA	 = 3600 * 24 * 7
 local QUERIES	 = 'ipc://queries.ipc'
 
-local PEERS	 = {}
 local TABS	 = {tickets = 'uid, tag, clave, desc, costol NUMBER, unidad, precio NUMBER, qty INTEGER, rea INTEGER, totalCents INTEGER',
 		   updates = 'vers INTEGER PRIMARY KEY, clave, campo, valor'}
 local INDEX	= {'uid', 'tag', 'clave', 'desc', 'costol', 'unidad', 'precio', 'qty', 'rea', 'totalCents'}
 
 local QRY	= 'SELECT * FROM precios WHERE clave LIKE %q LIMIT 1'
+
+local QUID	= 'SELECT uid, SUBSTR(uid, 12, 5) time, SUM(qty) count, ROUND(SUM(totalCents)/100, 2) total, tag FROM tickets GROUP BY uid WHERE uid %s %q'
+
+
 --------------------------------
 -- Local function definitions --
 --------------------------------
@@ -74,7 +77,8 @@ local function asweek(t) return date('Y%YW%U', t) end
 local function addTicket(conn, conn2, msg)
     local tag, data, uid = msg:match'(%a+)%spid=%d+&([^!]+)&uid=([^!]+)$'
     fd.reduce(fd.wrap(data:gmatch'query=([^&]+)'), fd.map(process(uid, tag, conn2)), into'tickets', conn)
-    return 'Data received and stored!'
+--    return 'Data received and stored!'
+    return uid
 end
 
 local function dumpFEED(conn, fruit, qry)
@@ -123,8 +127,9 @@ print'+\n'
     local cmd = msg:match'%a+'
 -- following replies are to be sent to WEEK 
     if cmd == 'ticket' or cmd == 'presupuesto' then
-	local uid, fruit = addTicket(WEEK, PRECIOS, msg)
-	queues:send_msgs{'WEEK', }
+	local uid = addTicket(WEEK, PRECIOS, msg)
+	local msg = fd.first()
+	queues:send_msgs{'WEEK', format('feed ')}
 
 
 	print(addTicket(WEEK, PRECIOS, msg), '\n')
