@@ -1,6 +1,6 @@
 <!DOCTYPE html><html lang="es-MX"><head>	<meta charset="utf-8"/>
 	<meta name="viewport" content="width=device-width, initial-scale=1" />
-	<title>VENTAS</title>
+	<title>CAJA</title>
 	<link rel="shortcut icon" href="favicon" />
 
 <script>"use strict";
@@ -231,7 +231,7 @@
 
 	(function() {
 	    const VARS = ['id', 'clave', 'qty', 'rea', 'precio', 'totalCents'];
-	    const EVARS = ['id', 'desc', 'qty', 'rea', 'prc', 'subTotal' ]; // clave
+	    const EVARS = ['id', 'desc', 'qty', 'rea', 'precio', 'subTotal' ]; // clave
 
 	    TICKET.items = new Map();
 
@@ -411,114 +411,10 @@
 
 
 
-	var BROWSE = {};
-
-	(function() {
-	    let sstr = '\uffff';
-	    const IDBKeyRange =  window.IDBKeyRange || window.webkitIDBKeyRange || window.msIDBKeyRange;
-	    const N = 11;
-
-	    BROWSE.rows = function(a, row) {
-		row.insertCell().appendChild( document.createTextNode( a.fecha ) );
-		let clave = row.insertCell();
-		clave.classList.add('pesos'); clave.appendChild( document.createTextNode( a.clave ) );
-		let desc = row.insertCell(); // class 'desc' necessary for scrolling
-		if (a.faltante) { desc.classList.add('faltante'); }
-		desc.classList.add('desc'); desc.appendChild( document.createTextNode( a.desc ) );
-		let precios = a.precios;
-		Object.keys( precios ).forEach( k => {
-		    let pesos = row.insertCell();
-		    pesos.classList.add('total'); pesos.appendChild( document.createTextNode( precios[k] ) );
-		    if (k == 'precio1') { pesos.classList.add(k); }
-		} );
-	    };
-
-	    function newItem(a, j) {
-		let row = BROWSE.lis.insertRow(j);
-//		row.title = a.desc.substr(0,3); // TRYING OUT LOCATION XXX
-		if (a.desc.startsWith(sstr)) { row.classList.add('encontrado'); };
-		row.dataset.clave = a.clave;
-		// insert rows
-		BROWSE.rows(a, row);
-	    }
-
-	    function browsing(j, M) {
-		let k = 0;
-		return function(cursor) {
-		    if (!cursor) { return Promise.reject('Not suitable value found!'); } // XXX STILL necessary ????
-		    newItem(cursor.value, j); k++;
-		    if (k == M) { return true; }
-		    cursor.continue();
-		};
-	    }
-
-	    function searchIndex(type, s, M) {
-		let NN = M || N;
-		let t = type.substr(0,4) == 'next';
-		let range = t ? IDBKeyRange.lowerBound(s, NN<N) : IDBKeyRange.upperBound(s, NN<N); // XXX WHY ???? Rationale
-		let j = t ? -1 : 0;
-		return BROWSE.DBindex( range, type, browsing(j, NN) );
-	    }
-
-	    function searchByDesc(s) {
-		console.log('Searching by description:' + s); sstr = s;
-		return searchIndex('next', s).catch(e => console.log('Error searching by desc: ' + e));
-	    }
-
-	    function searchByClave(s) {
-		console.log('Searching by clave:' + s);
-		return BROWSE.DBget( UTILS.asnum(s) ).then(result => searchByDesc(result ? result.desc : s), e => console.log("Error searching by clave: " + e));
-	    }
-
-	    function retrieve(t) {
-		let ans = BROWSE.lis;
-		const pred = (t == 'prev');
-		let s = ans[pred ? 'firstChild' : 'lastChild'].querySelector('.desc').textContent;
-
-		searchIndex(t, s, 1).then(() => ans.removeChild(pred ? ans.lastChild : ans.firstChild), e => console.log('Error getting next item: ' + e));
-	    }
-
- 	    BROWSE.startSearch = function startSearch(e) {
-		const ss = e.target.value.toUpperCase();
-		if (ss.length == 0) { console.log('Empty search: nothing to be done.'); }
-		BROWSE.tab.style.visibility='hidden';
-		UTILS.clearTable( BROWSE.lis );
-		e.target.value = "";
-	// IF string.contains('*') : searchSQL
-		if (ss.includes('*')) {
-		    XHR.getJSON('/app/query.lua?desc='+encodeURIComponent(ss))
-			.then( a => {
-			    if (a[0])
-				searchByDesc(a[0].desc.match(ss.replace('*','.+'))[0]).then( () => {BROWSE.tab.style.visibility='visible';} );
-			} );
-		} else { searchByClave(ss).then( () => {BROWSE.tab.style.visibility='visible';} ); }
-	    };
-
-	    BROWSE.keyPressed = function keyPressed(e) {
-		switch (e.key || e.which) {
-		    case 'Escape':
-		    case 'Esc':
-		    case 27:
-			e.target.value = "";
-			break;
-		    default: break;
-		}
-	    };
-
-	    BROWSE.scroll = function scroll(e) {
-		if (e.deltaY > 0)
-		    retrieve('next');
-		else
-		    retrieve('prev');
-	    };
-
-	})();
-
-
-	var ferre = {
+	var caja = {
 	    updateItem: TICKET.update,
 	    clickItem: e => TICKET.remove( e.target.parentElement ),
-	    xget: (q,o) => XHR.get( ferre.origin + q + '?' + UTILS.asstr(o) )
+	    xget: (q,o) => XHR.get( caja.origin + q + '?' + UTILS.asstr(o) )
 	};
 
 (function() { let oldload = window.onload; window.onload = function() { oldload && oldload(); 	// HEADER
@@ -569,117 +465,82 @@
 
 	})();
 
-	// FERRE
-	(function() {
-	    ferre.origin = document.location.origin+':5040/';
-	    DATA.inplace = q => {let r = document.body.querySelector('tr[data-clave="'+q.clave+'"]'); if (r) {DATA.clearTable(r); BROWSE.rows(q,r);} return q;};
-	})();
-
-	// BROWSE
+	// CAJA
 	(function() {
 	    const PRICE = DATA.STORES.PRICE;
-	    BROWSE.tab = document.getElementById('resultados');
-	    BROWSE.lis = document.getElementById('tabla-resultados');
 
-	    BROWSE.DBget = s => IDB.readDB( PRICE ).get( s );
-	    BROWSE.DBindex = (a, b, f) => IDB.readDB( PRICE ).index( a, b, f );
+	    caja.origin = document.location.origin+':5040/';
+	    DATA.inplace = () => { return Promise.resolve( true ); }
+//	    DATA.inplace = q => {let r = document.body.querySelector('tr[data-clave="'+q.clave+'"]'); if (r) {DATA.clearTable(r); BROWSE.rows(q,r);} return q;};
 
-	    ferre.keyPressed = BROWSE.keyPressed;
-	    ferre.startSearch = BROWSE.startSearch;
-	    ferre.scroll = BROWSE.scroll;
-	    ferre.cerrar = DATA.close;
+	    const cajita = document.getElementById('tabla-caja');
+	    const mybag = TICKET.bag;
+	    const clearTable = UTILS.clearTable;
+/*
+	    function getUID( uid ) {  //  rfc, id_tag 
+		TICKET.bagUID.add( uid ); // XXX REMOVE
+		const fruit = localStorage.fruit;
+		return caja.xget('uid', {fruit: fruit, uid: uid});
+	    }
+*/
+	    function addRow( row, w ) {
+/*
+		let ie = document.createElement('input');
+		ie.type = 'checkbox'; ie.value = w.uid; ie.name = 'XXX';// ie.name = w.rfc || ((TICKET.TAGS.facturar == w.id_tag) && 'XXX');
+		ie.addEventListener('change', e => { if (e.target.checked) getUID(e.target.value); else removeByUID(e.target.value); } ); // e.target.name, 
+		row.insertCell().appendChild(ie);
+*/
+		row.dataset.uid = w.uid;
+		for (let k of ['time', 'nombre', 'count', 'total', 'tag']) { row.insertCell().appendChild( document.createTextNode(w[k]) ); }
+	    }
+
+	    caja.getUID = e => {
+		const uid = e.target.parentElement.dataset.uid;
+		const fruit = localStorage.fruit;
+		return caja.xget('uid', {fruit: fruit, uid: uid});
+	    };
+
+	    caja.cleanCaja = () => Array.from(cajita.querySelectorAll("input:checked")).forEach(ic => {ic.checked = false });
+
+	    caja.add2bag = function( o ) {
+		return IDB.readDB( PRICE )
+		    .get( UTILS.asnum(o.clave) )
+		    .then( w => { if (w) { return Object.assign( o, w, {id: o.clave} ) } else { return Promise.reject() } } )
+		    .then( TICKET.show ) //	.then( () => { mybag.lastChild.dataset.uid = o.uid } )
+		    .catch( e => console.log(e) )
+	    };
+
+	    caja.add2caja = function(w) {
+		let row = cajita.insertRow(0);
+		addRow(row, w);
+	    };
+
 	})();
 
 	// TICKET
 	(function() {
 	    const PRICE = DATA.STORES.PRICE;
+	    const BRUTO = 1.16;
+	    const IVA = 7.25;
+	    const tiva = document.getElementById( TICKET.tivaID );
+	    const tbruto = document.getElementById( TICKET.tbrutoID );
+	    const ttotal = document.getElementById( TICKET.ttotalID );
+
 	    TICKET.bag = document.getElementById( TICKET.bagID );
 	    TICKET.myticket = document.getElementById( TICKET.myticketID );
 
-		const tcount = document.getElementById(TICKET.tcountID);
-		const ttotal = document.getElementById( TICKET.ttotalID );
-		const persona = document.getElementById('personas');
+	    TICKET.extraEmpty = () => true;
 
-		persona.dataset.id = 0;
+	    caja.emptyBag = () => { TICKET.empty(); caja.cleanCaja(); } // TICKET.bagUID.clear(); TICKET.bagRFC = false;  flipSAT.checked = true; 
 
-		function uptoCents(q) { return Math.round( 100 * q[q.precio] * q.qty * (1-q.rea/100) ); };
+	    function tocents(x) { return (x / 100).toFixed(2); };
 
-		function getPrice( o ) {
-		    let clave = UTILS.asnum(o.clave);
-		    return IDB.readDB( PRICE )
-			.get( clave )
-			.then( w => { if (w) { return Object.assign( o, w, {id: clave} ) } else { return Promise.reject('Item not found in DB: ' + clave) } } ) // ITEM NOT FOUND or REMOVED
-		}
-
-		function add2bag(clave) {
-		    if (TICKET.items.has( clave )) { console.log('Item is already in the bag.'); return false; }
-		    return getPrice( {clave: clave, qty: 1, precio: 'precio1', rea: 0} )
-			.then( w => Object.assign(w, {totalCents: uptoCents(w)}) )
-			.then( TICKET.add );
-		}
-
-		TICKET.getPrice = getPrice;
-
-		TICKET.total = cents => { ttotal.textContent = (cents / 100).toFixed(2); tcount.textContent = TICKET.items.size;}; //' $' + 
-
-		TICKET.extraEmpty = () => { ttotal.textContent = ''; tcount.textContent = ''; };
-
-		ferre.emptyBag = () => { TICKET.empty(); return ferre.xget('delete', {pid: Number(persona.value)}) };
-
-		ferre.menu = e => {
-		    if (persona.value == 0) { return; }
-		    const clave = UTILS.asnum(e.target.parentElement.dataset.clave);
-		    add2bag(clave);
-		};
-
-	    ferre.print = function(a) {
-		if (TICKET.items.size == 0) {return Promise.resolve();}
-		const pid = Number(persona.dataset.id);
-
-		if (pid == 0) { TICKET.empty(); return Promise.resolve(); } // should NEVER happen XXX
-
-		let objs = ['pid='+pid];
-		TICKET.myticket.style.visibility = 'hidden';
-		TICKET.items.forEach( item => objs.push( 'query=' + TICKET.plain(item) ) );
-
-		return ferre.xget(a, objs ).then( TICKET.empty, () => {TICKET.myticket.style.visibility = 'visible'} );
+	    TICKET.total = function(amount) {
+		tiva.textContent = tocents( amount / IVA );
+		tbruto.textContent = tocents( amount / BRUTO );
+		ttotal.textContent = tocents( amount );
 	    };
 
-	    // XXX in case of mulitiple elements on the ticket, one should consider
-	    // dividing the load by splitting the elements to be sent XXX
-	    ferre.split = function() {
-	    };
-
-	})();
-
-
-	// PEOPLE - Multi-User support
-	(function() {
-	    var PEOPLE = {
-		id: [''],
-		nombre: {},
-		tabs: new Map()
-	    };
-
-	    ferre.TABS = PEOPLE.tabs;
-
-	    const persona = document.getElementById('personas');
-	    let fetchMe = o => TICKET.getPrice( o ).then( TICKET.add );
-	    let recreate = a => Promise.all( a.map( fetchMe ) ); // .then( () => Promise.resolve() ).then( () => {tcount.textContent = TICKET.items.size;} )
-	    function tabs(k) { persona.dataset.id = k; if (PEOPLE.tabs.has(k)) { recreate(PEOPLE.tabs.get(k)); } }
-
-	    ferre.tab = () => {
-		const pid = Number(persona.value);
-		ferre.print('tabs').then( () => tabs(pid) );
-	    };
-
-	    let opt = document.createElement('option');
-	    opt.value = 0;
-	    opt.label = '';
-	    opt.selected = true;
-	    persona.appendChild(opt);
-
-	    XHR.getJSON('json/people.json').then(a => a.forEach( p => { let opt = document.createElement('option'); opt.value = p.id; opt.appendChild(document.createTextNode(p.nombre)); persona.appendChild(opt); } ) );
 	})();
 
 
@@ -690,28 +551,18 @@
 
 	    const elbl = document.getElementById("eventos");
 	    const flbl = document.getElementById('frutas');
-	    const tabs = ferre.TABS;
 	    const STORES = DATA.STORES;
 
-		function a2obj( a ) { const M = a.length/2; let o = {}; for (let i=0; i<M; i++) { o[a[i*2]] = a[i*2+1]; } return o; }
-
-		function distill( s ) {
-		    let chunks = s.split('&query=');
-		    const pid = Number( chunks.shift().match(/\d+/) );
-		    tabs.set(pid, chunks.map(s => a2obj(s.split('|'))));
-		}
-
-		function updateOne( o ) {
-		    const store = o.store; delete o.store;
-		    return STORES[store].update(o);
-		}
+	    const add2bag  = caja.add2bag;
+	    const add2caja = caja.add2caja;
 
 		// First message received after successful handshake
 		esource.addEventListener("fruit", function(e) {
 		    console.log('I am ' + e.data);
 		    localStorage.fruit = e.data;
 		    flbl.innerHTML = e.data;
-		    XHR.get( ferre.origin + 'CACHE?' + e.data );
+		    XHR.get( caja.origin + 'CACHE?' + e.data );
+		    XHR.get( caja.origin + 'feed?' + e.data );
 		}, false);
 
 		esource.addEventListener("Hi", function(e) {
@@ -728,29 +579,9 @@
 		    elbl.innerHTML = "version event";
 		    console.log('version event ongoing');
 		    if (!DATA.STORES.VERS.check( JSON.parse(e.data) ))
-			ferre.xget('adjust', localStorage); // adjust version; sends fruit, week, vers
+			caja.xget('adjust', localStorage); // adjust version-time
 		}, false);
 
-		esource.addEventListener("delete", function(e) {
-		    const pid = Number( e.data );
-		    tabs.delete( pid );
-		    console.log('Remove ticket for: ' + PEOPLE.id[pid]);
-		    elbl.innerHTML = "delete event";
-		}, false);
-
-		esource.addEventListener("tabs", function(e) {
-		    elbl.innerHTML = "tabs event";
-		    console.log("tabs event received");
-		    distill( e.data );
-		}, false);
-
-		// XXX not in use YET
-		esource.addEventListener("uid", function(e) {
-		    elbl.innerHTML = "uid event";
-		    console.log("uid event received");
-		}, false);
-
-		// XXX not implemented YET
 		esource.addEventListener("update", function(e) {
 		    elbl.innerHTML = "update event";
 		    console.log('update event ongoing');
@@ -767,17 +598,28 @@
 		    XHR.getJSON( '/ventas/json/' + e.data ).then( data => Promise.all( data.map( updateOne ) ) );
 		}, false);
 
+		esource.addEventListener("feed", function(e) {
+		    elbl.innerHTML = "feed event";
+		    console.log('feed event ongoing');
+		    const data = e.data;
+		    if (data.includes('json'))
+			XHR.getJSON('json/' + data).then(a => a.forEach( add2caja ));
+		    else
+			add2caja( JSON.parse(data) );
+		}, false);
+
+		esource.addEventListener("uid", function(e) {
+		    elbl.innerHTML = "uid event";
+		    console.log('uid event ongoing');
+		    XHR.getJSON('json/' + e.data).then(a => a.forEach( add2bag ));
+		}, false);
+
 	})();
 
  }; })();</script>
 <style>td { font: 100% arial; }
 
 table { border-spacing: 6px 6px; }
-
-input[type=number] {
-    text-align: right;
-    width: 50px;
-}
 
 button[name=cerrar] { color: white; background-color: red; }
 
@@ -807,8 +649,6 @@ button[name=guardar] { color: white; background-color: blue; }
     text-align: right;
 }
 
-.faltante { color: red; text-decoration: line-through; }
-
 .pesos { text-align: right; }
 
 .rabatt .total { background-color: #e6ccff; }
@@ -833,32 +673,6 @@ button[name=guardar] { color: white; background-color: blue; }
     border-top: 2px solid black;
 }
 
-
-.query {
-    padding-left: 30px;
-    background-color: #ffffff;
-}
-
-.carrito {
-    display: block;
-    position: fixed;
-    top: 1%;
-    max-height: 60%;
-    z-index: 2;
-    padding: 5px;
-    overflow: auto;
-}
-
-.dialogos {
-    z-index: 3;
-    display: inline-block;
-    overflow: auto;
-}
-
-.embiggen { display: none; }
-
-.dialogos:hover .embiggen { display: block; }
-
 .basura { cursor: url("svg/trash.svg"), default; }
 
 #ticket-count {
@@ -868,21 +682,6 @@ button[name=guardar] { color: white; background-color: blue; }
 }
 
 #ticket-total { font: 200% arial; }
-
-#personas {
-    width: 100px;
-    padding: 0.5rem;
-    border-radius: 4px;
-}
-
-#personas td:hover {
-    cursor:default;
-    font: bold italic 100% arial;
-}
-
-#resultados td { cursor: copy; }
-
-#keys-resultados { visibility: hidden; }
 
 #myhead {
     display: flex;
@@ -903,16 +702,6 @@ button[name=guardar] { color: white; background-color: blue; }
     z-index: 7;
 }
 
-#busq {
-    padding: 0.5rem;
-    border-radius: 4px;
-    border: 3px solid #ddd;
-    background-image: url("svg/search.svg");
-    background-repeat: no-repeat;
-    background-position: top 50% right 30px;
-    padding-left: 5px;
-}
-
 #main { 
     width: 95%;
     padding: 5px;
@@ -920,11 +709,6 @@ button[name=guardar] { color: white; background-color: blue; }
     display: flex;
     justify-content: space-between;
     align-content: space-between;
-}
-
-#buscar {
-    padding: 5px;
-    order: 1;
 }
 
 #ticket {
@@ -936,45 +720,39 @@ button[name=guardar] { color: white; background-color: blue; }
 </style></head>
 <body>    <div id="myhead">
 	<label id="notifications"></label><label id="frutas"></label>
-	<select name="persona" id="personas" accesskey="c" onchange="ferre.tab()"></select>
 	<label id="eventos"></label>
 	<img id="pacman" src="svg/pacman.svg" width="50px" height="50px" />
 	<label id="db-vers"></label> <label id="copyright"></label>
     </div>
 
 <section id="main">
-    <div id="buscar" class="dialogos query">
-        <div> <input id="busq" type="search" size=40 accesskey="b" placeholder="Art&iacute;culo o Clave" onchange="ferre.startSearch(event)" onkeyup="ferre.keyPressed(event)"> </div>
-
-	<section id="resultados" class="tablas">
-        <table onwheel="ferre.scroll(event)">
-	    <dt>
-            <thead>
-                <tr><th> Fecha </th><th> Clave </th><th> Descripci&oacute;n </th><th colspan=3> Precios </th></tr>
-            </thead>
-	    </dt>
-	    <tbody id="tabla-resultados" class="amarillo" onclick="ferre.menu(event)"></tbody>
-	    <tfoot><tr><th colspan=6><button accesskey="a" onclick="ferre.scroll({deltaY:0})">&larr;Anterior</button> <label> | </label> <button accesskey="s" onclick="ferre.scroll({deltaY:1})">Siguiente&rarr;</button></th></tr></tfoot>
+    <div id="feed">
+	<section id="caja" class="scrollable">
+        <table>
+	    <caption>CAJA</caption>
+	    <dt><thead>
+                <tr><th> Hora </th><th> Nombre </th><th> Art&iacute;culos </th><th> Total </th><th> </th></tr>
+            </thead></dt>
+	    <tbody id="tabla-caja" ondblclick="caja.getUID(event)"></tbody>
 	</table>
 	</section>
     </div>
 
-    <div id="ticket" class="tablas">
+    <div id="ticket" class="tablas" style="overflow-x:auto">
 	<table>
-	    <tbody>
-		<tr><td><button name="cerrar" onclick="ferre.emptyBag()">Cancelar</button>&emsp;<button onclick="ferre.print('presupuesto')">Presupuesto</button>&emsp;<button onclick="ferre.print('ticket')">Caja</button></td><td>&emsp;</td><td>&emsp;</td><td><label id="ticket-count"></label><img src="svg/empty-cart.svg" height="25px"><label id="ticket-total" class="total"></label></td></tr>
+	    <caption>
+	    </caption>
+	    <dt><thead>
+                <tr><th> Clave</th><th class="desc"> Descripci&oacute;n </th><th> # </th><th> % </th><th> Precio </th><th> Total </th></tr>
+            </thead></dt>
+	    <tfoot>
+		<tr><th colspan=4><button name="cerrar" onclick="caja.emptyBag()">Cerrar</button>&emsp;<button name="facturar" onclick="caja.facturar()">Facturar</button>&emsp;<button onclick="caja.print()">Imprimir</button>&emsp;<button onclick="caja.pagar()">Pagar</button></th><th align="right">TOTAL</th><th class="total"><label id="ticket-total"></label></th></tr>
+		<tr><td colspan=5 align="right">Sub Total</td><td class="pesos"><label id="ticket-bruto"></label></td></tr>
+		<tr><td colspan=5 align="right">I.V.A.</td><td class="pesos"><label id="ticket-iva"></label></td></tr>
+	    </tfoot>
+	    <tbody id="ticket-compra" class="amarillo" onchange="caja.updateItem(event)" ondblclick="caja.clickItem(event)">
 	    </tbody>
 	</table>
-	<section class="scrollable">
-	<table>
-	    <dt>
-            <thead>
-                <tr> <th> Clave </th><th> Cantidad </th><th class="desc"> Descripci&oacute;n </th><th> Precio </th><th> Descuento </th><th> Total </th> </tr> 
-            </thead>
-	    </dt>
-	    <tbody id="ticket-compra" class="amarillo" onchange="ferre.updateItem(event)" ondblclick="ferre.clickItem(event)"></tbody>
-	</table>
-	</section>
     </div>
 </section>
 </body></html>

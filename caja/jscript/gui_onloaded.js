@@ -81,8 +81,6 @@
 
 //	    caja.updateItem = TICKET.update;
 
-	    caja.clickItem = e => TICKET.remove( e.target.parentElement );
-
 	    caja.emptyBag = () => { TICKET.empty(); caja.cleanCaja(); }
 
 	})();
