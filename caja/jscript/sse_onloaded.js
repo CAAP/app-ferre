@@ -4,16 +4,10 @@
 
 	    const elbl = document.getElementById("eventos");
 	    const flbl = document.getElementById('frutas');
-	    const tabs = ferre.TABS;
 	    const STORES = DATA.STORES;
 
-		function a2obj( a ) { const M = a.length/2; let o = {}; for (let i=0; i<M; i++) { o[a[i*2]] = a[i*2+1]; } return o; }
-
-		function distill( s ) {
-		    let chunks = s.split('&query=');
-		    const pid = Number( chunks.shift().match(/\d+/) );
-		    tabs.set(pid, chunks.map(s => a2obj(s.split('|'))));
-		}
+	    const add2caja = caja.add2caja;
+	    const add2bag  = caja.add2bag;
 
 		function updateOne( o ) {
 		    const store = o.store; delete o.store;
@@ -45,19 +39,6 @@
 			ferre.xget('adjust', localStorage); // adjust version; sends fruit, week, vers
 		}, false);
 
-		esource.addEventListener("delete", function(e) {
-		    const pid = Number( e.data );
-		    tabs.delete( pid );
-		    console.log('Remove ticket for: ' + PEOPLE.id[pid]);
-		    elbl.innerHTML = "delete event";
-		}, false);
-
-		esource.addEventListener("tabs", function(e) {
-		    elbl.innerHTML = "tabs event";
-		    console.log("tabs event received");
-		    distill( e.data );
-		}, false);
-
 		// XXX not implemented YET
 		esource.addEventListener("update", function(e) {
 		    elbl.innerHTML = "update event";
@@ -73,6 +54,24 @@
 		    elbl.innerHTML = "adjust event";
 		    console.log('adjust event ongoing');
 		    XHR.getJSON( '/ventas/json/' + e.data ).then( data => Promise.all( data.map( updateOne ) ) );
+		}, false);
+
+		// XXX not in use YET
+		esource.addEventListener("uid", function(e) {
+		    elbl.innerHTML = "uid event";
+		    console.log("uid event received");
+		    XHR.getJSON('json/' + e.data).then( a => a.forEach( add2bag ));
+		}, false);
+
+		// XXX not in use YET
+		esource.addEventListener("feed", function(e) {
+		    elbl.innerHTML = "feed event";
+		    console.log("feed event received");
+		    const data = e.data;
+		    if (data.includes('.json'))
+			XHR.getJSON('json/' + data).then(a => a.forEach( add2caja ));
+		    else
+			add2caja(JSON.parse( data ));
 		}, false);
 
 	})();

@@ -24,7 +24,7 @@ local UPSTREAM   = 'ipc://upstream.ipc'
 local DOWNSTREAM = 'ipc://downstream.ipc'
 local QUERIES	 = 'ipc://queries.ipc'
 
-local SUBS	 = {'feed', 'KILL'} -- uid
+local SUBS	 = {'feed', 'uid', 'KILL'}
 
 --------------------------------
 -- Local function definitions --
@@ -83,17 +83,7 @@ print'+\n'
 		    break
 		end
 	    end
---[[
-	    if cmd == 'CAJA' then
-		local fruit = msg:match'%s(%a+)'
-		queues:send_msg(format('feed %s', fruit))
-		CACHE.sndkch( msgr, fruit )
-		print('CAJA sent to', fruit, '\n')
-	    end
---]]
-	    if cmd == 'feed' then
---		local fruit = msg:match'%s(%a+)'
---		PEER[#PEER+1] = fruit
+	    if cmd == 'feed' or cmd == 'uid' then
 		queues:send_msg(msg)
 		print('Data forward to queue\n')
 	    end

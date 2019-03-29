@@ -41,6 +41,7 @@ local PEOPLE	= {}
 
 local QRY	= 'SELECT * FROM precios WHERE clave LIKE %q LIMIT 1'
 local QUID	= 'SELECT uid, SUBSTR(uid, -1) nombre, SUBSTR(uid, 12, 5) time, SUM(qty) count, ROUND((SUM(totalCents)+50)/100, 2) total, tag FROM tickets WHERE uid %s %q GROUP BY uid'
+local QTKT	= 'SELECT * FROM tickets WHERE uid LIKE %q'
 
 
 --------------------------------
@@ -87,7 +88,7 @@ local function dumpFEED(conn, fruit, qry)
     local ROOT = '/var/www/htdocs/app-ferre/caja/json'
     local FIN = open(format('%s/%s-feed.json', ROOT, fruit), 'w')
     FIN:write'['
-    FIN:write( concat(fd.reduce(conn.query(qry), fd.map(), fd.map(asJSON), fd.into, {}), ',\n') )
+    FIN:write( concat(fd.reduce(conn.query(qry), fd.map(getName), fd.map(asJSON), fd.into, {}), ',\n') )
     FIN:write']'
     FIN:close()
     return 'Updates stored and dumped'
@@ -134,6 +135,9 @@ print'+\n'
     msg = msg[1]
     local cmd = msg:match'%a+'
 -- following replies are to be sent to WEEK 
+--
+-- In case of a very very long ticket one should
+-- be able to receive a file as in 'feed'
     if cmd == 'ticket' or cmd == 'presupuesto' then
 	local uid = addTicket(WEEK, PRECIOS, msg)
 	local qry = format(QUID, 'LIKE', uid)
@@ -143,10 +147,17 @@ print'+\n'
     end
     if cmd == 'feed' then
 	local fruit = msg:match'%s(%a+)' -- secs = %s(%d+)$
-	local t = date('%FT%T', now())
+	local t = date('%FT%T', now()):sub(1, 10)
 	local qry = format(QUID, '>', t)
 	print(dumpFEED( WEEK, fruit, qry ), '\n')
 	queues:send_msgs{'WEEK', format('%s feed %s-feed.json', fruit, fruit)}
+    end
+    if cmd == 'uid' then
+	local fruit = msg:match'fruit=(%a+)'
+	local uid   = msg:match'uid=([^!&]+)'
+	local qry   = format(QTKT, uid)
+	print(dumpFEED( WEEK, fruit, qry ), '\n')
+	queues:send_msgs{'WEEK', format('%s uid %s-feed.json', fruit, fruit)}
     end
 end
 
