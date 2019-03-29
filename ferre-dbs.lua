@@ -37,10 +37,10 @@ local QUERIES	 = 'ipc://queries.ipc'
 local TABS	 = {tickets = 'uid, tag, clave, desc, costol NUMBER, unidad, precio NUMBER, qty INTEGER, rea INTEGER, totalCents INTEGER',
 		   updates = 'vers INTEGER PRIMARY KEY, clave, campo, valor'}
 local INDEX	= {'uid', 'tag', 'clave', 'desc', 'costol', 'unidad', 'precio', 'qty', 'rea', 'totalCents'}
+local PEOPLE	= {}
 
 local QRY	= 'SELECT * FROM precios WHERE clave LIKE %q LIMIT 1'
-
-local QUID	= 'SELECT uid, SUBSTR(uid, 12, 5) time, SUM(qty) count, ROUND(SUM(totalCents)/100, 2) total, tag FROM tickets GROUP BY uid WHERE uid %s %q'
+local QUID	= 'SELECT uid, SUBSTR(uid, -1) nombre, SUBSTR(uid, 12, 5) time, SUM(qty) count, ROUND((SUM(totalCents)+50)/100, 2) total, tag FROM tickets WHERE uid %s %q GROUP BY uid'
 
 
 --------------------------------
@@ -81,11 +81,13 @@ local function addTicket(conn, conn2, msg)
     return uid
 end
 
+local function getName(o) o.nombre = PEOPLE[o.nombre] or 'NaP'; return o end
+
 local function dumpFEED(conn, fruit, qry)
     local ROOT = '/var/www/htdocs/app-ferre/caja/json'
     local FIN = open(format('%s/%s-feed.json', ROOT, fruit), 'w')
     FIN:write'['
-    FIN:write( concat(fd.reduce(conn.query(qry), fd.map(asJSON), fd.into, {}), ',\n') )
+    FIN:write( concat(fd.reduce(conn.query(qry), fd.map(), fd.map(asJSON), fd.into, {}), ',\n') )
     FIN:write']'
     FIN:close()
     return 'Updates stored and dumped'
@@ -116,6 +118,12 @@ assert(queues:bind( QUERIES ))
 print('Successfully bound to:', QUERIES)
 --
 -- -- -- -- -- --
+--
+-- Store PEOPLE values
+--
+fd.reduce(PRECIOS.query'SELECT * FROM empleados', fd.rejig(function(o) return o.nombre, o.id end), fd.merge, PEOPLE)
+--
+-- -- -- -- -- --
 -- Run loop
 --
 while true do
@@ -128,16 +136,15 @@ print'+\n'
 -- following replies are to be sent to WEEK 
     if cmd == 'ticket' or cmd == 'presupuesto' then
 	local uid = addTicket(WEEK, PRECIOS, msg)
-	local msg = fd.first()
-	queues:send_msgs{'WEEK', format('feed ')}
-
-
-	print(addTicket(WEEK, PRECIOS, msg), '\n')
+	local qry = format(QUID, 'LIKE', uid)
+	local msg = asJSON(getName(fd.first(WEEK.query(qry), function(x) return x end)))
+	queues:send_msgs{'WEEK', format('feed %s', msg)}
+	print(msg, '\n')
     end
     if cmd == 'feed' then
 	local fruit = msg:match'%s(%a+)' -- secs = %s(%d+)$
 	local t = date('%FT%T', now())
-	local qry = format('SELECT uid, SUBSTR(uid, 12, 5) time, SUM(qty) count, ROUND(SUM(totalCents)/100, 2) total, tag FROM tickets GROUP BY uid WHERE uid > %q', t)
+	local qry = format(QUID, '>', t)
 	print(dumpFEED( WEEK, fruit, qry ), '\n')
 	queues:send_msgs{'WEEK', format('%s feed %s-feed.json', fruit, fruit)}
     end

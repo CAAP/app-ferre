@@ -196,8 +196,8 @@ print'+\n'
     local msg = tasks:recv_msg()
     local cmd = msg:match'%a+'
     if cmd == 'KILL' then
-	if msg:match'%s(%a+)' == 'TABS' then
-	    msgr:send_msg('Bye TABS')
+	if msg:match'%s(%a+)' == 'VERS' then
+	    msgr:send_msg('Bye VERS')
 	    break
 	end
     end
