@@ -11,8 +11,8 @@ local pollin		= require'lzmq'.pollin
 local dbconn		= require'carlos.ferre'.dbconn
 local connexec		= require'carlos.ferre'.connexec
 local receive		= require'carlos.ferre'.receive
-local decode		= require'carlos.ferre'.decode
 local now		= require'carlos.ferre'.now
+local asnum		= require'carlos.ferre'.asnum
 local newTable    	= require'carlos.sqlite'.newTable
 
 local format	= require'string'.format
@@ -33,15 +33,16 @@ _ENV = nil -- or M
 --
 local SEMANA	 = 3600 * 24 * 7
 local QUERIES	 = 'ipc://queries.ipc'
+local LPR	 = 'ipc://lpr.ipc'
 local ROOT	 = '/var/www/htdocs/app-ferre/caja/json'
 
-local TABS	 = {tickets = 'uid, tag, prc, clave, desc, costol NUMBER, unidad, precio NUMBER, qty INTEGER, rea INTEGER, totalCents INTEGER',
+local TABS	 = {tickets = 'uid, tag, prc, clave, desc, costol NUMBER, unidad, precio NUMBER, unitario NUMBER, qty INTEGER, rea INTEGER, totalCents INTEGER',
 		   updates = 'vers INTEGER PRIMARY KEY, clave, campo, valor'}
-local INDEX	= {'uid', 'tag', 'prc', 'clave', 'desc', 'costol', 'unidad', 'precio', 'qty', 'rea', 'totalCents'}
-local PEOPLE	= {}
+local INDEX	= {'uid', 'tag', 'prc', 'clave', 'desc', 'costol', 'unidad', 'precio', 'unitario', 'qty', 'rea', 'totalCents'}
+local PEOPLE	= {A = 'caja'} -- could use 'fruit' id instead XXX
 
 local QRY	= 'SELECT * FROM precios WHERE clave LIKE %q LIMIT 1'
-local QUID	= 'SELECT uid, SUBSTR(uid, -1) nombre, SUBSTR(uid, 12, 5) time, SUM(qty) count, ROUND((SUM(totalCents)+50)/100, 2) total, tag FROM tickets WHERE uid %s %q GROUP BY uid'
+local QUID	= 'SELECT uid, SUBSTR(uid, 12, 5) time, SUM(qty) count, ROUND(SUM(totalCents)/100.0, 2) total, tag FROM tickets WHERE uid %s %q GROUP BY uid'
 local QTKT	= 'SELECT uid, tag, clave, qty, rea, totalCents,  prc "precio" FROM tickets WHERE uid LIKE %q'
 local QDESC	= 'SELECT desc FROM precios WHERE desc LIKE %q ORDER BY desc LIMIT 1'
 
@@ -49,27 +50,17 @@ local QDESC	= 'SELECT desc FROM precios WHERE desc LIKE %q ORDER BY desc LIMIT 1
 -- Local function definitions --
 --------------------------------
 --
---[[
-local function dumpPEOPLE(conn)
-    local QRY = 'SELECT id, nombre FROM empleados'
-    local FIN = open(DEST, 'w')
-
-print'\nWriting people to file ...\n'
-    FIN:write'['
-    FIN:write( concat(fd.reduce(conn.query(QRY), fd.map(asJSON), fd.into, {}), ', ') )
-    FIN:write']'
-    FIN:close()
-end
---]]
 
 local function process(uid, tag, conn2)
     return function(q)
 	local o = {uid=uid, tag=tag}
-	for k,v in q:gmatch'([%a%d]+)|([^|]+)' do o[k] = v end
+	for k,v in q:gmatch'([%a%d]+)|([^|]+)' do o[k] = asnum(v) end
 	local lbl = 'u' .. o.precio:match'%d$'
+	local rea = (100-o.rea)/100.0
 	local b = fd.first(conn2.query(format(QRY, o.clave)), function(x) return x end)
 	fd.reduce(fd.keys(o), fd.merge, b)
-	b.precio = b[o.precio]; b.unidad = b[lbl]; b.prc = o.precio
+	b.precio = b[o.precio]; b.unidad = b[lbl];
+	b.prc = o.precio; b.unitario = b.rea > 0 and b.precio*rea or b.precio
 	return fd.reduce(INDEX, fd.map(function(k) return b[k] or '' end), fd.into, {})
     end
 end
@@ -77,13 +68,18 @@ end
 local function asweek(t) return date('Y%YW%U', t) end
 
 local function addTicket(conn, conn2, msg)
-    local tag, data, uid = msg:match'(%a+)%spid=%d+&([^!]+)&uid=([^!]+)$'
+    local tag	    = msg:match'%a+'
+    local data, uid = msg:match'&([^!]+)&uid=([^!]+)$'
     fd.reduce(fd.wrap(data:gmatch'query=([^&]+)'), fd.map(process(uid, tag, conn2)), into'tickets', conn)
 --    return 'Data received and stored!'
     return uid
 end
 
-local function getName(o) o.nombre = PEOPLE[o.nombre] or 'NaP'; return o end
+local function getName(o)
+    local pid = asnum(o.uid:match'P([%d%a]+)')
+    o.nombre = pid and PEOPLE[pid] or 'NaP';
+    return o 
+end
 
 local function dumpFEED(conn, fruit, qry)
     local FIN = open(format('%s/%s-feed.json', ROOT, fruit), 'w')
@@ -127,9 +123,17 @@ print('Successfully bound to:', QUERIES)
 --
 -- -- -- -- -- --
 --
+local tickets = assert(CTX:socket'PUSH')
+
+assert(tickets:connect( LPR ))
+
+print('Successfully connected to:', LPR)
+--
+-- -- -- -- -- --
+--
 -- Store PEOPLE values
 --
-fd.reduce(PRECIOS.query'SELECT * FROM empleados', fd.rejig(function(o) return o.nombre, o.id end), fd.merge, PEOPLE)
+fd.reduce(PRECIOS.query'SELECT * FROM empleados', fd.rejig(function(o) return o.nombre, asnum(o.id) end), fd.merge, PEOPLE)
 --
 -- -- -- -- -- --
 -- Run loop
@@ -141,7 +145,7 @@ print'+\n'
     local id, msg = receive( queues )
     msg = msg[1]
     local cmd = msg:match'%a+'
--- following replies are to be sent to WEEK 
+-- following replies are to be sent to WEEK & LPR
 --
 -- In case of a very very long ticket one should
 -- be able to receive a file as in 'feed'
@@ -150,6 +154,7 @@ print'+\n'
 	local qry = format(QUID, 'LIKE', uid)
 	local msg = asJSON(getName(fd.first(WEEK.query(qry), function(x) return x end)))
 	queues:send_msgs{'WEEK', format('feed %s', msg)}
+	tickets:send_msg(format('bixolon %s', uid))
 	print(msg, '\n')
     end
     if cmd == 'feed' then
@@ -166,6 +171,7 @@ print'+\n'
 	print(dumpFEED( WEEK, fruit, qry ), '\n') -- as shown down, create fn 'byUID'
 	queues:send_msgs{'WEEK', format('%s uid %s-feed.json', fruit, fruit)}
     end
+    -- could be placed somewhere else, like in WEEK for lookup service XXX
     if cmd == 'query' then
 	local fruit = msg:match'fruit=(%a+)'
 	local desc  = msg:match'desc=([^!&]+)' -- potential error if '&' included

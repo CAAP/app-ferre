@@ -5,12 +5,11 @@
 local fd	= require'carlos.fold'
 
 local asJSON	= require'carlos.json'.asJSON
-local now	= require'carlos.ferre'.now
+local newUID	= require'carlos.ferre'.newUID
 local context	= require'lzmq'.context
 
 local format	= require'string'.format
 local concat 	= table.concat
-local date	= os.date
 local assert	= assert
 
 local print	= print
@@ -31,8 +30,6 @@ local SUBS	 = {'ticket', 'presupuesto', 'KILL'} -- date, uid, utime, urtime
 -- Local function definitions --
 --------------------------------
 --
-local function newUID( pid ) return date('%FT%TP', now())..pid end
-
 ---------------------------------
 -- Program execution statement --
 ---------------------------------
@@ -71,16 +68,9 @@ print'+\n'
 	end
     end
     if cmd == 'ticket' or cmd == 'presupuesto' then
-	local pid = msg:match'pid=(%d)'
-	queues:send_msg(msg .. '&uid=' .. newUID( pid ))
+	local pid = msg:match'pid=([%d%a]+)'
+	queues:send_msg(format('%s&uid=%s%s', msg, newUID(), pid))
 	print('Data forward to queue\n')
     end
---[[
-    if cmd == 'uid' then -- UNUSED not YET XXX
-	local fruit = msg:match'%s(%a+)'
-	msgr:send_msg(format('%s uid %s', fruit, newUID()))
-	print('UID sent to', fruit, '\n')
-    end
---]]
 end
 

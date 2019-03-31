@@ -37,7 +37,7 @@ local QUERY 	 = 'SELECT * FROM updates %s'
 local ROOT	 = '/var/www/htdocs/app-ferre/ventas/json'
 local DEST	 = ROOT .. '/version.json'
 local DEST_PRC	 = ROOT .. '/precios.json'
---local DEST_PEOP	= '/var/www/htdocs/app-ferre/ventas/json/people.json'
+local DEST_PPL 	 = ROOT .. '/people.json'
 
 local SUBS	 = {'adjust', 'version', 'CACHE', 'KILL'} -- people
 local CACHE	 = cache'Hi VERS'
@@ -140,7 +140,18 @@ print'\nWriting data to file ...\n'
     FIN:write( concat(fd.reduce(conn.query(QRY), fd.map(nulls), fd.map(asJSON), fd.into, {}), ', ') )
     FIN:write']'
     FIN:close()
+end
 
+local function dumpPEOPLE(conn)
+    local conn = dbconn'ferre'
+    local QRY = 'SELECT id, nombre FROM empleados'
+    local FIN = open(DEST_PPL, 'w')
+
+print'\nWriting people to file ...\n'
+    FIN:write'['
+    FIN:write( concat(fd.reduce(conn.query(QRY), fd.map(asJSON), fd.into, {}), ', ') )
+    FIN:write']'
+    FIN:close()
 end
 
 local function getVersion()
@@ -218,14 +229,4 @@ end
 
 
 --[[
-local function dumpPEOPLE(conn)
-    local QRY = 'SELECT id, nombre FROM empleados'
-    local FIN = open(DEST, 'w')
-
-print'\nWriting people to file ...\n'
-    FIN:write'['
-    FIN:write( concat(fd.reduce(conn.query(QRY), fd.map(asJSON), fd.into, {}), ', ') )
-    FIN:write']'
-    FIN:close()
-end
 --]]

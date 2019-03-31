@@ -4,7 +4,7 @@
 local fd	= require'carlos.fold'
 
 local asJSON	= require'carlos.json'.asJSON
-local getUID	= require'carlos.ferre'.getUID
+local newUID	= require'carlos.ferre'.newUID
 local now	= require'carlos.ferre'.now
 local pollin	= require'lzmq'.pollin
 local context	= require'lzmq'.context
@@ -29,11 +29,6 @@ local SUBS	 = {'feed', 'uid', 'query', 'KILL'}
 --------------------------------
 -- Local function definitions --
 --------------------------------
-
-local function newTicket( msg )
-    local pid = msg:match'pid=([^!&]+)&'
-    return (getUID() .. pid)
-end
 
 ---------------------------------
 -- Program execution statement --
