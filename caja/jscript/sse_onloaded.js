@@ -19,7 +19,8 @@
 		    console.log('I am ' + e.data);
 		    localStorage.fruit = e.data;
 		    flbl.innerHTML = e.data;
-		    XHR.get( ferre.origin + 'CACHE?' + e.data );
+		    XHR.get( caja.origin + 'CACHE?' + e.data );
+		    XHR.get( caja.origin + 'feed?' + e.data );
 		}, false);
 
 		esource.addEventListener("Hi", function(e) {
@@ -36,7 +37,7 @@
 		    elbl.innerHTML = "version event";
 		    console.log('version event ongoing');
 		    if (!DATA.STORES.VERS.check( JSON.parse(e.data) ))
-			ferre.xget('adjust', localStorage); // adjust version; sends fruit, week, vers
+			caja.xget('adjust', localStorage); // adjust version; sends fruit, week, vers
 		}, false);
 
 		// XXX not implemented YET
@@ -56,19 +57,17 @@
 		    XHR.getJSON( '/ventas/json/' + e.data ).then( data => Promise.all( data.map( updateOne ) ) );
 		}, false);
 
-		// XXX not in use YET
 		esource.addEventListener("uid", function(e) {
 		    elbl.innerHTML = "uid event";
 		    console.log("uid event received");
 		    XHR.getJSON('json/' + e.data).then( a => a.forEach( add2bag ));
 		}, false);
 
-		// XXX not in use YET
 		esource.addEventListener("feed", function(e) {
 		    elbl.innerHTML = "feed event";
 		    console.log("feed event received");
 		    const data = e.data;
-		    if (data.includes('.json'))
+		    if (data.includes('json'))
 			XHR.getJSON('json/' + data).then(a => a.forEach( add2caja ));
 		    else
 			add2caja(JSON.parse( data ));

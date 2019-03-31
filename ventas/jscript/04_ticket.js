@@ -2,17 +2,15 @@
 
 	(function() {
 	    const VARS = ['id', 'clave', 'qty', 'rea', 'precio', 'totalCents'];
-	    const EVARS = ['id', 'desc', 'qty', 'rea', 'prc', 'subTotal' ]; // clave
+	    const EVARS = ['id', 'desc', 'qty', 'rea', 'precio', 'subTotal' ]; // clave
 
 	    TICKET.items = new Map();
+
+	    const asnum = UTILS.asnum;
 
 	    function tocents(x) { return (x / 100).toFixed(2); }
 
 	    function uptoCents(q) { return Math.round( 100 * q[q.precio] * q.qty * (1-q.rea/100) ); }
-
-	    function asnum(s) { let n = Number(s); return Number.isNaN(n) ? s : n; } // XXX
-
-	    function clearTable(tb) { while (tb.firstChild) { tb.removeChild( tb.firstChild ); } } //recycle? XXX
 
 	    function incdec(e) {
 		switch (e.key || e.which) {
@@ -176,7 +174,7 @@
 		return clave; // FIX for caja.js XXX
 	    };
 
-	    TICKET.empty = function() { TICKET.items.clear(); clearTable( TICKET.bag ); TICKET.myticket.style.visibility = 'hidden'; TICKET.extraEmpty(); };
+	    TICKET.empty = function() { TICKET.items.clear(); UTILS.clearTable( TICKET.bag ); TICKET.myticket.style.visibility = 'hidden'; TICKET.extraEmpty(); };
 
 	    })();
 

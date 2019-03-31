@@ -2,6 +2,11 @@ td { font: 100% arial; }
 
 table { border-spacing: 6px 6px; }
 
+input[type=number] {
+    text-align: right;
+    width: 50px;
+}
+
 button[name=cerrar] { color: white; background-color: red; }
 
 button[name=guardar] { color: white; background-color: blue; }
@@ -54,7 +59,22 @@ button[name=guardar] { color: white; background-color: blue; }
     border-top: 2px solid black;
 }
 
+.query {
+    padding-left: 30px;
+    background-color: #ffffff;
+}
+
 .basura { cursor: url("svg/trash.svg"), default; }
+
+.dialogos {
+    z-index: 3;
+    display: inline-block;
+    overflow: auto;
+}
+
+.embiggen { display: none; }
+
+.dialogos:hover .embiggen { display: block; }
 
 #ticket-count {
     position: absolute;
@@ -90,6 +110,11 @@ button[name=guardar] { color: white; background-color: blue; }
     display: flex;
     justify-content: space-between;
     align-content: space-between;
+}
+
+#buscar {
+    padding: 5px;
+    order: 1;
 }
 
 #ticket {

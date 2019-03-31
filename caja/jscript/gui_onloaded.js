@@ -52,6 +52,21 @@
 	    DATA.inplace = () => Promise.resolve(true);
 	})();
 
+	// BROWSE
+	(function() {
+	    const PRICE = DATA.STORES.PRICE;
+	    BROWSE.tab = document.getElementById('resultados');
+	    BROWSE.lis = document.getElementById('tabla-resultados');
+
+	    BROWSE.DBget = s => IDB.readDB( PRICE ).get( s );
+	    BROWSE.DBindex = (a, b, f) => IDB.readDB( PRICE ).index( a, b, f );
+
+	    caja.keyPressed = BROWSE.keyPressed;
+	    caja.startSearch = BROWSE.startSearch;
+	    caja.scroll = BROWSE.scroll;
+	    caja.cerrar = DATA.close;
+	})();
+
 	// TICKET
 	(function() {
 	    const PRICE = DATA.STORES.PRICE;
@@ -77,11 +92,11 @@
 	    TICKET.bag = document.getElementById( TICKET.bagID );
 	    TICKET.myticket = document.getElementById( TICKET.myticketID );
 
-//	    TICKET.redondeo = x => x; // TEMPORAL x FACTURAR
+	    UTILS.redondeo = x => x; // TEMPORAL x FACTURAR
 
 //	    caja.updateItem = TICKET.update;
 
-	    caja.emptyBag = () => { TICKET.empty(); caja.cleanCaja(); }
+	    caja.emptyBag = TICKET.empty; // () => { TICKET.empty(); caja.cleanCaja(); }
 
 	})();
 
@@ -95,7 +110,7 @@
 		return IDB.readDB( PRICE )
 		    .get( UTILS.asnum(o.clave) )
 		    .then( w => { if (w) { return Object.assign( o, w, {id: o.clave} ) } else { return Promise.reject() } } )
-		    .then( TICKET.show )
+		    .then( TICKET.add ) // instead of TICKET.show
 		    .catch( e => console.log(e) )
 	    };
 

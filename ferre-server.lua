@@ -69,7 +69,7 @@ local function switch(msgs, server)
     if FRUITS[fruit] then
 	fruit, m = distill(m)
 	broadcast(server, ssevent(distill( m )), fruit)
-	return 'Broadcast CACHE to '..fruit
+	return 'Broadcast message to '..fruit
     else
 	return broadcast(server, ssevent(distill( m )))
     end

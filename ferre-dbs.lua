@@ -33,16 +33,17 @@ _ENV = nil -- or M
 --
 local SEMANA	 = 3600 * 24 * 7
 local QUERIES	 = 'ipc://queries.ipc'
+local ROOT	 = '/var/www/htdocs/app-ferre/caja/json'
 
-local TABS	 = {tickets = 'uid, tag, clave, desc, costol NUMBER, unidad, precio NUMBER, qty INTEGER, rea INTEGER, totalCents INTEGER',
+local TABS	 = {tickets = 'uid, tag, prc, clave, desc, costol NUMBER, unidad, precio NUMBER, qty INTEGER, rea INTEGER, totalCents INTEGER',
 		   updates = 'vers INTEGER PRIMARY KEY, clave, campo, valor'}
-local INDEX	= {'uid', 'tag', 'clave', 'desc', 'costol', 'unidad', 'precio', 'qty', 'rea', 'totalCents'}
+local INDEX	= {'uid', 'tag', 'prc', 'clave', 'desc', 'costol', 'unidad', 'precio', 'qty', 'rea', 'totalCents'}
 local PEOPLE	= {}
 
 local QRY	= 'SELECT * FROM precios WHERE clave LIKE %q LIMIT 1'
 local QUID	= 'SELECT uid, SUBSTR(uid, -1) nombre, SUBSTR(uid, 12, 5) time, SUM(qty) count, ROUND((SUM(totalCents)+50)/100, 2) total, tag FROM tickets WHERE uid %s %q GROUP BY uid'
-local QTKT	= 'SELECT * FROM tickets WHERE uid LIKE %q'
-
+local QTKT	= 'SELECT uid, tag, clave, qty, rea, totalCents,  prc "precio" FROM tickets WHERE uid LIKE %q'
+local QDESC	= 'SELECT desc FROM precios WHERE desc LIKE %q ORDER BY desc LIMIT 1'
 
 --------------------------------
 -- Local function definitions --
@@ -68,7 +69,7 @@ local function process(uid, tag, conn2)
 	local lbl = 'u' .. o.precio:match'%d$'
 	local b = fd.first(conn2.query(format(QRY, o.clave)), function(x) return x end)
 	fd.reduce(fd.keys(o), fd.merge, b)
-	b.precio = b[o.precio]; b.unidad = b[lbl]
+	b.precio = b[o.precio]; b.unidad = b[lbl]; b.prc = o.precio
 	return fd.reduce(INDEX, fd.map(function(k) return b[k] or '' end), fd.into, {})
     end
 end
@@ -85,7 +86,6 @@ end
 local function getName(o) o.nombre = PEOPLE[o.nombre] or 'NaP'; return o end
 
 local function dumpFEED(conn, fruit, qry)
-    local ROOT = '/var/www/htdocs/app-ferre/caja/json'
     local FIN = open(format('%s/%s-feed.json', ROOT, fruit), 'w')
     FIN:write'['
     FIN:write( concat(fd.reduce(conn.query(qry), fd.map(getName), fd.map(asJSON), fd.into, {}), ',\n') )
@@ -93,6 +93,13 @@ local function dumpFEED(conn, fruit, qry)
     FIN:close()
     return 'Updates stored and dumped'
 end
+
+local function byDesc(conn, s)
+    local qry = format(QDESC, s:gsub('*', '%%')..'%%')
+    local o = fd.first(conn.query(qry), function(x) return x end)
+    return o.desc
+end
+
 ---------------------------------
 -- Program execution statement --
 ---------------------------------
@@ -156,8 +163,14 @@ print'+\n'
 	local fruit = msg:match'fruit=(%a+)'
 	local uid   = msg:match'uid=([^!&]+)'
 	local qry   = format(QTKT, uid)
-	print(dumpFEED( WEEK, fruit, qry ), '\n')
+	print(dumpFEED( WEEK, fruit, qry ), '\n') -- as shown down, create fn 'byUID'
 	queues:send_msgs{'WEEK', format('%s uid %s-feed.json', fruit, fruit)}
+    end
+    if cmd == 'query' then
+	local fruit = msg:match'fruit=(%a+)'
+	local desc  = msg:match'desc=([^!&]+)' -- potential error if '&' included
+	desc = byDesc(PRECIOS, desc)
+	queues:send_msgs{'WEEK', format('%s query %s', fruit, desc)}
     end
 end
 

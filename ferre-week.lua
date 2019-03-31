@@ -24,7 +24,7 @@ local UPSTREAM   = 'ipc://upstream.ipc'
 local DOWNSTREAM = 'ipc://downstream.ipc'
 local QUERIES	 = 'ipc://queries.ipc'
 
-local SUBS	 = {'feed', 'uid', 'KILL'}
+local SUBS	 = {'feed', 'uid', 'query', 'KILL'}
 
 --------------------------------
 -- Local function definitions --
@@ -83,17 +83,17 @@ print'+\n'
 		    break
 		end
 	    end
-	    if cmd == 'feed' or cmd == 'uid' then
+	    if cmd == 'feed' or cmd == 'uid' or cmd == 'query' then
 		queues:send_msg(msg)
 		print('Data forward to queue\n')
 	    end
 	end
---  XXX must know which PEERs are connected to ME XXX	
 	if queues:events() == 'POLLIN' then
 	    local msg = queues:recv_msg()
-	    if msg:match'feed' then
+	    local ev = msg:match'%s(%a+)'
+	    if msg:match'feed' or ev == 'uid' or ev == 'query' then
 		msgr:send_msg(msg)
-		print(format('feed event sent'))
+		print('WEEK event sent\n')
 	    end
 	end
     end
