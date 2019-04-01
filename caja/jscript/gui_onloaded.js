@@ -94,9 +94,17 @@
 
 	    UTILS.redondeo = x => x; // TEMPORAL x FACTURAR
 
-//	    caja.updateItem = TICKET.update;
+	    caja.emptyBag = () => { caja.UIDS.clear(); return TICKET.empty() }
 
-	    caja.emptyBag = TICKET.empty; // () => { TICKET.empty(); caja.cleanCaja(); }
+	    caja.print = function(a) {
+		if (TICKET.items.size == 0) { return Promise.resolve() }
+
+		if (!caja.UPDATED) { caja.UIDS.forEach(uid => XHR.get(caja.origin + 'bixolon?' + uid)) }
+
+		let objs = ['pid=A'];
+		TICKET.items.forEach( item => objs.push( 'query=' + TICKET.plain(item) ) );
+		return caja.xget(a, objs);
+	    };
 
 	})();
 
@@ -104,14 +112,16 @@
 	(function() {
 	    const PRICE = DATA.STORES.PRICE;
 	    const cajita = document.getElementById('tabla-caja');
-	    const asnum = UTILS.asnum;
 
 	    caja.add2bag = function(o) {
+		const clave = UTILS.asnum(o.clave);
+		if (TICKET.items.has( clave )) { console.log('Item is already in the bag.'); return false; }
+
 		return IDB.readDB( PRICE )
-		    .get( UTILS.asnum(o.clave) )
-		    .then( w => { if (w) { return Object.assign( o, w, {id: o.clave} ) } else { return Promise.reject() } } )
+		    .get( clave )
+		    .then( w => { if (w) { return Object.assign( o, w, {id: clave} ) } else { return Promise.reject() } } )
 		    .then( TICKET.add ) // instead of TICKET.show
-		    .catch( e => console.log(e) )
+		    .catch( e => console.log(e) );
 	    };
 
 	    caja.add2caja = function(w) {
@@ -121,8 +131,11 @@
 	    };
 
 	    caja.getUID = e => {
+		const UIDS = caja.UIDS;
 		const uid = e.target.parentElement.dataset.uid;
 		const fruit = localStorage.fruit;
+		UIDS.add( uid );
+		if (UIDS.size > 1) { caja.UPDATED = true; }
 		return caja.xget('uid', {uid: uid, fruit: fruit});
 	    };
 

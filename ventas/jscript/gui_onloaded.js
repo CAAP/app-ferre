@@ -119,7 +119,7 @@
 		TICKET.myticket.style.visibility = 'hidden';
 		TICKET.items.forEach( item => objs.push( 'query=' + TICKET.plain(item) ) );
 
-		return ferre.xget(a, objs ).then( TICKET.empty, () => {TICKET.myticket.style.visibility = 'visible'} );
+		return ferre.xget(a, objs).then( TICKET.empty, () => {TICKET.myticket.style.visibility = 'visible'} );
 	    };
 
 	    // XXX in case of mulitiple elements on the ticket, one should consider

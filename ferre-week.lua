@@ -6,6 +6,7 @@ local fd	= require'carlos.fold'
 local asJSON	= require'carlos.json'.asJSON
 local newUID	= require'carlos.ferre'.newUID
 local now	= require'carlos.ferre'.now
+local uid2week	= require'carlos.ferre'.uid2week
 local pollin	= require'lzmq'.pollin
 local context	= require'lzmq'.context
 
@@ -24,11 +25,16 @@ local UPSTREAM   = 'ipc://upstream.ipc'
 local DOWNSTREAM = 'ipc://downstream.ipc'
 local QUERIES	 = 'ipc://queries.ipc'
 
-local SUBS	 = {'feed', 'uid', 'query', 'KILL'}
+local SUBS	 = {'feed', 'uid', 'query', 'bixolon', 'KILL'}
 
 --------------------------------
 -- Local function definitions --
 --------------------------------
+local function addWeek(msg)
+    local json = msg:match'uid='
+    local uid = json and msg:match'uid=([^!&]+)' or msg:match'%s([^!]+)'
+    return format(json and '%s&week=%s' or '%s %s', msg, uid2week(uid))
+end
 
 ---------------------------------
 -- Program execution statement --
@@ -78,8 +84,12 @@ print'+\n'
 		    break
 		end
 	    end
-	    if cmd == 'feed' or cmd == 'uid' or cmd == 'query' then
+	    if cmd == 'feed' or cmd == 'query'then
 		queues:send_msg(msg)
+		print('Data forward to queue\n')
+	    end
+	    if cmd == 'uid' or cmd == 'bixolon' then
+		queues:send_msg( addWeek(msg) )
 		print('Data forward to queue\n')
 	    end
 	end
