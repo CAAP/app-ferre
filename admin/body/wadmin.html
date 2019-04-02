@@ -1,28 +1,30 @@
 <section id="main">
     <div id="buscar" class="dialogos query">
-        <div> <input id="busq" type="search" size=40 accesskey="b" placeholder="Art&iacute;culo o Clave" onchange="ferre.startSearch(event)" onkeyup="ferre.keyPressed(event)"> </div>
+        <div> <input id="busq" type="search" size=40 accesskey="b" placeholder="Art&iacute;culo o Clave" onchange="admin.startSearch(event)" onkeyup="admin.keyPressed(event)"> </div>
 
 	<section id="resultados" class="tablas">
-        <table onwheel="ferre.scroll(event)">
+        <table onwheel="admin.scroll(event)">
 	    <dt>
             <thead>
-                <tr><th> Fecha </th><th> Clave </th><th> Descripci&oacute;n </th><th colspan=3> Precios </th></tr>
+                <tr><th> Fecha </th><th> Clave </th><th> SAT </th><th> Descripci&oacute;n </th><th> Costo </th></tr>
             </thead>
 	    </dt>
 	    <tbody id="tabla-resultados" class="amarillo" onclick="ferre.menu(event)"></tbody>
-	    <tfoot><tr><th colspan=6><button accesskey="a" onclick="ferre.scroll({deltaY:0})">&larr;Anterior</button> <label> | </label> <button accesskey="s" onclick="ferre.scroll({deltaY:1})">Siguiente&rarr;</button></th></tr></tfoot>
+	    <tfoot><tr><th colspan=6><button accesskey="a" onclick="admin.scroll({deltaY:0})">&larr;Anterior</button> <label> | </label> <button accesskey="s" onclick="admin.scroll({deltaY:1})">Siguiente&rarr;</button></th></tr></tfoot>
 	</table>
 	</section>
     </div>
 
-    <div id="cambios" class="tablas">
+    <div id="ticket" class="tablas">
 	<table>
-	    <caption>PRODUCTO</caption>
-	    <tbody id="tabla-cambios" onchange="admin.anUpdate(event)"></tbody>
-	    <tfoot>
-		<tr><td><button align="right" name="cerrar" onclick="admin.cancelar()">Cancelar</button></td><td><button name="guardar" onclick="admin.enviar()">Guardar</button></td><td colspan="2" align="right"><button onclick="admin.actualizar()">Actualizar</button></td></tr>
-	    </tfoot>
+	    <tbody>
+		<tr><td><button name="cerrar" onclick="admin.cancelar()">Cancelar</button>&emsp;<button name="guardar" onclick="caja.actualizar()">Actualizar</button></td></tr>
+	    </tbody>
 	</table>
+	<section>
+	<table>
+	    <tbody id="tabla-cambios" class="amarillo" onchange="admin.anUpdate(event)" ondblclick="caja.clickItem(event)"></tbody>
+	</table>
+	</section>
     </div>
-
 </section>

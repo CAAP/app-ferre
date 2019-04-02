@@ -49,7 +49,7 @@
 	// ADMIN
 	(function() {
 	    admin.origin = document.location.origin+':5040/';
-	    DATA.inplace = q => {let r = document.body.querySelector('tr[data-clave="'+q.clave+'"]'); if (r) {DATA.clearTable(r); BROWSE.rows(q,r);} return q;};
+	    DATA.inplace = () => Promise.resolve(true);
 	})();
 
 	// BROWSE
@@ -61,7 +61,6 @@
 	    BROWSE.DBget = s => IDB.readDB( PRICE ).get( s );
 	    BROWSE.DBindex = (a, b, f) => IDB.readDB( PRICE ).index( a, b, f );
 
-		// REALLY necessary still? XXX
 	    BROWSE.rows = function(a, row) {
 		row.insertCell().appendChild( document.createTextNode( a.fecha ) );
 		let clave = row.insertCell();
@@ -76,12 +75,40 @@
 		costol.appendChild( document.createTextNode( (a.costol / 1e4).toFixed(2) ) );
 	    };
 
-
-
 	    admin.keyPressed = BROWSE.keyPressed;
 	    admin.startSearch = BROWSE.startSearch;
 	    admin.scroll = BROWSE.scroll;
-//	    ferre.cerrar = DATA.close; XXX is it needed here & 'ventas'?
 	})();
 
-	
+	// TICKET
+	(function() {
+
+	})();
+
+	// FEED
+	(function() {
+	    const PRICE = DATA.STORES.PRICE;
+
+	    admin.add2bag = function(o) {
+		const clave = UTILS.asnum(o.clave);
+		if (TICKET.items.has( clave )) { console.log('Item is already in the bag.'); return false; }
+
+		return IDB.readDB( PRICE )
+		    .get( clave )
+		    .then( w => { if (w) { return Object.assign( o, w, {id: clave} ) } else { return Promise.reject() } } )
+		    .then( TICKET.add ) // instead of TICKET.show
+		    .catch( e => console.log(e) );
+	    };
+
+	    caja.getUID = e => {
+		const UIDS = caja.UIDS;
+		const uid = e.target.parentElement.dataset.uid;
+		const fruit = localStorage.fruit;
+		UIDS.add( uid );
+		if (UIDS.size > 1) { caja.UPDATED = true; }
+		return caja.xget('uid', {uid: uid, fruit: fruit});
+	    };
+
+	})();
+
+

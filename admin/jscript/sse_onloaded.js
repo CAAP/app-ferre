@@ -6,6 +6,8 @@
 	    const flbl = document.getElementById('frutas');
 	    const STORES = DATA.STORES;
 
+	    const add2bag  = admin.add2bag;
+
 		function updateOne( o ) {
 		    const store = o.store; delete o.store;
 		    return STORES[store].update(o);
@@ -16,7 +18,8 @@
 		    console.log('I am ' + e.data);
 		    localStorage.fruit = e.data;
 		    flbl.innerHTML = e.data;
-		    XHR.get( ferre.origin + 'CACHE?' + e.data );
+		    XHR.get( caja.origin + 'CACHE?' + e.data );
+		    XHR.get( caja.origin + 'feed?' + e.data );
 		}, false);
 
 		esource.addEventListener("Hi", function(e) {
@@ -33,7 +36,7 @@
 		    elbl.innerHTML = "version event";
 		    console.log('version event ongoing');
 		    if (!DATA.STORES.VERS.check( JSON.parse(e.data) ))
-			ferre.xget('adjust', localStorage); // adjust version; sends fruit, week, vers
+			caja.xget('adjust', localStorage); // adjust version; sends fruit, week, vers
 		}, false);
 
 		// XXX not implemented YET
@@ -52,7 +55,6 @@
 		    console.log('adjust event ongoing');
 		    XHR.getJSON( '/ventas/json/' + e.data ).then( data => Promise.all( data.map( updateOne ) ) );
 		}, false);
-
 
 	})();
 

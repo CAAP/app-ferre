@@ -65,20 +65,20 @@
 		searchIndex(t, s, 1).then(() => ans.removeChild(pred ? ans.lastChild : ans.firstChild), e => console.log('Error getting next item: ' + e));
 	    }
 
+	    BROWSE.doSearch = ss => searchByClave(ss).then( () => {BROWSE.tab.style.visibility='visible';} );
+
  	    BROWSE.startSearch = function startSearch(e) {
 		const ss = e.target.value.toUpperCase();
+		const fruit = localStorage.fruit;
 		if (ss.length == 0) { console.log('Empty search: nothing to be done.'); }
 		BROWSE.tab.style.visibility='hidden';
 		UTILS.clearTable( BROWSE.lis );
 		e.target.value = "";
 	// IF string.contains('*') : searchSQL
-		if (ss.includes('*')) {
-		    XHR.getJSON('/app/query.lua?desc='+encodeURIComponent(ss))
-			.then( a => {
-			    if (a[0])
-				searchByDesc(a[0].desc.match(ss.replace('*','.+'))[0]).then( () => {BROWSE.tab.style.visibility='visible';} );
-			} );
-		} else { searchByClave(ss).then( () => {BROWSE.tab.style.visibility='visible';} ); }
+		if (ss.includes('*'))
+		    ferre.xget('query', {desc: encodeURIComponent(ss), fruit: fruit});
+		else
+		    BROWSE.doSearch(ss);
 	    };
 
 	    BROWSE.keyPressed = function keyPressed(e) {

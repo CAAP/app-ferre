@@ -100,10 +100,11 @@
 		if (TICKET.items.size == 0) { return Promise.resolve() }
 
 		if (!caja.UPDATED) { caja.UIDS.forEach(uid => XHR.get(caja.origin + 'bixolon?' + uid)) }
-
-		let objs = ['pid=A'];
-		TICKET.items.forEach( item => objs.push( 'query=' + TICKET.plain(item) ) );
-		return caja.xget(a, objs);
+		else {
+		    let objs = ['pid=A'];
+		    TICKET.items.forEach( item => objs.push( 'query=' + TICKET.plain(item) ) );
+		    return caja.xget(a, objs);
+		}
 	    };
 
 	})();

@@ -101,9 +101,9 @@ end
 local function nextWeek(t) return {t=t+SEMANA, vers=0} end
 
 local function stream(week, vers)
-    local function iter(WEEK, o)
+    local function iter(wk, o)
 	local w = asweek( o.t )
-	if w > WEEK then return nil
+	if w > wk then return nil
 	else return nextWeek(o.t), fromWeek(w, o.vers) end
     end
     return function() return iter, asweek(now()), {t=backintime(week, now()), vers=vers} end
