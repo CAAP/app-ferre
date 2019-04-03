@@ -104,9 +104,9 @@ local function bixolon(uid, conn)
     local HEAD = {'tag', 'uid', 'total', 'nombre'}
     local DATOS = {'clave', 'desc', 'qty', 'rea', 'unitario', 'subTotal'}
 
-    local head = getName(fd.first(conn.query(format(QHEAD, uid)), function(x) return x end))
+    local head = getName(fd.first(conn.query(format(QHEAD, '%.2f', uid)), function(x) return x end))
 
-    local data = fd.reduce(conn.query(format(QLPR, uid)), fd.into, {})
+    local data = fd.reduce(conn.query(format(QLPR, '%.2f', '%.2f', uid)), fd.into, {})
 
     print( ticket(head, data) )
     return true
