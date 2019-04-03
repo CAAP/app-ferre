@@ -49,6 +49,7 @@
 	    function precios(q) {
 		if ((q.precio2 == 0) && (q.precio3 == 0)) { return document.createTextNode( q.precios.precio1 ); }
 		let ret = document.createElement('select');
+		ret.addEventListener('change', TICKET.update);
 		ret.name = 'precio';
 		for (let k in q.precios) {
 		    let opt = document.createElement('option');

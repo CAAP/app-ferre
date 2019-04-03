@@ -166,35 +166,30 @@ print'+\n'
 	queues:send_msgs{'WEEK', format('feed %s', msg)}
 	bixolon(uid, WEEK)
 	print(msg, '\n')
-    end
-    if cmd == 'feed' then
+    elseif cmd == 'feed' then
 	local fruit = msg:match'%s(%a+)' -- secs = %s(%d+)$
 	local t = date('%FT%T', now()):sub(1, 10)
 	local qry = format(QUID, '>', t)
 	print(dumpFEED( WEEK, fruit, qry ), '\n')
 	queues:send_msgs{'WEEK', format('%s feed %s-feed.json', fruit, fruit)}
-    end
-    if cmd == 'query' then
+    elseif cmd == 'query' then
 	local fruit = msg:match'fruit=(%a+)'
 	local desc  = msg:match'desc=([^!&]+)' -- potential error if '&' included
 	desc = byDesc(PRECIOS, desc)
-	print()
+	print('Querying database ...\n')
 	queues:send_msgs{'WEEK', format('%s query %s', fruit, desc)}
-    end
-    if cmd == 'uid' then
+    elseif cmd == 'uid' then
 	local fruit = msg:match'fruit=(%a+)'
 	local uid   = msg:match'uid=([^!&]+)'
 	local week   = msg:match'week=([^!&]+)'
 	local qry   = format(QTKT, uid)
 	print(dumpFEED( which(week), fruit, qry ), '\n') -- as shown in query, create fn 'byUID'
 	queues:send_msgs{'WEEK', format('%s uid %s-feed.json', fruit, fruit)}
-    end
-    if cmd == 'bixolon' then
+    elseif cmd == 'bixolon' then
 	local uid, week = msg:match'%s([^!]+)%s([^!]+)'
 	bixolon(uid, which(week))
-	print()
-    end
-    if cmd == 'update' then
+	print('Printing data ...\n')
+    elseif cmd == 'update' then
 	print()
     end
 end

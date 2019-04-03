@@ -18,8 +18,8 @@
 		    console.log('I am ' + e.data);
 		    localStorage.fruit = e.data;
 		    flbl.innerHTML = e.data;
-		    XHR.get( caja.origin + 'CACHE?' + e.data );
-		    XHR.get( caja.origin + 'feed?' + e.data );
+		    XHR.get( admin.origin + 'CACHE?' + e.data );
+		    XHR.get( admin.origin + 'feed?' + e.data );
 		}, false);
 
 		esource.addEventListener("Hi", function(e) {
@@ -36,7 +36,7 @@
 		    elbl.innerHTML = "version event";
 		    console.log('version event ongoing');
 		    if (!DATA.STORES.VERS.check( JSON.parse(e.data) ))
-			caja.xget('adjust', localStorage); // adjust version; sends fruit, week, vers
+			admin.xget('adjust', localStorage); // adjust version; sends fruit, week, vers
 		}, false);
 
 		// XXX not implemented YET

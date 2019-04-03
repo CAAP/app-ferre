@@ -113,6 +113,16 @@ button[name=guardar] { color: white; background-color: blue; }
     z-index: 7;
 }
 
+#busq {
+    padding: 0.5rem;
+    border-radius: 4px;
+    border: 3px solid #ddd;
+    background-image: url("svg/search.svg");
+    background-repeat: no-repeat;
+    background-position: top 50% right 30px;
+    padding-left: 5px;
+}
+
 #main { 
     width: 95%;
     padding: 5px;

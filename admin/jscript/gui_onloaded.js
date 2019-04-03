@@ -80,34 +80,40 @@
 	    admin.scroll = BROWSE.scroll;
 	})();
 
-	// TICKET
+	// UPDATES
 	(function() {
+	    let tabla = document.getElementById('tabla-cambios');
 
+	    function outputs(row, k) {
+		let ie = document.createElement('input');
+		ie.type = 'text'; ie.size = 5; ie.name = k; ie.disabled = true;
+		row.insertCell().appendChild( ie );
+		return ie;
+	    }
+
+	    function addField(k) {
+		if (k.startsWith()) { return; } // taken care of by prc_
+		let row = table.insertRow();
+		// input && defaults
+		let cell = row.insertCell();
+		let ie = document.createElement('input');
+		ie.type = 'text'; ie.size = 5; ie.name = k;
+		// specifics
+		switch(k) {
+		    case 'desc': ie.size = 40; cell.colSpan = 3; break;
+		    case 'clave': ie.disabled = true; outputs(row, 'uidSAT').disabled = false; break;
+		    case 'costo': outputs(row, 'costol'); break;
+		}
+		if (k.startsWith('prc')) { outputs(row, k.replace('prc', 'u')).disabled = false; outputs(row, k.replace('prc', 'precio')); }
+		if (costos.has(k)) { ie.type = 'number'; }
+		cell.appendChild( ie );
+	    }
+
+	    XHR.getJSON('json/header.json').then(a => a.forEach( addField ));
 	})();
 
 	// FEED
 	(function() {
-	    const PRICE = DATA.STORES.PRICE;
-
-	    admin.add2bag = function(o) {
-		const clave = UTILS.asnum(o.clave);
-		if (TICKET.items.has( clave )) { console.log('Item is already in the bag.'); return false; }
-
-		return IDB.readDB( PRICE )
-		    .get( clave )
-		    .then( w => { if (w) { return Object.assign( o, w, {id: clave} ) } else { return Promise.reject() } } )
-		    .then( TICKET.add ) // instead of TICKET.show
-		    .catch( e => console.log(e) );
-	    };
-
-	    caja.getUID = e => {
-		const UIDS = caja.UIDS;
-		const uid = e.target.parentElement.dataset.uid;
-		const fruit = localStorage.fruit;
-		UIDS.add( uid );
-		if (UIDS.size > 1) { caja.UPDATED = true; }
-		return caja.xget('uid', {uid: uid, fruit: fruit});
-	    };
 
 	})();
 

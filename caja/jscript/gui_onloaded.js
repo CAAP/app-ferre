@@ -94,12 +94,12 @@
 
 	    UTILS.redondeo = x => x; // TEMPORAL x FACTURAR
 
-	    caja.emptyBag = () => { caja.UIDS.clear(); return TICKET.empty() }
+	    caja.emptyBag = () => { caja.UIDS.clear(); caja.UPDATED = false; return TICKET.empty() }
 
 	    caja.print = function(a) {
 		if (TICKET.items.size == 0) { return Promise.resolve() }
-
-		if (!caja.UPDATED) { caja.UIDS.forEach(uid => XHR.get(caja.origin + 'bixolon?' + uid)) }
+		if (!caja.UPDATED)
+		    caja.UIDS.forEach(uid => XHR.get(caja.origin + 'bixolon?' + uid));
 		else {
 		    let objs = ['pid=A'];
 		    TICKET.items.forEach( item => objs.push( 'query=' + TICKET.plain(item) ) );
