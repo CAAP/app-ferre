@@ -56,5 +56,17 @@
 		    XHR.getJSON( '/ventas/json/' + e.data ).then( data => Promise.all( data.map( updateOne ) ) );
 		}, false);
 
+		esource.addEventListener("header", function(e) {
+		    elbl.innerHTML = "header event";
+		    console.log('header event ongoing');
+		    JSON.parse(e.data).forEach( admin.addField );
+		}, false);
+
+		esource.addEventListener("query", function(e) {
+		    elbl.innerHTML = "query event";
+		    console.log('query event ongoing');
+		    admin.setRecord( JSON.parse(e.data) );
+		}, false);
+
 	})();
 

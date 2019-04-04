@@ -159,7 +159,7 @@ local function getVersion()
     local v = asJSON(VERS)
     dumpVERS( v )
     dumpPRICE()
-    CACHE.store('vers' ,format('version %s', v))
+    CACHE.store('vers', format('version %s', v))
     print('\n\tWeek:', VERS.week, '\n\tVers:', VERS.vers, '\n')
     return v
 end

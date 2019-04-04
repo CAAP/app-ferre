@@ -4,11 +4,10 @@
 local fd	= require'carlos.fold'
 
 local asJSON	= require'carlos.json'.asJSON
-local newUID	= require'carlos.ferre'.newUID
-local now	= require'carlos.ferre'.now
-local uid2week	= require'carlos.ferre'.uid2week
 local pollin	= require'lzmq'.pollin
 local context	= require'lzmq'.context
+local dbconn	= require'carlos.ferre'.dbconn
+local cache	= require'carlos.ferre'.cache
 
 local format	= require'string'.format
 local concat	= table.concat
@@ -25,15 +24,19 @@ local UPSTREAM   = 'ipc://upstream.ipc'
 local DOWNSTREAM = 'ipc://downstream.ipc'
 local QUERIES	 = 'ipc://queries.ipc'
 
-local SUBS	 = {'feed', 'uid', 'query', 'bixolon', 'KILL'}
+local ROOT	 = '/var/www/htdocs/app-ferre/admin/json'
+local SUBS	 = {'update', 'CACHE', 'KILL'}
+local CACHE	 = cache'Hi ADMIN'
 
 --------------------------------
 -- Local function definitions --
 --------------------------------
-local function addWeek(msg)
-    local json = msg:match'uid='
-    local uid = json and msg:match'uid=([^!&]+)' or msg:match'%s([^!]+)'
-    return format(json and '%s&week=%s' or '%s %s', msg, uid2week(uid))
+local function escape(a) return fd.reduce(a, fd.map(function(x) return format('%q',x) end), fd.into, {}) end
+
+local function cacheHEADER()
+    local conn =  dbconn'ferre'
+    local ret = concat(escape(conn.header'datos'), ', ')
+    CACHE.store( 'header', format('%s [%s]', 'header', ret) )
 end
 
 ---------------------------------
@@ -72,6 +75,8 @@ print('Successfully connected to:', QUERIES, '\n')
 -- -- -- -- -- --
 --
 
+cacheHEADER()
+
 while true do
 print'+\n'
     if pollin{tasks, queues} then
@@ -79,20 +84,23 @@ print'+\n'
 	    local msg = tasks:recv_msg()
 	    local cmd = msg:match'%a+'
 	    if cmd == 'KILL' then
-		if msg:match'%s(%a+)' == 'WEEK' then
-		    msgr:send_msg'Bye WEEK'
+		if msg:match'%s(%a+)' == 'ADMIN' then
+		    msgr:send_msg'Bye ADMIN'
 		    break
 		end
 	    end
-	    if cmd == 'feed' or cmd == 'query'then
---		queues:send_msg(msg)
-		print('Data forward to queue\n')
+	    if cmd == 'CACHE' then
+		local fruit = msg:match'%s(%a+)'
+		CACHE.sndkch( msgr, fruit )
+		print('CACHE sent to', fruit, '\n')
+	    end
+	    if cmd == 'update' then
 	    end
 	end
 	if queues:events() == 'POLLIN' then
 	    local msg = queues:recv_msg()
 	    local ev = msg:match'%s(%a+)'
-	    if msg:match'feed' or ev == 'uid' or ev == 'query' then
+	    if ev == 'header' or ev == 'update' then
 		msgr:send_msg(msg)
 		print('WEEK event sent\n')
 	    end

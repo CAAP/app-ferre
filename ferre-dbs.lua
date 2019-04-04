@@ -98,6 +98,11 @@ local function byDesc(conn, s)
     return o.desc
 end
 
+local function byClave(conn, s)
+    local qry = format('SELECT * FROM  datos WHERE clave LIKE %q LIMIT 1', s)
+    return asJSON( fd.first(conn.query(qry), function(x) return x end) )
+end
+
 local function fields(a, t) return fd.reduce(a, fd.map(function(k) return t[k] end), fd.into, {}) end
 
 local function bixolon(uid, conn)
@@ -174,10 +179,16 @@ print'+\n'
 	queues:send_msgs{'WEEK', format('%s feed %s-feed.json', fruit, fruit)}
     elseif cmd == 'query' then
 	local fruit = msg:match'fruit=(%a+)'
-	local desc  = msg:match'desc=([^!&]+)' -- potential error if '&' included
-	desc = byDesc(PRECIOS, desc)
+	local ret
+	if msg:match'desc' then
+	    ret = msg:match'desc=([^!&]+)' -- potential error if '&' included
+	    ret = byDesc(PRECIOS, ret)
+	elseif msg:match'clave' then
+	    ret = msg:match'clave=([%a%d]+)' -- potential error if '&' included
+	    ret = byClave(PRECIOS, ret)
+	end
 	print('Querying database ...\n')
-	queues:send_msgs{'WEEK', format('%s query %s', fruit, desc)}
+	queues:send_msgs{'WEEK', format('%s query %s', fruit, ret)}
     elseif cmd == 'uid' then
 	local fruit = msg:match'fruit=(%a+)'
 	local uid   = msg:match'uid=([^!&]+)'

@@ -83,17 +83,22 @@
 	// UPDATES
 	(function() {
 	    let tabla = document.getElementById('tabla-cambios');
+	    let costos = new Set(['costo', 'impuesto', 'descuento', 'rebaja', 'prc1', 'prc2', 'prc3']);
+	    let records = new Map()
+	    let fields = new Set();
+
 
 	    function outputs(row, k) {
 		let ie = document.createElement('input');
 		ie.type = 'text'; ie.size = 5; ie.name = k; ie.disabled = true;
 		row.insertCell().appendChild( ie );
+		fields.add( k );
 		return ie;
 	    }
 
-	    function addField(k) {
+	    admin.addField = k => {
 		if (k.startsWith()) { return; } // taken care of by prc_
-		let row = table.insertRow();
+		let row = tabla.insertRow();
 		// input && defaults
 		let cell = row.insertCell();
 		let ie = document.createElement('input');
@@ -107,9 +112,31 @@
 		if (k.startsWith('prc')) { outputs(row, k.replace('prc', 'u')).disabled = false; outputs(row, k.replace('prc', 'precio')); }
 		if (costos.has(k)) { ie.type = 'number'; }
 		cell.appendChild( ie );
+ 		fields.add( k );
+	    };
+
+	    function setfields( o ) {
+		let costol = o.costol
+		let a = Object.assign({}, o, {costol: (costol/1e4).toFixed(2)});
+		Array.from(fields).filter( k => k.startsWith('prc') ).forEach( k => {a[k.replace('prc', 'precio')] = (a[k]*costol/1e4).toFixed(2)} );
+		fields.forEach( k => {tabla.querySelector('input[name='+k+']').value = a[k] || '' } );
 	    }
 
-	    XHR.getJSON('json/header.json').then(a => a.forEach( addField ));
+	    function fetch(k, f) {
+		if (records.has(k)) { return f( records.get(k) ); }
+		return admin.xget('query', {clave: k, fruit: localStorage.fruit});
+	    }
+
+	    admin.getRecord = function(e) {
+		let clave = UTILS.asnum(e.target.parentElement.dataset.clave);
+		fetch(clave, setfields);
+	    };
+
+	    admin.setRecord = function(a) {
+		records.set(a.clave, a);
+		setfields(a);
+	    };
+
 	})();
 
 	// FEED

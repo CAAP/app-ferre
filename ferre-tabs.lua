@@ -64,6 +64,7 @@ print'+\n'
 	    msgr:send_msg('Bye TABS')
 	    break
 	end
+	goto FIN
     end
     if cmd == 'CACHE' then
 	local fruit = msg:match'%s(%a+)'
