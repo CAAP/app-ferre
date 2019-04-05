@@ -77,6 +77,44 @@ local function addTicket(conn, conn2, msg)
     return uid
 end
 
+local function addUpdate(conn, msg)
+    local w
+    for k,v in msg:gmatch'([%a%d]+)=([^&]+)' do o[k] = asnum(v) end
+
+    local clave = w.clave
+    local clause = format('WHERE clave LIKE %q', clave)
+
+	w.id_tag = nil; w.args = nil; w.clave = nil; w.tbname = nil; -- SANITIZE
+
+
+	local ret = fd.reduce( fd.keys(w), fd.map( reformat ), fd.into, {} )
+	local qry = string.format('UPDATE %q SET %s %s', tbname, table.concat(ret, ', '), clause)
+	assert( conn.exec( qry ), qry )
+
+	if w.costo or w.impuesto or w.descuento or w.rebaja then up_costos(w, clause) end
+
+	if w.prc1 or w.prc2 or w.prc3 then up_precios(w, clause) end
+
+	ret = {VERS=ups}
+	ups.week = week
+	ups.prev = ups.vers
+
+	local function events(k, v)
+	    local store = 'PRICE' -- stores[k] or 'PRICE'
+	    if not ret[store] then ret[store] = {clave=clave, store=store} end
+	    ret[store][k] = v
+	end
+
+	fd.reduce( fd.keys(w), fd.map(function(v,k) events(k, v); return {'', clave, k, v} end), sql.into'updates', conn )
+
+	ups.vers = conn.count'updates'
+
+	return {data=table.concat(fd.reduce(fd.keys(ret), fd.map( asJSON ), fd.into, {}), ',\n'), event='update'}
+
+
+
+end
+
 local function getName(o)
     local pid = asnum(o.uid:match'P([%d%a]+)')
     o.nombre = pid and PEOPLE[pid] or 'NaP';
@@ -192,7 +230,7 @@ print'+\n'
     elseif cmd == 'uid' then
 	local fruit = msg:match'fruit=(%a+)'
 	local uid   = msg:match'uid=([^!&]+)'
-	local week   = msg:match'week=([^!&]+)'
+	local week  = msg:match'week=([^!&]+)'
 	local qry   = format(QTKT, uid)
 	print(dumpFEED( which(week), fruit, qry ), '\n') -- as shown in query, create fn 'byUID'
 	queues:send_msgs{'WEEK', format('%s uid %s-feed.json', fruit, fruit)}
@@ -201,7 +239,8 @@ print'+\n'
 	bixolon(uid, which(week))
 	print('Printing data ...\n')
     elseif cmd == 'update' then
-	print()
+	
+	print( msg )
     end
 end
 

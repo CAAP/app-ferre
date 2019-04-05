@@ -142,4 +142,10 @@ button[name=guardar] { color: white; background-color: blue; }
     order: 2;
 }
 
+#tabla-cambios tr {
+    background-color: #eee;
+    padding: 0.5rem;
+    border-radius: 4px;
+    border: 2px solid #ddd;
+}
 

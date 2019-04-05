@@ -18,12 +18,12 @@
     <div id="ticket" class="tablas">
 	<table>
 	    <tbody>
-		<tr><td><button name="cerrar" onclick="admin.cancelar()">Cancelar</button>&emsp;<button name="guardar" onclick="caja.actualizar()">Actualizar</button></td></tr>
+		<tr><td><button name="cerrar" onclick="admin.cancelar()">Cancelar</button>&emsp;<button name="guardar" onclick="admin.enviar()">Actualizar</button></td></tr>
 	    </tbody>
 	</table>
 	<section>
 	<table>
-	    <tbody id="tabla-cambios" class="amarillo" onchange="admin.anUpdate(event)" ondblclick="caja.clickItem(event)"></tbody>
+	    <tbody id="tabla-cambios" class="amarillo" onchange="admin.anUpdate(event)"></tbody>
 	</table>
 	</section>
     </div>

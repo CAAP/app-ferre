@@ -11,6 +11,8 @@ local cache	= require'carlos.ferre'.cache
 
 local format	= require'string'.format
 local concat	= table.concat
+local insert	= table.insert
+local remove	= table.remove
 local assert	= assert
 
 local print	= print
@@ -35,7 +37,11 @@ local function escape(a) return fd.reduce(a, fd.map(function(x) return format('%
 
 local function cacheHEADER()
     local conn =  dbconn'ferre'
-    local ret = concat(escape(conn.header'datos'), ', ')
+    local ret = escape(conn.header'datos')
+    remove(ret) -- uidSAT
+    insert(ret, 6, remove(ret)) -- rebaja
+    remove(ret) -- costol
+    ret = concat(ret, ', ')
     CACHE.store( 'header', format('%s [%s]', 'header', ret) )
 end
 
@@ -95,6 +101,8 @@ print'+\n'
 		print('CACHE sent to', fruit, '\n')
 	    end
 	    if cmd == 'update' then
+		queues:send_msg( msg )
+		print('Message forward to queue\n')
 	    end
 	end
 	if queues:events() == 'POLLIN' then
