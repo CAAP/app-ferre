@@ -19,10 +19,12 @@ local ticket		= require'carlos.ticket'.ticket
 
 local format	= string.format
 local floor	= math.floor
+local tointeger = math.tointeger
 local concat 	= table.concat
 local remove	= table.remove
 local open	= io.open
 local date	= os.date
+local tonumber  = tonumber
 local assert	= assert
 
 local pairs	= pairs
@@ -40,16 +42,25 @@ local ROOT	 = '/var/www/htdocs/app-ferre/caja/json'
 
 local TABS	 = {tickets = 'uid, tag, prc, clave, desc, costol NUMBER, unidad, precio NUMBER, unitario NUMBER, qty INTEGER, rea INTEGER, totalCents INTEGER',
 		   updates = 'vers INTEGER PRIMARY KEY, clave, campo, valor'}
-local INDEX	= {'uid', 'tag', 'prc', 'clave', 'desc', 'costol', 'unidad', 'precio', 'unitario', 'qty', 'rea', 'totalCents'}
-local PEOPLE	= {A = 'caja'} -- could use 'fruit' id instead XXX
+local INDEX	 = {'uid', 'tag', 'prc', 'clave', 'desc', 'costol', 'unidad', 'precio', 'unitario', 'qty', 'rea', 'totalCents'}
+local PEOPLE	 = {A = 'caja'} -- could use 'fruit' id instead XXX
 
-local QRY	= 'SELECT * FROM precios WHERE clave LIKE %q LIMIT 1'
-local QUID	= 'SELECT uid, SUBSTR(uid, 12, 5) time, SUM(qty) count, ROUND(SUM(totalCents)/100.0, 2) total, tag FROM tickets WHERE uid %s %q GROUP BY uid'
-local QTKT	= 'SELECT uid, tag, clave, qty, rea, totalCents,  prc "precio" FROM tickets WHERE uid LIKE %q'
-local QDESC	= 'SELECT desc FROM precios WHERE desc LIKE %q ORDER BY desc LIMIT 1'
+local QRY	 = 'SELECT * FROM precios WHERE clave LIKE %q LIMIT 1'
+local QUID	 = 'SELECT uid, SUBSTR(uid, 12, 5) time, SUM(qty) count, ROUND(SUM(totalCents)/100.0, 2) total, tag FROM tickets WHERE uid %s %q GROUP BY uid'
+local QTKT	 = 'SELECT uid, tag, clave, qty, rea, totalCents,  prc "precio" FROM tickets WHERE uid LIKE %q'
+local QDESC	 = 'SELECT desc FROM precios WHERE desc LIKE %q ORDER BY desc LIMIT 1'
 local QHEAD	 = 'SELECT uid, tag, ROUND(SUM(totalCents)/100.0, 2) total from tickets WHERE uid LIKE %q GROUP BY uid'
 local QLPR	 = 'SELECT desc, clave, qty, rea, ROUND(unitario, 2) unitario, ROUND(totalCents/100.0, 2) subTotal FROM tickets WHERE uid LIKE %q'
 
+local DIRTY	 = {clave=true, tbname=true}
+local TOLL	 = {costo=true, impuesto=true, descuento=true, rebaja=true}
+local ISSTR	 = {desc=true, fecha=true, obs=true, proveedor=true, gps=true, u1=true, u2=true, u3=true}
+
+local UPQ	 = 'UPDATE %q SET %s %s'
+local UPC	 = 'UPDATE datos SET costol = costo*(100+impuesto)*(100-descuento)*(1-rebaja/100.0), fecha = %q %s'
+
+
+-- COSTOL = PRINTF("%d", costo*(100+impuesto)*(100-descuento)*(1-rebaja/100.0)+0.5)
 --------------------------------
 -- Local function definitions --
 --------------------------------
@@ -77,17 +88,60 @@ local function addTicket(conn, conn2, msg)
     return uid
 end
 
-local function addUpdate(conn, msg)
-    local w
-    for k,v in msg:gmatch'([%a%d]+)=([^&]+)' do o[k] = asnum(v) end
+local function reformat(v, k)
+    local vv = ISSTR[k] and format("'%s'", v:upper()) or (tointeger(v) or tonumber(v) or 0)
+    return format('%s = %s', k, vv)
+end
 
-    local clave = w.clave
+local function found(a, b) return fd.first(fd.keys(a), function(_,k) return b[k] end) end
+
+local function sanitize(b) return function(_,k) return not(b[k]) end end
+
+local function up_costos(w, clause) -- conn
+    for k in pairs(TOLL) do w[k] = nil end
+    w.fecha = HOY
+
+    local qry = format(UPC, HOY, clause)
+    assert(conn.exec( qry ), qry)
+
+--    w.faltantes = 0
+--    qry = format('UPDATE faltantes SET faltante = 0 %s', clause)
+--    assert(conn.exec( qry ), qry)
+
+    qry = format('SELECT * FROM precios %s', clause)
+    local a = fd.first(conn.query(qry), function(x) return x end)
+    fd.reduce(fd.keys(a), fd.filter(function(_,k) return k:match'^precio' or k:match'^costo' end), fd.merge, w)
+
+    return w
+end
+
+local function up_precios(w, clause)
+    --- XXX
+end
+
+local function addUpdate(msg) -- conn, conn2
+    print(msg, '\n')
+    local w = {}
+    for k,v in msg:gmatch'([%a%d]+)=([^&]+)' do w[k] = asnum(v) end
+
+    local clave  = w.clave
+    local tbname = w.tbname
     local clause = format('WHERE clave LIKE %q', clave)
 
-	w.id_tag = nil; w.args = nil; w.clave = nil; w.tbname = nil; -- SANITIZE
+    w = fd.reduce(fd.keys(w), fd.filter(sanitize(DIRTY)), fd.map( reformat ), fd.into, {})
+
+--    fd.reduce(w, print)
+
+    local qry = format(UPQ, tbname, concat(w, ', '), clause)
+    assert(conn.exec( qry ), qry)
+    if found(w, TOLL) then up_costos(w, clause) end
+    if w.prc1 or w.prc2 or w.prc3 then up_precios(w, clause) end
 
 
-	local ret = fd.reduce( fd.keys(w), fd.map( reformat ), fd.into, {} )
+    fd.reduce(w, sql.into'updates', conn2)
+end
+
+--[[
 	local qry = string.format('UPDATE %q SET %s %s', tbname, table.concat(ret, ', '), clause)
 	assert( conn.exec( qry ), qry )
 
@@ -110,10 +164,7 @@ local function addUpdate(conn, msg)
 	ups.vers = conn.count'updates'
 
 	return {data=table.concat(fd.reduce(fd.keys(ret), fd.map( asJSON ), fd.into, {}), ',\n'), event='update'}
-
-
-
-end
+--]]
 
 local function getName(o)
     local pid = asnum(o.uid:match'P([%d%a]+)')
@@ -239,8 +290,7 @@ print'+\n'
 	bixolon(uid, which(week))
 	print('Printing data ...\n')
     elseif cmd == 'update' then
-	
-	print( msg )
+	addUpdate(msg)
     end
 end
 
