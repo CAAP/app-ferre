@@ -37,6 +37,7 @@ _ENV = nil -- or M
 -- Local Variables for module-only access
 --
 local SEMANA	 = 3600 * 24 * 7
+local HOY	 = date('%d-%b-%y' ,now())
 local QUERIES	 = 'ipc://queries.ipc'
 local ROOT	 = '/var/www/htdocs/app-ferre/caja/json'
 
@@ -52,12 +53,14 @@ local QDESC	 = 'SELECT desc FROM precios WHERE desc LIKE %q ORDER BY desc LIMIT 
 local QHEAD	 = 'SELECT uid, tag, ROUND(SUM(totalCents)/100.0, 2) total from tickets WHERE uid LIKE %q GROUP BY uid'
 local QLPR	 = 'SELECT desc, clave, qty, rea, ROUND(unitario, 2) unitario, ROUND(totalCents/100.0, 2) subTotal FROM tickets WHERE uid LIKE %q'
 
-local DIRTY	 = {clave=true, tbname=true}
+local DIRTY	 = {clave=true, tbname=true, fruit=true}
 local TOLL	 = {costo=true, impuesto=true, descuento=true, rebaja=true}
 local ISSTR	 = {desc=true, fecha=true, obs=true, proveedor=true, gps=true, u1=true, u2=true, u3=true}
+local PRCS	 = {prc1=true, prc2=true, prc3=true}
 
+local INU	 = 'INSERT INTO updates (clave, campo, valor) VALUES (%s, %q, %s)'
 local UPQ	 = 'UPDATE %q SET %s %s'
-local UPC	 = 'UPDATE datos SET costol = costo*(100+impuesto)*(100-descuento)*(1-rebaja/100.0), fecha = %q %s'
+--local UPF	 = 'UPDATE datos SET fecha = %q %s'
 
 
 -- COSTOL = PRINTF("%d", costo*(100+impuesto)*(100-descuento)*(1-rebaja/100.0)+0.5)
@@ -89,37 +92,47 @@ local function addTicket(conn, conn2, msg)
 end
 
 local function reformat(v, k)
-    local vv = ISSTR[k] and format("'%s'", v:upper()) or (tointeger(v) or tonumber(v) or 0)
+    local vv = ISSTR[k] and format('%q', v:upper()) or (tointeger(v) or tonumber(v) or 0) -- "'%s'"
     return format('%s = %s', k, vv)
+end
+
+local function reformat2(clave)
+    clave = tointeger(clave) or format('%q', clave) -- "'%s'"
+    return function(v, k)
+	local vv = ISSTR[k] and format('%q', v:upper()) or (tointeger(v) or tonumber(v) or 0) -- "'%s'"
+	return format(INU, clave, k, vv)
+    end
 end
 
 local function found(a, b) return fd.first(fd.keys(a), function(_,k) return b[k] end) end
 
 local function sanitize(b) return function(_,k) return not(b[k]) end end
 
-local function up_costos(w, clause) -- conn
-    for k in pairs(TOLL) do w[k] = nil end
-    w.fecha = HOY
-
-    local qry = format(UPC, HOY, clause)
-    assert(conn.exec( qry ), qry)
-
+local function up_faltantes()
+--    Otra BASE de DATOS XXX
 --    w.faltantes = 0
 --    qry = format('UPDATE faltantes SET faltante = 0 %s', clause)
 --    assert(conn.exec( qry ), qry)
+end
 
-    qry = format('SELECT * FROM precios %s', clause)
-    local a = fd.first(conn.query(qry), function(x) return x end)
+local function up_costos(w, a) -- conn
+    for k in pairs(TOLL) do w[k] = nil end
     fd.reduce(fd.keys(a), fd.filter(function(_,k) return k:match'^precio' or k:match'^costo' end), fd.merge, w)
-
     return w
 end
 
-local function up_precios(w, clause)
-    --- XXX
+local function up_precios(conn, w, clause)
+    local qry = format('SELECT * FROM precios %s LIMIT 1', clause)
+    local a = fd.first(conn.query(qry), function(x) return x end)
+
+    fd.reduce(fd.keys(w), fd.filter(function(_,k) return k:match'prc' end), fd.map(function(_,k) return k:gsub('prc', 'precio') end), fd.rejig(function(k) return a[k], k end), fd.merge, w)
+
+    for k in pairs(PRCS) do w[k] = nil end
+
+    return a, w
 end
 
-local function addUpdate(msg) -- conn, conn2
+local function addUpdate(msg, conn, conn2) -- conn, conn2
     print(msg, '\n')
     local w = {}
     for k,v in msg:gmatch'([%a%d]+)=([^&]+)' do w[k] = asnum(v) end
@@ -127,44 +140,28 @@ local function addUpdate(msg) -- conn, conn2
     local clave  = w.clave
     local tbname = w.tbname
     local clause = format('WHERE clave LIKE %q', clave)
+    local toll = found(w, TOLL)
 
-    w = fd.reduce(fd.keys(w), fd.filter(sanitize(DIRTY)), fd.map( reformat ), fd.into, {})
+    if toll then w.fecha = HOY end
 
---    fd.reduce(w, print)
+    w = fd.reduce(fd.keys(w), fd.filter(sanitize(DIRTY)), fd.into, {})
 
-    local qry = format(UPQ, tbname, concat(w, ', '), clause)
-    assert(conn.exec( qry ), qry)
-    if found(w, TOLL) then up_costos(w, clause) end
-    if w.prc1 or w.prc2 or w.prc3 then up_precios(w, clause) end
+    local u = fd.reduce(fd.keys(w), fd.map( reformat ), fd.into, {})
+    local qry = format(UPQ, 'datos', concat(u, ', '), clause)
+    print( qry,'\n' )
+--    assert(conn.exec( qry ), qry)
 
+    if found(w, PRCS) or toll then
+	local a = up_precios(conn, w, clause)
+	if toll then up_costos(w, a) end
+    end
 
-    fd.reduce(w, sql.into'updates', conn2)
+    u = fd.reduce(fd.keys(w), fd.map(reformat2(clave)), fd.into, {})
+    print( concat(u,'\n') )
+--    assert(conn2.exec( qry ), qry)
+--
+--    return 'version'
 end
-
---[[
-	local qry = string.format('UPDATE %q SET %s %s', tbname, table.concat(ret, ', '), clause)
-	assert( conn.exec( qry ), qry )
-
-	if w.costo or w.impuesto or w.descuento or w.rebaja then up_costos(w, clause) end
-
-	if w.prc1 or w.prc2 or w.prc3 then up_precios(w, clause) end
-
-	ret = {VERS=ups}
-	ups.week = week
-	ups.prev = ups.vers
-
-	local function events(k, v)
-	    local store = 'PRICE' -- stores[k] or 'PRICE'
-	    if not ret[store] then ret[store] = {clave=clave, store=store} end
-	    ret[store][k] = v
-	end
-
-	fd.reduce( fd.keys(w), fd.map(function(v,k) events(k, v); return {'', clave, k, v} end), sql.into'updates', conn )
-
-	ups.vers = conn.count'updates'
-
-	return {data=table.concat(fd.reduce(fd.keys(ret), fd.map( asJSON ), fd.into, {}), ',\n'), event='update'}
---]]
 
 local function getName(o)
     local pid = asnum(o.uid:match'P([%d%a]+)')
@@ -290,7 +287,10 @@ print'+\n'
 	bixolon(uid, which(week))
 	print('Printing data ...\n')
     elseif cmd == 'update' then
-	addUpdate(msg)
+	local fruit = msg:match'fruit=(%a+)'
+	addUpdate(msg, PRECIOS, WEEK)
+	queues:send_msgs{'ADMIN', format('%s update', fruit)} -- PRECIOS
+	print('Data updated correctly\n')
     end
 end
 

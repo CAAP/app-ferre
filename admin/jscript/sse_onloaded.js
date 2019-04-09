@@ -36,18 +36,13 @@
 		    elbl.innerHTML = "version event";
 		    console.log('version event ongoing');
 		    if (!DATA.STORES.VERS.check( JSON.parse(e.data) ))
-			admin.xget('adjust', localStorage); // adjust version; sends fruit, week, vers
+			admin.xget('adjust', localStorage); // adjust (version) sends: fruit, week, vers
 		}, false);
 
-		// XXX not implemented YET
 		esource.addEventListener("update", function(e) {
 		    elbl.innerHTML = "update event";
 		    console.log('update event ongoing');
-		    const data = JSON.parse(e.data);
-		    if (Array.isArray(data))
-			Promise.all( data.map( updateOne ) );
-		    else
-			updateOne( data );
+		    XHR.get( admin.origin + 'version' ); //  notify ALL peers
 		}, false);
 
 		esource.addEventListener("adjust", function(e) {
@@ -70,3 +65,14 @@
 
 	})();
 
+/*
+		esource.addEventListener("update", function(e) {
+		    elbl.innerHTML = "update event";
+		    console.log('update event ongoing');
+		    const data = JSON.parse(e.data);
+		    if (Array.isArray(data))
+			Promise.all( data.map( updateOne ) );
+		    else
+			updateOne( data );
+		}, false);
+*/
