@@ -22,12 +22,14 @@ local floor	= math.floor
 local tointeger = math.tointeger
 local concat 	= table.concat
 local remove	= table.remove
+local insert	= table.insert
 local open	= io.open
 local date	= os.date
 local tonumber  = tonumber
 local assert	= assert
 
 local pairs	= pairs
+local ipairs	= ipairs
 
 local print	= print
 
@@ -45,6 +47,7 @@ local TABS	 = {tickets = 'uid, tag, prc, clave, desc, costol NUMBER, unidad, pre
 		   updates = 'vers INTEGER PRIMARY KEY, clave, campo, valor'}
 local INDEX	 = {'uid', 'tag', 'prc', 'clave', 'desc', 'costol', 'unidad', 'precio', 'unitario', 'qty', 'rea', 'totalCents'}
 local PEOPLE	 = {A = 'caja'} -- could use 'fruit' id instead XXX
+local HEADER
 
 local QRY	 = 'SELECT * FROM precios WHERE clave LIKE %q LIMIT 1'
 local QUID	 = 'SELECT uid, SUBSTR(uid, 12, 5) time, SUM(qty) count, ROUND(SUM(totalCents)/100.0, 2) total, tag FROM tickets WHERE uid %s %q GROUP BY uid'
@@ -133,7 +136,6 @@ local function up_precios(conn, w, clause)
 end
 
 local function addUpdate(msg, conn, conn2) -- conn, conn2
-    print(msg, '\n')
     local w = {}
     for k,v in msg:gmatch'([%a%d]+)=([^&]+)' do w[k] = asnum(v) end
 
@@ -144,23 +146,20 @@ local function addUpdate(msg, conn, conn2) -- conn, conn2
 
     if toll then w.fecha = HOY end
 
-    w = fd.reduce(fd.keys(w), fd.filter(sanitize(DIRTY)), fd.into, {})
-
-    local u = fd.reduce(fd.keys(w), fd.map( reformat ), fd.into, {})
+    local u = fd.reduce(fd.keys(w), fd.filter(sanitize(DIRTY)), fd.map( reformat ), fd.into, {})
     local qry = format(UPQ, 'datos', concat(u, ', '), clause)
-    print( qry,'\n' )
---    assert(conn.exec( qry ), qry)
+    assert(conn.exec( qry ))
 
     if found(w, PRCS) or toll then
 	local a = up_precios(conn, w, clause)
 	if toll then up_costos(w, a) end
     end
 
-    u = fd.reduce(fd.keys(w), fd.map(reformat2(clave)), fd.into, {})
+    u = fd.reduce(fd.keys(w), fd.filter(sanitize(DIRTY)), fd.map(reformat2(clave)), fd.into, {})
     print( concat(u,'\n') )
---    assert(conn2.exec( qry ), qry)
---
---    return 'version'
+    for _,q in ipairs(u) do assert(conn2.exec( q )) end
+
+    return true
 end
 
 local function getName(o)
@@ -203,6 +202,18 @@ local function bixolon(uid, conn)
     return true
 end
 
+local function escape(a) return fd.reduce(a, fd.map(function(x) return format('%q',x) end), fd.into, {}) end
+
+-- XXX
+local function getHeader(conn)
+    local ret = escape(conn.header'datos')
+    remove(ret) -- uidSAT
+    insert(ret, 6, remove(ret)) -- rebaja
+    remove(ret) -- costol
+    ret = concat(ret, ', ')
+    return format('%s [%s]', 'header', ret)
+end
+
 ---------------------------------
 -- Program execution statement --
 ---------------------------------
@@ -237,6 +248,13 @@ print('Successfully bound to:', QUERIES)
 fd.reduce(PRECIOS.query'SELECT * FROM empleados', fd.rejig(function(o) return o.nombre, asnum(o.id) end), fd.merge, PEOPLE)
 --
 -- -- -- -- -- --
+--
+-- get HEADER
+--
+HEADER = getHeader(PRECIOS)
+--
+-- -- -- -- -- --
+--
 -- Run loop
 --
 
@@ -291,6 +309,10 @@ print'+\n'
 	addUpdate(msg, PRECIOS, WEEK)
 	queues:send_msgs{'ADMIN', format('%s update', fruit)} -- PRECIOS
 	print('Data updated correctly\n')
+    elseif cmd == 'header' then
+	local fruit = msg:match'%s(%a+)'
+	queues:send_msgs{'ADMIN', format('%s %s', fruit, HEADER)}
+	print('HEADER sent\n')
     end
 end
 

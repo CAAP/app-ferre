@@ -6,13 +6,10 @@ local fd	= require'carlos.fold'
 local asJSON	= require'carlos.json'.asJSON
 local pollin	= require'lzmq'.pollin
 local context	= require'lzmq'.context
-local dbconn	= require'carlos.ferre'.dbconn
 local cache	= require'carlos.ferre'.cache
 
 local format	= require'string'.format
 local concat	= table.concat
-local insert	= table.insert
-local remove	= table.remove
 local assert	= assert
 
 local print	= print
@@ -27,23 +24,12 @@ local DOWNSTREAM = 'ipc://downstream.ipc'
 local QUERIES	 = 'ipc://queries.ipc'
 
 local ROOT	 = '/var/www/htdocs/app-ferre/admin/json'
-local SUBS	 = {'update', 'CACHE', 'KILL'}
+local SUBS	 = {'update', 'header', 'CACHE', 'KILL'}
 local CACHE	 = cache'Hi ADMIN'
 
 --------------------------------
 -- Local function definitions --
 --------------------------------
-local function escape(a) return fd.reduce(a, fd.map(function(x) return format('%q',x) end), fd.into, {}) end
-
-local function cacheHEADER()
-    local conn =  dbconn'ferre'
-    local ret = escape(conn.header'datos')
-    remove(ret) -- uidSAT
-    insert(ret, 6, remove(ret)) -- rebaja
-    remove(ret) -- costol
-    ret = concat(ret, ', ')
-    CACHE.store( 'header', format('%s [%s]', 'header', ret) )
-end
 
 ---------------------------------
 -- Program execution statement --
@@ -78,10 +64,9 @@ assert(queues:set_id'ADMIN') -- ID sent to ROUTER skt
 assert(queues:connect( QUERIES ))
 
 print('Successfully connected to:', QUERIES, '\n')
+--
 -- -- -- -- -- --
 --
-
-cacheHEADER()
 
 while true do
 print'+\n'
@@ -100,7 +85,7 @@ print'+\n'
 		CACHE.sndkch( msgr, fruit )
 		print('CACHE sent to', fruit, '\n')
 	    end
-	    if cmd == 'update' then
+	    if cmd == 'update' or cmd == 'header' then
 		queues:send_msg( msg )
 		print('Message forward to queue\n')
 	    end
@@ -108,9 +93,9 @@ print'+\n'
 	if queues:events() == 'POLLIN' then
 	    local msg = queues:recv_msg()
 	    local ev = msg:match'%s(%a+)'
-	    if ev == 'header' or ev == 'update' then
+	    if ev == 'update' or ev == 'header' then
 		msgr:send_msg(msg)
-		print('WEEK event sent\n')
+		print(format('%s event sent\n', ev:upper()))
 	    end
 	end
     end
