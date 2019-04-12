@@ -168,8 +168,8 @@ local function getName(o)
     return o 
 end
 
-local function dumpFEED(conn, fruit, qry)
-    local FIN = open(format('%s/%s-feed.json', ROOT, fruit), 'w')
+local function dumpFEED(conn, path, qry)
+    local FIN = open(path, 'w')
     FIN:write'['
     FIN:write( concat(fd.reduce(conn.query(qry), fd.map(getName), fd.map(asJSON), fd.into, {}), ',\n') )
     FIN:write']'
@@ -260,6 +260,8 @@ HEADER = getHeader(PRECIOS)
 
 local function which(week) return TODAY==week and WEEK or assert(dbconn( week )) end
 
+local function feedPath(fruit)  return format('%s/%s-feed.json', ROOT, fruit) end
+
 while true do
 print'+\n'
     pollin{queues}
@@ -279,7 +281,7 @@ print'+\n'
 	local fruit = msg:match'%s(%a+)' -- secs = %s(%d+)$
 	local t = date('%FT%T', now()):sub(1, 10)
 	local qry = format(QUID, '>', t)
-	print(dumpFEED( WEEK, fruit, qry ), '\n')
+	print(dumpFEED( WEEK, feedPath(fruit), qry ), '\n')
 	queues:send_msgs{'WEEK', format('%s feed %s-feed.json', fruit, fruit)}
     elseif cmd == 'query' then
 	local fruit = msg:match'fruit=(%a+)'
@@ -298,7 +300,7 @@ print'+\n'
 	local uid   = msg:match'uid=([^!&]+)'
 	local week  = msg:match'week=([^!&]+)'
 	local qry   = format(QTKT, uid)
-	print(dumpFEED( which(week), fruit, qry ), '\n') -- as shown in query, create fn 'byUID'
+	print(dumpFEED( which(week), feedPath(fruit), qry ), '\n')
 	queues:send_msgs{'WEEK', format('%s uid %s-feed.json', fruit, fruit)}
     elseif cmd == 'bixolon' then
 	local uid, week = msg:match'%s([^!]+)%s([^!]+)'
