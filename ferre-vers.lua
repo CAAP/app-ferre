@@ -27,7 +27,8 @@ local assert	= assert
 local print	= print
 
 local HOME	= require'carlos.ferre'.HOME
-local ROOT	= env'HOME' .. '/actual/app-ferre'
+local APP	= require'carlos.ferre'.APP
+local DEST	= HOME .. '/ventas/json/version.json'
 
 -- No more external access after this point
 _ENV = nil -- or M
@@ -37,9 +38,6 @@ _ENV = nil -- or M
 local DOWNSTREAM = 'ipc://downstream.ipc'
 local UPSTREAM	 = 'ipc://upstream.ipc'
 
---local ROOT	 = HOME .. '/ventas/json'
---local DEST	 = ROOT .. '/version.json'
-
 local SUBS	 = {'adjust', 'version', 'CACHE', 'KILL'} -- people
 local CACHE	 = cache'Hi VERS'
 
@@ -48,27 +46,27 @@ local CACHE	 = cache'Hi VERS'
 --------------------------------
 
 -- find all updates that need to be sent to a specific peer & send them all
-local function adjust(fruit, week, vers) exec(format('dump-fruit.lua %s %s %d', fruit, week, vers)) end
+local function adjust(fruit, week, vers) exec(format('%s/dump-fruit.lua %s %s %d', APP, fruit, week, vers)) end
 
--- DUMP
---local function dumpVERS(v) dump(DEST, v) end
+-- DUMP --
+local function dumpPRICE() exec(format('%s/dump-price.lua', APP)) end
 
-local function dumpPRICE() exec(format('%s/dump-price.lua', ROOT)) end
-
-local function dumpPEOPLE() exec(format('%s/dump-people.lua', ROOT)) end
+local function dumpPEOPLE() exec(format('%s/dump-people.lua', APP)) end
 
 local function getVersion()
---    dumpVERS( v )
     dumpPRICE()
 
-    local f = popen(format('%s/dump-vers.lua', ROOT))
-    local v = f:read'l'
+    local f = popen(format('%s/dump-vers.lua', APP))
+    local v = f:read('l'):gsub('%s+%d$', '')
     f:close()
+
+    dump(DEST, v)
 
     CACHE.store('vers', format('version %s', v))
     print(v)
     return v
 end
+
 
 ---------------------------------
 -- Program execution statement --

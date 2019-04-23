@@ -67,7 +67,7 @@ local function switch(msgs, server)
     local fruit = m:match'%a+'
     if FRUITS[fruit] then
 	fruit, m = distill(m)
-	broadcast(server, ssevent(distill( m ) or m), fruit)
+	broadcast(server, ssevent(distill( m )), fruit) --  XXX CAUSES error ON HI: distill( m ) or m
 	return 'Broadcast message to '..fruit
     else
 	return broadcast(server, ssevent(distill( m )))
