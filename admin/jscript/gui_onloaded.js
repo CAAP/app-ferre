@@ -49,7 +49,8 @@
 	// ADMIN
 	(function() {
 	    admin.origin = document.location.origin+':5040/';
-	    DATA.inplace = () => Promise.resolve(true);
+	    DATA.inplace = q => {let r = document.body.querySelector('tr[data-clave="'+q.clave+'"]'); if (r) {UTILS.clearTable(r); BROWSE.rows(q,r);} return q;};
+//	    DATA.inplace = () => Promise.resolve(true);
 	})();
 
 	// BROWSE
@@ -161,7 +162,7 @@
 		if (costos.has(k)) { compute(clave, k); }
 	    };
 
-	    function update(clave, o) { return XHR.get(admin.origin + 'update?' + UTILS.encPpties(Object.assign(o,{clave: clave, tbname: 'datos'}))) }
+	    function update(clave, o) { return XHR.get(admin.origin + 'update?' + UTILS.encPpties(Object.assign(o,{clave: clave, tbname: 'datos', fruit: localStorage.fruit}))) }
 
 	    admin.enviar = function() {
 		const clave = UTILS.asnum(tkt.dataset.clave);

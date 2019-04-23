@@ -41,6 +41,7 @@
 		esource.addEventListener("version", function(e) {
 		    elbl.innerHTML = "version event";
 		    console.log('version event ongoing');
+		console.log(e.data);
 		    if (!DATA.STORES.VERS.check( JSON.parse(e.data) ))
 			ferre.xget('adjust', localStorage); // adjust version; sends fruit, week, vers
 		}, false);
@@ -48,7 +49,7 @@
 		esource.addEventListener("delete", function(e) {
 		    const pid = Number( e.data );
 		    tabs.delete( pid );
-		    console.log('Remove ticket for: ' + PEOPLE.id[pid]);
+		    console.log('Removing ticket'); // PEOPLE.id[pid]
 		    elbl.innerHTML = "delete event";
 		}, false);
 
@@ -58,6 +59,7 @@
 		    distill( e.data );
 		}, false);
 
+/*		
 		// XXX not implemented YET
 		esource.addEventListener("update", function(e) {
 		    elbl.innerHTML = "update event";
@@ -68,6 +70,7 @@
 		    else
 			updateOne( data );
 		}, false);
+*/
 
 		esource.addEventListener("adjust", function(e) {
 		    elbl.innerHTML = "adjust event";

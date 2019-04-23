@@ -56,7 +56,13 @@
 		    console.log('adjust event ongoing');
 		    XHR.getJSON( '/ventas/json/' + e.data ).then( data => Promise.all( data.map( updateOne ) ) );
 		}, false);
-
+/*
+		esource.addEventListener("query", function(e) {
+		    elbl.innerHTML = "query event";
+		    console.log('query event ongoing');
+		    BROWSE.doSearch(e.data);
+		}, false);
+*/
 		esource.addEventListener("uid", function(e) {
 		    elbl.innerHTML = "uid event";
 		    console.log("uid event received");

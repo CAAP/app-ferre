@@ -43,7 +43,7 @@
 		esource.addEventListener("update", function(e) {
 		    elbl.innerHTML = "update event";
 		    console.log('update event ongoing');
-		    XHR.get( admin.origin + 'version' ); //  notify ALL peers
+		    XHR.get( admin.origin + 'version?ALL' ); //  notify ALL peers
 		}, false);
 
 		esource.addEventListener("adjust", function(e) {
