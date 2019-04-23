@@ -5,16 +5,18 @@ local fd	= require'carlos.fold'
 
 local asJSON	= require'carlos.json'.asJSON
 local newUID	= require'carlos.ferre'.newUID
-local now	= require'carlos.ferre'.now
 local uid2week	= require'carlos.ferre'.uid2week
 local pollin	= require'lzmq'.pollin
 local context	= require'lzmq'.context
 
-local format	= require'string'.format
+local format	= string.format
+local popen	= io.popen
 local concat	= table.concat
 local assert	= assert
 
 local print	= print
+
+local APP	= require'carlos.ferre'.APP
 
 -- No more external access after this point
 _ENV = nil -- or M
@@ -35,6 +37,17 @@ local function addWeek(msg)
     local uid = json and msg:match'uid=([^!&]+)' or msg:match'%s([^!]+)'
     return format(json and '%s&week=%s' or '%s %s', msg, uid2week(uid))
 end
+
+local function queryDB(msg)
+    local fruit = msg:match'fruit=(%a+)'
+    msg = msg:match'%a+%s([^!]+)'
+    print('Querying database ...\n')
+    local f = assert( popen(format('%s/dump-query.lua %s', APP, msg)) )
+    local v = f:read'l' -- :gsub('%s+%d$', '')
+    f:close()
+    return format('%s query %s', fruit, v)
+end
+
 
 ---------------------------------
 -- Program execution statement --
@@ -83,12 +96,12 @@ print'+\n'
 		    msgr:send_msg'Bye WEEK'
 		    break
 		end
-	    end
-	    if cmd == 'feed' or cmd == 'query'then
+	    elseif cmd == 'query' then
+		msgr:send_msg( queryDB(msg) )
+	    elseif cmd == 'feed' then
 		queues:send_msg(msg)
 		print('Data forward to queue\n')
-	    end
-	    if cmd == 'uid' or cmd == 'bixolon' then
+	    elseif cmd == 'uid' or cmd == 'bixolon' then
 		queues:send_msg( addWeek(msg) )
 		print('Data forward to queue\n')
 	    end
@@ -96,7 +109,7 @@ print'+\n'
 	if queues:events() == 'POLLIN' then
 	    local msg = queues:recv_msg()
 	    local ev = msg:match'%s(%a+)'
-	    if msg:match'feed' or ev == 'uid' or ev == 'query' then
+	    if msg:match'feed' or ev == 'uid'then --  or ev == 'query' 
 		msgr:send_msg(msg)
 		print('WEEK event sent\n')
 	    end
