@@ -99,7 +99,7 @@
 	    }
 
 	    admin.addField = k => {
-		if (k.startsWith('u')) { return; } // taken care of by prc_
+		if (k.startsWith('u')) { return; } // already taken into account by prc_
 		let row = tabla.insertRow();
 		// input && defaults
 		row.insertCell().appendChild( document.createTextNode(k.replace('prc', 'precio')) );

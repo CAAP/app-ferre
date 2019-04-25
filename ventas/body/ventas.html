@@ -10,7 +10,6 @@
             </thead>
 	    </dt>
 	    <tbody id="tabla-resultados" class="amarillo" onclick="ferre.menu(event)"></tbody>
-	    <tfoot><tr><th colspan=6><button accesskey="a" onclick="ferre.scroll({deltaY:0})">&larr;Anterior</button> <label> | </label> <button accesskey="s" onclick="ferre.scroll({deltaY:1})">Siguiente&rarr;</button></th></tr></tfoot>
 	</table>
 	</section>
     </div>
@@ -18,17 +17,17 @@
     <div id="ticket" class="tablas">
 	<table>
 	    <tbody>
-		<tr><td><button name="cerrar" onclick="ferre.emptyBag()">Cancelar</button>&emsp;<button onclick="ferre.print('presupuesto')">Presupuesto</button>&emsp;<button onclick="ferre.print('ticket')">Caja</button></td><td>&emsp;</td><td>&emsp;</td><td><label id="ticket-count"></label><img src="svg/empty-cart.svg" height="25px"><label id="ticket-total" class="total"></label></td></tr>
+		<tr><td><button name="cerrar" onclick="ferre.emptyBag()">Cancelar</button>&emsp;<button onclick="ferre.print('presupuesto')">Presupuesto</button>&emsp;<button onclick="ferre.print('ticket')">Caja</button></td><td>&emsp;</td><td><label id="ticket-total" class="total"></label></td></tr>
 	    </tbody>
 	</table>
 	<section class="scrollable">
 	<table>
 	    <dt>
             <thead>
-                <tr> <th> Clave </th><th> Cantidad </th><th class="desc"> Descripci&oacute;n </th><th> Precio </th><th> Descuento </th><th> Total </th> </tr> 
+                <tr> <th> Cantidad </th><th> Precio </th><th> Descuento </th><th> Total </th> </tr> 
             </thead>
 	    </dt>
-	    <tbody id="ticket-compra" class="amarillo" onchange="ferre.updateItem(event)" ondblclick="ferre.clickItem(event)"></tbody>
+	    <tbody id="ticket-compra" class="amarillo" onchange="ferre.updateItem(event)"></tbody>
 	</table>
 	</section>
     </div>

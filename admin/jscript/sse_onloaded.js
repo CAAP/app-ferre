@@ -20,7 +20,7 @@
 		    flbl.innerHTML = e.data;
 		    XHR.get( admin.origin + 'CACHE?' + e.data );
 		    XHR.get( admin.origin + 'feed?' + e.data );
-		    XHR.get( admin.origin + 'header?' + e.data );
+//		    XHR.get( admin.origin + 'header?' + e.data );
 		}, false);
 
 		esource.addEventListener("Hi", function(e) {

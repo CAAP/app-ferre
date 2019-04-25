@@ -60,6 +60,19 @@
 		return ret;
 	    }
 
+	    function israbatt2(q, row, prev) {
+		let clave = asnum( row.dataset.clave );
+		let nodes = TICKET.bag.querySelectorAll("[data-clave='"+clave+"']");
+
+		let rabatt = parseFloat(q.rea) > 0 || q.precio != 'precio1';
+		if (rabatt ^ prev) {
+		    if (rabatt)
+			nodes.forEach(tr => tr.classList.add('rabatt'));
+		    else
+			nodes.forEach(tr => tr.classList.remove('rabatt'));
+		}
+	    }
+
 	    function israbatt(q, row, prev) {
 		let rabatt = parseFloat(q.rea) > 0 || q.precio != 'precio1';
 		if (rabatt ^ prev) {
@@ -87,6 +100,43 @@
 		let td = row.insertCell(); td.appendChild(rea); td.appendChild( document.createTextNode('%'));
 		let total = row.insertCell();
 		total.classList.add('pesos'); total.classList.add('total'); total.appendChild( document.createTextNode( tocents(q.totalCents) ) );
+	    }
+
+	    function reassure( e ) {
+		if (window.confirm('Quieres eliminar un producto?'))
+		    TICKET.remove( e.target.parentElement );
+	    }
+
+	    function displayItem2(q) {
+		let row = TICKET.bag.insertRow(0);
+		row.classList.add('bold');
+//		row.title = q.desc.substr(0,3); // TRYING OUT LOCATION XXX
+		row.dataset.clave = q.clave;
+		// DATOS INFO
+		row.insertCell().appendChild( document.createTextNode( q.id ) ); // q.clave XXX
+		let desc = row.insertCell();
+		desc.colSpan = 2;
+		if (q.faltante) { desc.classList.add('faltante'); }
+		desc.classList.add('basura'); desc.appendChild( document.createTextNode( q.desc ) );
+		desc.onclick = () => { UTILS.clearTable( BROWSE.lis ); BROWSE.doSearch( q.clave ); } // taken from 'gui_onloaded' line 55
+		// TRASH
+		let trash = row.insertCell();
+		trash.classList.add('trashout'); trash.appendChild( document.createTextNode( ' ' ) );
+		trash.onclick = reassure;
+//	BREAK
+		row = TICKET.bag.insertRow(1);
+		row.dataset.clave = q.clave;
+		// DATOS 4 CHANGE
+		row.insertCell().appendChild( inputE( [['type', 'number'], ['size', 2], ['min', 0], ['name', 'qty'], ['value', q.qty]] ) ).select();
+		let pcs = row.insertCell();
+		pcs.classList.add('pesos'); pcs.appendChild( precios(q) );
+		let rea = inputE( [['type', 'number'], ['size', 2], ['name', 'rea'], ['value', q.rea]] );
+		let td = row.insertCell(); td.classList.add('pesos'); td.appendChild(rea); td.appendChild( document.createTextNode('%'));
+		// TOTAL
+		let total = row.insertCell();
+		total.classList.add('pesos'); total.classList.add('total'); total.appendChild( document.createTextNode( tocents(q.totalCents) ) );
+		// RABATT
+		israbatt2(q, row, false);
 	    }
 
 	    function showItem(q) {
@@ -138,7 +188,7 @@
 		    let q = items.get( clave );
 		    let rabatt = (q.rea > 0 || q.precio != 'precio1');
 		    q[k] = v;
-		    israbatt(q, tr, rabatt);
+		    israbatt2(q, tr, rabatt);
 		    q.totalCents = uptoCents(q); // partial total
 		    items.set( clave, q );
 		    lbl.textContent = tocents(q.totalCents);
@@ -147,10 +197,37 @@
 		}
 	    };
 
+/*
+	    TICKET.update = function(e) {
+		let tr = e.target.parentElement.parentElement;
+//		let lbl = tr.querySelector('.total');
+		let clave = asnum( tr.dataset.clave );
+		let k = e.target.name;
+		let v = asnum( e.target.value );
+		let items = TICKET.items;
+
+		e.target.value = v;
+
+		if (k == 'qty' && v == 0) { return TICKET.remove(tr); }
+
+		if (items.has( clave )) {
+		    let q = items.get( clave );
+		    let rabatt = (q.rea > 0 || q.precio != 'precio1');
+		    q[k] = v;
+		    israbatt2(q, tr, rabatt);
+		    q.totalCents = uptoCents(q); // partial total
+		    items.set( clave, q );
+//		    lbl.textContent = tocents(q.totalCents);
+		    bagTotal();
+		    return clave; // FIX for caja.js XXX
+		}
+	    };
+*/
+
 	    TICKET.add = function(w) {
 		TICKET.myticket.style.visibility = 'visible';
 		TICKET.items.set( w.clave, w );
-		displayItem( w );
+		displayItem2( w );
 		bagTotal();
 	    };
 
@@ -170,8 +247,10 @@
 	    TICKET.remove = function(tr) {
 		let clave = asnum( tr.dataset.clave );
 		TICKET.items.delete( clave );
-		TICKET.bag.removeChild( tr );
-		if (!TICKET.bag.hasChildNodes()) { TICKET.empty(); } else { bagTotal(); } // TICKET.myticket.style.visibility = 'hidden';
+
+		TICKET.bag.querySelectorAll("[data-clave='"+clave+"']").forEach( tr => TICKET.bag.removeChild(tr) );
+
+		if (!TICKET.bag.hasChildNodes()) { TICKET.empty(); } else { bagTotal(); }
 		return clave; // FIX for caja.js XXX
 	    };
 

@@ -73,7 +73,7 @@
 	    TICKET.bag = document.getElementById( TICKET.bagID );
 	    TICKET.myticket = document.getElementById( TICKET.myticketID );
 
-		const tcount = document.getElementById(TICKET.tcountID);
+//		const tcount = document.getElementById(TICKET.tcountID);  XXX
 		const ttotal = document.getElementById( TICKET.ttotalID );
 		const persona = document.getElementById('personas');
 
@@ -97,9 +97,10 @@
 
 		TICKET.getPrice = getPrice;
 
-		TICKET.total = cents => { ttotal.textContent = (cents / 100).toFixed(2); tcount.textContent = TICKET.items.size;}; //' $' + 
+		TICKET.total = cents => { ttotal.textContent = '$' + (cents / 100).toFixed(2); }; //
+		// tcount.textContent = TICKET.items.size; XXX
 
-		TICKET.extraEmpty = () => { ttotal.textContent = ''; tcount.textContent = ''; };
+		TICKET.extraEmpty = () => { ttotal.textContent = ''; }; // tcount.textContent = ''; 
 
 		ferre.emptyBag = () => { TICKET.empty(); return ferre.xget('delete', {pid: Number(persona.value)}) };
 

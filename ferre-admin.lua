@@ -8,11 +8,14 @@ local pollin	= require'lzmq'.pollin
 local context	= require'lzmq'.context
 local cache	= require'carlos.ferre'.cache
 
-local format	= require'string'.format
+local format	= string.format
+local popen	= io.popen
 local concat	= table.concat
 local assert	= assert
 
 local print	= print
+
+local APP	= require'carlos.ferre'.APP
 
 -- No more external access after this point
 _ENV = nil -- or M
@@ -30,6 +33,19 @@ local CACHE	 = cache'Hi ADMIN'
 --------------------------------
 -- Local function definitions --
 --------------------------------
+
+local function getHeader()
+    local f = popen(format('%s/dump-header.lua', APP))
+    local v = f:read'l'
+    f:close()
+    return v
+end
+
+---------------------------------
+-- 	Dump header to CACHE   --
+---------------------------------
+
+CACHE.store('HDR', getHeader())
 
 ---------------------------------
 -- Program execution statement --
@@ -79,13 +95,17 @@ print'+\n'
 		    msgr:send_msg'Bye ADMIN'
 		    break
 		end
-	    end
-	    if cmd == 'CACHE' then
+	    elseif cmd == 'CACHE' then
 		local fruit = msg:match'%s(%a+)'
 		CACHE.sndkch( msgr, fruit )
 		print('CACHE sent to', fruit, '\n')
-	    end
-	    if cmd == 'update' or cmd == 'header' then
+--[[
+	    elseif cmd == 'header' then
+		local fruit = msg:match'%s(%a+)'
+		msgr:send_msg( format('%s %s', fruit, HEADER) )
+		print('HEADER sent\n')
+--]]
+	    elseif cmd == 'update' then
 		queues:send_msg( msg )
 		print('Message forward to queue\n')
 	    end
@@ -93,9 +113,9 @@ print'+\n'
 	if queues:events() == 'POLLIN' then
 	    local msg = queues:recv_msg()
 	    local ev = msg:match'%s(%a+)'
-	    if ev == 'update' or ev == 'header' then
+	    if ev == 'update' then
 		msgr:send_msg(msg)
-		print(format('%s event sent\n', ev:upper()))
+		print'UPDATE event sent\n'
 	    end
 	end
     end

@@ -51,7 +51,6 @@ local TABS	 = {tickets = 'uid, tag, prc, clave, desc, costol NUMBER, unidad, pre
 		   updates = 'vers INTEGER PRIMARY KEY, clave, campo, valor'}
 local INDEX	 = {'uid', 'tag', 'prc', 'clave', 'desc', 'costol', 'unidad', 'precio', 'unitario', 'qty', 'rea', 'totalCents'}
 local PEOPLE	 = {A = 'caja'} -- could use 'fruit' id instead XXX
-local HEADER
 
 local QRY	 = 'SELECT * FROM precios WHERE clave LIKE %q LIMIT 1'
 local QUID	 = 'SELECT uid, SUBSTR(uid, 12, 5) time, SUM(qty) count, ROUND(SUM(totalCents)/100.0, 2) total, tag FROM tickets WHERE uid %s %q GROUP BY uid'
@@ -195,6 +194,7 @@ local function bixolon(uid, conn)
     return true
 end
 
+--[[
 local function escape(a) return fd.reduce(a, fd.map(function(x) return format('%q',x) end), fd.into, {}) end
 
 -- XXX
@@ -206,6 +206,7 @@ local function getHeader(conn)
     ret = concat(ret, ', ')
     return format('%s [%s]', 'header', ret)
 end
+--]]
 
 ---------------------------------
 -- Program execution statement --
@@ -239,12 +240,6 @@ print('Successfully bound to:', QUERIES)
 -- Store PEOPLE values
 --
 fd.reduce(PRECIOS.query'SELECT * FROM empleados', fd.rejig(function(o) return o.nombre, asnum(o.id) end), fd.merge, PEOPLE)
---
--- -- -- -- -- --
---
--- get HEADER
---
-HEADER = getHeader(PRECIOS)
 --
 -- -- -- -- -- --
 --
@@ -294,10 +289,6 @@ print'+\n'
 	addUpdate(msg, PRECIOS, WEEK)
 	queues:send_msgs{'ADMIN', format('%s update %s', fruit, date('%FT%T', now()):sub(1, 10))}
 	print('Data updated correctly\n')
-    elseif cmd == 'header' then
-	local fruit = msg:match'%s(%a+)'
-	queues:send_msgs{'ADMIN', format('%s %s', fruit, HEADER)}
-	print('HEADER sent\n')
     end
 end
 
