@@ -63,7 +63,7 @@
 
 	    ferre.keyPressed = BROWSE.keyPressed;
 	    ferre.startSearch = BROWSE.startSearch;
-	    ferre.scroll = BROWSE.scroll;
+	    ferre.scroll = e => {if (BROWSE.lis.childElementCount > 0) {return BROWSE.scroll(e);} }
 	    ferre.cerrar = DATA.close;
 	})();
 

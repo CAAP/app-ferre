@@ -1,6 +1,6 @@
 <section id="main">
     <div id="buscar" class="dialogos query">
-        <div> <input id="busq" type="search" size=40 accesskey="b" placeholder="Art&iacute;culo o Clave" onchange="ferre.startSearch(event)" onkeyup="ferre.keyPressed(event)"> </div>
+	    <div ontouchstart="function (e) {e.preventDefault();}"> <input id="busq" type="search" size=40 accesskey="b" placeholder="Art&iacute;culo o Clave" onchange="ferre.startSearch(event)" onkeyup="ferre.keyPressed(event)"> <span class="droit"> <img src="svg/up.svg" height="40px" onclick="ferre.scroll({deltaY:0})" /> &nbsp;&nbsp; <img src="svg/down.svg" height="40px" onclick="ferre.scroll({deltaY:1})" /> </span> </div>
 
 	<section id="resultados" class="tablas">
         <table onwheel="ferre.scroll(event)">
@@ -9,7 +9,7 @@
                 <tr><th> Fecha </th><th> Clave </th><th> Descripci&oacute;n </th><th colspan=3> Precios </th></tr>
             </thead>
 	    </dt>
-	    <tbody id="tabla-resultados" class="amarillo" onclick="ferre.menu(event)"></tbody>
+	    <tbody id="tabla-resultados" class="amarillo" onclick="ferre.menu(event)"> </tbody>
 	</table>
 	</section>
     </div>
