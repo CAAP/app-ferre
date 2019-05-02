@@ -292,7 +292,14 @@ print'+\n'
     end
 end
 
---[[    
+--[[
+    if cmd == 'KILL' then
+	if msg:match'%s(%a+)' == 'DB' then
+	    queues:send_msgs{id, 'Bye DB'}
+	    break
+	end
+    end
+
     elseif cmd == 'query' then
 	local fruit = msg:match'fruit=(%a+)'
 print(msg, '\n')
@@ -302,13 +309,5 @@ print(msg, '\n')
 	f:close()
 print(v,'\n')
 	queues:send_msgs{'WEEK', format('%s query %s', fruit, v)}
-
-
-    if cmd == 'KILL' then
-	if msg:match'%s(%a+)' == 'DB' then
-	    queues:send_msgs{id, 'Bye DB'}
-	    break
-	end
-    end
 --]]
 
