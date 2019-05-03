@@ -63,8 +63,8 @@
 
 	    caja.keyPressed = BROWSE.keyPressed;
 	    caja.startSearch = BROWSE.startSearch;
-	    caja.scroll = BROWSE.scroll;
-	    caja.cerrar = DATA.close;
+	    caja.scroll = e => {if (BROWSE.lis.childElementCount > 0) {return BROWSE.scroll(e)} };
+    	    caja.cerrar = DATA.close;
 	})();
 
 	// TICKET
@@ -114,6 +114,15 @@
 	    const PRICE = DATA.STORES.PRICE;
 	    const cajita = document.getElementById('tabla-caja');
 
+	    function getUID(e) {
+		const UIDS = caja.UIDS;
+		const uid = e.target.parentElement.dataset.uid;
+		const fruit = localStorage.fruit;
+		UIDS.add( uid );
+		if (UIDS.size > 1) { caja.UPDATED = true; }
+		return caja.xget('uid', {uid: uid, fruit: fruit});
+	    }
+
 	    caja.add2bag = function(o) {
 		const clave = UTILS.asnum(o.clave);
 		if (TICKET.items.has( clave )) { console.log('Item is already in the bag.'); return false; }
@@ -128,16 +137,13 @@
 	    caja.add2caja = function(w) {
 		let row = cajita.insertRow(0);
 		row.dataset.uid = w.uid;
-		for (let k of ['time', 'nombre', 'count', 'total', 'tag']) { row.insertCell().appendChild( document.createTextNode(w[k]) ); }
-	    };
+		for (let k of ['time', 'nombre', 'count', 'total']) { row.insertCell().appendChild( document.createTextNode(w[k]) ); }
+		let tag = row.insertCell();
+		tag.classList.add('addme');
+		tag.appendChild( document.createTextNode( w.tag ) );
+		tag.onclick = getUID;
 
-	    caja.getUID = e => {
-		const UIDS = caja.UIDS;
-		const uid = e.target.parentElement.dataset.uid;
-		const fruit = localStorage.fruit;
-		UIDS.add( uid );
-		if (UIDS.size > 1) { caja.UPDATED = true; }
-		return caja.xget('uid', {uid: uid, fruit: fruit});
+ onclick="caja.getUID(event)" 
 	    };
 
 	})();
