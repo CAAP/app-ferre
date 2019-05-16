@@ -48,14 +48,14 @@ local HOY	 = date('%d-%b-%y', now())
 local QUERIES	 = 'ipc://queries.ipc'
 
 local TABS	 = {tickets = 'uid, tag, prc, clave, desc, costol NUMBER, unidad, precio NUMBER, unitario NUMBER, qty INTEGER, rea INTEGER, totalCents INTEGER',
-		   updates = 'vers INTEGER PRIMARY KEY, clave, campo, valor'}
+		   updates = 'vers INTEGER PRIMARY KEY, clave, campo, valor'
+	   	   facturas = 'uid, fapi PRIMARY KEY NOT NULL, rfc NOT NULL, sat NOT NULL'}
 local INDEX	 = {'uid', 'tag', 'prc', 'clave', 'desc', 'costol', 'unidad', 'precio', 'unitario', 'qty', 'rea', 'totalCents'}
 local PEOPLE	 = {A = 'caja'} -- could use 'fruit' id instead XXX
 
 local QRY	 = 'SELECT * FROM precios WHERE clave LIKE %q LIMIT 1'
 local QUID	 = 'SELECT uid, SUBSTR(uid, 12, 5) time, SUM(qty) count, ROUND(SUM(totalCents)/100.0, 2) total, tag FROM tickets WHERE uid %s %q GROUP BY uid'
 local QTKT	 = 'SELECT uid, tag, clave, qty, rea, totalCents,  prc "precio" FROM tickets WHERE uid LIKE %q'
---local QDESC	 = 'SELECT desc FROM precios WHERE desc LIKE %q ORDER BY desc LIMIT 1'
 local QHEAD	 = 'SELECT uid, tag, ROUND(SUM(totalCents)/100.0, 2) total from tickets WHERE uid LIKE %q GROUP BY uid'
 local QLPR	 = 'SELECT desc, clave, qty, rea, ROUND(unitario, 2) unitario, ROUND(totalCents/100.0, 2) subTotal FROM tickets WHERE uid LIKE %q'
 
@@ -66,7 +66,6 @@ local PRCS	 = {prc1=true, prc2=true, prc3=true}
 
 local INU	 = 'INSERT INTO updates (clave, campo, valor) VALUES (%s, %q, %s)'
 local UPQ	 = 'UPDATE %q SET %s %s'
---local UPF	 = 'UPDATE datos SET fecha = %q %s'
 
 
 -- COSTOL = PRINTF("%d", costo*(100+impuesto)*(100-descuento)*(1-rebaja/100.0)+0.5)
@@ -197,7 +196,6 @@ end
 --[[
 local function escape(a) return fd.reduce(a, fd.map(function(x) return format('%q',x) end), fd.into, {}) end
 
--- XXX
 local function getHeader(conn)
     local ret = escape(conn.header'datos')
     remove(ret) -- uidSAT

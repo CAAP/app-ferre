@@ -46,28 +46,11 @@
 
 	})();
 
-	// CAJA
+	// FACTURAS
 	(function() {
-	    caja.origin = document.location.origin+':5040/';
+	    facturas.origin = document.location.origin+':5040/';
 	    DATA.inplace = () => Promise.resolve(true);
 	})();
-
-/*
-	// BROWSE
-	(function() {
-	    const PRICE = DATA.STORES.PRICE;
-	    BROWSE.tab = document.getElementById('resultados');
-	    BROWSE.lis = document.getElementById('tabla-resultados');
-
-	    BROWSE.DBget = s => IDB.readDB( PRICE ).get( s );
-	    BROWSE.DBindex = (a, b, f) => IDB.readDB( PRICE ).index( a, b, f );
-
-	    caja.keyPressed = BROWSE.keyPressed;
-	    caja.startSearch = BROWSE.startSearch;
-	    caja.scroll = e => {if (BROWSE.lis.childElementCount > 0) {return BROWSE.scroll(e)} };
-    	    caja.cerrar = DATA.close;
-	})();
-*/
 
 	// TICKET
 	(function() {
@@ -96,36 +79,23 @@
 
 	    UTILS.redondeo = x => x; // TEMPORAL x FACTURAR
 
-	    caja.emptyBag = () => { caja.UIDS.clear(); caja.UPDATED = false; return TICKET.empty() }
-
-	    caja.print = function(a) {
-		if (TICKET.items.size == 0) { return Promise.resolve() }
-		if (!caja.UPDATED)
-		    caja.UIDS.forEach(uid => XHR.get(caja.origin + 'bixolon?' + uid));
-		else {
-		    let objs = ['pid=A'];
-		    TICKET.items.forEach( item => objs.push( 'query=' + TICKET.plain(item) ) );
-		    return caja.xget(a, objs);
-		}
-	    };
+	    facturas.emptyBag = TICKET.empty;
 
 	})();
 
 	// FEED
 	(function() {
 	    const PRICE = DATA.STORES.PRICE;
-	    const cajita = document.getElementById('tabla-caja');
+	    const facturas = document.getElementById('tabla-facturas');
 
 	    function getUID(e) {
-		const UIDS = caja.UIDS;
 		const uid = e.target.parentElement.dataset.uid;
 		const fruit = localStorage.fruit;
-		UIDS.add( uid );
-		if (UIDS.size > 1) { caja.UPDATED = true; }
-		return caja.xget('uid', {uid: uid, fruit: fruit});
+		TICKET.empty(); // in case there's a TICKET already shown
+		return facturas.xget('uid', {uid: uid, fruit: fruit});
 	    }
 
-	    caja.add2bag = function(o) {
+	    facturas.add2bag = function(o) {
 		const clave = UTILS.asnum(o.clave);
 		if (TICKET.items.has( clave )) { console.log('Item is already in the bag.'); return false; }
 
@@ -136,13 +106,13 @@
 		    .catch( e => console.log(e) );
 	    };
 
-	    caja.add2caja = function(w) {
-		let row = cajita.insertRow(0);
+	    facturas.addInvoice = function(w) {
+		let row = facturas.insertRow(0);
 		row.dataset.uid = w.uid;
-		for (let k of ['time', 'nombre', 'count', 'total']) { row.insertCell().appendChild( document.createTextNode(w[k]) ); }
+		for (let k of ['time', 'razonSocial', 'total']) { row.insertCell().appendChild( document.createTextNode(w[k]) ); }
 		let tag = row.insertCell();
 		tag.classList.add('addme');
-		tag.appendChild( document.createTextNode( w.tag ) );
+		tag.appendChild( document.createTextNode( 'mostrar' ) );
 		tag.onclick = getUID;
 	    };
 
