@@ -89,7 +89,6 @@
 	    let records = new Map()
 	    let fields = new Set();
 
-
 	    function outputs(row, k) {
 		let ie = document.createElement('input');
 		ie.type = 'text'; ie.size = 7; ie.name = k; ie.disabled = true; // ie.size = 7;

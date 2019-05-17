@@ -83,6 +83,32 @@
 
 	})();
 
+
+	// Cliente - RFC
+	(function() {
+
+	    facturas.addField = k => {
+		if (k.startsWith('u')) { return; } // already taken into account by prc_
+		let row = tabla.insertRow();
+		// input && defaults
+//		row.insertCell().appendChild( document.createTextNode(k) );
+		let cell = row.insertCell();
+		let ie = document.createElement('input');
+		ie.type = 'text'; ie.size = 8; ie.name = k;
+		ie.placeholder = k;
+		// specifics
+		switch(k) {
+		    case 'razonSocial':
+			 'calle':
+				ie.size = 35; cell.colSpan = 2; break;
+		    case 'correo': ie.size = 30; cell.colSpan = 2; break;
+		}
+		cell.appendChild( ie );
+ 		fields.add( k );
+	    };
+	})();
+
+
 	// FEED
 	(function() {
 	    const PRICE = DATA.STORES.PRICE;
@@ -115,7 +141,6 @@
 		tag.appendChild( document.createTextNode( 'mostrar' ) );
 		tag.onclick = getUID;
 	    };
-
 	})();
 
 
