@@ -15,10 +15,10 @@
     <div id="ticket" class="tabla">
 	<table>
 	    <thead>
-		<tr><td><button name="cerrar" onclick="facturas.emptyBag()">Cancelar</button>&emsp;<button name="timbrar" onclick="facturas.timbrar()">Timbrar</button></td></tr>
-		<tr><td><input id="" type="search" size=15 accesskey="b" placeholder="RFC" onkeyup=""></td></tr>
+		    <tr><td><button name="cerrar" onclick="facturas.emptyBag()">Cancelar</button></td><td><button name="timbrar" onclick="facturas.timbrar()">Timbrar</button></td></tr>
+		    <tr><td><input id="" type="search" size=15 accesskey="b" placeholder="RFC" onkeyup=""></td><td><img src="svg/plus.svg" height=20 onclick="facturas.toggleForm()" /></td></tr>
 	    </thead>
-	    <tbody id="">
+	    <tbody id="taxes">
 	    </tbody>
 	</table>
 	<section class="scrollable">

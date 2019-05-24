@@ -8,6 +8,7 @@
 
 	    const addInvoice = facturas.addInvoice;
 	    const add2bag  = facturas.add2bag;
+	    const addField = facturas.addField;
 
 		function updateOne( o ) {
 		    const store = o.store; delete o.store;
@@ -72,6 +73,13 @@
 			XHR.getJSON('json/' + data).then(a => a.forEach( addInvoice ));
 		    else
 			addInvoice(JSON.parse( data ));
+		}, false);
+
+		esource.addEventListener("taxes", function(e) {
+		    elbl.innerHTML = "taxes header event";
+		    console.log("taxes header event received");
+		    const data = e.data;
+		    JSON.parse(e.data).forEach( addField );
 		}, false);
 
 	})();

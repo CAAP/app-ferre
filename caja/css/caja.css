@@ -13,10 +13,6 @@ button[name=guardar] { color: white; background-color: blue; }
 
 .azul:hover { transform: scale(1.2); }
 
-.encontrado { background-color: #aaeedd; }
-
-.modificado { background-color: #00cc44; }
-
 .precio1 { background-color: #e6ccff; }
 
 .amarillo tr:hover > td { background-color: #ffff97; }
@@ -38,7 +34,7 @@ button[name=guardar] { color: white; background-color: blue; }
 .rabatt .total { background-color: #e6ccff; }
 
 .marcado td:hover {
-    cursor:default;
+    cursor: default;
     font: bold italic 100% arial;
 }
 
@@ -62,8 +58,6 @@ button[name=guardar] { color: white; background-color: blue; }
     background-color: #ffffff;
 }
 
-.basura { cursor: url("svg/trash.svg"), default; }
-
 .dialogos {
     z-index: 3;
     display: inline-block;
@@ -78,9 +72,13 @@ button[name=guardar] { color: white; background-color: blue; }
     background-image: url("svg/trash.svg");
     background-repeat: no-repeat;
     background-position: center;
+    cursor: pointer;
 }
 
-.addme { text-decoration: underline; }
+.addme {
+    text-decoration: underline;
+    cursor: pointer;
+}
 
 .droit { padding-left: 1em; }
 
@@ -131,4 +129,6 @@ button[name=guardar] { color: white; background-color: blue; }
 }
 
 td { font: 80% arial; }
+
+tfoot { background-color: #e5e5e5; }
 

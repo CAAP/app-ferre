@@ -91,6 +91,7 @@ button[name=guardar] { color: white; background-color: blue; }
     background-image: url("svg/trash.svg");
     background-repeat: no-repeat;
     background-position: center;
+    cursor: pointer;
 }
 
 .droit { padding-left: 1em; }

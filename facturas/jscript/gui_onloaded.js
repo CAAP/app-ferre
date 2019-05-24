@@ -86,12 +86,14 @@
 
 	// Cliente - RFC
 	(function() {
+	    let tabla = document.getElementById('taxes');
+	    let dub = false;
+
+	    tabla.style.visibility = 'collapse';
 
 	    facturas.addField = k => {
-		if (k.startsWith('u')) { return; } // already taken into account by prc_
-		let row = tabla.insertRow();
+		let row = dub ? tabla.rows.item(tabla.rows.length-1) : tabla.insertRow();
 		// input && defaults
-//		row.insertCell().appendChild( document.createTextNode(k) );
 		let cell = row.insertCell();
 		let ie = document.createElement('input');
 		ie.type = 'text'; ie.size = 8; ie.name = k;
@@ -99,12 +101,20 @@
 		// specifics
 		switch(k) {
 		    case 'razonSocial':
-			 'calle':
+		    case 'calle':
 				ie.size = 35; cell.colSpan = 2; break;
-		    case 'correo': ie.size = 30; cell.colSpan = 2; break;
+		    case 'correo': ie.size = 20; cell.colSpan = 2; break;
+		    default: dub = !dub;
 		}
 		cell.appendChild( ie );
- 		fields.add( k );
+// 		fields.add( k );
+	    };
+
+	    facturas.toggleForm = () => {
+		if (tabla.style.visibility == 'collapse')
+		    tabla.style.visibility = 'visible';
+		else
+		    tabla.style.visibility = 'collapse';
 	    };
 	})();
 

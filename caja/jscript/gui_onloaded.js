@@ -78,6 +78,8 @@
 	    const tbruto = document.getElementById( TICKET.tbrutoID );
 	    const ttotal = document.getElementById( TICKET.ttotalID );
 
+	    const cajita = document.getElementById('tabla-caja');
+
 	    TICKET.bag = document.getElementById( TICKET.bagID );
 	    TICKET.myticket = document.getElementById( TICKET.myticketID );
 
@@ -88,7 +90,7 @@
 	    TICKET.total = function(amount) {
 		tiva.textContent = tocents( amount / IVA );
 		tbruto.textContent = tocents( amount / BRUTO );
-		ttotal.textContent = tocents( amount );
+		ttotal.textContent = '$' + tocents( amount );
 	    };
 
 	    TICKET.bag = document.getElementById( TICKET.bagID );
@@ -105,8 +107,17 @@
 		else {
 		    let objs = ['pid=A'];
 		    TICKET.items.forEach( item => objs.push( 'query=' + TICKET.plain(item) ) );
-		    return caja.xget(a, objs);
+		    return caja.xget(a, objs)
+			       .then( caja.emptyBag );
 		}
+	    };
+
+	    caja.facturar = function() {
+		if (TICKET.items.size == 0) { return Promise.resolve() }
+		let objs = ['pid=A'];
+		TICKET.items.forEach( item => objs.push( 'query=' + TICKET.plain(item) ) );
+		return caja.xget('factura', objs)
+			   .then( caja.emptyBag );
 	    };
 
 	})();
@@ -115,9 +126,9 @@
 	(function() {
 	    const PRICE = DATA.STORES.PRICE;
 	    const cajita = document.getElementById('tabla-caja');
+	    const UIDS = caja.UIDS;
 
 	    function getUID(e) {
-		const UIDS = caja.UIDS;
 		const uid = e.target.parentElement.dataset.uid;
 		const fruit = localStorage.fruit;
 		UIDS.add( uid );

@@ -48,13 +48,13 @@ local HOY	 = date('%d-%b-%y', now())
 local QUERIES	 = 'ipc://queries.ipc'
 
 local TABS	 = {tickets = 'uid, tag, prc, clave, desc, costol NUMBER, unidad, precio NUMBER, unitario NUMBER, qty INTEGER, rea INTEGER, totalCents INTEGER',
-		   updates = 'vers INTEGER PRIMARY KEY, clave, campo, valor'
+		   updates = 'vers INTEGER PRIMARY KEY, clave, campo, valor',
 	   	   facturas = 'uid, fapi PRIMARY KEY NOT NULL, rfc NOT NULL, sat NOT NULL'}
 local INDEX	 = {'uid', 'tag', 'prc', 'clave', 'desc', 'costol', 'unidad', 'precio', 'unitario', 'qty', 'rea', 'totalCents'}
 local PEOPLE	 = {A = 'caja'} -- could use 'fruit' id instead XXX
 
 local QRY	 = 'SELECT * FROM precios WHERE clave LIKE %q LIMIT 1'
-local QUID	 = 'SELECT uid, SUBSTR(uid, 12, 5) time, SUM(qty) count, ROUND(SUM(totalCents)/100.0, 2) total, tag FROM tickets WHERE uid %s %q GROUP BY uid'
+local QUID	 = 'SELECT uid, SUBSTR(uid, 12, 5) time, SUM(qty) count, ROUND(SUM(totalCents)/100.0, 2) total, tag FROM tickets WHERE tag NOT LIKE "factura" AND uid %s %q GROUP BY uid'
 local QTKT	 = 'SELECT uid, tag, clave, qty, rea, totalCents,  prc "precio" FROM tickets WHERE uid LIKE %q'
 local QHEAD	 = 'SELECT uid, tag, ROUND(SUM(totalCents)/100.0, 2) total from tickets WHERE uid LIKE %q GROUP BY uid'
 local QLPR	 = 'SELECT desc, clave, qty, rea, ROUND(unitario, 2) unitario, ROUND(totalCents/100.0, 2) subTotal FROM tickets WHERE uid LIKE %q'
@@ -164,7 +164,7 @@ local function addUpdate(msg, conn, conn2) -- conn, conn2
     return true
 end
 
-local function getName(o)
+local function addName(o)
     local pid = asnum(o.uid:match'P([%d%a]+)')
     o.nombre = pid and PEOPLE[pid] or 'NaP';
     return o 
@@ -173,7 +173,7 @@ end
 local function dumpFEED(conn, path, qry)
     local FIN = open(path, 'w')
     FIN:write'['
-    FIN:write( concat(fd.reduce(conn.query(qry), fd.map(getName), fd.map(asJSON), fd.into, {}), ',\n') )
+    FIN:write( concat(fd.reduce(conn.query(qry), fd.map(addName), fd.map(asJSON), fd.into, {}), ',\n') )
     FIN:write']'
     FIN:close()
     return true
@@ -185,7 +185,7 @@ local function bixolon(uid, conn)
     local HEAD = {'tag', 'uid', 'total', 'nombre'}
     local DATOS = {'clave', 'desc', 'qty', 'rea', 'unitario', 'subTotal'}
 
-    local head = getName(fd.first(conn.query(format(QHEAD, '%.2f', uid)), function(x) return x end))
+    local head = addName(fd.first(conn.query(format(QHEAD, '%.2f', uid)), function(x) return x end))
 
     local data = fd.reduce(conn.query(format(QLPR, '%.2f', '%.2f', uid)), fd.into, {})
 
@@ -259,9 +259,18 @@ print'+\n'
     if cmd == 'ticket' or cmd == 'presupuesto' then
 	local uid = addTicket(WEEK, PRECIOS, msg)
 	local qry = format(QUID, 'LIKE', uid)
-	local msg = asJSON(getName(fd.first(WEEK.query(qry), function(x) return x end)))
+	local msg = asJSON(addName(fd.first(WEEK.query(qry), function(x) return x end)))
 	queues:send_msgs{'WEEK', format('feed %s', msg)}
 --	bixolon(uid, WEEK)
+	print(msg, '\n')
+    elseif cmd == 'factura' then
+	local uid = addTicket(WEEK, PRECIOS, msg)
+
+local QUID	 = 'SELECT uid, SUBSTR(uid, 12, 5) time, ROUND(SUM(totalCents)/100.0, 2) total FROM tickets WHERE tag LIKE "factura" AND uid %s %q GROUP BY uid'
+
+	local qry = format(QUID, 'LIKE', uid)
+	local msg = asJSON(addName(fd.first(WEEK.query(qry), function(x) return x end)))
+	queues:send_msgs{'WEEK', format('invoice %s', msg)}
 	print(msg, '\n')
     elseif cmd == 'feed' then
 	local fruit = msg:match'%s(%a+)' -- secs = %s(%d+)$
@@ -270,6 +279,8 @@ print'+\n'
 	dumpFEED(WEEK, feedPath(fruit), qry)
 	print'Updates stored and dumped\n'
 	queues:send_msgs{'WEEK', format('%s feed %s-feed.json', fruit, fruit)}
+    elseif cmd == 'invoce' then
+
     elseif cmd == 'uid' then
 	local fruit = msg:match'fruit=(%a+)'
 	local uid   = msg:match'uid=([^!&]+)'

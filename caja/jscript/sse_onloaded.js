@@ -2,8 +2,9 @@
 	(function() {
 	    let esource = new EventSource(document.location.origin+':5030');
 
-	    const elbl = document.getElementById("eventos");
+	    const elbl = document.getElementById('eventos');
 	    const flbl = document.getElementById('frutas');
+	    const tlbl = document.getElementById('taxes');
 	    const STORES = DATA.STORES;
 
 	    const add2caja = caja.add2caja;
@@ -16,11 +17,13 @@
 
 		// First message received after successful handshake
 		esource.addEventListener("fruit", function(e) {
-		    console.log('I am ' + e.data);
-		    localStorage.fruit = e.data;
-		    flbl.innerHTML = e.data;
-		    XHR.get( caja.origin + 'CACHE?' + e.data );
-		    XHR.get( caja.origin + 'feed?' + e.data );
+		    let fruit = e.data;
+		    console.log('I am ' + fruit);
+		    localStorage.fruit = fruit;
+		    flbl.innerHTML = fruit;
+		    XHR.get( caja.origin + 'CAJA?' + fruit );
+		    XHR.get( caja.origin + 'CACHE?' + fruit );
+		    XHR.get( caja.origin + 'feed?' + fruit );
 		}, false);
 
 		esource.addEventListener("Hi", function(e) {

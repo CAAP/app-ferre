@@ -6,6 +6,7 @@ local fd	= require'carlos.fold'
 local asJSON	= require'carlos.json'.asJSON
 local newUID	= require'carlos.ferre'.newUID
 local uid2week	= require'carlos.ferre'.uid2week
+local cache	= require'carlos.ferre'.cache
 local pollin	= require'lzmq'.pollin
 local context	= require'lzmq'.context
 
@@ -27,11 +28,23 @@ local UPSTREAM   = 'ipc://upstream.ipc'
 local DOWNSTREAM = 'ipc://downstream.ipc'
 local QUERIES	 = 'ipc://queries.ipc'
 
-local SUBS	 = {'feed', 'uid', 'query', 'bixolon', 'KILL'}
+local SUBS	 = {'feed', 'uid', 'query', 'bixolon', 'CACHE', 'KILL'}
+
+local CACHE	 = cache'Hi WEEK'
+
+local CAJA, TAXES
 
 --------------------------------
 -- Local function definitions --
 --------------------------------
+
+local function getRFC()
+    local f = popen(format('%s/dump-rfc.lua', APP))
+    local v = f:read'l'
+    f:close()
+    return v
+end
+
 local function addWeek(msg)
     local json = msg:match'uid='
     local uid = json and msg:match'uid=([^!&]+)' or msg:match'%s([^!]+)'
@@ -48,6 +61,11 @@ local function queryDB(msg)
     return format('%s query %s', fruit, v)
 end
 
+---------------------------------
+-- 	Dump header to CACHE   --
+---------------------------------
+
+CACHE.store('RFC', getRFC())
 
 ---------------------------------
 -- Program execution statement --
@@ -96,8 +114,20 @@ print'+\n'
 		    msgr:send_msg'Bye WEEK'
 		    break
 		end
+	    elseif cmd == 'CACHE' then
+		local fruit = msg:match'%s(%a+)'
+		CACHE.sndkch( msgr, fruit )
+		print('CACHE sent to', fruit, '\n')
+	    elseif cmd == 'CAJA' then
+		CAJA = msg:match'%s(%a+)'
+		print('CAJA node identified as', CAJA, '\n')
+	    elseif cmd == 'TAXES' then
+		TAXES = msg:match'%s(%a+)'
+		print('TAXES node identified as', TAXES, '\n')
 	    elseif cmd == 'query' then
 		msgr:send_msg( queryDB(msg) )
+--	    elseif cmd == 'taxes' then
+--		msgr:send_msg( format('%s %s', TAXES, msg) )
 	    elseif cmd == 'feed' then
 		queues:send_msg(msg)
 		print('Data forward to queue\n')
