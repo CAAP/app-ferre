@@ -46,6 +46,7 @@ _ENV = nil -- or M
 local SEMANA	 = 3600 * 24 * 7
 local HOY	 = date('%d-%b-%y', now())
 local QUERIES	 = 'ipc://queries.ipc'
+local PRINTER	 = 'nc -N 192.168.3.21 9100'
 
 local TABS	 = {tickets = 'uid, tag, prc, clave, desc, costol NUMBER, unidad, precio NUMBER, unitario NUMBER, qty INTEGER, rea INTEGER, totalCents INTEGER',
 		   updates = 'vers INTEGER PRIMARY KEY, clave, campo, valor',
@@ -185,11 +186,16 @@ local function bixolon(uid, conn)
     local HEAD = {'tag', 'uid', 'total', 'nombre'}
     local DATOS = {'clave', 'desc', 'qty', 'rea', 'unitario', 'subTotal'}
 
-    local head = addName(fd.first(conn.query(format(QHEAD, '%.2f', uid)), function(x) return x end))
+    local head = addName(fd.first(conn.query(format(QHEAD, uid)), function(x) return x end))
 
     local data = fd.reduce(conn.query(format(QLPR, '%.2f', '%.2f', uid)), fd.into, {})
 
-    print( ticket(head, data) )
+
+    print(concat(fd.reduce(fd.keys(data), fd.map(function(_,k) return k end), fd.into, {}), ' '))
+
+    local skt = popen(PRINTER, 'w')
+    skt:write( ticket(head, data) )
+    skt:close()
     return true
 end
 
@@ -261,7 +267,7 @@ print'+\n'
 	local qry = format(QUID, 'LIKE', uid)
 	local msg = asJSON(addName(fd.first(WEEK.query(qry), function(x) return x end)))
 	queues:send_msgs{'WEEK', format('feed %s', msg)}
---	bixolon(uid, WEEK)
+	bixolon(uid, WEEK)
 	print(msg, '\n')
     elseif cmd == 'factura' then
 	local uid = addTicket(WEEK, PRECIOS, msg)
@@ -291,7 +297,7 @@ local QUID	 = 'SELECT uid, SUBSTR(uid, 12, 5) time, ROUND(SUM(totalCents)/100.0,
 	queues:send_msgs{'WEEK', format('%s uid %s-feed.json', fruit, fruit)}
     elseif cmd == 'bixolon' then
 	local uid, week = msg:match'%s([^!]+)%s([^!]+)'
---	bixolon(uid, which(week))
+	bixolon(uid, which(week))
 	print('Printing data ...\n')
     elseif cmd == 'update' then
 	local fruit = msg:match'fruit=(%a+)'
