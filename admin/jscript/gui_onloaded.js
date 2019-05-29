@@ -163,8 +163,10 @@
 
 	    function update(clave, o) { return XHR.get(admin.origin + 'update?' + UTILS.encPpties(Object.assign(o,{clave: clave, tbname: 'datos', fruit: localStorage.fruit}))) }
 
-	    admin.enviar = function() {
+	    admin.enviar = function(fecha) {
 		const clave = UTILS.asnum(tkt.dataset.clave);
+		if (fecha)
+		    CHANGES.update(clave, 'fecha', true);
 		if (window.confirm('Estas seguro de realizar los cambios?'))
 		    CHANGES.get(clave, update)
 		    .then( admin.cancelar );

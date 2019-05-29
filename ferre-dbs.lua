@@ -147,6 +147,7 @@ local function addUpdate(msg, conn, conn2) -- conn, conn2
     local clause = format('WHERE clave LIKE %q', clave)
     local toll = found(w, TOLL)
 
+    if w.fecha then w.fecha = HOY end -- only fecha updates!!!XXX
     if toll then w.fecha = HOY end
 
     local u = fd.reduce(fd.keys(w), fd.filter(sanitize(DIRTY)), fd.map( reformat ), fd.into, {})
