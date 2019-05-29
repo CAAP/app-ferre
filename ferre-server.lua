@@ -16,6 +16,9 @@ local assert	  = assert
 local print	  = print
 local pairs	  = pairs
 
+local concat = table.concat
+local pcall = pcall
+
 -- No more external access after this point
 _ENV = nil -- or M
 
@@ -38,8 +41,10 @@ end
 
 local function distill(msg) return msg:match'(%a+)%s([^!]+)' end
 
-local function handshake(server)
+local function handshakeORIG(server)
     local id, msg = receive(server)
+    msg = msg and concat(msg) or ''
+    if #msg > 0 then print('message:', concat(msg, ' ')) end
     local peer = FRUITS[id]
     if peer then FRUITS[id] = false; return 'Bye '..id; else FRUITS[id] = true end
 
@@ -52,9 +57,21 @@ local function handshake(server)
     return 'Null message'
 end
 
+local function handshake(server)
+    local id, msg = receive(server)
+    msg = msg and concat(msg) or ''
+
+    if #msg > 0 then
+	server:send_msgs{id, HELLO}
+	server:send_msgs{id, ssevent('fruit', id)}
+	FRUITS[id] = true 
+	return 'New id: '..id
+    end
+end
+
 -- XXX Maybe count the number of fails
 local function broadcast(server, msg, fruit)
-    local function send2fruit(id) if not(server:send_msgs{id, msg}) then FRUITS[id] = false end end
+    local function send2fruit(id) if not pcall(function() server:send_msgs{id, msg}end) then FRUITS[id] = false end end
 
     if fruit then send2fruit(fruit)
     else for id in pairs(FRUITS) do send2fruit(id) end end
@@ -82,6 +99,8 @@ end
 local CTX = context()
 
 local server = assert(CTX:socket'STREAM')
+
+assert( server:notify(false) )
 
 assert(server:bind( ENDPOINT ))
 

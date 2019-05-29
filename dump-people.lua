@@ -14,7 +14,7 @@ _ENV =  nil
 
 local DEST = HOME .. '/ventas/json/people.json'
 
-local conn = dbconn'ferre'
+local conn = dbconn'personas'
 local QRY = 'SELECT id, nombre FROM empleados'
 
 local FIN  = open(DEST, 'w')

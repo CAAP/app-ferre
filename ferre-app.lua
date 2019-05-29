@@ -31,19 +31,19 @@ local OK	 = response{status='ok'}
 local function receive(srv)
     local function msgs() return srv:recv_msgs() end -- returns iter, state & counter
     local id, more = assert(srv:recv_msg())
-    if more then more = fd.reduce(msgs, fd.into, {}) end
-    return id, more
+    return id, more and fd.reduce(msgs, fd.into, {}) or {}
 end
 
 local function distill(a) return format('%s %s', concat(a, ''):match'GET /(%a+)%?([^%?]+) HTTP') end
 
 local function handshake(server, tasks)
     local id, msg = receive(server)
-    if #msg > 0 then
-	tasks:send_msg(urldecode(distill(msg)))
+    msg = distill(msg)
+    if msg then
+	tasks:send_msg(urldecode(msg))
 	server:send_msgs{id, OK}
 	server:send_msgs{id, ''}
-	return msg[1]:match'([^%c]+)%c'
+	return msg:match'([^%c]+)%c'
     else
 	return 'Received empty message ;-('
     end

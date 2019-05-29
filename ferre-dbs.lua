@@ -67,7 +67,7 @@ local PRCS	 = {prc1=true, prc2=true, prc3=true}
 
 local INU	 = 'INSERT INTO updates (clave, campo, valor) VALUES (%s, %q, %s)'
 local UPQ	 = 'UPDATE %q SET %s %s'
-
+local COSTOL 	 = 'costol = costo*(100+impuesto)*(100-descuento)*(1-rebaja/100.0)'
 
 -- COSTOL = PRINTF("%d", costo*(100+impuesto)*(100-descuento)*(1-rebaja/100.0)+0.5)
 --------------------------------
@@ -151,7 +151,13 @@ local function addUpdate(msg, conn, conn2) -- conn, conn2
 
     local u = fd.reduce(fd.keys(w), fd.filter(sanitize(DIRTY)), fd.map( reformat ), fd.into, {})
     local qry = format(UPQ, 'datos', concat(u, ', '), clause)
-    assert(conn.exec( qry ))
+
+---[[
+    assert(conn.exec( qry ), qry)
+    if toll then
+	qry = format(UPQ, 'datos', COSTOL, clause)
+	assert(conn.exec( qry ), qry)
+    end
 
     if found(w, PRCS) or toll then
 	local a = up_precios(conn, w, clause)
@@ -163,6 +169,7 @@ local function addUpdate(msg, conn, conn2) -- conn, conn2
     for _,q in ipairs(u) do assert(conn2.exec( q )) end
 
     return true
+--]]
 end
 
 local function addName(o)
@@ -188,14 +195,12 @@ local function bixolon(uid, conn)
 
     local head = addName(fd.first(conn.query(format(QHEAD, uid)), function(x) return x end))
 
-    local data = fd.reduce(conn.query(format(QLPR, '%.2f', '%.2f', uid)), fd.into, {})
-
-
-    print(concat(fd.reduce(fd.keys(data), fd.map(function(_,k) return k end), fd.into, {}), ' '))
+    local data = fd.reduce(conn.query(format(QLPR, uid)), fd.into, {})
 
     local skt = popen(PRINTER, 'w')
     skt:write( ticket(head, data) )
     skt:close()
+
     return true
 end
 
@@ -243,7 +248,10 @@ print('Successfully bound to:', QUERIES)
 --
 -- Store PEOPLE values
 --
-fd.reduce(PRECIOS.query'SELECT * FROM empleados', fd.rejig(function(o) return o.nombre, asnum(o.id) end), fd.merge, PEOPLE)
+do
+    local people = assert( dbconn'personas' )
+    fd.reduce(people.query'SELECT * FROM empleados', fd.rejig(function(o) return o.nombre, asnum(o.id) end), fd.merge, PEOPLE)
+end
 --
 -- -- -- -- -- --
 --

@@ -62,7 +62,7 @@
 
 	    function israbatt2(q, row, prev) {
 		let clave = asnum( row.dataset.clave );
-		let nodes = TICKET.bag.querySelectorAll("[data-clave='"+clave+"']");
+		let nodes = Array.from(TICKET.bag.querySelectorAll("[data-clave='"+clave+"']"));
 
 		let rabatt = parseFloat(q.rea) > 0 || q.precio != 'precio1';
 		if (rabatt ^ prev) {
@@ -248,7 +248,7 @@
 		let clave = asnum( tr.dataset.clave );
 		TICKET.items.delete( clave );
 
-		TICKET.bag.querySelectorAll("[data-clave='"+clave+"']").forEach( tr => TICKET.bag.removeChild(tr) );
+		Array.from(TICKET.bag.querySelectorAll("[data-clave='"+clave+"']")).forEach( tr => TICKET.bag.removeChild(tr) );
 
 		if (!TICKET.bag.hasChildNodes()) { TICKET.empty(); } else { bagTotal(); }
 		return clave; // FIX for caja.js XXX

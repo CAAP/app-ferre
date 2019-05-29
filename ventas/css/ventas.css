@@ -167,6 +167,6 @@ button[name=guardar] { color: white; background-color: blue; }
     order: 2;
 }
 
-td { font: 70% arial; }
+td { font: bold 75% arial; }
 
 
