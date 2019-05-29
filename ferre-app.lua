@@ -13,6 +13,7 @@ local assert	  = assert
 local concat	  = table.concat
 local format	  = string.format
 
+loacal pcall      = pcall
 local print	  = print
 
 -- No more external access after this point
@@ -41,8 +42,8 @@ local function handshake(server, tasks)
     msg = distill(msg)
     if msg then
 	tasks:send_msg(urldecode(msg))
-	server:send_msgs{id, OK}
-	server:send_msgs{id, ''}
+	pcall(server:send_msgs{id, OK})
+	pcall(server:send_msgs{id, ''})
 	return msg:match'([^%c]+)%c'
     else
 	return 'Received empty message ;-('

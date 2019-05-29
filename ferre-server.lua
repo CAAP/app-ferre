@@ -36,7 +36,7 @@ local FRUITS	 = {apple=false, apricot=false, avocado=false, banana=false, berry=
 --
 local function getFruit()
     local _,k = fd.first(fd.keys(FRUITS), function(x) return not(x) end)
-    return k
+    return k or 'orphan'
 end
 
 local function distill(msg) return msg:match'(%a+)%s([^!]+)' end
