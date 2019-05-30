@@ -85,7 +85,7 @@
 	(function() {
 	    let tabla = document.getElementById('tabla-cambios');
 	    let tkt = document.getElementById('ticket');
-	    let costos = new Set(['costol', 'impuesto', 'descuento', 'rebaja', 'prc1', 'prc2', 'prc3']);
+	    let costos = new Set(['costo', 'costol', 'impuesto', 'descuento', 'rebaja', 'prc1', 'prc2', 'prc3']);
 	    let records = new Map()
 	    let fields = new Set();
 

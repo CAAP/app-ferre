@@ -98,15 +98,17 @@ local function addTicket(conn, conn2, msg)
     return uid
 end
 
+--local function smart(v) return v:match'"' and format("'%s'", v) or format('%q', v) end
+
 local function reformat(v, k)
-    local vv = ISSTR[k] and format('%q', v:upper()) or (tointeger(v) or tonumber(v) or 0) -- "'%s'"
+    local vv = ISSTR[k] and format("'%s'", v:upper()) or (tointeger(v) or tonumber(v) or 0) -- "'%s'"
     return format('%s = %s', k, vv)
 end
 
 local function reformat2(clave)
     clave = tointeger(clave) or format('%q', clave) -- "'%s'"
     return function(v, k)
-	local vv = ISSTR[k] and format('%q', v:upper()) or (tointeger(v) or tonumber(v) or 0) -- "'%s'"
+	local vv = ISSTR[k] and format("'%s'", v:upper()) or (tointeger(v) or tonumber(v) or 0) -- "'%s'"
 	return format(INU, clave, k, vv)
     end
 end
@@ -155,6 +157,7 @@ local function addUpdate(msg, conn, conn2) -- conn, conn2
     local qry = format(UPQ, 'datos', concat(u, ', '), clause)
 
 ---[[
+    print( qry )
     pcall(conn.exec( qry ))
     if toll then
 	qry = format(UPQ, 'datos', COSTOL, clause)
