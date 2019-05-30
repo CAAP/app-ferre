@@ -76,7 +76,7 @@
 		e.target.value = "";
 	// IF string.contains('*') : searchSQL
 		if (ss.includes('*'))
-		    ferre.xget('query', {desc: encodeURIComponent(ss), fruit: fruit});
+		    BROWSE.query({desc: encodeURIComponent(ss), fruit: fruit});
 		else
 		    BROWSE.doSearch(ss);
 	    };

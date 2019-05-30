@@ -61,6 +61,8 @@
 	    BROWSE.DBget = s => IDB.readDB( PRICE ).get( s );
 	    BROWSE.DBindex = (a, b, f) => IDB.readDB( PRICE ).index( a, b, f );
 
+	    BROWSE.query = o => ferre.xget('query', o);
+
 	    ferre.keyPressed = BROWSE.keyPressed;
 	    ferre.startSearch = BROWSE.startSearch;
 	    ferre.scroll = e => {if (BROWSE.lis.childElementCount > 0) {return BROWSE.scroll(e)} };
