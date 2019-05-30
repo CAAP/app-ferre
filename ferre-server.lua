@@ -7,17 +7,18 @@ local fd	  = require'carlos.fold'
 local sse	  = require'carlos.html'.response
 local ssevent	  = require'carlos.ferre'.ssevent
 local receive	  = require'carlos.ferre'.receive
+local send	  = require'carlos.ferre'.send
+local getFruit	  = require'carlos.ferre'.getFruit
+local purge	  = require'carlos.ferre'.purge
 local pollin	  = require'lzmq'.pollin
 local context	  = require'lzmq'.context
 
 local format	  = require'string'.format
+local concat	  = table.concat
 local env	  = os.getenv
 local assert	  = assert
 local print	  = print
 local pairs	  = pairs
-
-local concat = table.concat
-local pcall = pcall
 
 -- No more external access after this point
 _ENV = nil -- or M
@@ -28,42 +29,24 @@ local ENDPOINT	 = 'tcp://*:5030'
 local UPSTREAM   = 'ipc://upstream.ipc'
 local HELLO      = sse{content='stream'}
 local TIMEOUT    = 100 -- 100 msecs
-local FRUITS	 = {apple=false, apricot=false, avocado=false, banana=false, berry=false, cherry=false, coconut=false, cucumber=false, fig=false, grape=false, raisin=false, guava=false, pepper=false, corn=false, plum=false, kiwi=false, lemon=false, lime=false, lychee=false, mango=false, melon=false, olive=false, orange=false, durian=false, longan=false, pea=false, peach=false, pear=false, prune=false, pine=false, pomelo=false, pome=false, quince=false, rhubarb=false, mamey=false, soursop=false, granate=false, sapote=false}
+local FRUITS	 = {}
 
 --------------------------------
 -- Local function definitions --
 --------------------------------
 --
-local function getFruit()
-    local _,k = fd.first(fd.keys(FRUITS), function(x) return not(x) end)
-    return k or 'orphan'
-end
+---[[
+--]]
 
 local function distill(msg) return msg:match'(%a+)%s([^!]+)' end
 
-local function handshakeORIG(server)
-    local id, msg = receive(server)
-    msg = msg and concat(msg) or ''
-    if #msg > 0 then print('message:', concat(msg, ' ')) end
-    local peer = FRUITS[id]
-    if peer then FRUITS[id] = false; return 'Bye '..id; else FRUITS[id] = true end
-
-    id, msg = receive(server) -- receive salutation
-    if id and #msg > 0 then
-	server:send_msgs{id, HELLO}
-	server:send_msgs{id, ssevent('fruit', id)}
-	return 'New id: '..id
-    end
-    return 'Null message'
-end
-
 local function handshake(server)
     local id, msg = receive(server)
-    msg = msg and concat(msg) or ''
+    msg = concat(msg)
 
     if #msg > 0 then
-	server:send_msgs{id, HELLO}
-	server:send_msgs{id, ssevent('fruit', id)}
+	send(server, id, HELLO)
+	send(server, id, ssevent('fruit', id))
 	FRUITS[id] = true 
 	return 'New id: '..id
     end
@@ -71,20 +54,38 @@ end
 
 -- XXX Maybe count the number of fails
 local function broadcast(server, msg, fruit)
-    local function send2fruit(id) if not pcall(function() server:send_msgs{id, msg}end) then FRUITS[id] = false end end
+    if fruit then
+	send(server, fruit, msg)
+	return 'Broadcast: '..msg
+    else
+	local j = 0
+	for id in pairs(FRUITS) do send(server, id, msg); j = j + 1 end
+	return format('Message %s broadcasted to %d peers', msg, j)
+    end
+end
 
-    if fruit then send2fruit(fruit)
-    else for id in pairs(FRUITS) do send2fruit(id) end end
-
-    return 'Broadcast: '..msg
+local function purge(m, server)
+    local ret, i = {}, 0
+    for fruit in m:gmatch'[a-z]+' do
+	ret[fruit] = true
+	i = i + 1
+    end
+    for fruit in pairs(FRUITS) do
+	if not(ret[fruit]) then send(server, fruit, '') end
+    end
+    return ret, i
 end
 
 local function switch(msgs, server)
     local m = msgs:recv_msg()
+    if m:match'PONG' then
+	FRUITS, m = purge(m, server)
+	return format('There are %d connected peers', m)
+    end
     local fruit = m:match'%a+'
     if FRUITS[fruit] then
 	fruit, m = distill(m)
-	broadcast(server, ssevent(distill( m )), fruit) --  XXX CAUSES error ON HI: distill( m ) or m
+	broadcast(server, ssevent(distill( m )), fruit)
 	return 'Broadcast message to '..fruit
     else
 	return broadcast(server, ssevent(distill( m )))
@@ -116,7 +117,7 @@ print('\nSuccessfully bound to:', UPSTREAM, '\n')
 ---[[
 while true do
     print'+\n'
-    server:set_rid( getFruit() )
+    server:set_rid( getFruit(FRUITS) )
     if pollin{server, msgs} then
 	if server:events() == 'POLLIN' then
 	    print( handshake(server), '\n' )

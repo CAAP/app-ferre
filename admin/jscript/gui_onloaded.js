@@ -49,7 +49,7 @@
 	// ADMIN
 	(function() {
 	    admin.origin = document.location.origin+':5040/';
-	    DATA.inplace = q => {let r = document.body.querySelector('tr[data-clave="'+q.clave+'"]'); if (r) {UTILS.clearTable(r); BROWSE.rows(q,r);} return q;};
+	    DATA.inplace = q => {let r = document.body.querySelector('tr[data-clave="'+q.clave+'"]'); if (r) {UTILS.clearTable(r); BROWSE.rows(q,r); r.classList.add('modificado'); } return q;};
 //	    DATA.inplace = () => Promise.resolve(true);
 	})();
 
@@ -143,8 +143,9 @@
 	    admin.getRecord = function(e) {
 		let clave = UTILS.asnum(e.target.parentElement.dataset.clave);
 		fetch(clave, setfields);
-		tkt.style.visibility = 'visible';
 	    };
+
+	    admin.nuevo = () => admin.xget('query', {desc: 'VV*', fruit: localStorage.fruit});
 
 	    admin.setRecord = function(a) {
 		records.set(a.clave, a);

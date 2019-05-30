@@ -29,6 +29,7 @@ local date	= os.date
 local exec	= os.execute
 local tonumber  = tonumber
 local assert	= assert
+local pcall     = pcall
 
 local pairs	= pairs
 local ipairs	= ipairs
@@ -154,10 +155,10 @@ local function addUpdate(msg, conn, conn2) -- conn, conn2
     local qry = format(UPQ, 'datos', concat(u, ', '), clause)
 
 ---[[
-    assert(conn.exec( qry ), qry)
+    pcall(conn.exec( qry ))
     if toll then
 	qry = format(UPQ, 'datos', COSTOL, clause)
-	assert(conn.exec( qry ), qry)
+	pcall(conn.exec( qry ))
     end
 
     if found(w, PRCS) or toll then

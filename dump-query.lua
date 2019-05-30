@@ -13,19 +13,19 @@ local arg	= arg
 
 _ENV =  nil
 
-local msg = assert( arg[1] )
+local msg 	 = assert( arg[1] )
 
-local QDESC	 = 'SELECT desc FROM precios WHERE desc LIKE %q ORDER BY desc LIMIT 1'
+local QDESC	 = 'SELECT clave FROM precios WHERE desc LIKE %q ORDER BY desc LIMIT 1'
 
 local function byDesc(conn, s)
     local qry = format(QDESC, s:gsub('*', '%%')..'%%')
-    local o = first(conn.query(qry), function(x) return x end) or {desc=''} -- XXX can return NIL
-    return o.desc
+    local o = first(conn.query(qry), function(x) return x end) or {clave=''} -- XXX can return NIL
+    return o.clave
 end
 
 local function byClave(conn, s)
     local qry = format('SELECT * FROM  datos WHERE clave LIKE %q LIMIT 1', s)
-    return asJSON( first(conn.query(qry), function(x) return x end) )
+    return asJSON( first(conn.query(qry), function(x) return x end) or '' )
 end
 
 local fruit = msg:match'fruit=(%a+)'

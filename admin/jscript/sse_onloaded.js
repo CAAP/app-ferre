@@ -61,7 +61,10 @@
 		esource.addEventListener("query", function(e) {
 		    elbl.innerHTML = "query event";
 		    console.log('query event ongoing');
-		    admin.setRecord( JSON.parse(e.data) );
+		    if (e.data.length > 5)
+			admin.setRecord( JSON.parse(e.data) );
+		    else
+			admin.xget('query', {clave: e.data, fruit: localStorage.fruit});
 		}, false);
 
 	})();

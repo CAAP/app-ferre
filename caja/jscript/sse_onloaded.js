@@ -76,8 +76,10 @@
 		    elbl.innerHTML = "feed event";
 		    console.log("feed event received");
 		    const data = e.data;
-		    if (data.includes('json'))
+		    if (data.includes('json')) {
+
 			XHR.getJSON('json/' + data).then(a => a.forEach( add2caja ));
+		    }
 		    else
 			add2caja(JSON.parse( data ));
 		}, false);
