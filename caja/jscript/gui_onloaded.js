@@ -52,23 +52,6 @@
 	    DATA.inplace = () => Promise.resolve(true);
 	})();
 
-/*
-	// BROWSE
-	(function() {
-	    const PRICE = DATA.STORES.PRICE;
-	    BROWSE.tab = document.getElementById('resultados');
-	    BROWSE.lis = document.getElementById('tabla-resultados');
-
-	    BROWSE.DBget = s => IDB.readDB( PRICE ).get( s );
-	    BROWSE.DBindex = (a, b, f) => IDB.readDB( PRICE ).index( a, b, f );
-
-	    caja.keyPressed = BROWSE.keyPressed;
-	    caja.startSearch = BROWSE.startSearch;
-	    caja.scroll = e => {if (BROWSE.lis.childElementCount > 0) {return BROWSE.scroll(e)} };
-    	    caja.cerrar = DATA.close;
-	})();
-*/
-
 	// TICKET
 	(function() {
 	    const PRICE = DATA.STORES.PRICE;

@@ -62,6 +62,8 @@
 	    BROWSE.DBget = s => IDB.readDB( PRICE ).get( s );
 	    BROWSE.DBindex = (a, b, f) => IDB.readDB( PRICE ).index( a, b, f );
 
+	    BROWSE.query = o => admin.xget('query', o);
+
 	    BROWSE.rows = function(a, row) {
 		row.insertCell().appendChild( document.createTextNode( a.fecha ) );
 		let clave = row.insertCell();
