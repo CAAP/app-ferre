@@ -135,18 +135,17 @@
 
 	// PEOPLE - Multi-User support
 	(function() {
-	    var PEOPLE = {
+	    var PEOPLE = new Map();
+/*
 		id: [''],
 		nombre: {},
-		tabs: new Map()
-	    };
-
-	    ferre.TABS = PEOPLE.tabs;
+*/
+	    ferre.TABS = PEOPLE;
 
 	    const persona = document.getElementById('personas');
 	    let fetchMe = o => TICKET.getPrice( o ).then( TICKET.add );
 	    let recreate = a => Promise.all( a.map( fetchMe ) ); // .then( () => Promise.resolve() ).then( () => {tcount.textContent = TICKET.items.size;} )
-	    function tabs(k) { persona.dataset.id = k; if (PEOPLE.tabs.has(k)) { recreate(PEOPLE.tabs.get(k)); } }
+	    function tabs(k) { persona.dataset.id = k; if (PEOPLE.has(k)) { recreate(PEOPLE.get(k)); } }
 
 	    ferre.tab = () => {
 		const pid = Number(persona.value);

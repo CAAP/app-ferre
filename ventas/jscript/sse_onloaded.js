@@ -47,7 +47,7 @@
 		}, false);
 
 		esource.addEventListener("delete", function(e) {
-		    const pid = Number( e.data );
+		    const pid = Number( e.data.match(/\d+/) );
 		    tabs.delete( pid );
 		    console.log('Removing ticket'); // PEOPLE.id[pid]
 		    elbl.innerHTML = "delete event";
