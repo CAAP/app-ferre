@@ -42,7 +42,7 @@
 			    return ifLoad(store);
 			}
 		   })))
-		   .then(() => { document.getElementById('pacman').style.visibility = 'hidden'; STORES.PRICE.INDEX = 'desc'; });
+		   .then(() => { STORES.PRICE.INDEX = 'desc'; });
 
 	})();
 
@@ -119,6 +119,8 @@
 		cell.appendChild( ie );
  		fields.add( k );
 	    };
+
+	    admin.reset = () => { UTILS.clearTable( tabla ); tkt.style.visibility = 'visible'; }
 
 	    function setfields( o ) {
 		tkt.dataset.clave = o.clave;

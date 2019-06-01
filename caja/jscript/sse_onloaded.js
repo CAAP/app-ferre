@@ -1,5 +1,5 @@
 	// SSE - ServerSentEvent's
-	(function() {
+	(function ssevent() {
 	    let esource = new EventSource(document.location.origin+':5030');
 
 	    const elbl = document.getElementById('eventos');
@@ -10,6 +10,8 @@
 	    const add2caja = caja.add2caja;
 	    const add2bag  = caja.add2bag;
 
+		function ready() { document.getElementById('pacman').style.visibility = 'hidden'; }
+
 		function updateOne( o ) {
 		    const store = o.store; delete o.store;
 		    return STORES[store].update(o);
@@ -17,13 +19,18 @@
 
 		// First message received after successful handshake
 		esource.addEventListener("fruit", function(e) {
-		    let fruit = e.data;
-		    console.log('I am ' + fruit);
-		    localStorage.fruit = fruit;
-		    flbl.innerHTML = fruit;
-		    XHR.get( caja.origin + 'CAJA?' + fruit );
-		    XHR.get( caja.origin + 'CACHE?' + fruit );
-		    XHR.get( caja.origin + 'feed?' + fruit );
+		    if (e.data.match(/[a-z]+/)) {
+			let fruit = e.data;
+			console.log('I am ' + fruit);
+			localStorage.fruit = fruit;
+			flbl.innerHTML = fruit;
+			ready();
+			XHR.get( caja.origin + 'CACHE?' + fruit );
+			XHR.get( caja.origin + 'feed?' + fruit );
+		    } else {
+			esource.close();
+			ssevent();
+		    }
 		}, false);
 
 		esource.addEventListener("Hi", function(e) {
@@ -77,7 +84,7 @@
 		    console.log("feed event received");
 		    const data = e.data;
 		    if (data.includes('json')) {
-
+			caja.reset();
 			XHR.getJSON('json/' + data).then(a => a.forEach( add2caja ));
 		    }
 		    else

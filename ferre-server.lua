@@ -9,13 +9,13 @@ local ssevent	  = require'carlos.ferre'.ssevent
 local receive	  = require'carlos.ferre'.receive
 local send	  = require'carlos.ferre'.send
 local getFruit	  = require'carlos.ferre'.getFruit
-local purge	  = require'carlos.ferre'.purge
 local pollin	  = require'lzmq'.pollin
 local context	  = require'lzmq'.context
 
 local format	  = require'string'.format
 local concat	  = table.concat
 local env	  = os.getenv
+local time	  = os.time
 local assert	  = assert
 local print	  = print
 local pairs	  = pairs
@@ -28,8 +28,9 @@ _ENV = nil -- or M
 local ENDPOINT	 = 'tcp://*:5030'
 local UPSTREAM   = 'ipc://upstream.ipc'
 local HELLO      = sse{content='stream'}
-local TIMEOUT    = 100 -- 100 msecs
 local FRUITS	 = {}
+local CDOWN	 = time()
+local RID	 = nil
 
 --------------------------------
 -- Local function definitions --
@@ -40,19 +41,26 @@ local FRUITS	 = {}
 
 local function distill(msg) return msg:match'(%a+)%s([^!]+)' end
 
+local function setRID( server )
+    RID = getFruit( FRUITS )
+    return server:set_rid( RID )
+end
+
 local function handshake(server)
     local id, msg = receive(server)
     msg = concat(msg)
 
-    if #msg > 0 then
+    if #msg > 0 and id == RID then
 	send(server, id, HELLO)
 	send(server, id, ssevent('fruit', id))
-	FRUITS[id] = true 
+	FRUITS[id] = time() 
+	assert( setRID( server ) )
 	return 'New id: '..id
+    else
+	send(server, id, '')
     end
 end
 
--- XXX Maybe count the number of fails
 local function broadcast(server, msg, fruit)
     if fruit then
 	send(server, fruit, msg)
@@ -64,27 +72,28 @@ local function broadcast(server, msg, fruit)
     end
 end
 
-local function purge(m, server)
-    local ret, i = {}, 0
-    for fruit in m:gmatch'[a-z]+' do
-	ret[fruit] = true
-	i = i + 1
+local function purge(fruit, server)
+    local now = time()
+    FRUITS[fruit] = now
+
+    if (now-CDOWN) < 300 then return FRUITS end
+
+    CDOWN = now -- reset countdown
+    local ret =  {}
+    for id,t in pairs(FRUITS) do
+	if (now-t) < 120 then ret[id] = t
+	else send(server, id, '') end
     end
-    for fruit in pairs(FRUITS) do
-	if not(ret[fruit]) then send(server, fruit, '') end
-    end
-    return ret, i
+
+    return ret
 end
 
 local function switch(msgs, server)
     local m = msgs:recv_msg()
-    if m:match'PONG' then
-	FRUITS, m = purge(m, server)
-	return format('There are %d connected peers', m)
-    end
     local fruit = m:match'%a+'
     if FRUITS[fruit] then
 	fruit, m = distill(m)
+	FRUITS = purge(fruit, server)
 	broadcast(server, ssevent(distill( m )), fruit)
 	return 'Broadcast message to '..fruit
     else
@@ -105,6 +114,8 @@ assert( server:notify(false) )
 
 assert(server:bind( ENDPOINT ))
 
+assert( setRID( server ) )
+
 print('\nSuccessfully bound to:', ENDPOINT, '\n')
 -- -- -- -- -- --
 --
@@ -117,7 +128,6 @@ print('\nSuccessfully bound to:', UPSTREAM, '\n')
 ---[[
 while true do
     print'+\n'
-    server:set_rid( getFruit(FRUITS) )
     if pollin{server, msgs} then
 	if server:events() == 'POLLIN' then
 	    print( handshake(server), '\n' )

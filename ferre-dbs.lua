@@ -28,6 +28,7 @@ local popen	= io.popen
 local date	= os.date
 local exec	= os.execute
 local tonumber  = tonumber
+local tostring	= tostring
 local assert	= assert
 local pcall     = pcall
 
@@ -98,17 +99,17 @@ local function addTicket(conn, conn2, msg)
     return uid
 end
 
---local function smart(v) return v:match'"' and format("'%s'", v) or format('%q', v) end
+local function smart(v, k) return ISSTR[k] and format("'%s'", tostring(v):upper()) or (tointeger(v) or tonumber(v) or 0) end
 
 local function reformat(v, k)
-    local vv = ISSTR[k] and format("'%s'", v:upper()) or (tointeger(v) or tonumber(v) or 0) -- "'%s'"
+    local vv = smart(v, k)
     return format('%s = %s', k, vv)
 end
 
 local function reformat2(clave)
     clave = tointeger(clave) or format('%q', clave) -- "'%s'"
     return function(v, k)
-	local vv = ISSTR[k] and format("'%s'", v:upper()) or (tointeger(v) or tonumber(v) or 0) -- "'%s'"
+	local vv = smart(v, k)
 	return format(INU, clave, k, vv)
     end
 end
@@ -154,6 +155,7 @@ local function addUpdate(msg, conn, conn2) -- conn, conn2
     if toll then w.fecha = HOY end
 
     local u = fd.reduce(fd.keys(w), fd.filter(sanitize(DIRTY)), fd.map( reformat ), fd.into, {})
+    if #u == 0 then return false end -- safeguard
     local qry = format(UPQ, 'datos', concat(u, ', '), clause)
 
 ---[[

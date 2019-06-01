@@ -42,7 +42,7 @@
 			    return ifLoad(store);
 			}
 		   })))
-		   .then(() => { document.getElementById('pacman').style.visibility = 'hidden'; STORES.PRICE.INDEX = 'desc'; });
+		   .then(() => { STORES.PRICE.INDEX = 'desc'; });
 
 	})();
 

@@ -1,5 +1,5 @@
 	// SSE - ServerSentEvent's
-	(function() {
+	(function ssevent() {
 	    let esource = new EventSource(document.location.origin+':5030');
 
 	    const elbl = document.getElementById("eventos");
@@ -8,6 +8,8 @@
 
 	    const add2bag  = admin.add2bag;
 
+		function ready() { document.getElementById('pacman').style.visibility = 'hidden'; }
+
 		function updateOne( o ) {
 		    const store = o.store; delete o.store;
 		    return STORES[store].update(o);
@@ -15,12 +17,16 @@
 
 		// First message received after successful handshake
 		esource.addEventListener("fruit", function(e) {
-		    console.log('I am ' + e.data);
-		    localStorage.fruit = e.data;
-		    flbl.innerHTML = e.data;
-		    XHR.get( admin.origin + 'CACHE?' + e.data );
-		    XHR.get( admin.origin + 'feed?' + e.data );
-//		    XHR.get( admin.origin + 'header?' + e.data );
+		    if (e.data.match(/[a-z]+/)) {
+			console.log('I am ' + e.data);
+			localStorage.fruit = e.data;
+			flbl.innerHTML = e.data;
+			ready();
+			XHR.get( admin.origin + 'CACHE?' + e.data )
+		    } else {
+			esource.close();
+			ssevent();
+		    }
 		}, false);
 
 		esource.addEventListener("Hi", function(e) {
@@ -55,6 +61,7 @@
 		esource.addEventListener("header", function(e) {
 		    elbl.innerHTML = "header event";
 		    console.log('header event ongoing');
+		    admin.reset();
 		    JSON.parse(e.data).forEach( admin.addField );
 		}, false);
 
@@ -64,7 +71,7 @@
 		    if (e.data.length > 5)
 			admin.setRecord( JSON.parse(e.data) );
 		    else
-			admin.xget('query', {clave: e.data, fruit: localStorage.fruit});
+			BROWSE.doSearch(e.data);
 		}, false);
 
 	})();

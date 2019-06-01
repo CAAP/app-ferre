@@ -1,11 +1,13 @@
 	// SSE - ServerSentEvent's
-	(function() {
+	(function ssevent() {
 	    let esource = new EventSource(document.location.origin+':5030');
 
 	    const elbl = document.getElementById("eventos");
 	    const flbl = document.getElementById('frutas');
 	    const tabs = ferre.TABS;
 	    const STORES = DATA.STORES;
+
+		function ready() { document.getElementById('pacman').style.visibility = 'hidden'; }
 
 		function a2obj( a ) { const M = a.length/2; let o = {}; for (let i=0; i<M; i++) { o[a[i*2]] = a[i*2+1]; } return o; }
 
@@ -22,10 +24,16 @@
 
 		// First message received after successful handshake
 		esource.addEventListener("fruit", function(e) {
-		    console.log('I am ' + e.data);
-		    localStorage.fruit = e.data;
-		    flbl.innerHTML = e.data;
-		    XHR.get( ferre.origin + 'CACHE?' + e.data );
+		    if (e.data.match(/[a-z]+/)) {
+			console.log('I am ' + e.data);
+			localStorage.fruit = e.data;
+			flbl.innerHTML = e.data;
+			ready();
+			XHR.get( ferre.origin + 'CACHE?' + e.data )
+		    } else {
+			esource.close();
+			ssevent();
+		    }
 		}, false);
 
 		esource.addEventListener("Hi", function(e) {
@@ -58,19 +66,6 @@
 		    console.log("tabs event received");
 		    distill( e.data );
 		}, false);
-
-/*		
-		// XXX not implemented YET
-		esource.addEventListener("update", function(e) {
-		    elbl.innerHTML = "update event";
-		    console.log('update event ongoing');
-		    const data = JSON.parse(e.data);
-		    if (Array.isArray(data))
-			Promise.all( data.map( updateOne ) );
-		    else
-			updateOne( data );
-		}, false);
-*/
 
 		esource.addEventListener("adjust", function(e) {
 		    elbl.innerHTML = "adjust event";

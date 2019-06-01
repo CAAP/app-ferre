@@ -50,6 +50,7 @@ button[name=guardar] { color: white; background-color: blue; }
 }
 
 .tablas {
+    visibility: hidden;
     cursor: default;
 }
 

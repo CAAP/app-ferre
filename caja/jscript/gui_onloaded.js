@@ -42,7 +42,7 @@
 			    return ifLoad(store);
 			}
 		   })))
-		   .then(() => { document.getElementById('pacman').style.visibility = 'hidden'; STORES.PRICE.INDEX = 'desc'; });
+		   .then(() => { STORES.PRICE.INDEX = 'desc'; });
 
 	})();
 
@@ -139,6 +139,8 @@
 		tag.appendChild( document.createTextNode( w.tag ) );
 		tag.onclick = getUID;
 	    };
+
+	    caja.reset = () => UTILS.clearTable( cajita );
 
 	})();
 
