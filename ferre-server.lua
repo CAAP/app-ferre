@@ -64,7 +64,7 @@ end
 local function broadcast(server, msg, fruit)
     if fruit then
 	send(server, fruit, msg)
-	return 'Broadcast: '..msg
+	return format('Broadcast %s to %s', msg, fruit)
     else
 	local j = 0
 	for id in pairs(FRUITS) do send(server, id, msg); j = j + 1 end
@@ -90,12 +90,11 @@ end
 
 local function switch(msgs, server)
     local m = msgs:recv_msg()
-    local fruit = m:match'%a+'
-    if FRUITS[fruit] then
-	fruit, m = distill(m)
+    local fruit = m:match'^%a+'
+    if fruit and FRUITS[fruit] then
+	m = m:match'%a+%s([^!]+)' or 'SSE :empty' -- XXX redefine fruit XXX
 	FRUITS = purge(fruit, server)
-	broadcast(server, ssevent(distill( m )), fruit)
-	return 'Broadcast message to '..fruit
+	return broadcast(server, ssevent(distill( m )), fruit)
     else
 	return broadcast(server, ssevent(distill( m )))
     end
