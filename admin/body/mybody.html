@@ -1,6 +1,28 @@
     <div id="myhead">
+	<img src="svg/bars.svg" height="30px" onclick="admin.menuToggle();">
 	<label id="notifications"></label><label id="frutas"></label>
 	<label id="eventos"></label>
 	<img id="pacman" src="svg/pacman.svg" width="50px" height="50px" />
 	<label id="db-vers"></label> <label id="copyright"></label>
     </div>
+
+    <div id="menu">
+		<img id="ekis" src="svg/close.svg" onclick="admin.menuToggle();">
+
+		<div class="choice" onclick="window.location.href = '/ventas';">
+		    <img src="svg/ventas.svg"><label> ventas </label>
+		</div>
+
+		<div class="choice" onclick="window.location.href = '/caja';">
+		    <img src="svg/caja.svg"><label> caja </label>
+		</div>
+
+		<div class="choice" onclick="window.location.href = '/admin';">
+		    <img src="svg/admin.svg"><label> admin </label>
+		</div>
+
+		<div class="choice" onclick="">
+		    <img src="svg/facturas.svg"><label> facturas </label>
+		</div>
+    </div>
+

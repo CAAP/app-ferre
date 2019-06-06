@@ -25,24 +25,21 @@ end
 
 local function byClave(conn, s)
     local qry = format('SELECT * FROM  datos WHERE clave LIKE %q LIMIT 1', s)
-    return asJSON( first(conn.query(qry), function(x) return x end) or '' )
+    local o = first(conn.query(qry), function(x) return x end)
+    return o and asJSON( o ) or ''
 end
-
-local fruit = msg:match'fruit=(%a+)'
 
 local PRECIOS = assert( dbconn'ferre' )
 
 if msg:match'desc' then
 
-    local ret = msg:match'desc=([^&]+)' -- potential error if '&' included
-    ret = byDesc(PRECIOS, ret)
-    print(ret)
+    local ret = msg:match'desc=([^!]+)'
+    print( byDesc(PRECIOS, ret) )
 
 elseif msg:match'clave' then
 
-    local ret = msg:match'clave=([%a%d]+)' -- potential error if '&' included
-    ret = byClave(PRECIOS, ret)
-    print(ret)
+    local ret = msg:match'clave=([%a%d]+)'
+    print( byClave(PRECIOS, ret) )
 
 end
 

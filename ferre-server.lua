@@ -39,7 +39,11 @@ local RID	 = nil
 ---[[
 --]]
 
-local function distill(msg) return msg:match'(%a+)%s([^!]+)' end
+local function distill(msg)
+    local ev, d = msg:match'(%a+)%s([^!]+)'
+    if ev and d then return ev,d
+    else return 'SSE',':empty' end
+end
 
 local function setRID( server )
     RID = getFruit( FRUITS )
@@ -76,24 +80,23 @@ local function purge(fruit, server)
     local now = time()
     FRUITS[fruit] = now
 
-    if (now-CDOWN) < 300 then return FRUITS end
-
-    CDOWN = now -- reset countdown
-    local ret =  {}
-    for id,t in pairs(FRUITS) do
-	if (now-t) < 120 then ret[id] = t
-	else send(server, id, '') end
+    if (now-CDOWN) > 300 then
+	CDOWN = now -- reset countdown
+	local ret =  {}
+	for id,t in pairs(FRUITS) do
+	    if (now-t) < 120 then ret[id] = t
+	    else send(server, id, ''); print('Bye',id,'\n') end
+	end
+	FRUITS = ret
     end
-
-    return ret
 end
 
 local function switch(msgs, server)
     local m = msgs:recv_msg()
     local fruit = m:match'^%a+'
     if fruit and FRUITS[fruit] then
-	m = m:match'%a+%s([^!]+)' or 'SSE :empty' -- XXX redefine fruit XXX
-	FRUITS = purge(fruit, server)
+	m = m:match'%a+%s([^!]+)' or 'SSE :empty'
+	purge(fruit, server)
 	return broadcast(server, ssevent(distill( m )), fruit)
     else
 	return broadcast(server, ssevent(distill( m )))
@@ -111,7 +114,7 @@ local server = assert(CTX:socket'STREAM')
 
 assert( server:notify(false) )
 
-assert(server:bind( ENDPOINT ))
+assert( server:bind( ENDPOINT ) )
 
 assert( setRID( server ) )
 
@@ -120,7 +123,7 @@ print('\nSuccessfully bound to:', ENDPOINT, '\n')
 --
 local msgs = assert(CTX:socket'PULL')
 
-assert(msgs:bind( UPSTREAM ))
+assert( msgs:bind( UPSTREAM ) )
 
 print('\nSuccessfully bound to:', UPSTREAM, '\n')
 

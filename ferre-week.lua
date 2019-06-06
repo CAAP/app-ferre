@@ -53,10 +53,10 @@ end
 
 local function queryDB(msg)
     local fruit = msg:match'fruit=(%a+)'
-    msg = msg:match'%a+%s([^!]+)'
-    print('Querying database ...\n')
+    msg = msg:match('%a+%s([^!]+)'):gsub('|', '!')
+    print('Querying database:', msg, '\n')
     local f = assert( popen(format('%s/dump-query.lua %s', APP, msg)) )
-    local v = f:read'l' -- :gsub('%s+%d$', '')
+    local v = f:read'l'
     f:close()
     return format('%s query %s', fruit, v)
 end
@@ -125,7 +125,9 @@ print'+\n'
 		TAXES = msg:match'%s(%a+)'
 		print('TAXES node identified as', TAXES, '\n')
 	    elseif cmd == 'query' then
-		msgr:send_msg( queryDB(msg) )
+		local msg = queryDB( msg )
+		msgr:send_msg( msg )
+		print('Query result:', msg, '\n')
 --	    elseif cmd == 'taxes' then
 --		msgr:send_msg( format('%s %s', TAXES, msg) )
 	    elseif cmd == 'feed' then

@@ -39,7 +39,7 @@ local function handshake(server, tasks)
 	tasks:send_msg(urldecode(msg))
 	send(server, id, OK)
 	send(server, id, '')
-	return msg:match'([^%c]+)%c'
+	return msg -- msg:match'([^%c]+)%c'
     else
 	return 'Received empty message ;-('
     end

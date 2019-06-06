@@ -128,6 +128,40 @@ button[name=guardar] { color: white; background-color: blue; }
     order: 2;
 }
 
+
+#menu {
+    z-index: 3;
+    position: fixed;
+    width: 150px;
+    top: 75px;
+    background-color: #dcdcdc;
+    display: none;
+}
+
+#ekis {
+    float: right;
+    width: 30px;
+}
+
+.choice:hover { background-color: #cbd7ed; }
+
+div.choice {
+    margin: 20px;
+    padding: 10px;
+    width: 80px;
+    display: flex;
+    flex-direction: column;
+    flex-wrap: nowrap;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.choice img {
+    height: 50px;
+    width: 50px;
+}
+
 td { font: 80% arial; }
 
 tfoot { background-color: #e5e5e5; }

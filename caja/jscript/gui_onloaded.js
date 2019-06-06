@@ -50,6 +50,13 @@
 	(function() {
 	    caja.origin = document.location.origin+':5040/';
 	    DATA.inplace = () => Promise.resolve(true);
+
+	    let mymenu = document.getElementById("menu");
+
+	    caja.menuToggle = () => {
+		let a = mymenu.style.display;
+		mymenu.style.display = (a == 'none') ? 'inline' : 'none';
+	    };
 	})();
 
 	// TICKET

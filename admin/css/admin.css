@@ -149,3 +149,35 @@ button[name=guardar] { color: white; background-color: blue; }
     border: 2px solid #ddd;
 }
 
+#menu {
+    z-index: 5;
+    position: fixed;
+    width: 150px;
+    top: 75px;
+    background-color: #dcdcdc;
+    display: none;
+}
+
+#ekis {
+    float: right;
+    width: 30px;
+}
+
+.choice:hover { background-color: #cbd7ed; }
+
+div.choice {
+    margin: 20px;
+    padding: 10px;
+    width: 80px;
+    display: flex;
+    flex-direction: column;
+    flex-wrap: nowrap;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.choice img {
+    height: 50px;
+    width: 50px;
+}
