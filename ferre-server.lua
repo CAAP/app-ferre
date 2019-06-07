@@ -96,7 +96,7 @@ local function switch(msgs, server)
     local fruit = m:match'^%a+'
     if fruit and FRUITS[fruit] then
 	m = m:match'%a+%s([^!]+)' or 'SSE :empty'
-	purge(fruit, server)
+--	purge(fruit, server)
 	return broadcast(server, ssevent(distill( m )), fruit)
     else
 	return broadcast(server, ssevent(distill( m )))

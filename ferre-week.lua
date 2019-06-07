@@ -53,7 +53,7 @@ end
 
 local function queryDB(msg)
     local fruit = msg:match'fruit=(%a+)'
-    msg = msg:match('%a+%s([^!]+)'):gsub('|', '!')
+    msg = msg:match('%a+%s([^!]+)'):gsub('&', '!')
     print('Querying database:', msg, '\n')
     local f = assert( popen(format('%s/dump-query.lua %s', APP, msg)) )
     local v = f:read'l'
