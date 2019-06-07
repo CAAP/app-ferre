@@ -54,10 +54,7 @@
 
 	    let mymenu = document.getElementById("menu");
 
-	    admin.menuToggle = () => {
-		let a = mymenu.style.display;
-		mymenu.style.display = (a == 'none') ? 'inline' : 'none';
-	    };
+	    admin.menuToggle = p => { mymenu.style.display = p ? 'inline' : 'none'; };
 	})();
 
 	// BROWSE

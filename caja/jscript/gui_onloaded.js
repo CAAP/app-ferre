@@ -53,10 +53,7 @@
 
 	    let mymenu = document.getElementById("menu");
 
-	    caja.menuToggle = () => {
-		let a = mymenu.style.display;
-		mymenu.style.display = (a == 'none') ? 'inline' : 'none';
-	    };
+	    caja.menuToggle = p => { mymenu.style.display = p ? 'inline' : 'none'; };
 	})();
 
 	// TICKET
