@@ -1,6 +1,7 @@
 	var caja = {
 	    UPDATED: false,
 	    UIDS: new Set(),
+	    caja.updateItem = TICKET.update;
 //	    clickItem: e => { caja.UPDATED = true; return TICKET.remove( e.target.parentElement ); },
 	    xget: (q,o) => XHR.get( caja.origin + q + '?' + UTILS.asstr(o) )
 	};
