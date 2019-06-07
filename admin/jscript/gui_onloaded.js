@@ -173,7 +173,10 @@
 		if (costos.has(k)) { compute(clave, k); }
 	    };
 
-	    function update(clave, o) { return XHR.get(admin.origin + 'update?' + UTILS.encPpties(Object.assign(o,{clave: clave, tbname: 'datos', fruit: localStorage.fruit}))) }
+	    function update(clave, o) {
+		if (o.desc) { o.desc = o.desc.replace(/\s+$/, '').replace(/^\s+/, ''); }
+		return XHR.get(admin.origin + 'update?' + UTILS.encPpties(Object.assign(o,{clave: clave, tbname: 'datos', fruit: localStorage.fruit})));
+	    }
 
 	    admin.enviar = function(fecha) {
 		const clave = UTILS.asnum(tkt.dataset.clave);
