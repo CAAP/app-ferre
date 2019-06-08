@@ -159,7 +159,7 @@ local function addUpdate(msg, conn, conn2) -- conn, conn2
     local qry = format(UPQ, 'datos', concat(u, ', '), clause)
 
 ---[[
-    print( qry )
+--    print( qry )
     pcall(conn.exec( qry ))
     if toll then
 	qry = format(UPQ, 'datos', COSTOL, clause)
@@ -172,7 +172,7 @@ local function addUpdate(msg, conn, conn2) -- conn, conn2
     end
 
     u = fd.reduce(fd.keys(w), fd.filter(sanitize(DIRTY)), fd.map(reformat2(clave)), fd.into, {})
-    print( concat(u,'\n') )
+--    print( concat(u,'\n') )
     for _,q in ipairs(u) do assert(conn2.exec( q )) end
 
     return true
