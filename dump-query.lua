@@ -34,7 +34,11 @@ local PRECIOS = assert( dbconn'ferre' )
 if msg:match'desc' then
 
     local ret = msg:match'desc=([^!]+)'
-    print( byDesc(PRECIOS, ret) )
+    if ret:match'VV' then
+	print( byClave(PRECIOS, byDesc(PRECIOS, ret)) )
+    else
+	print( byDesc(PRECIOS, ret) )
+    end
 
 elseif msg:match'clave' then
 
