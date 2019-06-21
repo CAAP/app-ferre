@@ -117,7 +117,7 @@
 
 	    function getUID(e) {
 		const uid = e.target.parentElement.dataset.uid;
-		const fruit = localStorage.fruit;
+		const fruit = sessionStorage.fruit;
 		UIDS.add( uid );
 		if (UIDS.size > 1) { caja.UPDATED = true; }
 		return caja.xget('uid', {uid: uid, fruit: fruit});
@@ -148,4 +148,32 @@
 
 	})();
 
+	// LEDGER
+	(function() {
+	    const cajita = document.getElementById('tabla-fechas');
+	    const UIDS = caja.UIDS;
+
+	    function getUID(e) {
+		const fruit = sessionStorage.fruit;
+		const uid = e.target.parentElement.dataset.uid;
+		UIDS.add( uid );
+		if (UIDS.size > 1) { caja.UPDATED = true; }
+		return caja.xget('uid', {uid: uid, fruit: fruit});
+	    }
+
+	    caja.add2fecha = function(w) {
+		let row = cajita.insertRow(0);
+		row.dataset.uid = w.uid;
+		for (let k of ['time', 'nombre', 'total']) { row.insertCell().appendChild( document.createTextNode(w[k]) ); }
+		let tag = row.insertCell();
+		tag.classList.add('addme');
+		tag.appendChild( document.createTextNode( w.tag ) );
+		tag.onclick = getUID;
+	    };
+
+	    caja.refresh = () => UTILS.clearTable( cajita );
+
+	    caja.ledger = e => caja.xget('ledger', {fruit: sessionStorage.fruit, uid: e.target.value+'T'});
+
+	})();
 

@@ -7,8 +7,9 @@
 	    const tlbl = document.getElementById('taxes');
 	    const STORES = DATA.STORES;
 
-	    const add2caja = caja.add2caja;
-	    const add2bag  = caja.add2bag;
+	    const add2caja  = caja.add2caja;
+	    const add2bag   = caja.add2bag;
+	    const add2fecha = caja.add2fecha;
 
 		function ready() { document.getElementById('pacman').style.visibility = 'hidden'; }
 
@@ -22,7 +23,7 @@
 		    if (e.data.match(/[a-z]+/)) {
 			let fruit = e.data;
 			console.log('I am ' + fruit);
-			localStorage.fruit = fruit;
+			sessionStorage.fruit = fruit;
 			flbl.innerHTML = fruit;
 			ready();
 			XHR.get( caja.origin + 'CACHE?' + fruit );
@@ -47,7 +48,7 @@
 		    elbl.innerHTML = "version event";
 		    console.log('version event ongoing');
 		    if (!DATA.STORES.VERS.check( JSON.parse(e.data) ))
-			caja.xget('adjust', localStorage); // adjust version; sends fruit, week, vers
+			caja.xget('adjust', Object.assign({}, localStorage, sessionStorage)); // adjust version; sends fruit, week, vers
 		}, false);
 
 		// XXX not implemented YET
@@ -89,6 +90,14 @@
 		    }
 		    else
 			add2caja(JSON.parse( data ));
+		}, false);
+
+		esource.addEventListener("ledger", function(e) {
+		    elbl.innerHTML = "ledger event";
+		    console.log("ledger event received");
+		    const data = e.data;
+		    caja.refresh();
+		    XHR.getJSON('json/' + data).then(a => a.forEach( add2fecha ));
 		}, false);
 
 	})();

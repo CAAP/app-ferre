@@ -28,7 +28,7 @@ local UPSTREAM   = 'ipc://upstream.ipc'
 local DOWNSTREAM = 'ipc://downstream.ipc'
 local QUERIES	 = 'ipc://queries.ipc'
 
-local SUBS	 = {'feed', 'uid', 'query', 'bixolon', 'CACHE', 'KILL'}
+local SUBS	 = {'feed', 'ledger', 'uid', 'query', 'bixolon', 'CACHE', 'KILL'}
 
 local CACHE	 = cache'Hi WEEK'
 
@@ -133,7 +133,7 @@ print'+\n'
 	    elseif cmd == 'feed' then
 		queues:send_msg(msg)
 		print('Data forward to queue\n')
-	    elseif cmd == 'uid' or cmd == 'bixolon' then
+	    elseif cmd == 'uid' or cmd == 'bixolon' or cmd == 'ledger' then
 		queues:send_msg( addWeek(msg) )
 		print('Data forward to queue\n')
 	    end

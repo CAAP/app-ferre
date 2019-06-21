@@ -58,6 +58,7 @@ local PEOPLE	 = {A = 'caja'} -- could use 'fruit' id instead XXX
 
 local QRY	 = 'SELECT * FROM precios WHERE clave LIKE %q LIMIT 1'
 local QUID	 = 'SELECT uid, SUBSTR(uid, 12, 5) time, SUM(qty) count, ROUND(SUM(totalCents)/100.0, 2) total, tag FROM tickets WHERE tag NOT LIKE "factura" AND uid %s %q GROUP BY uid'
+local CLAUSE	 = 'WHERE tag NOT LIKE "factura" AND uid %s %q'
 local QTKT	 = 'SELECT uid, tag, clave, qty, rea, totalCents,  prc "precio" FROM tickets WHERE uid LIKE %q'
 local QHEAD	 = 'SELECT uid, tag, ROUND(SUM(totalCents)/100.0, 2) total from tickets WHERE uid LIKE %q GROUP BY uid'
 local QLPR	 = 'SELECT desc, clave, qty, rea, ROUND(unitario, 2) unitario, unidad, ROUND(totalCents/100.0, 2) subTotal FROM tickets WHERE uid LIKE %q'
@@ -185,7 +186,8 @@ local function addName(o)
     return o 
 end
 
-local function dumpFEED(conn, path, qry)
+local function dumpFEED(conn, path, qry, clause)
+    if clause and conn.count( 'tickets', clause ) == 0 then return false end
     local FIN = open(path, 'w')
     FIN:write'['
     FIN:write( concat(fd.reduce(conn.query(qry), fd.map(addName), fd.map(asJSON), fd.into, {}), ',\n') )
@@ -297,18 +299,30 @@ local QUID	 = 'SELECT uid, SUBSTR(uid, 12, 5) time, ROUND(SUM(totalCents)/100.0,
 	local fruit = msg:match'%s(%a+)' -- secs = %s(%d+)$
 	local t = date('%FT%T', now()):sub(1, 10)
 	local qry = format(QUID, '>', t)
-	dumpFEED(WEEK, feedPath(fruit), qry)
-	print'Updates stored and dumped\n'
-	queues:send_msgs{'WEEK', format('%s feed %s-feed.json', fruit, fruit)}
+	local cls = format(CLAUSE, '>', t)
+	if dumpFEED(WEEK, feedPath(fruit), qry, cls) then
+	    print'Updates stored and dumped\n'
+	    queues:send_msgs{'WEEK', format('%s feed %s-feed.json', fruit, fruit)}
+	end
     elseif cmd == 'invoce' then
 
+    elseif cmd == 'ledger' then
+	local fruit = msg:match'fruit=(%a+)'
+	local uid   = msg:match'uid=([^!&]+)'
+	local week  = msg:match'week=([^!&]+)'
+	local qry   = format(QUID, 'LIKE', uid..'%')
+	local cls   = format(CLAUSE, 'LIKE', uid..'%')
+	if dumpFEED(which(week), feedPath(fruit), qry, cls) then
+	    print'Historic data stored and dumped\n'
+	    queues:send_msgs{'WEEK', format('%s ledger %s-feed.json', fruit, fruit)}
+	end
     elseif cmd == 'uid' then
 	local fruit = msg:match'fruit=(%a+)'
 	local uid   = msg:match'uid=([^!&]+)'
 	local week  = msg:match'week=([^!&]+)'
 	local qry   = format(QTKT, uid)
-	dumpFEED(which(week), feedPath(fruit), qry)
-	print'Updates stored and dumped\n'
+	dumpFEED(which(week), feedPath(fruit), qry, false)
+	print'Data for UID stored and dumped\n'
 	queues:send_msgs{'WEEK', format('%s uid %s-feed.json', fruit, fruit)}
     elseif cmd == 'bixolon' then
 	local uid, week = msg:match'%s([^!]+)%s([^!]+)'

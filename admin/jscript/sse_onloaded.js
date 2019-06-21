@@ -19,7 +19,7 @@
 		esource.addEventListener("fruit", function(e) {
 		    if (e.data.match(/[a-z]+/)) {
 			console.log('I am ' + e.data);
-			localStorage.fruit = e.data;
+			sessionStorage.fruit = e.data;
 			flbl.innerHTML = e.data;
 			ready();
 			XHR.get( admin.origin + 'CACHE?' + e.data )
@@ -43,7 +43,7 @@
 		    elbl.innerHTML = "version event";
 		    console.log('version event ongoing');
 		    if (!DATA.STORES.VERS.check( JSON.parse(e.data) ))
-			admin.xget('adjust', localStorage); // adjust (version) sends: fruit, week, vers
+			admin.xget('adjust', Object.assign({}, localStorage, sessionStorage)); // adjust (version) sends: fruit, week, vers
 		}, false);
 
 		esource.addEventListener("update", function(e) {

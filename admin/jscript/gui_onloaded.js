@@ -136,7 +136,7 @@
 
 	    function fetch(k, f) {
 		if (records.has(k)) { return f( CHANGES.fetch(k, records.get(k)) ); }
-		return admin.xget('query', {clave: k, fruit: localStorage.fruit});
+		return admin.xget('query', {clave: k, fruit: sessionStorage.fruit});
 	    }
 
 	    function costol(o) { o.costol = o.costo*(100+(Number(o.impuesto)||0))*(100-(Number(o.descuento)||0))*(1-(Number(o.rebaja)||0)/100) }
@@ -153,7 +153,7 @@
 		fetch(clave, setfields);
 	    };
 
-	    admin.nuevo = () => admin.xget('query', {desc: 'VV*', fruit: localStorage.fruit});
+	    admin.nuevo = () => admin.xget('query', {desc: 'VV*', fruit: sessionStorage.fruit});
 
 	    admin.setRecord = function(a) {
 		records.set(a.clave, a);
@@ -172,7 +172,7 @@
 
 	    function update(clave, o) {
 		if (o.desc) { o.desc = o.desc.replace(/\s+$/, '').replace(/^\s+/, ''); }
-		return XHR.get(admin.origin + 'update?' + UTILS.encPpties(Object.assign(o,{clave: clave, tbname: 'datos', fruit: localStorage.fruit})));
+		return XHR.get(admin.origin + 'update?' + UTILS.encPpties(Object.assign(o,{clave: clave, tbname: 'datos', fruit: sessionStorage.fruit})));
 	    }
 
 	    admin.enviar = function(fecha) {
