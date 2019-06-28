@@ -35,11 +35,6 @@ button[name=guardar] { color: white; background-color: blue; }
     text-align: right;
 }
 
-.faltante {
-    color: red;
-    text-decoration: line-through;
-}
-
 .faltantes { visibility: collapse; }
 
 #switch {
@@ -61,9 +56,12 @@ button[name=guardar] { color: white; background-color: blue; }
     color: black;
 }
 
-#switch:checked ~ * .ventas { visibility: collapse; }
-
 #switch:checked ~ * .faltantes { visibility: visible; }
+
+#switch:checked ~ * .faltante {
+    color: red;
+    text-decoration: line-through;
+}
 
 .pesos { text-align: right; }
 
