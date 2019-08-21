@@ -106,7 +106,7 @@
 
 		ferre.emptyBag = () => { TICKET.empty(); return ferre.xget('delete', {pid: Number(persona.value)}) };
 
-		ferre.menu = e => {
+		ferre.addItem = e => {
 		    if (persona.value == 0) { return; }
 		    const clave = UTILS.asnum(e.target.parentElement.dataset.clave);
 		    add2bag(clave);
@@ -132,6 +132,9 @@
 
 	})();
 
+	// SWITCH
+	(function() {
+	})();
 
 	// PEOPLE - Multi-User support
 	(function() {

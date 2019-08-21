@@ -35,7 +35,33 @@ button[name=guardar] { color: white; background-color: blue; }
     text-align: right;
 }
 
-.faltante { color: red; text-decoration: line-through; }
+.faltantes { visibility: collapse; }
+
+#switch {
+    visibility: hidden;
+    margin: 20px;
+    margin-top: 0px;
+}
+
+.switch-label {
+    visibility: visible;
+    padding: 5px;
+    background: grey;
+    border-radius: 50px;
+    color: white;
+}
+
+#switch:checked + label {
+    background: #bada55;
+    color: black;
+}
+
+#switch:checked ~ * .faltantes { visibility: visible; }
+
+#switch:checked ~ * .faltante {
+    color: red;
+    text-decoration: line-through;
+}
 
 .pesos { text-align: right; }
 

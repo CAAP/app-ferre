@@ -1,11 +1,14 @@
 <section id="main">
     <div id="buscar" class="dialogos query">
-	    <div ontouchstart="function (e) {e.preventDefault();}"> <input id="busq" type="search" size=40 accesskey="b" placeholder="Art&iacute;culo o Clave" onchange="ferre.startSearch(event)" onkeyup="ferre.keyPressed(event)"> </div>
 
+	<input id="switch" type="checkbox" /><label for="switch" class="switch-label">FALTANTES</label>
+
+	<div>       <!--  ontouchstart="function (e) {e.preventDefault();}"  --!>
+	    <input id="busq" type="search" size=40 accesskey="b" placeholder="Art&iacute;culo o Clave" onchange="ferre.startSearch(event)" onkeyup="ferre.keyPressed(event)" />
+	</div>
 <!--
 <span class="droit"> <img src="svg/up.svg" height="40px" onclick="ferre.scroll({deltaY:0})" /> &nbsp;&nbsp; <img src="svg/down.svg" height="40px" onclick="ferre.scroll({deltaY:1})" /> </span> 
 --!>
-
 	<section id="resultados" class="tablas">
         <table onwheel="ferre.scroll(event)">
 	    <dt>
@@ -14,7 +17,7 @@
                 <tr><th> Fecha </th><th> Clave </th><th> Descripci&oacute;n </th><th colspan=3> Precios </th></tr>
             </thead>
 	    </dt>
-	    <tbody id="tabla-resultados" class="amarillo" onclick="ferre.menu(event)"> </tbody>
+	    <tbody id="tabla-resultados" class="amarillo" onclick="ferre.addItem(event)"> </tbody>
 	</table>
 	</section>
     </div>
@@ -29,11 +32,12 @@
 	<table>
 	    <dt>
             <thead>
-                <tr> <th> Cantidad </th><th> Precio </th><th> Descuento </th><th> Total </th> </tr> 
+                <tr><th> Cantidad </th><th> Precio </th><th> Descuento </th><th> Total </th></tr>
             </thead>
 	    </dt>
 	    <tbody id="ticket-compra" class="amarillo" onchange="ferre.updateItem(event)"></tbody>
 	</table>
 	</section>
     </div>
+
 </section>
