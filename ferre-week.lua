@@ -28,7 +28,7 @@ local UPSTREAM   = 'ipc://upstream.ipc'
 local DOWNSTREAM = 'ipc://downstream.ipc'
 local QUERIES	 = 'ipc://queries.ipc'
 
-local SUBS	 = {'feed', 'ledger', 'uid', 'query', 'bixolon', 'CACHE', 'KILL'}
+local SUBS	 = {'feed', 'ledger', 'uid', 'query', 'bixolon', 'CACHE', 'KILL'} -- 'factura', 
 
 local CACHE	 = cache'Hi WEEK'
 

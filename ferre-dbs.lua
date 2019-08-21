@@ -213,6 +213,22 @@ local function bixolon(uid, conn)
     return true
 end
 
+local function facturar(uid, conn)
+    local HEAD = {'tag', 'uid', 'total', 'nombre'}
+    local DATOS = {'clave', 'desc', 'qty', 'rea', 'unitario', 'subTotal'}
+
+    local head = addName(fd.first(conn.query(format(QHEAD, uid)), function(x) return x end))
+
+    local data = fd.reduce(conn.query(format(QLPR, uid)), fd.into, {})
+
+    local skt = popen(PRINTER, 'w')
+    skt:write( ticket(head, data) )
+    skt:close()
+
+    return true
+end
+
+
 --[[
 local function escape(a) return fd.reduce(a, fd.map(function(x) return format('%q',x) end), fd.into, {}) end
 
@@ -286,15 +302,7 @@ print'+\n'
 	queues:send_msgs{'WEEK', format('feed %s', msg)}
 	bixolon(uid, WEEK)
 	print(msg, '\n')
-    elseif cmd == 'factura' then
-	local uid = addTicket(WEEK, PRECIOS, msg)
 
-local QUID	 = 'SELECT uid, SUBSTR(uid, 12, 5) time, ROUND(SUM(totalCents)/100.0, 2) total FROM tickets WHERE tag LIKE "factura" AND uid %s %q GROUP BY uid'
-
-	local qry = format(QUID, 'LIKE', uid)
-	local msg = asJSON(addName(fd.first(WEEK.query(qry), function(x) return x end)))
-	queues:send_msgs{'WEEK', format('invoice %s', msg)}
-	print(msg, '\n')
     elseif cmd == 'feed' then
 	local fruit = msg:match'%s(%a+)' -- secs = %s(%d+)$
 	local t = date('%FT%T', now()):sub(1, 10)
@@ -304,7 +312,6 @@ local QUID	 = 'SELECT uid, SUBSTR(uid, 12, 5) time, ROUND(SUM(totalCents)/100.0,
 	    print'Updates stored and dumped\n'
 	    queues:send_msgs{'WEEK', format('%s feed %s-feed.json', fruit, fruit)}
 	end
-    elseif cmd == 'invoce' then
 
     elseif cmd == 'ledger' then
 	local fruit = msg:match'fruit=(%a+)'
@@ -328,6 +335,12 @@ local QUID	 = 'SELECT uid, SUBSTR(uid, 12, 5) time, ROUND(SUM(totalCents)/100.0,
 	local uid, week = msg:match'%s([^!]+)%s([^!]+)'
 	bixolon(uid, which(week))
 	print('Printing data ...\n')
+
+    elseif cmd == 'factura' then
+	local uid, week = msg:match'%s([^!]+)%s([^!]+)'
+	facturar(uid, which(week))
+	queues:send_msgs{'WEEK', format('factura %s', uid)}
+
     elseif cmd == 'update' then
 	local fruit = msg:match'fruit=(%a+)'
 	addUpdate(msg, PRECIOS, WEEK)

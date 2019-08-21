@@ -1,0 +1,37 @@
+<section id="main">
+
+    <div id="feed">
+	<section id="caja" class="scrollable">
+        <table>
+	    <caption>PROVEEDORES</caption>
+	    <dt><thead>
+                <tr><th> Fecha </th><th> Nombre </th><th> Tel&eacute;fono </th></tr>
+            </thead></dt>
+	    <tbody id="tabla-caja" class="amarillo"></tbody>
+	</table>
+	</section>
+    </div>
+
+    <div id="popup" class="tablas">
+	<table>
+	    <dt><thead><tr> <th colspan="4"></th> </tr></thead></dt>
+	    <tbody>
+	    </tbody>
+	</table>
+	<section>
+	<table>
+	    <dt>
+            <thead>
+                <tr> <th> Cantidad </th><th> Precio </th><th> Descuento </th><th> Total </th> </tr> 
+            </thead>
+	    </dt>
+	    <tbody id="ticket-compra" class="amarillo" onchange="caja.updateItem(event)"></tbody>
+	    <tfoot>
+		<tr><td colspan=3 align="right">Sub Total</td><td class="pesos"><label id="ticket-bruto"></label></td></tr>
+		<tr><td colspan=3 align="right">I.V.A.</td><td class="pesos"><label id="ticket-iva"></label></td></tr>
+	    </tfoot>
+	</table>
+	</section>
+    </div>
+
+</section>

@@ -66,8 +66,9 @@ print'+\n'
 	    print'Bye TKTS'
 	    break
 	end
-    end
-    if cmd == 'ticket' or cmd == 'presupuesto' then
+    else
+--    end
+--    if cmd == 'ticket' or cmd == 'presupuesto' then
 	local pid = msg:match'pid=([%d%a]+)'
 	queues:send_msg(format('%s&uid=%s%s', msg, newUID(), pid))
 	print('Data forward to queue\n')
