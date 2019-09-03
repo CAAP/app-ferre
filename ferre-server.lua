@@ -16,9 +16,11 @@ local format	  = require'string'.format
 local concat	  = table.concat
 local env	  = os.getenv
 local time	  = os.time
+local sleep	  = require'lbsd'.sleep
 local assert	  = assert
 local print	  = print
 local pairs	  = pairs
+local toint	  = math.tointeger
 
 -- No more external access after this point
 _ENV = nil -- or M
@@ -27,17 +29,15 @@ _ENV = nil -- or M
 --
 local ENDPOINT	 = 'tcp://*:5030'
 local UPSTREAM   = 'ipc://upstream.ipc'
+local SPIES	 = 'inproc://espias'
 local HELLO      = sse{content='stream'}
 local FRUITS	 = {}
-local CDOWN	 = time()
-local RID	 = nil
+local SKS	 = {}
 
 --------------------------------
 -- Local function definitions --
 --------------------------------
 --
----[[
---]]
 
 local function distill(msg)
     local ev, d = msg:match'(%a+)%s([^!]+)'
@@ -45,49 +45,28 @@ local function distill(msg)
     else return 'SSE',':empty' end
 end
 
-local function setRID( server )
-    RID = getFruit( FRUITS )
-    return server:set_rid( RID )
+local function id2fruit( id, sk )
+    local fruit = getFruit( FRUITS )
+    FRUITS[fruit] = id
+    SKS[sk] = fruit
+    return fruit
 end
 
-local function handshake(server)
+local function handshake(server, sk)
     local id, msg = receive(server)
-    msg = concat(msg)
-
-    if #msg > 0 and id == RID then
 	send(server, id, HELLO)
-	send(server, id, ssevent('fruit', id))
-	FRUITS[id] = time() 
-	assert( setRID( server ) )
-	return 'New id: '..id
-    else
-	send(server, id, '')
-    end
+	send(server, id, ssevent('fruit', id2fruit(id, sk)))
+    return 'New fruit: '..SKS[sk]
 end
 
 local function broadcast(server, msg, fruit)
     if fruit then
-	send(server, fruit, msg)
+	send(server, FRUITS[fruit], msg)
 	return format('Broadcast %s to %s', msg, fruit)
     else
 	local j = 0
-	for id in pairs(FRUITS) do send(server, id, msg); j = j + 1 end
+	for _,id in pairs(FRUITS) do send(server, id, msg); j = j + 1 end
 	return format('Message %s broadcasted to %d peers', msg, j)
-    end
-end
-
-local function purge(fruit, server)
-    local now = time()
-    FRUITS[fruit] = now
-
-    if (now-CDOWN) > 300 then
-	CDOWN = now -- reset countdown
-	local ret =  {}
-	for id,t in pairs(FRUITS) do
-	    if (now-t) < 120 then ret[id] = t
-	    else send(server, id, ''); print('Bye',id,'\n') end
-	end
-	FRUITS = ret
     end
 end
 
@@ -96,11 +75,18 @@ local function switch(msgs, server)
     local fruit = m:match'^%a+'
     if fruit and FRUITS[fruit] then
 	m = m:match'%a+%s([^!]+)' or 'SSE :empty'
---	purge(fruit, server)
 	return broadcast(server, ssevent(distill( m )), fruit)
     else
 	return broadcast(server, ssevent(distill( m )))
     end
+end
+
+local function sayonara(sk)
+    local fruit = SKS[sk]
+    if not fruit then return ':empty' end
+    FRUITS[fruit] = nil
+    SKS[sk] = nil
+    return fruit
 end
 
 ---------------------------------
@@ -111,12 +97,16 @@ end
 local CTX = context()
 
 local server = assert(CTX:socket'STREAM')
-
+-- -- -- -- -- --
+-- * MONITOR *
+local spy = assert(CTX:socket'PAIR')
+assert( server:monitor( SPIES ) )
+assert( spy:connect( SPIES ) )
+-- -- -- -- -- --
+-- ***********
 assert( server:notify(false) )
 
 assert( server:bind( ENDPOINT ) )
-
-assert( setRID( server ) )
 
 print('\nSuccessfully bound to:', ENDPOINT, '\n')
 -- -- -- -- -- --
@@ -128,11 +118,26 @@ assert( msgs:bind( UPSTREAM ) )
 print('\nSuccessfully bound to:', UPSTREAM, '\n')
 
 ---[[
+--
+print( 'Starting servers ...', '\n' )
+sleep(2)
+--
 while true do
     print'+\n'
-    if pollin{server, msgs} then
-	if server:events() == 'POLLIN' then
-	    print( handshake(server), '\n' )
+    if pollin{server, msgs, spy} then
+	if spy:events() == 'POLLIN' then
+	    local ev, mm = receive(spy)
+	    if mm[1]:match'tcp' then
+		local sk = toint(ev:match'%d+$')
+		if ev:match'ACCEPTED' and server:events() == 'POLLIN' then
+--		    print( ev, '\n' )
+		    print( handshake(server, sk), '\n' )
+		end
+		if ev:match'DISCONNECTED' then
+--		    print( ev, '\n' )
+		    print( 'Bye bye', sayonara(sk), '\n')
+		end
+	    end
 	end
 	if msgs:events() == 'POLLIN' then
 	    print( switch(msgs, server), '\n' )
@@ -141,3 +146,7 @@ while true do
 end
 ---]]
 
+
+--[[
+
+--]]
