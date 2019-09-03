@@ -120,11 +120,12 @@ print('\nSuccessfully bound to:', UPSTREAM, '\n')
 ---[[
 --
 print( 'Starting servers ...', '\n' )
-sleep(2)
+local ev, mm = receive(spy)
+print( ev, mm[1], '\n' )
 --
 while true do
     print'+\n'
-    if pollin{server, msgs, spy} then
+    if pollin{msgs, spy} then
 	if spy:events() == 'POLLIN' then
 	    local ev, mm = receive(spy)
 	    if mm[1]:match'tcp' then
