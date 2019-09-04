@@ -11,12 +11,10 @@ local send	  = require'carlos.ferre'.send
 local getFruit	  = require'carlos.ferre'.getFruit
 local pollin	  = require'lzmq'.pollin
 local context	  = require'lzmq'.context
+local sleep	  =require'lbsd'.sleep
 
 local format	  = require'string'.format
 local concat	  = table.concat
-local env	  = os.getenv
-local time	  = os.time
-local sleep	  = require'lbsd'.sleep
 local assert	  = assert
 local print	  = print
 local pairs	  = pairs
@@ -27,7 +25,7 @@ _ENV = nil -- or M
 
 -- Local Variables for module-only access
 --
-local ENDPOINT	 = 'tcp://*:5030'
+local ENDPOINT	 = 'tcp://*:5030' -- 5030
 local UPSTREAM   = 'ipc://upstream.ipc'
 local SPIES	 = 'inproc://espias'
 local HELLO      = sse{content='stream'}
@@ -120,29 +118,39 @@ print('\nSuccessfully bound to:', UPSTREAM, '\n')
 ---[[
 --
 print( 'Starting servers ...', '\n' )
-local ev, mm = receive(spy)
-print( ev, mm[1], '\n' )
+sleep(2)
+
+
 --
+local flag
 while true do
+
     print'+\n'
-    if pollin{msgs, spy} then
+
+    if pollin{server, msgs, spy} then
+
+	if msgs:events() == 'POLLIN' then
+	    print( switch(msgs, server), '\n' )
+	end
+
 	if spy:events() == 'POLLIN' then
 	    local ev, mm = receive(spy)
 	    if mm[1]:match'tcp' then
 		local sk = toint(ev:match'%d+$')
-		if ev:match'ACCEPTED' and server:events() == 'POLLIN' then
---		    print( ev, '\n' )
-		    print( handshake(server, sk), '\n' )
-		end
 		if ev:match'DISCONNECTED' then
---		    print( ev, '\n' )
+		    print( ev, '\n' )
 		    print( 'Bye bye', sayonara(sk), '\n')
+		elseif ev:match'ACCEPTED' then
+		    print( ev, '\n' )
+		    if flag then flag = nil; print( handshake(server, sk), '\n' ) else flag = sk end
 		end
 	    end
 	end
-	if msgs:events() == 'POLLIN' then
-	    print( switch(msgs, server), '\n' )
+
+	if server:events() == 'POLLIN' then
+	    if flag then print( handshake(server, flag), '\n' ); flag = nil else flag = true end
 	end
+
     end
 end
 ---]]
