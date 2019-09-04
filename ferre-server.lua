@@ -122,12 +122,11 @@ sleep(2)
 
 
 --
-local flag
 while true do
 
     print'+\n'
 
-    if pollin{server, msgs, spy} then
+    if pollin{msgs, spy} then
 
 	if msgs:events() == 'POLLIN' then
 	    print( switch(msgs, server), '\n' )
@@ -138,17 +137,13 @@ while true do
 	    if mm[1]:match'tcp' then
 		local sk = toint(ev:match'%d+$')
 		if ev:match'DISCONNECTED' then
-		    print( ev, '\n' )
+--		    print( ev, '\n' )
 		    print( 'Bye bye', sayonara(sk), '\n')
 		elseif ev:match'ACCEPTED' then
-		    print( ev, '\n' )
-		    if flag then flag = nil; print( handshake(server, sk), '\n' ) else flag = sk end
+--		    print( ev, '\n' )
+		    print( handshake(server, sk), '\n' )
 		end
 	    end
-	end
-
-	if server:events() == 'POLLIN' then
-	    if flag then print( handshake(server, flag), '\n' ); flag = nil else flag = true end
 	end
 
     end
