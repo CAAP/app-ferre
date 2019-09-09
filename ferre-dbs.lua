@@ -187,14 +187,14 @@ end
 local function addName(o)
     local pid = asnum(o.uid:match'P([%d%a]+)')
     o.nombre = pid and PEOPLE[pid] or 'NaP';
-    return o 
+    return asJSON(o)
 end
 
 local function dumpFEED(conn, path, qry, clause)
     if clause and conn.count( 'tickets', clause ) == 0 then return false end
     local FIN = open(path, 'w')
     FIN:write'['
-    FIN:write( concat(fd.reduce(conn.query(qry), fd.map(addName), fd.map(asJSON), fd.into, {}), ',\n') )
+    FIN:write( concat(fd.reduce(conn.query(qry), fd.map(addName), fd.into, {}), ',\n') )
     FIN:write']'
     FIN:close()
     return true
