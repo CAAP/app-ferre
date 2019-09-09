@@ -123,6 +123,7 @@ print'+\n'
 	CACHE.sndkch( msgr, fruit )
 	print('CACHE sent to', fruit, '\n')
     elseif cmd == 'version' then
+	print'Version event ongoing!\n'
 	msgr:send_msg(format('version %s', getVersion()))
     elseif cmd == 'adjust' then
 	local cmd, o = decode(msg) -- o: fruit, week, vers

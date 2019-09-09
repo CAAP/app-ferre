@@ -25,7 +25,7 @@ _ENV = nil -- or M
 
 -- Local Variables for module-only access
 --
-local ENDPOINT	 = 'tcp://*:5030' -- 5030
+local ENDPOINT	 = 'tcp://*:5030'
 local UPSTREAM   = 'ipc://upstream.ipc'
 local SPIES	 = 'inproc://espias'
 local HELLO      = sse{content='stream'}
@@ -118,7 +118,7 @@ print('\nSuccessfully bound to:', UPSTREAM, '\n')
 ---[[
 --
 print( 'Starting servers ...', '\n' )
-sleep(2)
+sleep(1)
 
 
 --
@@ -134,6 +134,7 @@ while true do
 
 	if spy:events() == 'POLLIN' then
 	    local ev, mm = receive(spy)
+	    print( ev, '\n' )
 	    if mm[1]:match'tcp' then
 		local sk = toint(ev:match'%d+$')
 		if ev:match'DISCONNECTED' then

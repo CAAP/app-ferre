@@ -27,7 +27,7 @@ local DOWNSTREAM = 'ipc://downstream.ipc'
 local QUERIES	 = 'ipc://queries.ipc'
 
 local ROOT	 = '/var/www/htdocs/app-ferre/admin/json'
-local SUBS	 = {'update', 'header', 'CACHE', 'KILL'}
+local SUBS	 = {'update', 'CACHE', 'KILL'} -- 'header' now sent as CACHE
 local CACHE	 = cache'Hi ADMIN'
 
 --------------------------------
@@ -99,12 +99,6 @@ print'+\n'
 		local fruit = msg:match'%s(%a+)'
 		CACHE.sndkch( msgr, fruit )
 		print('CACHE sent to', fruit, '\n')
---[[
-	    elseif cmd == 'header' then
-		local fruit = msg:match'%s(%a+)'
-		msgr:send_msg( format('%s %s', fruit, HEADER) )
-		print('HEADER sent\n')
---]]
 	    elseif cmd == 'update' then
 		queues:send_msg( msg )
 		print('Message forward to queue\n')
@@ -121,3 +115,9 @@ print'+\n'
     end
 end
 
+--[[
+	    elseif cmd == 'header' then
+		local fruit = msg:match'%s(%a+)'
+		msgr:send_msg( format('%s %s', fruit, HEADER) )
+		print('HEADER sent\n')
+--]]
