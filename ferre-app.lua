@@ -30,7 +30,14 @@ local OK	 = response{status='ok'}
 -- Local function definitions --
 --------------------------------
 --
-local function distill(a) return format('%s %s', concat(a):match'GET /(%a+)%?([^%?]+) HTTP') end
+local function distill(a)
+    local data = concat(a)
+    if data:match'GET' then
+	return format('%s %s', data:match'GET /(%a+)%?([^%?]+) HTTP')
+    elseif data:match'POST' then
+	return format('%s %s', data:match'POST /(%a+)', data:match'pid=[^%s]+')
+    end
+end
 
 local function handshake(server, tasks)
     local id, msg = receive(server)

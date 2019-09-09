@@ -187,14 +187,16 @@ end
 local function addName(o)
     local pid = asnum(o.uid:match'P([%d%a]+)')
     o.nombre = pid and PEOPLE[pid] or 'NaP';
-    return asJSON(o)
+    return o
 end
+
+local function jsonName(o) return asJSON(addName(o)) end
 
 local function dumpFEED(conn, path, qry, clause)
     if clause and conn.count( 'tickets', clause ) == 0 then return false end
     local FIN = open(path, 'w')
     FIN:write'['
-    FIN:write( concat(fd.reduce(conn.query(qry), fd.map(addName), fd.into, {}), ',\n') )
+    FIN:write( concat(fd.reduce(conn.query(qry), fd.map(jsonName), fd.into, {}), ',\n') )
     FIN:write']'
     FIN:close()
     return true
@@ -302,7 +304,7 @@ print'+\n'
     if cmd == 'ticket' or cmd == 'presupuesto' then
 	local uid = addTicket(WEEK, PRECIOS, msg)
 	local qry = format(QUID, 'LIKE', uid)
-	local msg = asJSON(addName(fd.first(WEEK.query(qry), function(x) return x end)))
+	local msg = jsonName(fd.first(WEEK.query(qry), function(x) return x end))
 	queues:send_msgs{'WEEK', format('feed %s', msg)}
 	bixolon(uid, WEEK)
 	print(msg, '\n')
