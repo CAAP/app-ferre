@@ -51,7 +51,7 @@ local HOY	 = date('%d-%b-%y', now())
 local QUERIES	 = 'ipc://queries.ipc'
 local PRINTER	 = 'nc -N 192.168.3.21 9100'
 
-local TABS	 = {tickets = 'uid, tag, prc, clave, uidSAT, desc, costol NUMBER, unidad, precio NUMBER, unitario NUMBER, qty INTEGER, rea INTEGER, totalCents INTEGER',
+local TABS	 = {tickets = 'uid, tag, prc, clave, desc, costol NUMBER, unidad, precio NUMBER, unitario NUMBER, qty INTEGER, rea INTEGER, totalCents INTEGER, uidSAT',
 		   updates = 'vers INTEGER PRIMARY KEY, clave, campo, valor',
 	   	   facturas = 'uid, fapi PRIMARY KEY NOT NULL, rfc NOT NULL, sat NOT NULL'}
 
