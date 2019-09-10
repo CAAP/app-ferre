@@ -3,7 +3,7 @@
 local first	= require'carlos.fold'.first
 
 local dbconn	= require'carlos.ferre'.dbconn
-local asJSON	= require'carlos.json'.asJSON
+local asJSON	= require'json'.encode -- require'carlos.json'.asJSON
 
 local format	= string.format
 local assert	= assert

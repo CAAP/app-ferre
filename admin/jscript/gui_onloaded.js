@@ -91,16 +91,41 @@
 	(function() {
 	    let tabla = document.getElementById('tabla-cambios');
 	    let tkt = document.getElementById('ticket');
+	    let cpb = document.getElementById('clipboard');
 	    let costos = new Set(['costo', 'costol', 'impuesto', 'descuento', 'rebaja', 'prc1', 'prc2', 'prc3']);
 	    let records = new Map()
 	    let fields = new Set();
+	    let CLIP = false;
 
-	    function outputs(row, k) {
+	    let asnum = UTILS.asnum;
+
+	    function setPen(e) {
+		if (CLIP && (e.target.tagName != 'INPUT')) {
+		    const clave = asnum(tkt.dataset.clave);
+		    let ie = e.target.firstChild;
+		    let k = ie.name;
+		    let v = CLIP[k] || '';
+		    CHANGES.update(clave, k, v);
+		    ie.value = v;
+		    ie.classList.add('modificado');
+		}
+	    }
+
+	    function outputs(row, k, isClip) {
 		let ie = document.createElement('input');
 		ie.type = 'text'; ie.size = 7; ie.name = k; ie.disabled = true; // ie.size = 7;
-		row.insertCell().appendChild( ie );
+		let cell = row.insertCell(); cell.appendChild( ie );
+		if (isClip) { cell.classList.add('pen'); cell.onclick = setPen; }
 		fields.add( k );
 		return ie;
+	    }
+
+	    function setClip(e) {
+		let clave = asnum(e.target.firstChild.value);
+		if (records.has( clave )) {
+		    CLIP = records.get( clave );
+		    cpb.innerText = CLIP.clave + ' : ' + CLIP.desc.substr(0, 30);
+		}
 	    }
 
 	    admin.addField = k => {
@@ -113,12 +138,15 @@
 		ie.type = 'text'; ie.size = 8; ie.name = k;
 		// specifics
 		switch(k) {
-		    case 'desc': ie.size = 40; cell.colSpan = 3; break;
-		    case 'clave': ie.disabled = true; outputs(row, 'uidSAT').disabled = false; break;
-		    case 'costo': outputs(row, 'costol'); break;
+		    case 'desc':  ie.size = 40; cell.colSpan = 3; cell.style.paddingRight = "40px";
+				  cell.classList.add('pen'); cell.onclick = setPen; break;
+		    case 'clave': ie.disabled = true; outputs(row, 'uidSAT', true).disabled = false;
+				  cell.classList.add('clip'); cell.onclick = setClip; break;
+		    case 'costo': outputs(row, 'costol', false); break;
 		    case 'fecha': ie.disabled = true; break;
+		    case 'proveedor': cell.classList.add('pen'); cell.onclick = setPen; break;
 		}
-		if (k.startsWith('prc')) { outputs(row, k.replace('prc', 'u')).disabled = false; outputs(row, k.replace('prc', 'precio')); }
+		if (k.startsWith('prc')) { outputs(row, k.replace('prc', 'u'), false).disabled = false; outputs(row, k.replace('prc', 'precio'), false); }
 		if (costos.has(k)) { ie.type = 'number'; }
 		cell.appendChild( ie );
  		fields.add( k );
@@ -135,7 +163,10 @@
 	    }
 
 	    function fetch(k, f) {
-		if (records.has(k)) { return f( CHANGES.fetch(k, records.get(k)) ); }
+		if (records.has(k)) {
+		    CHANGES.inplace(k, m => tabla.querySelector('input[name='+m+']').classList.add('modificado'));
+		    return f( CHANGES.fetch(k, records.get(k)) );
+		} else
 		return admin.xget('query', {clave: k, fruit: sessionStorage.fruit});
 	    }
 
@@ -148,22 +179,32 @@
 		    fetch( clave, w => { costol(w); records.set(clave,w); setfields(w); } );
 	    }
 
+	    let cleanMark = () => tkt.querySelectorAll('.modificado').forEach(i => {i.classList.remove('modificado')});
+
 	    admin.getRecord = function(e) {
-		let clave = UTILS.asnum(e.target.parentElement.dataset.clave);
+		let clave = asnum(e.target.parentElement.dataset.clave);
 		fetch(clave, setfields);
 	    };
 
 	    admin.nuevo = () => admin.xget('query', {desc: 'VV*', fruit: sessionStorage.fruit});
 
 	    admin.setRecord = function(a) {
+		cleanMark();
 		records.set(a.clave, a);
 		setfields(a);
 	    };
 
-	    admin.cancelar = () => { records.clear(); CHANGES.clear(); tkt.querySelectorAll('input').forEach(i => { i.value = ''}); tkt.dataset.clave = ''; };
+	    admin.cancelar = () => {
+		    records.clear();
+		    CHANGES.clear();
+		    cleanMark();
+		    tkt.querySelectorAll('input').forEach(i => { i.value = ''});
+		    tkt.dataset.clave = '';
+	    };
 
 	    admin.anUpdate = function(e) {
-		const clave = UTILS.asnum(tkt.dataset.clave);
+		const clave = asnum(tkt.dataset.clave);
+		e.target.classList.add('modificado');
 		let k = e.target.name;
 		let v = e.target.value;
 		CHANGES.update(clave, k, v);
@@ -176,7 +217,7 @@
 	    }
 
 	    admin.enviar = function(fecha) {
-		const clave = UTILS.asnum(tkt.dataset.clave);
+		const clave = asnum(tkt.dataset.clave);
 		if (fecha)
 		    CHANGES.update(clave, 'fecha', true);
 		if (window.confirm('Estas seguro de realizar los cambios?'))

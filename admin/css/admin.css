@@ -17,7 +17,7 @@ button[name=guardar] { color: white; background-color: blue; }
 
 .encontrado { background-color: #aaeedd; }
 
-.modificado { background-color: #00cc44; }
+.modificado { border: 3px solid red; }
 
 .precio1 { background-color: #e6ccff; }
 
@@ -75,6 +75,20 @@ button[name=guardar] { color: white; background-color: blue; }
 .dialogos:hover .embiggen { display: block; }
 
 .basura { cursor: url("svg/trash.svg"), default; }
+
+.clip {
+    cursor: url("svg/clip.svg"), copy;
+    background-image: url("svg/clip.svg");
+    background-repeat: no-repeat;
+    background-position: top 50% right 5px;
+}
+
+.pen {
+    cursor: url("svg/pen.svg"), pointer;
+    background-image: url("svg/pen.svg");
+    background-repeat: no-repeat;
+    background-position: top 50% right 5px;
+}
 
 .dialogos {
     z-index: 3;
