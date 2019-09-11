@@ -18,7 +18,7 @@ _ENV =  nil
 local function getHeader()
     local conn = dbconn'ferre'
     local ret = conn.header'datos'
-    remove(ret) -- faltante
+--    remove(ret) -- faltante
     insert(ret, 2, remove(ret)) -- proveedor
     remove(ret) -- uidSAT
     insert(ret, 6, remove(ret)) -- rebaja
