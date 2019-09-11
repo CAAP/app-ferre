@@ -6,13 +6,21 @@ local fd		= require'carlos.fold'
 
 local context		= require'lzmq'.context
 local cache		= require'carlos.ferre'.cache
+local dbconn		= require'carlos.ferre'.dbconn
+local connexec		= require'carlos.ferre'.connexec
 local decode		= require'carlos.ferre'.decode
+local now		= require'carlos.ferre'.now
+local aspath		= require'carlos.ferre'.aspath
+local newTable    	= require'carlos.sqlite'.newTable
 local dump		= require'carlos.files'.dump
 
 local format	= require'string'.format
 local concat 	= table.concat
+local open	= io.open
 local popen	= io.popen
 local exec	= os.execute
+local date	= os.date
+local env	= os.getenv
 local assert	= assert
 
 local print	= print
@@ -29,18 +37,16 @@ _ENV = nil -- or M
 local DOWNSTREAM = 'ipc://downstream.ipc'
 local UPSTREAM	 = 'ipc://upstream.ipc'
 
-local SUBS	 = {'adjust', 'version', 'CACHE', 'KILL'} -- people
-local CACHE	 = cache'Hi VERS'
+local SUBS	 = {'CACHE', 'KILL'}
 
 --------------------------------
 -- Local function definitions --
 --------------------------------
 
--- find all updates that need to be sent to a specific peer & send them all
-local function adjust(fruit, week, vers) exec(format('%s/dump-fruit.lua %s %s %d', APP, fruit, week, vers)) end
-
 -- DUMP --
-local function dumpPRICE() exec(format('%s/dump-price.lua', APP)) end
+exec(format('%s/dump-price.lua', APP))
+
+exec(format('%s/dump-people.lua', APP))
 
 local function getVersion()
     dumpPRICE()
@@ -49,7 +55,7 @@ local function getVersion()
     local v = f:read('l'):gsub('%s+%d$', '')
     f:close()
 
-    dump(DEST, v) -- XXX really need this???
+    dump(DEST, v)
 
     CACHE.store('vers', format('version %s', v))
     print(v)
@@ -91,6 +97,8 @@ print('Successfully connected to:', UPSTREAM, '\n')
 --
 local vers = getVersion()
 msgr:send_msg(format('version %s', vers))
+
+dumpPEOPLE()
 
 --
 -- -- -- -- -- --

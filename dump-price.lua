@@ -2,11 +2,9 @@
 
 local fd	= require'carlos.fold'
 
-local asJSON	= require'carlos.json'.asJSON
+local asJSON	= require'json'.encode
 local dbconn	= require'carlos.ferre'.dbconn
-
-local open	= io.open
-local concat	= table.concat
+local dump	= require'carlos.files'.dump
 
 local HOME	= require'carlos.ferre'.HOME
 
@@ -23,10 +21,7 @@ end
 local conn = dbconn'ferre'
 local QRY  = 'SELECT * FROM precios WHERE desc NOT LIKE "VV%"'
 
-local FIN  = open(DEST, 'w')
+dump(DEST, asJSON(fd.reduce(conn.query(QRY), fd.map(nulls), fd.into, {})))
 
-    FIN:write'['
-    FIN:write( concat(fd.reduce(conn.query(QRY), fd.map(nulls), fd.map(asJSON), fd.into, {}), ', ') )
-    FIN:write']'
-    FIN:close()
+conn.close()
 

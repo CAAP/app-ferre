@@ -56,6 +56,15 @@ end
 -- Program execution statement --
 ---------------------------------
 --
+--
+--
+-- DUMP --
+exec(format('%s/dump-price.lua', APP))
+
+exec(format('%s/dump-people.lua', APP))
+--
+--
+--
 -- Initilize server(s)
 local CTX = context()
 

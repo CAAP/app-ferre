@@ -2,11 +2,11 @@
 
 local fd	= require'carlos.fold'
 
-local asJSON	= require'carlos.json'.asJSON
+local asJSON	= require'json'.encode -- require'carlos.json'.asJSON
 local dbconn	= require'carlos.ferre'.dbconn
+local dump	= require'carlos.files'.dump
 
-local open	= io.open
-local concat	= table.concat
+local print = print
 
 local HOME	= require'carlos.ferre'.HOME
 
@@ -17,10 +17,7 @@ local DEST = HOME .. '/ventas/json/people.json'
 local conn = dbconn'personas'
 local QRY = 'SELECT id, nombre FROM empleados'
 
-local FIN  = open(DEST, 'w')
+dump( DEST, asJSON(fd.reduce(conn.query(QRY), fd.into, {})) )
 
-    FIN:write'['
-    FIN:write( concat(fd.reduce(conn.query(QRY), fd.map(asJSON), fd.into, {}), ', ') )
-    FIN:write']'
-    FIN:close()
+conn.close()
 
