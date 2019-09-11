@@ -4,7 +4,7 @@
 --
 local fd	= require'carlos.fold'
 
-local asJSON	= require'carlos.json'.asJSON
+local asJSON	= require'json'.encode
 local context	= require'lzmq'.context
 local cache	= require'carlos.ferre'.cache
 

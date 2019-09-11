@@ -12,10 +12,14 @@ local context	  = require'lzmq'.context
 local asJSON	  = require'carlos.json'.asJSON
 
 local assert	  = assert
+local exec	  = os.execute
+local format	  = string.format
 local concat	  = table.concat
 local format	  = string.format
 
 local print	  = print
+
+local APP	  = require'carlos.ferre'.APP
 
 -- No more external access after this point
 _ENV = nil -- or M
