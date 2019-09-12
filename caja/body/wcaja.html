@@ -23,24 +23,30 @@
     </div>
 
     <div id="ticket" class="tablas">
-	<table>
-	    <tbody>
+	<section class="">
+	    <table>
+		<tbody>
+
+		</tbody>
+	    </table>
+	</section>
+	<section class="">
+	    <table>
+		<tbody>
 		    <tr><td><button name="cerrar" onclick="caja.emptyBag()">Cancelar</button>&emsp;<button name="guardar" onclick="caja.print('factura')">Facturar</button>&emsp;<button onclick="caja.print('ticket')">Imprimir</button></td><td>&emsp;</td><td><label id="ticket-total" class="total"></label></td></tr>
-	    </tbody>
-	</table>
-	<section>
-	<table>
-	    <dt>
-            <thead>
-                <tr> <th> Cantidad </th><th> Precio </th><th> Descuento </th><th> Total </th> </tr> 
-            </thead>
-	    </dt>
-	    <tbody id="ticket-compra" class="amarillo" onchange="caja.updateItem(event)"></tbody>
-	    <tfoot>
-		<tr><td colspan=3 align="right">Sub Total</td><td class="pesos"><label id="ticket-bruto"></label></td></tr>
-		<tr><td colspan=3 align="right">I.V.A.</td><td class="pesos"><label id="ticket-iva"></label></td></tr>
-	    </tfoot>
-	</table>
+		</tbody>
+	    </table>
+	    <table>
+		<dt><thead>
+		    <tr> <th> Cantidad </th><th> Precio </th><th> Descuento </th><th> Total </th> </tr>
+		</thead></dt>
+		<tbody id="ticket-compra" class="amarillo" onchange="caja.updateItem(event)"></tbody>
+		<tfoot>
+		    <tr><td colspan=3 align="right">Sub Total</td><td class="pesos"><label id="ticket-bruto"></label></td></tr>
+		    <tr><td colspan=3 align="right">I.V.A.</td><td class="pesos"><label id="ticket-iva"></label></td></tr>
+		</tfoot>
+	    </table>
 	</section>
     </div>
+
 </section>

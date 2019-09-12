@@ -134,8 +134,9 @@ print'+\n'
 		queues:send_msg(msg)
 		print('Data forward to queue\n')
 	    elseif cmd == 'uid' or cmd == 'bixolon' or cmd == 'ledger' then
-		queues:send_msg( addWeek(msg) )
-		print('Data forward to queue\n')
+		local m = addWeek(msg)
+		queues:send_msg( m )
+		print(m, 'forward to queue\n')
 	    end
 	end
 	if queues:events() == 'POLLIN' then

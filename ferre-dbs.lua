@@ -17,6 +17,7 @@ local now		= require'carlos.ferre'.now
 local asnum		= require'carlos.ferre'.asnum
 local newTable    	= require'carlos.sqlite'.newTable
 local ticket		= require'carlos.ticket'.ticket
+local dump		= require'carlos.files'.dump
 
 local format	= string.format
 local floor	= math.floor
@@ -192,13 +193,14 @@ end
 
 local function jsonName(o) return asJSON(addName(o)) end
 
-local function dumpFEED(conn, path, qry, clause)
+local function toCents(w)
+    if w.total then w.total = format('%.2f', w.total) end
+    return w
+end
+
+local function dumpFEED(conn, path, qry, clause) -- XXX correct FIN json
     if clause and conn.count( 'tickets', clause ) == 0 then return false end
-    local FIN = open(path, 'w')
-    FIN:write'['
-    FIN:write( concat(fd.reduce(conn.query(qry), fd.map(jsonName), fd.into, {}), ',\n') )
-    FIN:write']'
-    FIN:close()
+    dump(path, asJSON(fd.reduce(conn.query(qry), fd.map(toCents), fd.map(addName), fd.into, {})))
     return true
 end
 

@@ -160,6 +160,7 @@
 		let row = cajita.insertRow(0);
 		row.dataset.uid = w.uid;
 		for (let k of ['time', 'nombre', 'total']) { row.insertCell().appendChild( document.createTextNode(w[k]) ); }
+		row.lastChild.classList.add('pesos') ; // total en centavos
 		let tag = row.insertCell();
 		tag.classList.add('addme');
 		tag.appendChild( document.createTextNode( w.tag ) );
@@ -168,7 +169,11 @@
 
 	    caja.refresh = () => UTILS.clearTable( cajita );
 
-	    caja.ledger = e => caja.xget('ledger', {fruit: sessionStorage.fruit, uid: e.target.value+'T'});
+	    caja.ledger = function(e) {
+		let fecha = e.target.value
+		if (fecha.length > 0)
+		    return caja.xget('ledger', {fruit: sessionStorage.fruit, uid: fecha+'T'});
+	    };
 
 	})();
 
