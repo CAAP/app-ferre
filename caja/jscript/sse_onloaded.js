@@ -11,12 +11,16 @@
 	    const add2bag   = caja.add2bag;
 	    const add2fecha = caja.add2fecha;
 
-		function ready() { document.getElementById('pacman').style.visibility = 'hidden'; }
+	    const spin = document.getElementById('pacman');
+
+		function ready() { spin.style.visibility = 'hidden'; }
 
 		function updateOne( o ) {
 		    const store = o.store; delete o.store;
 		    return STORES[store].update(o);
 		}
+
+		esource.onerror = () => { spin.style.visibility = 'visible' };
 
 		// First message received after successful handshake
 		esource.addEventListener("fruit", function(e) {
