@@ -6,8 +6,9 @@
 	    const flbl = document.getElementById('frutas');
 	    const tabs = ferre.TABS;
 	    const STORES = DATA.STORES;
+	    const spin = document.getElementById('pacman');
 
-		function ready() { document.getElementById('pacman').style.visibility = 'hidden'; }
+		function ready() { spin.style.visibility = 'hidden'; }
 
 		function a2obj( a ) { const M = a.length/2; let o = {}; for (let i=0; i<M; i++) { o[a[i*2]] = a[i*2+1]; } return o; }
 
@@ -21,6 +22,8 @@
 		    const store = o.store; delete o.store;
 		    return STORES[store].update(o);
 		}
+
+		esource.onerror = () => { spin.style.visibility = 'visible' };
 
 		// First message received after successful handshake
 		esource.addEventListener("fruit", function(e) {
