@@ -75,7 +75,7 @@
 	    TICKET.bag = document.getElementById( TICKET.bagID );
 	    TICKET.myticket = document.getElementById( TICKET.myticketID );
 
-//		const tcount = document.getElementById(TICKET.tcountID);  XXX
+		const tcount = document.getElementById(TICKET.tcountID);
 		const ttotal = document.getElementById( TICKET.ttotalID );
 		const persona = document.getElementById('personas');
 
@@ -99,10 +99,9 @@
 
 		TICKET.getPrice = getPrice;
 
-		TICKET.total = cents => { ttotal.textContent = '$' + (cents / 100).toFixed(2); }; //
-		// tcount.textContent = TICKET.items.size; XXX
+		TICKET.total = cents => { ttotal.textContent = '$' + (cents / 100).toFixed(2); tcount.textContent = TICKET.items.size; };
 
-		TICKET.extraEmpty = () => { ttotal.textContent = ''; }; // tcount.textContent = ''; 
+		TICKET.extraEmpty = () => { ttotal.textContent = ''; tcount.textContent = ''; };
 
 		ferre.emptyBag = () => { TICKET.empty(); return ferre.xget('delete', {pid: Number(persona.value)}) };
 
@@ -123,7 +122,7 @@
 		TICKET.items.forEach( item => objs.push( 'query=' + TICKET.plain(item) ) );
 
 		if (TICKET.items.size > 4) {
-		    return ferre.xpost(a, objs);
+		    return ferre.xpost(a, objs).then( TICKET.empty, () => {TICKET.myticket.style.visibility = 'visible'} );
 		} else {
 		return ferre.xget(a, objs).then( TICKET.empty, () => {TICKET.myticket.style.visibility = 'visible'} );
 		}
@@ -143,6 +142,8 @@
 	// PEOPLE - Multi-User support
 	(function() {
 	    var PEOPLE = new Map();
+
+	    const tcount = document.getElementById(TICKET.tcountID);
 /*
 		id: [''],
 		nombre: {},
@@ -151,7 +152,7 @@
 
 	    const persona = document.getElementById('personas');
 	    let fetchMe = o => TICKET.getPrice( o ).then( TICKET.add );
-	    let recreate = a => Promise.all( a.map( fetchMe ) ); // .then( () => Promise.resolve() ).then( () => {tcount.textContent = TICKET.items.size;} )
+	    let recreate = a => Promise.all( a.map( fetchMe ) ).then( () => Promise.resolve() ).then( () => {tcount.textContent = TICKET.items.size;} );
 	    function tabs(k) { persona.dataset.id = k; if (PEOPLE.has(k)) { recreate(PEOPLE.get(k)); } }
 
 	    ferre.tab = () => {
