@@ -18,17 +18,14 @@
 		    pesos.classList.add('total'); pesos.appendChild( document.createTextNode( precios[k] ) );
 		    if (k == 'precio1') { pesos.classList.add(k); }
 		} );
-	// FALTANTES
+	// INVENTARIO
 		// TRASH
 		let MM = Object.keys( precios ).length;
-		if (MM < 3) { row.insertCell().colspan = 3-MM; }
+		for (let i = 0; i < (3-MM); i++)
+		    row.insertCell().appendChild(document.createTextNode(' '));
 		let agg = row.insertCell();
 		agg.classList.add('faltantes');
 		agg.appendChild( document.createTextNode('ADD') );
-		let trash = row.insertCell();
-		trash.classList.add('faltantes');
-		trash.classList.add('trashout'); trash.appendChild( document.createTextNode( '.' ) );
-//		trash.onclick = reassure;
 	    };
 
 	    function newItem(a, j) {

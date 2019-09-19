@@ -1,7 +1,9 @@
 <section id="main">
     <div id="buscar" class="dialogos query">
 
+<!--
 	<input id="switch" type="checkbox" /><label for="switch" class="switch-label">FALTANTES</label>
+--!>
 
 	<div>       <!--  ontouchstart="function (e) {e.preventDefault();}"  --!>
 	    <input id="busq" type="search" size=40 accesskey="b" placeholder="Art&iacute;culo o Clave" onchange="ferre.startSearch(event)" onkeyup="ferre.keyPressed(event)" />
@@ -25,7 +27,7 @@
     <div id="ticket" class="tablas">
 	<table>
 	    <tbody>
-		<tr><td><button name="cerrar" onclick="ferre.emptyBag()">Cancelar</button>&emsp;<button onclick="ferre.print('presupuesto')">Presupuesto</button>&emsp;<button onclick="ferre.print('ticket')">Caja</button></td><td>&emsp;</td><td><label id="ticket-total" class="total"></label></td></tr>
+	    <tr><td><button name="cerrar" onclick="ferre.emptyBag()">Cancelar</button>&emsp;<button onclick="ferre.print('presupuesto')">Presupuesto</button>&emsp;<button onclick="ferre.print('ticket')">Caja</button></td><td>&emsp;</td><td><label id="ticket-total" class="total"></label></td><td>&emsp;</td><td><label id="ticket-count"></label></td></tr>
 	    </tbody>
 	</table>
 	<section class="scrollable">

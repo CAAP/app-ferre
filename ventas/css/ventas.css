@@ -93,16 +93,6 @@ button[name=guardar] { color: white; background-color: blue; }
     background-color: #ffffff;
 }
 
-.carrito {
-    display: block;
-    position: fixed;
-    top: 1%;
-    max-height: 60%;
-    z-index: 2;
-    padding: 5px;
-    overflow: auto;
-}
-
 .dialogos {
     z-index: 3;
     display: inline-block;
@@ -121,12 +111,6 @@ button[name=guardar] { color: white; background-color: blue; }
 }
 
 .droit { padding-left: 1em; }
-
-#ticket-count {
-    position: absolute;
-    padding-left: 12px;
-    font-weight: bold;
-}
 
 #ticket-total { font: 200% arial; }
 
