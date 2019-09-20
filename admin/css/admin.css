@@ -17,6 +17,8 @@ button[name=guardar] { color: white; background-color: blue; }
 
 .encontrado { background-color: #aaeedd; }
 
+.updated { background-color: #ffaa90; }
+
 .modificado { border: 3px solid red; }
 
 .precio1 { background-color: #e6ccff; }
