@@ -77,7 +77,7 @@
 
  	    BROWSE.startSearch = function startSearch(e) {
 		const ss = e.target.value.toUpperCase();
-		const fruit = localStorage.fruit;
+		const fruit = sessionStorage.fruit;
 		if (ss.length == 0) { console.log('Empty search: nothing to be done.'); }
 		BROWSE.tab.style.visibility='hidden';
 		UTILS.clearTable( BROWSE.lis );
