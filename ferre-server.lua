@@ -51,7 +51,7 @@ local function id2fruit( id, sk )
 end
 
 local function handshake(server, sk)
-    local id, msg = receive(server)
+    local id, msg = receive(server, true)
 	send(server, id, HELLO)
 	send(server, id, ssevent('fruit', id2fruit(id, sk)))
     return 'New fruit: '..SKS[sk]
