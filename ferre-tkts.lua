@@ -70,8 +70,10 @@ print'+\n'
 --    end
 --    if cmd == 'ticket' or cmd == 'presupuesto' then
 	local pid = msg:match'pid=([%d%a]+)'
-	queues:send_msg(format('%s&uid=%s%s', msg, newUID(), pid))
-	print('Data forward to queue\n')
+	if pid then -- received messages saying presupuesto nil ??? XXX
+	    queues:send_msg(format('%s&uid=%s%s', msg, newUID(), pid))
+	    print('Data forward to queue\n')
+	end
     end
 end
 
