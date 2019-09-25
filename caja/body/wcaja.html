@@ -27,13 +27,11 @@
 	    <table>
 		<tbody>
 
-		</tbody>
-	    </table>
-	</section>
-	<section class="">
-	    <table>
-		<tbody>
-		    <tr><td><button name="cerrar" onclick="caja.emptyBag()">Cancelar</button>&emsp;<button name="guardar" onclick="caja.print('factura')">Facturar</button>&emsp;<button onclick="caja.print('ticket')">Imprimir</button></td><td>&emsp;</td><td><label id="ticket-total" class="total"><label id="ticket-count"></label></label></td></tr>
+		    <tr class=""><td><button name="cerrar" onclick="caja.emptyBag()">Cancelar</button>&emsp;<button name="guardar" onclick="caja.print('factura')">Facturar</button>&emsp;<button onclick="caja.print('ticket')">Imprimir</button></td><td>&emsp;</td><td><label id="ticket-total" class="total"><label id="ticket-count"></label></label></td></tr>
+
+		    <tr class=""><td><button name="cerrar" onclick="facturas.emptyBag()">Cancelar</button></td><td><button name="timbrar" onclick="facturas.timbrar()">Timbrar</button></td></tr>
+		    <tr><td colspan="2"><input id="" type="search" size=25 accesskey="b" placeholder="RFC o Razon Social" onchange="ferre.startSearch(event)" onkeyup="ferre.keyPressed(event)"></td></tr>
+
 		</tbody>
 	    </table>
 	    <table>

@@ -7,6 +7,7 @@ local fd		= require'carlos.fold'
 local into		= require'carlos.sqlite'.into
 local asJSON		= require'json'.encode
 local split		= require'carlos.string'.split
+local countN		= require'carlos.string'.count
 local context		= require'lzmq'.context
 local pollin		= require'lzmq'.pollin
 local dbconn		= require'carlos.ferre'.dbconn
@@ -38,6 +39,8 @@ local pairs	= pairs
 local ipairs	= ipairs
 
 local print	= print
+
+local stdout	= io.stdout
 
 local HOME	= require'carlos.ferre'.HOME
 local APP	= require'carlos.ferre'.APP
@@ -98,10 +101,15 @@ local function process(uid, tag, conn2)
     end
 end
 
+-- XXX should use fd.slice instead of fd.reduce XXX
 local function addTicket(conn, conn2, msg)
     local tag	    = msg:match'%a+'
     local data, uid = msg:match'&([^!]+)&uid=([^!]+)$'
-    fd.reduce(fd.wrap(data:gmatch'query=([^&]+)'), fd.map(process(uid, tag, conn2)), into'tickets', conn)
+    if countN(data, 'query=') > 6 then
+	fd.slice(5, fd.wrap(data:gmatch'query=([^&]+)'), fd.map(process(uid, tag, conn2)), into'tickets', conn)
+    else
+	fd.reduce(fd.wrap(data:gmatch'query=([^&]+)'), fd.map(process(uid, tag, conn2)), into'tickets', conn)
+    end
     return uid
 end
 
@@ -212,15 +220,21 @@ local function bixolon(uid, conn)
 
     local head = addName(fd.first(conn.query(format(QHEAD, uid)), function(x) return x end))
 
-    local data = fd.reduce(conn.query(format(QLPR, uid)), fd.into, {})
+    local data = ticket(head, fd.reduce(conn.query(format(QLPR, uid)), fd.into, {}))
 
-    local skt = popen(PRINTER, 'w')
-    skt:write( ticket(head, data) )
+    local skt = stdout -- popen(PRINTER, 'w')
+    if #data > 8 then
+	data = fd.slice(4, data, fd.into, {})
+	fd.reduce(data, function(v) skt:write(concat(v,'\n'), '\n') end)
+    else
+	skt:write( concat(data,'\n') )
+    end
     skt:close()
 
     return true
 end
 
+--[[
 local function facturar(uid, conn)
     local HEAD = {'tag', 'uid', 'total', 'nombre'}
     local DATOS = {'clave', 'desc', 'qty', 'rea', 'unitario', 'subTotal'}
@@ -230,12 +244,16 @@ local function facturar(uid, conn)
     local data = fd.reduce(conn.query(format(QLPR, uid)), fd.into, {})
 
     local skt = popen(PRINTER, 'w')
-    skt:write( ticket(head, data) )
+	if #data > 8 then
+	    fd.slice(4, function end)
+	else
+	    skt:write( concat(ticket(head, data), '\n') )
+	end
     skt:close()
 
     return true
 end
-
+--]]
 
 --[[
 local function escape(a) return fd.reduce(a, fd.map(function(x) return format('%q',x) end), fd.into, {}) end
@@ -293,7 +311,7 @@ end
 
 local function which(week) return TODAY==week and WEEK or assert(dbconn( week )) end
 
-local function feedPath(fruit)  return format('%s/caja/json/%s-feed.json', HOME, fruit) end
+local function feedPath(fruit) return format('%s/caja/json/%s-feed.json', HOME, fruit) end
 
 while true do
 print'+\n'
@@ -331,6 +349,7 @@ print'+\n'
 	    print'Historic data stored and dumped\n'
 	    queues:send_msgs{'WEEK', format('%s ledger %s-feed.json', fruit, fruit)}
 	end
+
     elseif cmd == 'uid' then
 	local fruit = msg:match'fruit=(%a+)'
 	local uid   = msg:match'uid=([^!&]+)'
@@ -339,6 +358,7 @@ print'+\n'
 	dumpFEED(which(week), feedPath(fruit), qry, false)
 	print'Data for UID stored and dumped\n'
 	queues:send_msgs{'WEEK', format('%s uid %s-feed.json', fruit, fruit)}
+
     elseif cmd == 'bixolon' then
 	local uid, week = msg:match'%s([^!]+)%s([^!]+)'
 	bixolon(uid, which(week))
@@ -355,6 +375,7 @@ print'+\n'
 	queues:send_msgs{'ADMIN', format('%s update %s', fruit, date('%FT%T', now()):sub(1, 10))}
 	print('Data updated correctly\n')
     end
+
 end
 
 --[[

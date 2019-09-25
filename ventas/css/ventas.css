@@ -108,7 +108,23 @@ button[name=guardar] { color: white; background-color: blue; }
     cursor: pointer;
 }
 
+.editme {
+    background-image: url("svg/pencil.svg");
+    background-repeat: no-repeat;
+    background-position: center;
+    cursor: pointer;
+}
+
+.highlight {
+    background-image: url("svg/check.svg");
+    background-repeat: no-repeat;
+    background-position: right;
+    cursor: pointer;
+}
+
 .droit { padding-left: 1em; }
+
+.checado { background-color: #cbd7ed; }
 
 #ticket-total { font: 200% arial; }
 

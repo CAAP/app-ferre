@@ -1,12 +1,14 @@
 	var TICKET = { bagID: 'ticket-compra', myticketID: 'ticket', ttotalID: 'ticket-total', tivaID: 'ticket-iva', tbrutoID: 'ticket-bruto', tcountID: 'ticket-count' };
 
 	(function() {
-	    const VARS = ['id', 'clave', 'qty', 'rea', 'precio', 'totalCents'];
+	    const VARS = ['id', 'clave', 'qty', 'rea', 'precio', 'totalCents', 'checado']; // XXX
 	    const EVARS = ['id', 'desc', 'qty', 'rea', 'precio', 'subTotal' ]; // clave
 
 	    TICKET.items = new Map();
 
 	    const asnum = UTILS.asnum;
+
+	    function getNodes(k) { return Array.from(TICKET.bag.querySelectorAll("[data-clave='"+k+"']")); }
 
 	    function tocents(x) { return (x / 100).toFixed(2); }
 
@@ -62,7 +64,7 @@
 
 	    function israbatt2(q, row, prev) {
 		let clave = asnum( row.dataset.clave );
-		let nodes = Array.from(TICKET.bag.querySelectorAll("[data-clave='"+clave+"']"));
+		let nodes = getNodes(clave);
 
 		let rabatt = parseFloat(q.rea) > 0 || q.precio != 'precio1';
 		if (rabatt ^ prev) {
@@ -93,7 +95,7 @@
 		row.insertCell().appendChild( inputE( [['type', 'number'], ['size', 2], ['min', 0], ['name', 'qty'], ['value', q.qty]] ) ).select();
 		let desc = row.insertCell();
 		if (q.faltante) { desc.classList.add('faltante'); }
-		desc.classList.add('basura'); desc.appendChild( document.createTextNode( q.desc ) );
+		desc.appendChild( document.createTextNode( q.desc ) );
 		let pcs = row.insertCell();
 		pcs.classList.add('pesos'); pcs.appendChild( precios(q) );
 		let rea = inputE( [['type', 'number'], ['size', 2], ['name', 'rea'], ['value', q.rea]] );
@@ -107,18 +109,32 @@
 		    TICKET.remove( e.target.parentElement );
 	    }
 
+	    function toggleView( e ) {
+		let clave = asnum(e.target.parentElement.dataset.clave);
+		let fun = e.target.dataset.fun;
+		let items = TICKET.items;
+		let q = items.get( clave );
+		q.checado = !q.checado;
+		items.set( clave, q );
+		getNodes(clave).forEach( tr => TICKET.bag.removeChild(tr) );
+		TICKET.add(q);
+	    }
+
 	    function displayItem2(q) {
 		let row = TICKET.bag.insertRow(0);
 		row.classList.add('bold');
 //		row.title = q.desc.substr(0,3); // TRYING OUT LOCATION XXX
 		row.dataset.clave = q.clave;
 		// DATOS INFO
-		row.insertCell().appendChild( document.createTextNode( q.id ) ); // q.clave XXX
+		let uid = row.insertCell();
+		uid.appendChild( document.createTextNode( q.id ) ); // q.clave XXX
+		uid.classList.add('highlight');
+		uid.ondblclick = toggleView;
 		let desc = row.insertCell();
 		desc.colSpan = 2;
 		if (q.faltante) { desc.classList.add('faltante'); }
-		desc.classList.add('basura'); desc.appendChild( document.createTextNode( q.desc ) );
-		desc.onclick = () => { UTILS.clearTable( BROWSE.lis ); BROWSE.doSearch( q.clave ); } // taken from 'gui_onloaded' line 55
+		desc.appendChild( document.createTextNode( q.desc ) );
+//		desc.onclick = () => { UTILS.clearTable( BROWSE.lis ); BROWSE.doSearch( q.clave ); }; // taken from 'gui_onloaded' line 55 XXX can be changeeeddd
 		// TRASH
 		let trash = row.insertCell();
 		trash.classList.add('trashout'); trash.appendChild( document.createTextNode( ' ' ) );
@@ -142,7 +158,6 @@
 	    function showItem(q) {
 		let row = TICKET.bag.insertRow();
 		row.dataset.clave = q.clave;
-		row.classList.add('basura');
 		israbatt(q, row, false);
 		// DATOS
 		q.subTotal = tocents(q.totalCents);
@@ -151,10 +166,43 @@
 		row.lastChild.classList.add('total');
 	    }
 
+	    function formatted( r, v ) {
+		r.classList.add('pesos');
+		r.appendChild( document.createTextNode(v) );
+	    }
+
+	    function showItem2(q) {
+		let row = TICKET.bag.insertRow(-1);
+		row.classList.add('bold'); row.classList.add('checado');
+		row.dataset.clave = q.clave;
+		// DATOS INFO
+		row.insertCell().appendChild( document.createTextNode( q.id ) ); // q.clave XXX
+		let desc = row.insertCell();
+		desc.colSpan = 2;
+		if (q.faltante) { desc.classList.add('faltante'); }
+		desc.appendChild( document.createTextNode( q.desc ) );
+//		desc.onclick = () => { UTILS.clearTable( BROWSE.lis ); BROWSE.doSearch( q.clave ); } // taken from 'gui_onloaded' line 55
+		// TRASH
+		let edt = row.insertCell();
+		edt.classList.add('editme'); edt.appendChild( document.createTextNode( ' ' ) );
+		edt.ondblclick = toggleView;
+//	BREAK
+		row = TICKET.bag.insertRow(-1);
+		row.dataset.clave = q.clave;
+		// DATOS 4 CHANGE
+		formatted( row.insertCell(), q.qty );
+		formatted( row.insertCell(), q.precios[q.precio] );
+		formatted( row.insertCell(), q.rea + ' %' );
+		// TOTAL
+		let total = row.insertCell();
+		total.classList.add('pesos'); total.classList.add('total'); total.appendChild( document.createTextNode( tocents(q.totalCents) ) );
+		// RABATT
+//		israbatt2(q, row, false);
+	    }
+
 	    function showTaxes(q) {
 		let row = TICKET.bag.insertRow();
 		row.dataset.clave = q.clave;
-		row.classList.add('basura');
 		israbatt(q, row, false);
 		// DATOS
 		q.subTotal = tocents(q.totalCents/1.16);
@@ -227,16 +275,21 @@
 	    TICKET.add = function(w) {
 		TICKET.myticket.style.visibility = 'visible';
 		TICKET.items.set( w.clave, w );
-		displayItem2( w );
+		if (w.checado)
+		    showItem2( w );
+		else
+		    displayItem2( w );
 		bagTotal();
 	    };
 
+/*		
 	    TICKET.show = function(w) {
 		TICKET.myticket.style.visibility = 'visible';
 		TICKET.items.set( w.clave, w );
-		showItem( w );
+		showItem2( w );
 		bagTotal();
 	    };
+*/
 
 	    TICKET.taxes = function(w) {
 		TICKET.myticket.style.visibility = 'visible';
@@ -248,7 +301,7 @@
 		let clave = asnum( tr.dataset.clave );
 		TICKET.items.delete( clave );
 
-		Array.from(TICKET.bag.querySelectorAll("[data-clave='"+clave+"']")).forEach( tr => TICKET.bag.removeChild(tr) );
+		getNodes(clave).forEach( tr => TICKET.bag.removeChild(tr) );
 
 		if (!TICKET.bag.hasChildNodes()) { TICKET.empty(); } else { bagTotal(); }
 		return clave; // FIX for caja.js XXX
