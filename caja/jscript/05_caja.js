@@ -9,4 +9,5 @@
 	    let old_remove = TICKET.remove;
 	    TICKET.update = e => { caja.UPDATED = true; return old_update(e); };
 	    TICKET.remove = e => { caja.UPDATED = true; return old_remove(e); };
+	    caja.updateItem = TICKET.update;
 	})();

@@ -128,11 +128,6 @@
 		}
 	    };
 
-	    // XXX in case of mulitiple elements on the ticket, one should consider
-	    // dividing the load by splitting the elements to be sent XXX
-	    ferre.split = function() {
-	    };
-
 	})();
 
 	// SWITCH
@@ -144,13 +139,24 @@
 	    var PEOPLE = new Map();
 
 	    const tcount = document.getElementById(TICKET.tcountID);
-/*
-		id: [''],
-		nombre: {},
-*/
+	    const persona = document.getElementById('personas');
+	    const opt = document.createElement('option');
+
+	    persona.appendChild(opt);
+	    persona.dataset.id = 0;
+
+	    function limpiar() {
+		opt.value = 0;
+		opt.label = '';
+		opt.selected = true;
+	    }
+
+	    limpiar();
+
 	    ferre.TABS = PEOPLE;
 
-	    const persona = document.getElementById('personas');
+	    ferre.
+
 	    let fetchMe = o => TICKET.getPrice( o ).then( TICKET.add );
 	    let recreate = a => Promise.all( a.map( fetchMe ) ).then( () => Promise.resolve() ).then( () => {tcount.textContent = TICKET.items.size;} );
 	    function tabs(k) { persona.dataset.id = k; if (PEOPLE.has(k)) { recreate(PEOPLE.get(k)); } }
@@ -159,12 +165,6 @@
 		const pid = Number(persona.value);
 		ferre.print('tabs').then( () => tabs(pid) );
 	    };
-
-	    let opt = document.createElement('option');
-	    opt.value = 0;
-	    opt.label = '';
-	    opt.selected = true;
-	    persona.appendChild(opt);
 
 	    XHR.getJSON('json/people.json').then(a => a.forEach( p => { let opt = document.createElement('option'); opt.value = p.id; opt.appendChild(document.createTextNode(p.nombre)); persona.appendChild(opt); } ) );
 	})();
