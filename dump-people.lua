@@ -12,7 +12,7 @@ local HOME	= require'carlos.ferre'.HOME
 
 _ENV =  nil
 
-local DEST = HOME .. '/ventas/json/people.json'
+local DEST = HOME .. '/json/people.json'
 
 local conn = dbconn'personas'
 local QRY = 'SELECT id, nombre FROM empleados'

@@ -56,6 +56,12 @@
 	    caja.menuToggle = p => { mymenu.style.display = p ? 'inline' : 'none'; };
 	})();
 
+	// PEOPLE
+	(function() {
+	    const persona = document.getElementById('personas');
+	    XHR.getJSON('/json/people.json').then(a => a.forEach( p => { let opt = document.createElement('option'); opt.value = p.id; opt.appendChild(document.createTextNode(p.nombre)); persona.appendChild(opt); } ) );
+	})();
+
 	// TICKET
 	(function() {
 	    const PRICE = DATA.STORES.PRICE;
@@ -66,6 +72,7 @@
 	    const ttotal = document.getElementById( TICKET.ttotalID );
 
 	    const cajita = document.getElementById('tabla-caja');
+	    const persona = document.getElementById('personas');
 
 	    TICKET.bag = document.getElementById( TICKET.bagID );
 	    TICKET.myticket = document.getElementById( TICKET.myticketID );
@@ -90,15 +97,23 @@
 	    caja.print = function(a) {
 		if (TICKET.items.size == 0) { return Promise.resolve() }
 
-		if (a == 'factura' && caja.UPDATED) { return alert('Se han hecho cambios al TICKET actual debes imprimirlo antes de facturar!'); }
+		if (a == 'msgs')
+		    return caja.UIDS.forEach(uid => caja.xget(a, ['pid='+persona.value, 'uid='+uid]));
+
+		if (a == 'pagar' && caja.UPDATED) { return alert('Se han hecho cambios al TICKET actual debes imprimirlo antes de marcarlo como pagado!'); }
+
+		if (a == 'ticket' && !caja.UPDATED) { a = 'bixolon'; }
 
 		if (!caja.UPDATED)
-		    return caja.UIDS.forEach(uid => XHR.get(caja.origin + (a=='factura' ? 'factura?' : 'bixolon?') + uid));
+		    return caja.UIDS.forEach(uid => XHR.get(caja.origin + a + '?' + uid));
 		else {
 		    let objs = ['pid=A'];
 		    TICKET.items.forEach( item => objs.push( 'query=' + TICKET.plain(item) ) );
-		    return caja.xget(a, objs)
-			       .then( caja.emptyBag );
+
+		    if (TICKETS.items.size > 4)
+			return caja.xpost(a, objs).then( caja.emptyBag );
+		    else
+			return caja.xget(a, objs).then( caja.emptyBag );
 		}
 	    };
 
@@ -125,7 +140,7 @@
 		return IDB.readDB( PRICE )
 		    .get( clave )
 		    .then( w => { if (w) { return Object.assign( o, w, {id: clave} ) } else { return Promise.reject() } } )
-		    .then( TICKET.add ) // instead of TICKET.show
+		    .then( TICKET.show ) // instead of TICKET.add
 		    .catch( e => console.log(e) );
 	    };
 

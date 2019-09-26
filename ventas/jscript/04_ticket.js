@@ -1,7 +1,7 @@
 	var TICKET = { bagID: 'ticket-compra', myticketID: 'ticket', ttotalID: 'ticket-total', tivaID: 'ticket-iva', tbrutoID: 'ticket-bruto', tcountID: 'ticket-count' };
 
 	(function() {
-	    const VARS = ['id', 'clave', 'qty', 'rea', 'precio', 'totalCents', 'checado']; // XXX
+	    const VARS = ['id', 'clave', 'qty', 'rea', 'precio', 'totalCents']; // XXX
 	    const EVARS = ['id', 'desc', 'qty', 'rea', 'precio', 'subTotal' ]; // clave
 
 	    TICKET.items = new Map();
@@ -104,10 +104,8 @@
 		total.classList.add('pesos'); total.classList.add('total'); total.appendChild( document.createTextNode( tocents(q.totalCents) ) );
 	    }
 
-	    function reassure( e ) {
-		if (window.confirm('Quieres eliminar un producto?'))
-		    TICKET.remove( e.target.parentElement );
-	    }
+/*
+ *
 
 	    function toggleView( e ) {
 		let clave = asnum(e.target.parentElement.dataset.clave);
@@ -119,6 +117,13 @@
 		getNodes(clave).forEach( tr => TICKET.bag.removeChild(tr) );
 		TICKET.add(q);
 	    }
+*
+*/
+
+	    function reassure( e ) {
+		if (window.confirm('Quieres eliminar un producto?'))
+		    TICKET.remove( e.target.parentElement );
+	    }
 
 	    function displayItem2(q) {
 		let row = TICKET.bag.insertRow(0);
@@ -128,8 +133,8 @@
 		// DATOS INFO
 		let uid = row.insertCell();
 		uid.appendChild( document.createTextNode( q.id ) ); // q.clave XXX
-		uid.classList.add('highlight');
-		uid.ondblclick = toggleView;
+//		uid.classList.add('highlight');
+//		uid.ondblclick = toggleView;
 		let desc = row.insertCell();
 		desc.colSpan = 2;
 		if (q.faltante) { desc.classList.add('faltante'); }
@@ -173,7 +178,7 @@
 
 	    function showItem2(q) {
 		let row = TICKET.bag.insertRow(-1);
-		row.classList.add('bold'); row.classList.add('checado');
+		row.classList.add('bold');
 		row.dataset.clave = q.clave;
 		// DATOS INFO
 		row.insertCell().appendChild( document.createTextNode( q.id ) ); // q.clave XXX
@@ -181,11 +186,10 @@
 		desc.colSpan = 2;
 		if (q.faltante) { desc.classList.add('faltante'); }
 		desc.appendChild( document.createTextNode( q.desc ) );
-//		desc.onclick = () => { UTILS.clearTable( BROWSE.lis ); BROWSE.doSearch( q.clave ); } // taken from 'gui_onloaded' line 55
 		// TRASH
-		let edt = row.insertCell();
-		edt.classList.add('editme'); edt.appendChild( document.createTextNode( ' ' ) );
-		edt.ondblclick = toggleView;
+		let trash = row.insertCell();
+		trash.classList.add('trashout'); trash.appendChild( document.createTextNode( ' ' ) );
+		trash.onclick = reassure;
 //	BREAK
 		row = TICKET.bag.insertRow(-1);
 		row.dataset.clave = q.clave;
@@ -275,21 +279,17 @@
 	    TICKET.add = function(w) {
 		TICKET.myticket.style.visibility = 'visible';
 		TICKET.items.set( w.clave, w );
-		if (w.checado)
-		    showItem2( w );
-		else
-		    displayItem2( w );
+		displayItem2( w );
 		bagTotal();
 	    };
-
-/*		
+		
 	    TICKET.show = function(w) {
 		TICKET.myticket.style.visibility = 'visible';
 		TICKET.items.set( w.clave, w );
 		showItem2( w );
 		bagTotal();
 	    };
-*/
+
 
 	    TICKET.taxes = function(w) {
 		TICKET.myticket.style.visibility = 'visible';

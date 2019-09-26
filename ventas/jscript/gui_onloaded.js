@@ -130,32 +130,23 @@
 
 	})();
 
-	// SWITCH
-	(function() {
-	})();
-
 	// PEOPLE - Multi-User support
 	(function() {
 	    var PEOPLE = new Map();
 
 	    const tcount = document.getElementById(TICKET.tcountID);
 	    const persona = document.getElementById('personas');
-	    const opt = document.createElement('option');
 
-	    persona.appendChild(opt);
-	    persona.dataset.id = 0;
-
-	    function limpiar() {
+	    (function() {
+		let opt = document.createElement('option');
+		persona.appendChild(opt);
+		persona.dataset.id = 0;
 		opt.value = 0;
 		opt.label = '';
 		opt.selected = true;
-	    }
-
-	    limpiar();
+	    })();
 
 	    ferre.TABS = PEOPLE;
-
-	    ferre.
 
 	    let fetchMe = o => TICKET.getPrice( o ).then( TICKET.add );
 	    let recreate = a => Promise.all( a.map( fetchMe ) ).then( () => Promise.resolve() ).then( () => {tcount.textContent = TICKET.items.size;} );
@@ -166,7 +157,7 @@
 		ferre.print('tabs').then( () => tabs(pid) );
 	    };
 
-	    XHR.getJSON('json/people.json').then(a => a.forEach( p => { let opt = document.createElement('option'); opt.value = p.id; opt.appendChild(document.createTextNode(p.nombre)); persona.appendChild(opt); } ) );
+	    XHR.getJSON('/json/people.json').then(a => a.forEach( p => { let opt = document.createElement('option'); opt.value = p.id; opt.appendChild(document.createTextNode(p.nombre)); persona.appendChild(opt); } ) );
 	})();
 
 

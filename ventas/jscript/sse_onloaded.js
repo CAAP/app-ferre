@@ -70,6 +70,12 @@
 		    distill( e.data );
 		}, false);
 
+		esource.addEventListener("msgs", function(e) {
+		    elbl.innerHTML = "msgs event";
+		    console.log("msgs event received");
+		    console.log(e.data);
+		}, false);
+
 		esource.addEventListener("adjust", function(e) {
 		    elbl.innerHTML = "adjust event";
 		    console.log('adjust event ongoing');

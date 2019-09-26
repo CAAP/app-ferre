@@ -26,19 +26,19 @@
 	<section class="">
 	    <table>
 		<tbody>
-
-		    <tr class=""><td><button name="cerrar" onclick="caja.emptyBag()">Cancelar</button>&emsp;<button name="guardar" onclick="caja.print('factura')">Facturar</button>&emsp;<button onclick="caja.print('ticket')">Imprimir</button></td><td>&emsp;</td><td><label id="ticket-total" class="total"><label id="ticket-count"></label></label></td></tr>
-
+			<tr><td><button name="cerrar" onclick="caja.emptyBag()">Cancelar</button>&emsp;<button name="guardar" onclick="caja.print('pagar')">Pagar</button>&emsp;<button onclick="caja.print('ticket')">Imprimir</button></td><td>&emsp;</td><td><label id="ticket-total" class="total"></label><label id="ticket-count"></label></td></tr>
+		    <tr><td><select name="persona" id="personas" accesskey="c"></select>&emsp;<button onclick="caja.print('msgs')">Enviar</button></td></tr>
+<!--
 		    <tr class=""><td><button name="cerrar" onclick="facturas.emptyBag()">Cancelar</button></td><td><button name="timbrar" onclick="facturas.timbrar()">Timbrar</button></td></tr>
 		    <tr><td colspan="2"><input id="" type="search" size=25 accesskey="b" placeholder="RFC o Razon Social" onchange="ferre.startSearch(event)" onkeyup="ferre.keyPressed(event)"></td></tr>
-
+--!>
 		</tbody>
 	    </table>
 	    <table>
 		<dt><thead>
 		    <tr> <th> Cantidad </th><th> Precio </th><th> Descuento </th><th> Total </th> </tr>
 		</thead></dt>
-		<tbody id="ticket-compra" class="amarillo" onchange="caja.updateItem(event)"></tbody>
+		<tbody id="ticket-compra" class="amarillo"></tbody>
 		<tfoot>
 		    <tr><td colspan=3 align="right">Sub Total</td><td class="pesos"><label id="ticket-bruto"></label></td></tr>
 		    <tr><td colspan=3 align="right">I.V.A.</td><td class="pesos"><label id="ticket-iva"></label></td></tr>

@@ -20,15 +20,16 @@ _ENV = nil -- or M
 -- Local Variables for module-only access
 --
 local CACHE	 = cache'Hi TABS' -- {carl='Hi TABS'}
+local MSGS	 = cache'Hi MSGS'
 local UPSTREAM	 = 'ipc://upstream.ipc'
 local DOWNSTREAM = 'ipc://downstream.ipc'
-local SUBS	 = {'tabs', 'delete', 'CACHE', 'KILL'}
+local SUBS	 = {'tabs', 'delete', 'msgs', 'CACHE', 'KILL'}
 
 --------------------------------
 -- Local function definitions --
 --------------------------------
 --
-CACHE.tabs = CACHE.store
+CACHE.tabs = CACHE.store -- REDEFINITION
 ---------------------------------
 -- Program execution statement --
 ---------------------------------
@@ -69,11 +70,16 @@ print'+\n'
     if cmd == 'CACHE' then
 	local fruit = msg:match'%s(%a+)'
 	CACHE.sndkch( msgr, fruit )
+	MSGS.sndkch( msgr, fruit )
 	print('CACHE sent to', fruit, '\n')
 	goto FIN
     end
     local pid = msg:match'pid=(%d+)'
-    CACHE[cmd]( pid, msg )
+    if cmd == 'msgs' then
+	MSGS.store( pid, msg )
+    else
+	CACHE[cmd]( pid, msg )
+    end
     msgr:send_msg( msg )
     print(msg, '\n')
     ::FIN::
