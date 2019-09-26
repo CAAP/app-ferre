@@ -191,6 +191,8 @@ button[name=guardar] { color: white; background-color: blue; }
     order: 2;
 }
 
+#msgs { text-decoration: underline; }
+
 td { font: bold 75% arial; }
 
 

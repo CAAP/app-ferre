@@ -133,6 +133,7 @@
 	// PEOPLE - Multi-User support
 	(function() {
 	    var PEOPLE = new Map();
+	    var MSGS   = new Map();
 
 	    const tcount = document.getElementById(TICKET.tcountID);
 	    const persona = document.getElementById('personas');
@@ -147,6 +148,7 @@
 	    })();
 
 	    ferre.TABS = PEOPLE;
+	    ferre.MSGS = MSGS;
 
 	    let fetchMe = o => TICKET.getPrice( o ).then( TICKET.add );
 	    let recreate = a => Promise.all( a.map( fetchMe ) ).then( () => Promise.resolve() ).then( () => {tcount.textContent = TICKET.items.size;} );

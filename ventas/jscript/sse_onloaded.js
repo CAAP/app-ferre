@@ -73,7 +73,14 @@
 		esource.addEventListener("msgs", function(e) {
 		    elbl.innerHTML = "msgs event";
 		    console.log("msgs event received");
+
+		    const d = e.data;
+		    const pid = Number( d.match(/\d+/) );
+		    const uid = d.match(/^=+/);
+		    msgs.set(pid, uid);
+
 		    console.log(e.data);
+
 		}, false);
 
 		esource.addEventListener("adjust", function(e) {
