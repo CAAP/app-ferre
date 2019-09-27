@@ -183,8 +183,10 @@
 		    pcode.value = '';
 		    pcode.disabled = true;
 		    persona.disabled = true;
-		} else
+		} else {
+		    pcode.value = '';
 		    return alert("PIN incorrecto!");
+		}
 	    }
 
 	    ferre.logout = () => ferre.print('tabs').then( nadie );
