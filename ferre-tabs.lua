@@ -21,9 +21,10 @@ _ENV = nil -- or M
 --
 local CACHE	 = cache'Hi TABS' -- {carl='Hi TABS'}
 local MSGS	 = cache'Hi MSGS'
+local PINS	 = cache'Hi PINS'
 local UPSTREAM	 = 'ipc://upstream.ipc'
 local DOWNSTREAM = 'ipc://downstream.ipc'
-local SUBS	 = {'tabs', 'delete', 'msgs', 'CACHE', 'KILL'}
+local SUBS	 = {'tabs', 'delete', 'msgs', 'pins', 'CACHE', 'KILL'}
 
 --------------------------------
 -- Local function definitions --
@@ -71,11 +72,14 @@ print'+\n'
 	local fruit = msg:match'%s(%a+)'
 	CACHE.sndkch( msgr, fruit )
 	MSGS.sndkch( msgr, fruit )
+	PINS.sndkch( msgr, fruit )
 	print('CACHE sent to', fruit, '\n')
 	goto FIN
     end
     local pid = msg:match'pid=(%d+)'
-    if cmd == 'msgs' then
+    if cmd == 'pins' then
+	PINS.store(pid, msg)
+    elseif cmd == 'msgs' then
 	MSGS.store( pid, msg )
     else
 	CACHE[cmd]( pid, msg )

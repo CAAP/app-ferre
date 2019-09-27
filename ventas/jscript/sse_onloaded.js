@@ -5,6 +5,7 @@
 	    const elbl = document.getElementById("eventos");
 	    const flbl = document.getElementById('frutas');
 	    const tabs = ferre.TABS;
+	    const pins = ferre.PINS;
 	    const STORES = DATA.STORES;
 	    const spin = document.getElementById('pacman');
 
@@ -68,6 +69,13 @@
 		    elbl.innerHTML = "tabs event";
 		    console.log("tabs event received");
 		    distill( e.data );
+		}, false);
+
+		esource.addEventListener("pins", function(e) {
+		    elbl.innerHTML = "pins event";
+		    console.log("pins event received");
+		    const a = e.data.match(/pid=(\d+)&pincode=(\d+)/);
+		    pins.set(Number(a[1]), Number(a[2]));
 		}, false);
 
 		esource.addEventListener("msgs", function(e) {

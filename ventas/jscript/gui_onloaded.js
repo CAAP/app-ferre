@@ -79,8 +79,6 @@
 		const ttotal = document.getElementById( TICKET.ttotalID );
 		const persona = document.getElementById('personas');
 
-		persona.dataset.id = 0;
-
 		function uptoCents(q) { return Math.round( 100 * q[q.precio] * q.qty * (1-q.rea/100) ); };
 
 		function getPrice( o ) {
@@ -113,7 +111,7 @@
 
 	    ferre.print = function(a) {
 		if (TICKET.items.size == 0) {return Promise.resolve();}
-		const pid = Number(persona.dataset.id);
+		const pid = Number(persona.value); // Number(persona.dataset.id);
 
 		if (pid == 0) { TICKET.empty(); return Promise.resolve(); } // should NEVER happen XXX
 
@@ -132,34 +130,77 @@
 
 	// PEOPLE - Multi-User support
 	(function() {
-	    var PEOPLE = new Map();
+	    var TABS = new Map();
 	    var MSGS   = new Map();
+	    var PINS   = new Map();
 
 	    const tcount = document.getElementById(TICKET.tcountID);
 	    const persona = document.getElementById('personas');
+	    const pcode = document.getElementById('pincode');
 
-	    (function() {
 		let opt = document.createElement('option');
 		persona.appendChild(opt);
-		persona.dataset.id = 0;
+//		persona.dataset.id = 0;
 		opt.value = 0;
 		opt.label = '';
 		opt.selected = true;
-	    })();
 
-	    ferre.TABS = PEOPLE;
+	    ferre.TABS = TABS;
 	    ferre.MSGS = MSGS;
+	    ferre.PINS = PINS;
 
+	    let nadie = () => { opt.selected = true; persona.disabled = false; }
 	    let fetchMe = o => TICKET.getPrice( o ).then( TICKET.add );
 	    let recreate = a => Promise.all( a.map( fetchMe ) ).then( () => Promise.resolve() ).then( () => {tcount.textContent = TICKET.items.size;} );
-	    function tabs(k) { persona.dataset.id = k; if (PEOPLE.has(k)) { recreate(PEOPLE.get(k)); } }
+
+/*
+	    function tabs(k) {
+		persona.dataset.id = k;
+		if (TABS.has(k)) { recreate(TABS.get(k)); }
+	    }
+*/
 
 	    ferre.tab = () => {
 		const pid = Number(persona.value);
-		ferre.print('tabs').then( () => tabs(pid) );
-	    };
+		if (pid == 0) { return; }
+//		persona.dataset.id = pid;
+		pcode.disabled = false;
+		pcode.focus();
+	    }
 
-	    XHR.getJSON('/json/people.json').then(a => a.forEach( p => { let opt = document.createElement('option'); opt.value = p.id; opt.appendChild(document.createTextNode(p.nombre)); persona.appendChild(opt); } ) );
+	    ferre.login = () => {
+		if (!pcode.value.match(/\d{1,4}/)) { pcode.value = ''; return alert("PIN invalido!"); };
+		const pid = Number(persona.value);
+		let pin = PINS.get(pid);
+		if (pin == 0) {
+		    pin = Number(pcode.value);
+		    ferre.xget('pins', {pid: pid, pincode: pin});
+// XXX save new PIN to DB
+		}
+		if (Number(pcode.value) == pin) {
+		    if (TABS.has(pid)) { recreate(TABS.get(pid)); }
+		    if (MSGS.has(pid)) {}
+		    pcode.value = '';
+		    pcode.disabled = true;
+		    persona.disabled = true;
+		} else
+		    return alert("PIN incorrecto!");
+	    }
+
+	    ferre.logout = () => ferre.print('tabs').then( nadie );
+
+/*	    ferre.tab = () => {
+		const pid = Number(persona.value);
+		ferre.print('tabs').then( () => tabs(pid) );
+	    }; */
+
+	    XHR.getJSON('/json/people.json').then(
+		a => a.forEach( p => {
+		    PINS.set(Number(p.id), 0); // initialize to 0
+		    let opt = document.createElement('option');
+		    opt.value = p.id;
+		    opt.appendChild(document.createTextNode(p.nombre));
+		    persona.appendChild(opt); } ) );
 	})();
 
 
