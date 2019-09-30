@@ -3,8 +3,7 @@
 	    let esource = new EventSource(document.location.origin+':5030');
 
 	    const elbl = document.getElementById("eventos");
-	    const flbl = document.getElementById('frutas');
-	    const tabs = ferre.TABS;
+	    const flbl = document.getElementById("frutas");
 	    const pins = ferre.PINS;
 	    const STORES = DATA.STORES;
 	    const spin = document.getElementById('pacman');
@@ -16,7 +15,7 @@
 		function distill( s ) {
 		    let chunks = s.split('&query=');
 		    const pid = Number( chunks.shift().match(/\d+/) );
-		    tabs.set(pid, chunks.map(s => a2obj(s.split('|'))));
+		    return chunks.map(s => a2obj(s.split('|')));
 		}
 
 		function updateOne( o ) {
@@ -58,19 +57,6 @@
 			ferre.xget('adjust', Object.assign({}, localStorage, sessionStorage)); // adjust version; sends fruit, week, vers
 		}, false);
 
-		esource.addEventListener("delete", function(e) {
-		    const pid = Number( e.data.match(/\d+/) );
-		    tabs.delete( pid );
-		    console.log('Removing ticket'); // PEOPLE.id[pid]
-		    elbl.innerHTML = "delete event";
-		}, false);
-
-		esource.addEventListener("tabs", function(e) {
-		    elbl.innerHTML = "tabs event";
-		    console.log("tabs event received");
-		    distill( e.data );
-		}, false);
-
 		esource.addEventListener("pins", function(e) {
 		    elbl.innerHTML = "pins event";
 		    console.log("pins event received");
@@ -78,18 +64,38 @@
 		    pins.set(Number(a[1]), Number(a[2]));
 		}, false);
 
+		esource.addEventListener("tabs", function(e) {
+		    elbl.innerHTML = "tabs event";
+		    console.log("tabs event received");
+		    ferre.recreate( distill( e.data ) );
+		}, false);
+
 		esource.addEventListener("msgs", function(e) {
 		    elbl.innerHTML = "msgs event";
 		    console.log("msgs event received");
+		    ferre.message( e.data );
+		}, false);
 
+
+
+/*
+		esource.addEventListener("msgs", function(e) {
+		    elbl.innerHTML = "msgs event";
+		    console.log("msgs event received");
 		    const d = e.data;
 		    const pid = Number( d.match(/\d+/) );
 		    const uid = d.match(/^=+/);
 		    msgs.set(pid, uid);
-
 		    console.log(e.data);
+		}, false);
+
+		esource.addEventListener("login", function(e) {
+		    elbl.innerHTML = "login event";
+		    console.log("login event received");
+		    const a = e.data.match(/pid=(\d+)/);
 
 		}, false);
+*/
 
 		esource.addEventListener("adjust", function(e) {
 		    elbl.innerHTML = "adjust event";

@@ -111,7 +111,7 @@
 
 	    ferre.print = function(a) {
 		if (TICKET.items.size == 0) {return Promise.resolve();}
-		const pid = Number(persona.value); // Number(persona.dataset.id);
+		const pid = Number(persona.value);
 
 		if (pid == 0) { TICKET.empty(); return Promise.resolve(); } // should NEVER happen XXX
 
@@ -130,43 +130,34 @@
 
 	// PEOPLE - Multi-User support
 	(function() {
-	    var TABS = new Map();
-	    var MSGS   = new Map();
 	    var PINS   = new Map();
 
 	    const tcount = document.getElementById(TICKET.tcountID);
 	    const persona = document.getElementById('personas');
 	    const pcode = document.getElementById('pincode');
+	    const mensaje = document.getElementById('mensajes');
 
 		let opt = document.createElement('option');
 		persona.appendChild(opt);
-//		persona.dataset.id = 0;
 		opt.value = 0;
 		opt.label = '';
 		opt.selected = true;
 
-	    ferre.TABS = TABS;
-	    ferre.MSGS = MSGS;
 	    ferre.PINS = PINS;
 
 	    let nadie = () => { opt.selected = true; persona.disabled = false; }
+
 	    let fetchMe = o => TICKET.getPrice( o ).then( TICKET.add );
 	    let recreate = a => Promise.all( a.map( fetchMe ) ).then( () => Promise.resolve() ).then( () => {tcount.textContent = TICKET.items.size;} );
 
-/*
-	    function tabs(k) {
-		persona.dataset.id = k;
-		if (TABS.has(k)) { recreate(TABS.get(k)); }
-	    }
-*/
+	    ferre.recreate = recreate;
 
 	    ferre.tab = () => {
 		const pid = Number(persona.value);
 		if (pid == 0) { return; }
-//		persona.dataset.id = pid;
 		pcode.disabled = false;
 		pcode.focus();
-	    }
+	    };
 
 	    ferre.login = () => {
 		if (!pcode.value.match(/\d{1,4}/)) { pcode.value = ''; return alert("PIN invalido!"); };
@@ -175,26 +166,27 @@
 		if (pin == 0) {
 		    pin = Number(pcode.value);
 		    ferre.xget('pins', {pid: pid, pincode: pin});
-// XXX save new PIN to DB
 		}
 		if (Number(pcode.value) == pin) {
-		    if (TABS.has(pid)) { recreate(TABS.get(pid)); }
-		    if (MSGS.has(pid)) {}
 		    pcode.value = '';
 		    pcode.disabled = true;
 		    persona.disabled = true;
+		    sessionStorage.pid = pid; // send fruit+pid
+		    ferre.xget('login', sessionStorage);
 		} else {
 		    pcode.value = '';
 		    return alert("PIN incorrecto!");
 		}
-	    }
+	    };
+
+	    ferre.message = m => {
+		const pid = m.match(/pid=(\d+)/);
+		if (pid == persona.value) {
+		    mensaje.innerHTML = m.match(/uid=()/);
+		}
+	    };
 
 	    ferre.logout = () => ferre.print('tabs').then( nadie );
-
-/*	    ferre.tab = () => {
-		const pid = Number(persona.value);
-		ferre.print('tabs').then( () => tabs(pid) );
-	    }; */
 
 	    XHR.getJSON('/json/people.json').then(
 		a => a.forEach( p => {
