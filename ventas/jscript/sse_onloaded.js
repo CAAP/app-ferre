@@ -85,7 +85,7 @@
 		esource.addEventListener("logout", function(e) {
 		    elbl.innerHTML = "logout event";
 		    console.log("logout event received");
-		    ferre.already( e.data.match(/d+/) );
+		    ferre.already( e.data.match(/\d+/) );
 		}, false);
 
 		esource.addEventListener("adjust", function(e) {
