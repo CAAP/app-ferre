@@ -149,7 +149,16 @@
 
 	    let nadie = () => { opt.selected = true; persona.disabled = false; mensaje.innerHTML = ''; }
 
-	    let fetchMe = o => TICKET.getPrice( o ).then( TICKET.add );
+//		    if (TICKET.items.has( clave )) { console.log('Item is already in the bag.'); return false; }
+
+	    let fetchMe = o => {
+		if (TICKET.items.has( o.clave )) {
+		    console.log('Item is already in the bag.');
+		    return false;
+		} else
+		    return TICKET.getPrice( o ).then( TICKET.add );
+	    }
+
 	    let recreate = a => Promise.all( a.map( fetchMe ) ).then( () => Promise.resolve() ).then( () => {tcount.textContent = TICKET.items.size;} );
 
 	    ferre.recreate = recreate;
