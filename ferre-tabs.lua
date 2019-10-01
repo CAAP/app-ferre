@@ -94,7 +94,8 @@ print'+\n'
 	end
     else -- tabs, delete, msgs
 	update(pid, cmd, msg)
-	if cmd == 'msgs' and FRUITS[pid] then msgr:send_msg(format('%s %s', FRUITS[pid], msg)) end
+	local ft = FRUITS[pid]
+	if cmd == 'msgs' and ft and fruit ~= ft then msgr:send_msg(format('%s %s', ft, msg)) end
     end
     print(msg, '\n')
     ::FIN::
