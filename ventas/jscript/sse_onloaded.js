@@ -76,26 +76,17 @@
 		    ferre.message( e.data );
 		}, false);
 
-
-
-/*
-		esource.addEventListener("msgs", function(e) {
-		    elbl.innerHTML = "msgs event";
-		    console.log("msgs event received");
-		    const d = e.data;
-		    const pid = Number( d.match(/\d+/) );
-		    const uid = d.match(/^=+/);
-		    msgs.set(pid, uid);
-		    console.log(e.data);
+		esource.addEventListener("uid", function(e) {
+		    elbl.innerHTML = "uid event";
+		    console.log("uid event received");
+		    XHR.getJSON('/caja/json/' + e.data).then( ferre.recreate );
 		}, false);
 
-		esource.addEventListener("login", function(e) {
-		    elbl.innerHTML = "login event";
-		    console.log("login event received");
-		    const a = e.data.match(/pid=(\d+)/);
-
+		esource.addEventListener("logout", function(e) {
+		    elbl.innerHTML = "logout event";
+		    console.log("logout event received");
+		    ferre.already( e.data.match(/d+/) );
 		}, false);
-*/
 
 		esource.addEventListener("adjust", function(e) {
 		    elbl.innerHTML = "adjust event";

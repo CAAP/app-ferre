@@ -98,7 +98,7 @@
 		if (TICKET.items.size == 0) { return Promise.resolve() }
 
 		if (a == 'msgs')
-		    return caja.UIDS.forEach(uid => caja.xget(a, ['pid='+persona.value, 'uid='+uid]));
+		    return caja.UIDS.forEach(uid => caja.xget(a, {pid: persona.value, uid: uid}));
 
 		if (a == 'pagar' && caja.UPDATED) { return alert('Se han hecho cambios al TICKET actual debes imprimirlo antes de marcarlo como pagado!'); }
 

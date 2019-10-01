@@ -194,10 +194,16 @@ button[name=guardar] { color: white; background-color: blue; }
 
 #ticket {
     padding: 5px;
+}
+
+#mensajes {
+    font: 95% arial;
+    text-decoration: underline;
+    padding-left: 10px;
     order: 2;
 }
 
-#msgs { text-decoration: underline; }
+#laderecha { order: 2; }
 
 td { font: bold 75% arial; }
 

@@ -86,6 +86,7 @@ print'+\n'
 	PINS.store(pid, msg)
 	msgr:send_msg( msg )
     elseif cmd == 'login' then
+	if FRUITS[pid] then msgr:send_msg(format('%s logout pid=%d', FRUITS[pid], pid)) end
 	local fruit = msg:match'fruit=(%a+)'
 	FRUITS[pid] = fruit
 	if PIDS[pid] then
@@ -93,7 +94,7 @@ print'+\n'
 	end
     else -- tabs, delete, msgs
 	update(pid, cmd, msg)
-	if cmd == 'msgs' then msgr:send_msg(format('%s %s', FRUITS[pid], msg)) end
+	if cmd == 'msgs' and FRUITS[pid] then msgr:send_msg(format('%s %s', FRUITS[pid], msg)) end
     end
     print(msg, '\n')
     ::FIN::

@@ -18,8 +18,9 @@
 	</section>
     </div>
 
+    <div id="laderecha">
+    <label id="mensajes" onclick="ferre.getUID(event)"></label>
     <div id="ticket" class="tablas">
-        <span><label id="mensajes"></label></span>
 	<table>
 	    <tbody>
 	    <tr><td><button name="cerrar" onclick="ferre.emptyBag()">Cancelar</button>&emsp;<button onclick="ferre.print('presupuesto')">Presupuesto</button>&emsp;<button onclick="ferre.print('ticket')">Caja</button></td><td>&emsp;</td><td><label id="ticket-total" class="total"></label></td><td>&emsp;</td><td><label id="ticket-count"></label></td></tr>
@@ -35,6 +36,8 @@
 	    <tbody id="ticket-compra" class="amarillo" onchange="ferre.updateItem(event)"></tbody>
 	</table>
 	</section>
+	</div>
+    </div>
     </div>
 
 </section>

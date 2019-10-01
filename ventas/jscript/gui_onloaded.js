@@ -50,6 +50,8 @@
 	(function() {
 	    ferre.origin = document.location.origin+':5040/';
 	    DATA.inplace = q => {let r = document.body.querySelector('tr[data-clave="'+q.clave+'"]'); if (r) {UTILS.clearTable(r); BROWSE.rows(q,r);} return q;};
+
+	    ferre.getUID = e => ferre.xget('uid', {uid: e.target.innerHTML, fruit: sessionStorage.fruit});
 	})();
 
 	// BROWSE
@@ -145,7 +147,7 @@
 
 	    ferre.PINS = PINS;
 
-	    let nadie = () => { opt.selected = true; persona.disabled = false; }
+	    let nadie = () => { opt.selected = true; persona.disabled = false; mensaje.innerHTML = ''; }
 
 	    let fetchMe = o => TICKET.getPrice( o ).then( TICKET.add );
 	    let recreate = a => Promise.all( a.map( fetchMe ) ).then( () => Promise.resolve() ).then( () => {tcount.textContent = TICKET.items.size;} );
@@ -180,13 +182,19 @@
 	    };
 
 	    ferre.message = m => {
-		const pid = m.match(/pid=(\d+)/);
-		if (pid == persona.value) {
-		    mensaje.innerHTML = m.match(/uid=()/);
-		}
+		const a = m.match(/pid=(\d+)&uid=([^&]+)/);
+		if (a[1] == persona.value)
+		    mensaje.innerHTML = a[2];
 	    };
 
 	    ferre.logout = () => ferre.print('tabs').then( nadie );
+
+	    ferre.already = k => {
+		if (k == persona.value) {
+		    TICKET.empty();
+		    nadie();
+		}
+	    };
 
 	    XHR.getJSON('/json/people.json').then(
 		a => a.forEach( p => {
