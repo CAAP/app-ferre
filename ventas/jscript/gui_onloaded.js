@@ -113,12 +113,16 @@
 		};
 
 	    ferre.print = function(a) {
-		if (TICKET.items.size == 0) {return Promise.resolve();}
+		if (TICKET.items.size == 0) { return Promise.resolve(); }
 		const pid = Number(persona.value);
 
 		if (pid == 0) { TICKET.empty(); return Promise.resolve(); } // should NEVER happen XXX
 
 		if (a == 'destinos') { a = destinos.value; };
+
+		if (a == 'surtir') { return Promise.resolve(); } // temporary XXX
+
+console.log('Printing: '+a);
 
 		let objs = ['pid='+pid];
 		TICKET.myticket.style.visibility = 'hidden';
