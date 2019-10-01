@@ -192,10 +192,6 @@ button[name=guardar] { color: white; background-color: blue; }
     order: 1;
 }
 
-#ticket {
-    padding: 5px;
-}
-
 #mensajes {
     font: 95% arial;
     text-decoration: underline;
@@ -203,7 +199,10 @@ button[name=guardar] { color: white; background-color: blue; }
     order: 2;
 }
 
-#laderecha { order: 2; }
+#laderecha {
+    order: 2;
+    padding: 5px;
+}
 
 td { font: bold 75% arial; }
 

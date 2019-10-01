@@ -85,7 +85,10 @@
 		esource.addEventListener("logout", function(e) {
 		    elbl.innerHTML = "logout event";
 		    console.log("logout event received");
-		    ferre.already( e.data.match(/\d+/) );
+		    if( e.data.match(/\d+/) == sessionStorage.pid ) {
+			TICKET.empty();
+			return ferre.logout();
+		    }
 		}, false);
 
 		esource.addEventListener("adjust", function(e) {

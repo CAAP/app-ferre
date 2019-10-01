@@ -19,11 +19,11 @@
     </div>
 
     <div id="laderecha">
-    <label id="mensajes" onclick="ferre.getUID(event)"></label>
+    <span><label id="sesion"></label><label>&emsp;</label><label id="mensajes" onclick="ferre.getUID(event)"></label></span>
     <div id="ticket" class="tablas">
 	<table>
 	    <tbody>
-	    <tr><td><button name="cerrar" onclick="ferre.emptyBag()">Cancelar</button>&emsp;<button onclick="ferre.print('presupuesto')">Presupuesto</button>&emsp;<button onclick="ferre.print('ticket')">Caja</button></td><td>&emsp;</td><td><label id="ticket-total" class="total"></label></td><td>&emsp;</td><td><label id="ticket-count"></label></td></tr>
+	    <tr><td><button name="cerrar" onclick="ferre.emptyBag()">Cancelar</button>&emsp;<select id="destinos"></select>&emsp;<button onclick="ferre.print('destinos')">Enviar</button></td> <td><label id="ticket-total" class="total"></label>&emsp;<label id="ticket-count"></label></td></tr>
 	    </tbody>
 	</table>
 	<section class="scrollable">

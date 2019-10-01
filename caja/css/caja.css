@@ -58,49 +58,12 @@ button[name=guardar] { color: white; background-color: blue; }
     background-color: #ffffff;
 }
 
-.dialogos {
-    z-index: 3;
-    display: inline-block;
-    overflow: auto;
-}
-
-.embiggen { display: none; }
-
-.dialogos:hover .embiggen { display: block; }
-
-.trashout {
-    background-image: url("svg/trash.svg");
-    background-repeat: no-repeat;
-    background-position: center;
-    cursor: pointer;
-}
-
-.editme {
-    background-image: url("svg/pencil.svg");
-    background-repeat: no-repeat;
-    background-position: center;
-    cursor: pointer;
-}
-
-.highlight {
-    background-image: url("svg/check.svg");
-    background-repeat: no-repeat;
-    background-position: right;
-    cursor: pointer;
-}
-
 .addme {
     text-decoration: underline;
     cursor: pointer;
 }
 
 .droit { padding-left: 1em; }
-
-#ticket-count {
-    position: absolute;
-    padding-left: 12px;
-    font-weight: bold;
-}
 
 #ticket-total { font: 200% arial; }
 

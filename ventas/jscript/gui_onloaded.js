@@ -80,6 +80,7 @@
 		const tcount = document.getElementById(TICKET.tcountID);
 		const ttotal = document.getElementById( TICKET.ttotalID );
 		const persona = document.getElementById('personas');
+		const destino = document.getElementById('destinos');
 
 		function uptoCents(q) { return Math.round( 100 * q[q.precio] * q.qty * (1-q.rea/100) ); };
 
@@ -117,6 +118,8 @@
 
 		if (pid == 0) { TICKET.empty(); return Promise.resolve(); } // should NEVER happen XXX
 
+		if (a == 'destinos') { a = destinos.value; };
+
 		let objs = ['pid='+pid];
 		TICKET.myticket.style.visibility = 'hidden';
 		TICKET.items.forEach( item => objs.push( 'query=' + TICKET.plain(item) ) );
@@ -128,16 +131,25 @@
 		}
 	    };
 
+	    ['ticket', 'presupuesto', 'surtir'].forEach( lbl => {
+		    let opt = document.createElement('option');
+		    opt.value = lbl;
+		    opt.appendChild(document.createTextNode(lbl));
+		    destino.appendChild(opt);
+	    });
+
 	})();
 
 	// PEOPLE - Multi-User support
 	(function() {
 	    var PINS   = new Map();
+	    var NAMES  = new Map();
 
 	    const tcount = document.getElementById(TICKET.tcountID);
 	    const persona = document.getElementById('personas');
 	    const pcode = document.getElementById('pincode');
 	    const mensaje = document.getElementById('mensajes');
+	    const sesion = document.getElementById('sesion');
 
 		let opt = document.createElement('option');
 		persona.appendChild(opt);
@@ -147,9 +159,7 @@
 
 	    ferre.PINS = PINS;
 
-	    let nadie = () => { opt.selected = true; persona.disabled = false; mensaje.innerHTML = ''; }
-
-//		    if (TICKET.items.has( clave )) { console.log('Item is already in the bag.'); return false; }
+	    let nadie = () => { opt.selected = true; persona.disabled = false; mensaje.innerHTML = ''; sesion.innerHTML = ''; }
 
 	    let fetchMe = o => {
 		if (TICKET.items.has( o.clave )) {
@@ -183,6 +193,7 @@
 		    pcode.disabled = true;
 		    persona.disabled = true;
 		    sessionStorage.pid = pid; // send fruit+pid
+		    sesion.innerHTML = NAMES.get(pid);
 		    ferre.xget('login', sessionStorage);
 		} else {
 		    pcode.value = '';
@@ -198,18 +209,13 @@
 
 	    ferre.logout = () => ferre.print('tabs').then( nadie );
 
-	    ferre.already = k => {
-		if (k == persona.value) {
-		    TICKET.empty();
-		    nadie();
-		}
-	    };
-
 	    XHR.getJSON('/json/people.json').then(
 		a => a.forEach( p => {
-		    PINS.set(Number(p.id), 0); // initialize to 0
+		    const pid = Number(p.id);
+		    PINS.set(pid, 0); // initialize to 0
+		    NAMES.set(pid, p.nombre.toUpperCase());
 		    let opt = document.createElement('option');
-		    opt.value = p.id;
+		    opt.value = pid;
 		    opt.appendChild(document.createTextNode(p.nombre));
 		    persona.appendChild(opt); } ) );
 	})();
