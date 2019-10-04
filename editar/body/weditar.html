@@ -1,0 +1,47 @@
+<section id="menu">
+    <div class="choice" onclick="editar.show('empleados')">
+	<img src="svg/people.svg"><label> empleados </label>
+    </div>
+
+    <div class="choice" onclick="editar.show('clientes')">
+	<img src="svg/friends.svg"><label> clientes </label>
+    </div>
+
+    <div class="choice" onclick="editar.show('proveedores')">
+	<img src="svg/shipping.svg"><label> proveedores </label>
+    </div>
+
+    <div class="choice" onclick="">
+	<img src="svg/facturas.svg"><label> facturas </label>
+    </div>
+</section>
+
+<section id="formas" class="scrollable">
+
+    <div id="empleados">
+    <table>
+	<dt><thead>
+	    <tr><th> Nombre </th><th> Pincode </th><th> Sesi&oacute;n </td></tr>
+	</thead></dt>
+	<tbody id="tabla-empleados" onchange=""></tbody>
+    </table>
+    </div>
+
+    <div id="clientes">
+    <table>
+	<dt><thead>
+	</thead></dt>
+	<tbody id="tabla-clientes" onchange=""></tbody>
+    </table>
+    </div>
+
+    <div id="proveedores">
+    <table>
+	<dt><thead>
+	    <tr><th> Raz&oacute;n Social </th><th> Ciudad </th><th> RFC </td><th> E-mail </td><th> Tel </td><th> WhatsApp </td><th> Contacto </td><th> Fecha </td></tr>
+	</thead></dt>
+	<tbody id="tabla-proveedores" onchange=""></tbody>
+    </table>
+    </div>
+
+</section>

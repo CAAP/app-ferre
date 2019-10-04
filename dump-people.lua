@@ -12,12 +12,27 @@ local HOME	= require'carlos.ferre'.HOME
 
 _ENV =  nil
 
-local DEST = HOME .. '/json/people.json'
 
 local conn = dbconn'personas'
+
+---------------------------------------
+
+local DEST = HOME .. '/json/people.json'
+
 local QRY = 'SELECT id, nombre FROM empleados'
 
 dump( DEST, asJSON(fd.reduce(conn.query(QRY), fd.into, {})) )
 
+---------------------------------------
+
+DEST = HOME .. '/json/proveedores.json'
+
+QRY = 'SELECT * FROM proveedores'
+
+dump( DEST, asJSON(fd.reduce(conn.query(QRY), fd.into, {})) )
+
+---------------------------------------
+
 conn.close()
+
 

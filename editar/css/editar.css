@@ -1,0 +1,94 @@
+table { border-spacing: 6px 6px; }
+
+input[type=number] {
+    text-align: right;
+    width: 50px;
+}
+
+button[name=cerrar] { color: white; background-color: red; }
+
+button[name=guardar] { color: white; background-color: blue; }
+
+.dots {
+    background-image: url("svg/ellipsis.svg");
+    background-repeat: no-repeat;
+    background-position: center;
+    cursor: pointer;
+}
+
+.backs {
+    background-image: url("svg/backspace.svg");
+    background-repeat: no-repeat;
+    background-position: center;
+    cursor: pointer;
+}
+
+.scrollable {
+    max-height: 400px;
+    overflow: auto;
+}
+
+#myhead {
+    display: flex;
+    margin: 4px;
+    padding: 5px;
+    background-color: #3d5a98;
+    align-items: center;
+    align-content: space-between;
+    justify-content: space-between;
+}
+
+#myhead label { color: #ffffff; }
+
+#pacman {
+    visibility: hidden;
+    padding: 3px;
+    align: middle;
+    z-index: 7;
+}
+
+#menu {
+    margin:  5px;
+    background-color: #dcdcdc;
+    display: flex;
+    justify-content: center;
+    align-content: space-between;
+}
+
+#formas {
+    margin:  5px;
+}
+
+#formas div {
+    visibility: collapse;
+    display: flex;
+    flex-direction: column;
+    flex-wrap: nowrap;
+    align-items: center;
+    justify-content: center;
+    align-content: space-between;
+}
+
+.choice:hover { background-color: #cbd7ed; }
+
+div.choice {
+    margin: 10px;
+    padding: 10px;
+    display: flex;
+    height: 40px;
+    flex-direction: column;
+    flex-wrap: nowrap;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.choice img {
+    height: 35px;
+    width: 35px;
+}
+
+td { font: 80% arial; }
+
+tfoot { background-color: #e5e5e5; }
+
