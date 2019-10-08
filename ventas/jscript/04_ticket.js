@@ -139,7 +139,7 @@
 		desc.colSpan = 2;
 		if (q.faltante) { desc.classList.add('faltante'); }
 		desc.appendChild( document.createTextNode( q.desc ) );
-//		desc.onclick = () => { UTILS.clearTable( BROWSE.lis ); BROWSE.doSearch( q.clave ); }; // taken from 'gui_onloaded' line 55 XXX can be changeeeddd
+		if (TICKET.lookUp) { desc.onclick = () => { UTILS.clearTable( BROWSE.lis ); BROWSE.doSearch( q.clave ); }; }
 		// TRASH
 		let trash = row.insertCell();
 		trash.classList.add('trashout'); trash.appendChild( document.createTextNode( ' ' ) );

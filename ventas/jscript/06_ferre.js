@@ -4,3 +4,7 @@
 	    xget: (q,o) => XHR.get( ferre.origin + q + '?' + UTILS.asstr(o) ),
 	    xpost: (q, o) => XHR.post( ferre.origin + q, UTILS.asstr(o) )
 	};
+
+	(function() {
+	    TICKET.lookUp = true;
+	})();
