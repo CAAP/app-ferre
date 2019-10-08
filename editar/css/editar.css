@@ -9,17 +9,22 @@ button[name=cerrar] { color: white; background-color: red; }
 
 button[name=guardar] { color: white; background-color: blue; }
 
-.dots {
+td[data-pcode] {
+    border: solid 2px;
+    border-radius: 40px;
     background-image: url("svg/ellipsis.svg");
     background-repeat: no-repeat;
     background-position: center;
     cursor: pointer;
 }
 
-.backs {
-    background-image: url("svg/backspace.svg");
+td[data-pcode="0"] { background-image: none; }
+
+.trashout {
+    background-image: url("svg/trash.svg");
     background-repeat: no-repeat;
     background-position: center;
+    background-size: 15px;
     cursor: pointer;
 }
 
@@ -88,7 +93,10 @@ div.choice {
     width: 35px;
 }
 
-td { font: 80% arial; }
+td {
+    font: 90% arial;
+    padding: 5px;
+}
 
 tfoot { background-color: #e5e5e5; }
 

@@ -38,7 +38,7 @@
 		    elbl.innerHTML = "pins event";
 		    console.log("pins event received");
 		    const a = e.data.match(/pid=(\d+)&pincode=(\d+)/);
-		    pins.set(Number(a[1]), Number(a[2]));
+		    editar.pins( a[1], a[2] );
 		}, false);
 
 	})();

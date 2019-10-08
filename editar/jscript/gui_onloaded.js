@@ -15,6 +15,7 @@
 	    let visible = false;
 
 	    editar.origin = document.location.origin+':5040/';
+
 	    editar.show = a => {
 		if (!visible) {
 		    formas[a].style.visibility = 'visible';
@@ -28,6 +29,15 @@
 		    formas[visible].style.visibility = 'collapse';
 		    visible = a;
 		}
+	    };
+
+	    editar.add = () => {
+		if (!visible) { return; }
+		switch(visible) {
+		    case 'empleados': return editar.addEmployee();
+			break;
+		    default: break;
+		};
 	    };
 	})();
 
@@ -44,18 +54,46 @@
 		return ret;
 	    }
 
-//  if (PINS.get(pid) == 0) { n.classList.add('dots'); } XXX
+	    function reassure(e) {
+		const pid = e.target.parentElement.dataset.pid;
+		if (window.confirm('Quieres eliminar esta persona?'))
+		    ;
+	    }
+
+	    function zerop(e) {
+		const pid = e.target.parentElement.dataset.pid;
+		if ((e.target.dataset.pcode != '0') && window.confirm('Deseas resetear el pin?'))
+		    editar.xget('pins', {pid: pid, pincode: 0});
+	    }
 
 	    function addRow(p) {
 		const row = employees.insertRow();
+		const pid = Number(p.id);
+		row.dataset.pid = pid;
 		// NOMBRE
-		row.insertCell().appendChild( document.createTextNode(p.nombre) );
+		let n = inputE([['value', p.nombre], ['type', 'text'], ['size', 10], ['placeholder', 'Nombre'], ['name', 'empleado']]);
+		row.insertCell().appendChild( n );
 		//  PINCODE
-		let n = row.insertCell();
+		n = row.insertCell();
 		n.appendChild( document.createTextNode(' ') );
-		n = row.insertCell(); n.classList.add('backs');
+		n.dataset.pcode = 0;
+		n.onclick = zerop;
+		// TRASH-OUT
+		n = row.insertCell(); n.classList.add('trashout');
 		n.appendChild( document.createTextNode(' ') );
+		n.onclick = reassure;
 	    }
+
+	    editar.pins = function(pid, pcode) {
+		PINS.set(pid, pcode);
+		employees.querySelector('tr[data-pid="'+pid+'"]').querySelector('td[data-pcode]').dataset.pcode = pcode;
+	    };
+
+	    editar.addEmployee = function() {
+		const chn = employees.children;
+		addRow({id: 'A', nombre: ''});
+		chn[chn.length].querySelector('input').focus();
+	    };
 
 	    XHR.getJSON('/json/people.json').then(
 		a => a.forEach( p => {
