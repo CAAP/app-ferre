@@ -95,6 +95,7 @@
 	    let costos = new Set(['costo', 'costol', 'impuesto', 'descuento', 'rebaja', 'prc1', 'prc2', 'prc3']);
 	    let records = new Map()
 	    let fields = new Set();
+	    let suppliers = new Map();
 	    let CLIP = false;
 
 	    let asnum = UTILS.asnum;
@@ -111,7 +112,7 @@
 		}
 	    }
 
-	    function outputs(row, k, isClip) {
+	    function inputs(row, k, isClip) {
 		let ie = document.createElement('input');
 		ie.type = 'text'; ie.size = 7; ie.name = k; ie.disabled = true; // ie.size = 7;
 		let cell = row.insertCell(); cell.appendChild( ie );
@@ -128,6 +129,27 @@
 		}
 	    }
 
+	    function choices(s, b) {
+		let opt = document.createElement('option');
+		opt.value = s;
+		opt.appendChild(document.createTextNode(s));
+		opt.selected = b;
+		return opt;
+	    }
+
+	    function getSuppliers() {
+		return XHR.getJSON('/json/proveedores.json').then( a => {
+		    const ch = choices('', true);
+		    tabla.querySelector('select[name="proveedor"]').appendChild( ch );
+		    suppliers.set('nadie', ch);
+		    return Promise.resolve(a);
+		} ).then( a => a.forEach( p => {
+		    const ch = choices(p.nombre, false);
+		    suppliers.set(p.nombre, ch);
+		    tabla.querySelector('select[name="proveedor"]').appendChild( ch );
+		} ) );
+	    }
+
 	    admin.addField = k => {
 		if (k.startsWith('u')) { return; } // already taken into account by prc_
 		let row = tabla.insertRow();
@@ -140,26 +162,39 @@
 		switch(k) {
 		    case 'desc':  ie.size = 40; cell.colSpan = 3; cell.style.paddingRight = "40px";
 				  cell.classList.add('pen'); cell.onclick = setPen; break;
-		    case 'clave': ie.disabled = true; outputs(row, 'uidSAT', true).disabled = false;
+		    case 'clave': ie.disabled = true; inputs(row, 'uidSAT', true).disabled = false;
 				  cell.classList.add('clip'); cell.onclick = setClip; break;
-		    case 'costo': outputs(row, 'costol', false); break;
+		    case 'costo': inputs(row, 'costol', false); break;
 		    case 'fecha': ie.disabled = true; break;
-		    case 'proveedor': cell.classList.add('pen'); cell.onclick = setPen; break;
+		    case 'proveedor': k = 'uidPROV'; ie.name = k; // fields.add( 'uidPROV' ); ie.name = 'uidPROV'; 
+				      let ch = document.createElement('select'); ch.name = 'proveedor';
+				      cell.colSpan = 2; cell.appendChild( ch );
+				      cell = row.insertCell(); getSuppliers(); break;
 		}
-		if (k.startsWith('prc')) { outputs(row, k.replace('prc', 'u'), false).disabled = false; outputs(row, k.replace('prc', 'precio'), false); }
+		if (k.startsWith('prc')) { inputs(row, k.replace('prc', 'u'), false).disabled = false; inputs(row, k.replace('prc', 'precio'), false); }
 		if (costos.has(k)) { ie.type = 'number'; }
 		cell.appendChild( ie );
  		fields.add( k );
 	    };
 
-	    admin.reset = () => { UTILS.clearTable( tabla ); tkt.style.visibility = 'visible'; }
+	    admin.reset = () => {
+		UTILS.clearTable( tabla );
+		if (suppliers.has('nadie')) { suppliers.get('nadie').selected = true; }
+		tkt.style.visibility = 'visible';
+	    };
 
+		// XXX
 	    function setfields( o ) {
 		tkt.dataset.clave = o.clave;
 		let costol = o.costol
 		let a = Object.assign({}, o, {costol: (costol/1e4).toFixed(2)});
 		Array.from(fields).filter( k => k.startsWith('prc') ).forEach( k => {a[k.replace('prc', 'precio')] = (a[k]*costol/1e4).toFixed(2)} );
 		fields.forEach( k => {tabla.querySelector('input[name='+k+']').value = a[k] || '' } );
+		const p = o.proveedor;
+		if (p && suppliers.has(p))
+		    suppliers.get(p).selected = true;
+		else
+		    suppliers.get('nadie').selected = true;
 	    }
 
 	    function fetch(k, f) {
@@ -200,6 +235,7 @@
 		    cleanMark();
 		    tkt.querySelectorAll('input').forEach(i => { i.value = ''});
 		    tkt.dataset.clave = '';
+		    suppliers.get('nadie').selected = true;
 	    };
 
 	    admin.anUpdate = function(e) {

@@ -73,7 +73,7 @@ local QLPR	 = 'SELECT desc, clave, qty, rea, ROUND(unitario, 2) unitario, unidad
 
 local DIRTY	 = {clave=true, tbname=true, fruit=true}
 local TOLL	 = {costo=true, impuesto=true, descuento=true, rebaja=true}
-local ISSTR	 = {desc=true, fecha=true, obs=true, proveedor=true, gps=true, u1=true, u2=true, u3=true}
+local ISSTR	 = {desc=true, fecha=true, obs=true, proveedor=true, gps=true, u1=true, u2=true, u3=true, uidPROV=true}
 local PRCS	 = {prc1=true, prc2=true, prc3=true}
 
 local INU	 = 'INSERT INTO updates (clave, campo, valor) VALUES (%s, %q, %s)'

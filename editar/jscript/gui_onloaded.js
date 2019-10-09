@@ -117,7 +117,7 @@
 
 	    function addRow(p) {
 		const row = employees.insertRow();
-		vars.forEach(v => row.insertCell().appendChild( document.createTextNode(p[v] || '') ));
+		vars.forEach(v => row.insertCell().appendChild( inputE([['value',p[v] || ''], ['type','text'], ['size',10]]) ));
 	    }
 
 	    XHR.getJSON('/json/proveedores.json').then( a => a.forEach( addRow ) );

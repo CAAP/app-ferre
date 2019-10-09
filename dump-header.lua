@@ -19,7 +19,7 @@ local function getHeader()
 
     conn.close()
 
---    remove(ret) -- faltante
+    remove(ret) -- uidPROV
     insert(ret, 2, remove(ret)) -- proveedor
     remove(ret) -- uidSAT
     insert(ret, 6, remove(ret)) -- rebaja
