@@ -77,26 +77,26 @@
 	    TICKET.bag = document.getElementById( TICKET.bagID );
 	    TICKET.myticket = document.getElementById( TICKET.myticketID );
 
-		const tcount = document.getElementById(TICKET.tcountID);
-		const ttotal = document.getElementById( TICKET.ttotalID );
-		const persona = document.getElementById('personas');
-		const destino = document.getElementById('destinos');
+	    const tcount = document.getElementById(TICKET.tcountID);
+	    const ttotal = document.getElementById( TICKET.ttotalID );
+	    const persona = document.getElementById('personas');
+	    const destino = document.getElementById('destinos');
 
-		function uptoCents(q) { return Math.round( 100 * q[q.precio] * q.qty * (1-q.rea/100) ); };
+	    function uptoCents(q) { return Math.round( 100 * q[q.precio] * q.qty * (1-q.rea/100) ); };
 
-		function getPrice( o ) {
-		    let clave = UTILS.asnum(o.clave);
-		    return IDB.readDB( PRICE )
-			.get( clave )
-			.then( w => { if (w) { return Object.assign( o, w, {id: clave} ) } else { return Promise.reject('Item not found in DB: ' + clave) } } ) // ITEM NOT FOUND or REMOVED
-		}
+	    function getPrice( o ) {
+		let clave = UTILS.asnum(o.clave);
+		return IDB.readDB( PRICE )
+		    .get( clave )
+		    .then( w => { if (w) { return Object.assign( o, w, {id: clave} ) } else { return Promise.reject('Item not found in DB: ' + clave) } } ) // ITEM NOT FOUND or REMOVED
+	    }
 
-		function add2bag(clave) {
-		    if (TICKET.items.has( clave )) { console.log('Item is already in the bag.'); return false; }
-		    return getPrice( {clave: clave, qty: 1, precio: 'precio1', rea: 0} )
-			.then( w => Object.assign(w, {totalCents: uptoCents(w)}) )
-			.then( TICKET.add );
-		}
+	    function add2bag(clave) {
+		if (TICKET.items.has( clave )) { console.log('Item is already in the bag.'); return false; }
+		return getPrice( {clave: clave, qty: 1, precio: 'precio1', rea: 0} )
+		    .then( w => Object.assign(w, {totalCents: uptoCents(w)}) )
+		    .then( TICKET.add );
+	    }
 
 		TICKET.getPrice = getPrice;
 
@@ -120,10 +120,11 @@
 		};
 
 	    ferre.print = function(a) {
-		if (TICKET.items.size == 0) { return Promise.resolve(); }
 		const pid = Number(persona.value);
 
-		if (pid == 0) { TICKET.empty(); return Promise.resolve(); } // should NEVER happen XXX
+		if ((pid != 0) && (TICKET.items.size == 0)) { return ferre.logout(); }
+
+		if (pid == 0) { TICKET.empty(); return Promise.resolve(); }
 
 		if (a == 'destinos') { a = destinos.value; };
 
@@ -160,11 +161,11 @@
 	    const mensaje = document.getElementById('mensajes');
 	    const sesion = document.getElementById('sesion');
 
-		let opt = document.createElement('option');
-		persona.appendChild(opt);
-		opt.value = 0;
-		opt.label = '';
-		opt.selected = true;
+	    let opt = document.createElement('option');
+	    persona.appendChild(opt);
+	    opt.value = 0;
+	    opt.label = '';
+	    opt.selected = true;
 
 	    ferre.PINS = PINS;
 
@@ -231,4 +232,17 @@
 		    persona.appendChild(opt); } ) );
 	})();
 
+/*
+ *
+ *
+	    let tID;
 
+	    function replay() {
+		console.log('Logged timeout!');
+		tID = setTimeout(replay, 15000);
+	    }
+
+	    setTimeout(replay, 15000);
+*
+*
+*/
