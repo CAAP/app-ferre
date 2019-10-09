@@ -100,9 +100,16 @@
 
 		TICKET.getPrice = getPrice;
 
-		TICKET.total = cents => { ttotal.textContent = '$' + (cents / 100).toFixed(2); tcount.textContent = TICKET.items.size; };
+		TICKET.total = cents => {
+			ttotal.textContent = '$' + (cents / 100).toFixed(2);
+			tcount.textContent = TICKET.items.size;
+		};
 
-		TICKET.extraEmpty = () => { ttotal.textContent = ''; tcount.textContent = ''; };
+		TICKET.extraEmpty = () => {
+			ttotal.textContent = '';
+			tcount.textContent = '';
+			ferre.nadie();
+		};
 
 		ferre.emptyBag = () => { TICKET.empty(); return ferre.xget('delete', {pid: Number(persona.value)}) };
 
@@ -121,8 +128,6 @@
 		if (a == 'destinos') { a = destinos.value; };
 
 		if (a == 'surtir') { return Promise.resolve(); } // temporary XXX
-
-console.log('Printing: '+a);
 
 		let objs = ['pid='+pid];
 		TICKET.myticket.style.visibility = 'hidden';
@@ -175,6 +180,8 @@ console.log('Printing: '+a);
 
 	    let recreate = a => Promise.all( a.map( fetchMe ) ).then( () => Promise.resolve() ).then( () => {tcount.textContent = TICKET.items.size;} );
 
+	    ferre.nadie = nadie;
+
 	    ferre.recreate = recreate;
 
 	    ferre.tab = () => {
@@ -211,7 +218,7 @@ console.log('Printing: '+a);
 		    mensaje.innerHTML = a[2];
 	    };
 
-	    ferre.logout = () => ferre.print('tabs').then( nadie );
+	    ferre.logout = () => ferre.print('tabs');
 
 	    XHR.getJSON('/json/people.json').then(
 		a => a.forEach( p => {
