@@ -27,7 +27,7 @@ dump( DEST, asJSON(fd.reduce(conn.query(QRY), fd.into, {})) )
 
 DEST = HOME .. '/json/proveedores.json'
 
-QRY = 'SELECT * FROM proveedores'
+QRY = 'SELECT * FROM proveedores ORDER BY nombre ASC'
 
 dump( DEST, asJSON(fd.reduce(conn.query(QRY), fd.into, {})) )
 
