@@ -122,7 +122,7 @@
 	    ferre.print = function(a) {
 		const pid = Number(persona.value);
 
-		if ((pid != 0) && (TICKET.items.size == 0)) { return ferre.logout(); }
+		if ((pid != 0) && (TICKET.items.size == 0)) { return ferre.nadie(); }
 
 		if (pid == 0) { TICKET.empty(); return Promise.resolve(); }
 
