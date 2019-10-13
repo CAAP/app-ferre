@@ -112,7 +112,7 @@
 
 		ferre.emptyBag = () => {
 			TICKET.empty();
-			return ferre.xget('delete', {pid: Number(persona.value)}).then( ferre.nadie );
+			return ferre.xget('delete', {pid: Number(persona.value)});
 		};
 
 		ferre.addItem = e => {
@@ -137,9 +137,9 @@
 		TICKET.items.forEach( item => objs.push( 'query=' + TICKET.plain(item) ) );
 
 		if (TICKET.items.size > 4) {
-		    return ferre.xpost(a, objs).then( TICKET.empty, () => {ferre.nadie(); TICKET.myticket.style.visibility = 'visible'} );
+		    return ferre.xpost(a, objs).then( TICKET.empty, () => { TICKET.myticket.style.visibility = 'visible'} ).then( ferre.nadie );
 		} else {
-		return ferre.xget(a, objs).then( TICKET.empty, () => {ferre.nadie(); TICKET.myticket.style.visibility = 'visible'} );
+		return ferre.xget(a, objs).then( TICKET.empty, () => { TICKET.myticket.style.visibility = 'visible'} ).then( ferre.nadie );
 		}
 	    };
 
