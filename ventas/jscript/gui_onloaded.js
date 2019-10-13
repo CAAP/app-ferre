@@ -137,9 +137,9 @@
 		TICKET.items.forEach( item => objs.push( 'query=' + TICKET.plain(item) ) );
 
 		if (TICKET.items.size > 4) {
-		    return ferre.xpost(a, objs).then( TICKET.empty, () => { TICKET.myticket.style.visibility = 'visible'} ).then( ferre.nadie );
+		    return ferre.xpost(a, objs).then( ferre.emptyBag, () => { TICKET.myticket.style.visibility = 'visible'} ).then( ferre.nadie );
 		} else {
-		return ferre.xget(a, objs).then( TICKET.empty, () => { TICKET.myticket.style.visibility = 'visible'} ).then( ferre.nadie );
+		return ferre.xget(a, objs).then( ferre.emptyBag, () => { TICKET.myticket.style.visibility = 'visible'} ).then( ferre.nadie );
 		}
 	    };
 
