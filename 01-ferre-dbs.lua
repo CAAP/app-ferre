@@ -222,7 +222,7 @@ local function bixolon(uid, conn)
 
     local data = ticket(head, fd.reduce(conn.query(format(QLPR, uid)), fd.into, {}))
 
-    local skt = stdout -- popen(PRINTER, 'w')
+    local skt = popen(PRINTER, 'w')
     if #data > 8 then
 	data = fd.slice(4, data, fd.into, {})
 	fd.reduce(data, function(v) skt:write(concat(v,'\n'), '\n') end)

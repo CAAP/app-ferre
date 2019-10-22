@@ -108,10 +108,12 @@
 		TICKET.extraEmpty = () => {
 			ttotal.textContent = '';
 			tcount.textContent = '';
-			ferre.nadie();
 		};
 
-		ferre.emptyBag = () => { TICKET.empty(); return ferre.xget('delete', {pid: Number(persona.value)}) };
+		ferre.emptyBag = () => {
+			TICKET.empty();
+			return ferre.xget('delete', {pid: Number(persona.value)});
+		};
 
 		ferre.addItem = e => {
 		    if (!persona.disabled) { return; }
@@ -122,7 +124,7 @@
 	    ferre.print = function(a) {
 		const pid = Number(persona.value);
 
-		if ((pid != 0) && (TICKET.items.size == 0)) { return ferre.logout(); }
+		if ((pid != 0) && (TICKET.items.size == 0)) { return ferre.nadie(); }
 
 		if (pid == 0) { TICKET.empty(); return Promise.resolve(); }
 
@@ -135,9 +137,9 @@
 		TICKET.items.forEach( item => objs.push( 'query=' + TICKET.plain(item) ) );
 
 		if (TICKET.items.size > 4) {
-		    return ferre.xpost(a, objs).then( TICKET.empty, () => {TICKET.myticket.style.visibility = 'visible'} );
+		    return ferre.xpost(a, objs).then( ferre.emptyBag, () => { TICKET.myticket.style.visibility = 'visible'} ).then( ferre.nadie );
 		} else {
-		return ferre.xget(a, objs).then( TICKET.empty, () => {TICKET.myticket.style.visibility = 'visible'} );
+		return ferre.xget(a, objs).then( ferre.emptyBag, () => { TICKET.myticket.style.visibility = 'visible'} ).then( ferre.nadie );
 		}
 	    };
 
