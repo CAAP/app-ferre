@@ -59,7 +59,11 @@
 	// PEOPLE
 	(function() {
 	    const persona = document.getElementById('personas');
-	    XHR.getJSON('/json/people.json').then(a => a.forEach( p => { let opt = document.createElement('option'); opt.value = p.id; opt.appendChild(document.createTextNode(p.nombre)); persona.appendChild(opt); } ) );
+	    XHR.getJSON('/json/people.json').then(a => a.forEach( p => {
+		let opt = document.createElement('option');
+		opt.value = p.id;
+		opt.appendChild(document.createTextNode(p.nombre));
+		persona.appendChild(opt); } ) );
 	})();
 
 	// TICKET
@@ -95,21 +99,23 @@
 	    caja.emptyBag = () => { caja.UIDS.clear(); caja.UPDATED = false; return TICKET.empty() }
 
 	    caja.print = function(a) {
-		if (TICKET.items.size == 0) { return Promise.resolve() }
+		if (TICKET.items.size == 0)
+		    return Promise.resolve();
+
+		if (caja.UPDATED && a != 'ticket')
+		    return Promise.resolve();
 
 		if (a == 'msgs')
 		    return caja.UIDS.forEach(uid => caja.xget(a, {pid: persona.value, uid: uid}));
 
-		if (a == 'pagar' && caja.UPDATED) { return alert('Se han hecho cambios al TICKET actual debes imprimirlo antes de marcarlo como pagado!'); }
-
-		if (a == 'ticket' && !caja.UPDATED) { a = 'bixolon'; }
+		if (!caja.UPDATED && a == 'ticket' )
+		    a = 'bixolon';
 
 		if (!caja.UPDATED)
-		    return caja.UIDS.forEach(uid => XHR.get(caja.origin + a + '?' + uid));
+		    return caja.UIDS.forEach(uid => XHR.get(caja.origin + a + '?' + uid)); // XXX checar para asi poder usar un objecto como en todos lo casos y fusionar con 'msgs'
 		else {
 		    let objs = ['pid=A'];
 		    TICKET.items.forEach( item => objs.push( 'query=' + TICKET.plain(item) ) );
-
 		    if (TICKETS.items.size > 4)
 			return caja.xpost(a, objs).then( caja.emptyBag );
 		    else

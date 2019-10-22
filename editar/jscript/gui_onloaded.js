@@ -107,7 +107,7 @@
 	// PROVEEDORES
 	(function() {
 	    const employees = document.getElementById("tabla-proveedores");
-	    const vars = ['nombre', 'ciudad', 'rfc', 'email', 'tel', 'whats', 'contact', 'fecha'];
+	    const vars = ['nombre', 'ciudad']; // , 'rfc', 'email', 'tel', 'whats', 'contact', 'fecha'
 
 	    function inputE( a ) {
 		let ret = document.createElement('input');
@@ -115,9 +115,18 @@
 		return ret;
 	    }
 
+	    function choices(s, b) {
+		let opt = document.createElement('option');
+		opt.value = s;
+		opt.appendChild(document.createTextNode(s));
+		opt.selected = b;
+		return opt;
+	    }
+
 	    function addRow(p) {
 		const row = employees.insertRow();
-		vars.forEach(v => row.insertCell().appendChild( inputE([['value',p[v] || ''], ['type','text'], ['size',10]]) ));
+		// RAZON SOCIAL
+		row.insertCell().appendChild( inputE([['type', 'text'], ['size', 15], ['value', p.nombre], ['name', 'nombre']]) );
 	    }
 
 	    XHR.getJSON('/json/proveedores.json').then( a => a.forEach( addRow ) );

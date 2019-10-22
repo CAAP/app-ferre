@@ -4,6 +4,7 @@ local fd	= require'carlos.fold'
 
 local dbconn	= require'carlos.ferre'.dbconn
 local asJSON	= require'json'.encode
+local dump	= require'carlos.files'.dump
 
 local remove	= table.remove
 local insert	= table.insert
@@ -11,21 +12,23 @@ local format	= string.format
 
 local print	= print
 
+local HOME	= require'carlos.ferre'.HOME
+
 _ENV =  nil
 
-local function getHeader()
-    local conn = dbconn'ferre'
-    local ret = conn.header'datos'
+local DEST = HOME .. '/json/header.json'
 
-    conn.close()
+local conn = dbconn'ferre'
 
-    remove(ret) -- uidPROV
-    insert(ret, 2, remove(ret)) -- proveedor
-    remove(ret) -- uidSAT
-    insert(ret, 6, remove(ret)) -- rebaja
-    remove(ret) -- costol
-    return format('%s %s', 'header', asJSON(ret))
-end
+local ret = conn.header'datos'
 
-print( getHeader() )
+conn.close()
+
+remove(ret) -- uidPROV
+insert(ret, 2, remove(ret)) -- proveedor
+remove(ret) -- uidSAT
+insert(ret, 6, remove(ret)) -- rebaja
+remove(ret) -- costol
+
+dump( DEST, asJSON(ret) )
 

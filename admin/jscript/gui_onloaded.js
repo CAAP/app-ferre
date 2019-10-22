@@ -150,33 +150,6 @@
 		} ) );
 	    }
 
-	    admin.addField = k => {
-		if (k.startsWith('u')) { return; } // already taken into account by prc_
-		let row = tabla.insertRow();
-		// input && defaults
-		row.insertCell().appendChild( document.createTextNode(k.replace('prc', 'precio')) );
-		let cell = row.insertCell();
-		let ie = document.createElement('input');
-		ie.type = 'text'; ie.size = 8; ie.name = k;
-		// specifics
-		switch(k) {
-		    case 'desc':  ie.size = 40; cell.colSpan = 3; cell.style.paddingRight = "40px";
-				  cell.classList.add('pen'); cell.onclick = setPen; break;
-		    case 'clave': ie.disabled = true; inputs(row, 'uidSAT', true).disabled = false;
-				  cell.classList.add('clip'); cell.onclick = setClip; break;
-		    case 'costo': inputs(row, 'costol', false); break;
-		    case 'fecha': ie.disabled = true; break;
-		    case 'proveedor': k = 'uidPROV'; ie.name = k; // fields.add( 'uidPROV' ); ie.name = 'uidPROV'; 
-				      let ch = document.createElement('select'); ch.name = 'proveedor';
-				      cell.colSpan = 2; cell.appendChild( ch );
-				      cell = row.insertCell(); getSuppliers(); break;
-		}
-		if (k.startsWith('prc')) { inputs(row, k.replace('prc', 'u'), false).disabled = false; inputs(row, k.replace('prc', 'precio'), false); }
-		if (costos.has(k)) { ie.type = 'number'; }
-		cell.appendChild( ie );
- 		fields.add( k );
-	    };
-
 	    admin.reset = () => {
 		UTILS.clearTable( tabla );
 		if (suppliers.has('nadie')) { suppliers.get('nadie').selected = true; }
@@ -260,6 +233,35 @@
 		    CHANGES.get(clave, update)
 		    .then( admin.cancelar );
 	    };
+
+	    function addField(k) {
+		if (k.startsWith('u')) { return; } // already taken into account by prc_
+		let row = tabla.insertRow();
+		// input && defaults
+		row.insertCell().appendChild( document.createTextNode(k.replace('prc', 'precio')) );
+		let cell = row.insertCell();
+		let ie = document.createElement('input');
+		ie.type = 'text'; ie.size = 8; ie.name = k;
+		// specifics
+		switch(k) {
+		    case 'desc':  ie.size = 40; cell.colSpan = 3; cell.style.paddingRight = "40px";
+				  cell.classList.add('pen'); cell.onclick = setPen; break;
+		    case 'clave': ie.disabled = true; inputs(row, 'uidSAT', true).disabled = false;
+				  cell.classList.add('clip'); cell.onclick = setClip; break;
+		    case 'costo': inputs(row, 'costol', false); break;
+		    case 'fecha': ie.disabled = true; break;
+		    case 'proveedor': k = 'uidPROV'; ie.name = k; // fields.add( 'uidPROV' ); ie.name = 'uidPROV'; 
+				      let ch = document.createElement('select'); ch.name = 'proveedor';
+				      cell.colSpan = 2; cell.appendChild( ch );
+				      cell = row.insertCell(); getSuppliers(); break;
+		}
+		if (k.startsWith('prc')) { inputs(row, k.replace('prc', 'u'), false).disabled = false; inputs(row, k.replace('prc', 'precio'), false); }
+		if (costos.has(k)) { ie.type = 'number'; }
+		cell.appendChild( ie );
+ 		fields.add( k );
+	    }
+
+	    XHR.getJSON('/json/header.json').then(a => a.forEach( addField ));
 
 	})();
 
