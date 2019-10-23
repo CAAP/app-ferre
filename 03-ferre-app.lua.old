@@ -11,8 +11,6 @@ local send	  = require'carlos.ferre'.send
 local context	  = require'lzmq'.context
 local asJSON	  = require'carlos.json'.asJSON
 
-local tabs	= require'carlos.ferre.tabs'
-
 local assert	  = assert
 local exec	  = os.execute
 local format	  = string.format
@@ -30,23 +28,22 @@ _ENV = nil -- or M
 --
 local ENDPOINT	 = 'tcp://*:5040'
 local DOWNSTREAM = 'ipc://downstream.ipc'
-local UPSTREAM   = 'ipc://upstream.ipc'
 local OK	 = response{status='ok'}
 
-local TASKS = { ticket=true, presupuesto=true,
-		update=true, bixolon=true }
-
-local TABS = {  tabs=true, delete=true, msgs=true,
-		pins=true, login=true, CACHE=true }
-
-local CMDS = {  adjust=true, version=true,
-		feed=true, ledger=true, uid=true,
-		query=true, CACHE=true }
+local CMDS = { tabs=, delete=, msgs=, pins=, login=,
+		ticket=, presupuesto=, update=,
+		adjust=, version=,
+		feed=, ledger=, uid=, query=,
+		bixolon=}
 
 --------------------------------
 -- Local function definitions --
 --------------------------------
 --
+
+local function switch()
+    ;
+end
 
 local function distill(a)
     local data = concat(a)
@@ -57,22 +54,13 @@ local function distill(a)
     end
 end
 
-local function handshake(server, tasks, msgr)
+local function handshake(server, tasks)
     local id, msg = receive(server)
     msg = distill(msg)
     if msg then
-	-- send OK  & close socket
+	tasks:send_msg(urldecode(msg))
 	send(server, id, OK)
 	send(server, id, '')
-	-- divide & conquer
-	local cmd = msg:match'%a+'
-	if TASKS[cmd] then
-	    tasks:send_msg(urldecode(msg))
-	    goto ::FIN::
-	end
-	if TABS[cmd] then tabs(msg, msgr) end
-
-	::FIN::
 	return msg -- msg:match'([^%c]+)%c'
     else
 	return 'Received empty message ;-('
@@ -111,15 +99,8 @@ assert(tasks:bind( DOWNSTREAM ))
 print('Successfully bound to:', DOWNSTREAM, '\n')
 -- -- -- -- -- --
 --
-local msgr = assert(CTX:socket'PUSH')
-
-assert( msgr:connect( UPSTREAM ) )
-
-print('\nSuccessfully connected to:', UPSTREAM, '\n')
---- -- -- -- -- --
---
 while true do
 print'+\n'
-    print(handshake(server, tasks, msgr), '\n')
+    print(handshake(server, tasks), '\n')
 end
 
