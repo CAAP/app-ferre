@@ -40,12 +40,6 @@ local function getRFC()
     return v
 end
 
-local function addWeek(msg)
-    local json = msg:match'uid='
-    local uid = json and msg:match'uid=([^!&]+)' or msg:match'%s([^!]+)'
-    return format(json and '%s&week=%s' or '%s %s', msg, uid2week(uid))
-end
-
 local function queryDB(msg)
     local fruit = msg:match'fruit=(%a+)'
     msg = msg:match('%a+%s([^!]+)'):gsub('&', '!')
@@ -125,7 +119,6 @@ local function switch( msg, msgr )
 	end
 
 -- ledger & uid
---		local m = addWeek(msg)
 
     elseif cmd == 'ledger' then
 	local fruit = msg:match'fruit=(%a+)'

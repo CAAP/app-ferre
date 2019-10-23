@@ -16,6 +16,7 @@ local connexec		= require'carlos.ferre'.connexec
 local receive		= require'carlos.ferre'.receive
 local now		= require'carlos.ferre'.now
 local newUID		= require'carlos.ferre'.newUID
+local uid2week		= require'carlos.ferre'.uid2week
 local asnum		= require'carlos.ferre'.asnum
 local newTable    	= require'carlos.sqlite'.newTable
 local ticket		= require'carlos.ticket'.ticket
@@ -308,7 +309,8 @@ print'+\n'
 	print(msg, '\n')
 
     elseif cmd == 'bixolon' then
-	local uid, week = msg:match'%s([^!]+)%s([^!]+)'
+	local uid = msg:match'%s([^!]+)'
+	local week = uid2week( uid )
 	bixolon(uid, which(week))
 	print('Printing data ...\n')
 

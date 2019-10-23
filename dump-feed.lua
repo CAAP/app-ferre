@@ -3,6 +3,7 @@
 local fd	= require'carlos.fold'
 
 local dbconn	= require'carlos.ferre'.dbconn
+local uid2week	= require'carlos.ferre'.uid2week
 local asJSON	= require'json'.encode
 
 local concat	= table.concat
@@ -13,18 +14,28 @@ local assert	= assert
 
 local print	= print
 
+local HOME	= require'carlos.ferre'.HOME
+
+local msg	= arg[1]
+
 _ENV =  nil
 
-local function getHeader()
-    local conn = dbconn'ferre'
-    local ret = conn.header'datos'
---    remove(ret) -- faltante
-    insert(ret, 2, remove(ret)) -- proveedor
-    remove(ret) -- uidSAT
-    insert(ret, 6, remove(ret)) -- rebaja
-    remove(ret) -- costol
-    return format('%s %s', 'header', asJSON(ret))
-end
+local cmd = msg:match'%a+'
 
-print( getHeader() )
+local fruit = msg:match'fruit=(%a+)'
 
+local uid   = msg:match'uid=([^!&]+)'
+
+local week = uid2week( uid )
+
+local conn = assert( dbconn( week ) )
+
+local path = format('%s/caja/json/%s-feed.json', HOME, fruit)
+
+local qry = cmd == 'uid' and format(QTKT, uid) or format(QUID, 'LIKE', uid..'%')
+
+local clause = format(CLAUSE, 'LIKE', uid..'%')
+
+if cmd == 'ledger' and conn.count( 'tickets', clause ) == 0 then return false end
+
+dump(path, asJSON(fd.reduce(conn.query(qry), fd.map(toCents), fd.map(addName), fd.into, {})))
