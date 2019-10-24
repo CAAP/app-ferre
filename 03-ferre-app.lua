@@ -8,6 +8,7 @@ local response	  = require'carlos.html'.response
 local urldecode   = require'carlos.ferre'.urldecode
 local receive	  = require'carlos.ferre'.receive
 local send	  = require'carlos.ferre'.send
+local queryDB	  = require'carlos.ferre'.queryDB
 local context	  = require'lzmq'.context
 local asJSON	  = require'carlos.json'.asJSON
 
@@ -36,13 +37,13 @@ local OK	 = response{status='ok'}
 local TASKS = { ticket=true, presupuesto=true,
 		update=true, bixolon=true }
 
+local FEED = { feed=true, ledger=true, uid=true }
+
 local TABS = {  tabs=true, delete=true, msgs=true,
 		pins=true, login=true, CACHE=true }
 
-local FEED = { feed=true, ledger=true, uid=true }
-
 local CMDS = {  adjust=true, version=true,
-		query=true, CACHE=true }
+		CACHE=true }
 
 --------------------------------
 -- Local function definitions --
@@ -96,11 +97,15 @@ local function handshake(server, tasks, msgr)
 	send(server, id, '')
 	-- divide & conquer
 	local cmd = msg:match'%a+'
-	if TASKS[cmd] then
+	if cmd == 'query' then
+	    msgr:send_msg( queryDB( msg ) )
+
+	elseif TASKS[cmd] then
 	    tasks:send_msg(urldecode(msg))
-	end
-	if TABS[cmd] then tabs(msg, msgr) end
-	if FEED[cmd] then feed(cmd, msg, msgr) end
+
+	elseif FEED[cmd] then feed(cmd, msg, msgr)
+
+	elseif TABS[cmd] then tabs(msg, msgr) end
 
 	return msg -- msg:match'([^%c]+)%c'
     else
