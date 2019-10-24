@@ -7,13 +7,14 @@ local dbconn	= require'carlos.ferre'.dbconn
 local dump	= require'carlos.files'.dump
 
 local print = print
+local assert = assert
 
 local HOME	= require'carlos.ferre'.HOME
 
 _ENV =  nil
 
 
-local conn = dbconn'personas'
+local conn = assert( dbconn'personas' )
 
 ---------------------------------------
 

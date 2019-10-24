@@ -59,8 +59,10 @@
 	// PEOPLE
 	(function() {
 	    const persona = document.getElementById('personas');
+
 	    XHR.getJSON('/json/people.json').then(a => a.forEach( p => {
 		let opt = document.createElement('option');
+		caja.NAMES.set(p.id, p.nombre.toUpperCase());
 		opt.value = p.id;
 		opt.appendChild(document.createTextNode(p.nombre));
 		persona.appendChild(opt); } ) );
@@ -153,6 +155,7 @@
 	    caja.add2caja = function(w) {
 		let row = cajita.insertRow(0);
 		row.dataset.uid = w.uid;
+		w.nombre = caja.NAMES.get( UTILS.asnum(w.uid.match(/\d+$/)) );
 		for (let k of ['time', 'nombre', 'count', 'total']) { row.insertCell().appendChild( document.createTextNode(w[k]) ); }
 		let tag = row.insertCell();
 		tag.classList.add('addme');
@@ -180,6 +183,7 @@
 	    caja.add2fecha = function(w) {
 		let row = cajita.insertRow(0);
 		row.dataset.uid = w.uid;
+		w.nombre = caja.NAMES.get( UTILS.asnum(w.uid.match(/\d+$/)) );
 		for (let k of ['time', 'nombre', 'total']) { row.insertCell().appendChild( document.createTextNode(w[k]) ); }
 		row.lastChild.classList.add('pesos') ; // total en centavos
 		let tag = row.insertCell();

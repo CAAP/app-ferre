@@ -294,19 +294,20 @@ local function which(week) return TODAY==week and WEEK or assert(dbconn( week ))
 while true do
 print'+\n'
     pollin{tasks}
-    print'message received!\n'
-    local id, msg = receive( queues )
-    msg = msg[1]
+--    print'message received!\n'
+    local msg = tasks:recv_msg()
     local cmd = msg:match'%a+'
+    print(msg, '\n')
 
     if cmd == 'ticket' or cmd == 'presupuesto' then
-	local uid = newUID()
+	local pid = msg:match'pid=([%d%a]+)'
+	local uid = newUID()..pid
 	addTicket(WEEK, PRECIOS, msg, uid)
 	local qry = format(QUID, 'LIKE', uid)
-	local msg = jsonName(fd.first(WEEK.query(qry), function(x) return x end))
-	msgr:send_msgs{'WEEK', format('feed %s', msg)}
+	local m = jsonName(fd.first(WEEK.query(qry), function(x) return x end))
+	msgr:send_msgs{'WEEK', format('feed %s', m)}
 	bixolon(uid, WEEK)
-	print(msg, '\n')
+	print(m, '\n')
 
     elseif cmd == 'bixolon' then
 	local uid = msg:match'%s([^!]+)'

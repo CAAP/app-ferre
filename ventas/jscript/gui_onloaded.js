@@ -110,9 +110,12 @@
 			tcount.textContent = '';
 		};
 
-		ferre.emptyBag = () => {
+		ferre.emptyBag = (a) => {
 			TICKET.empty();
-			return ferre.xget('delete', {pid: Number(persona.value)});
+			if (a=='tabs')
+			    return Promise.resolve(true);
+			else
+			    return ferre.xget('delete', {pid: Number(persona.value)});
 		};
 
 		ferre.addItem = e => {
@@ -137,9 +140,13 @@
 		TICKET.items.forEach( item => objs.push( 'query=' + TICKET.plain(item) ) );
 
 		if (TICKET.items.size > 4) {
-		    return ferre.xpost(a, objs).then( ferre.emptyBag, () => { TICKET.myticket.style.visibility = 'visible'} ).then( ferre.nadie );
+		    return ferre.xpost(a, objs)
+			.then( () => ferre.emptyBag(a), () => { TICKET.myticket.style.visibility = 'visible'} )
+			.then( ferre.nadie );
 		} else {
-		return ferre.xget(a, objs).then( ferre.emptyBag, () => { TICKET.myticket.style.visibility = 'visible'} ).then( ferre.nadie );
+		return ferre.xget(a, objs)
+			.then( () => ferre.emptyBag(a), () => { TICKET.myticket.style.visibility = 'visible'} )
+			.then( ferre.nadie );
 		}
 	    };
 

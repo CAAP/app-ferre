@@ -1,6 +1,7 @@
 	var caja = {
 	    UPDATED: false,
 	    UIDS: new Set(),
+	    NAMES: new Map(),
 	    xget: (q,o) => XHR.get( caja.origin + q + '?' + UTILS.asstr(o) ),
 	    xpost: (q, o) => XHR.post( caja.origin + q, UTILS.asstr(o) )
 	};

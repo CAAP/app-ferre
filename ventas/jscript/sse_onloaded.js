@@ -15,7 +15,7 @@
 		function distill( s ) {
 		    let chunks = s.split('&query=');
 		    const pid = Number( chunks.shift().match(/\d+/) );
-		    return chunks.map(s => a2obj(s.split('|')));
+		    return chunks.map(s => a2obj(s.split('+'))); // | when urldecode used
 		}
 
 		function updateOne( o ) {

@@ -39,8 +39,9 @@ local TASKS = { ticket=true, presupuesto=true,
 local TABS = {  tabs=true, delete=true, msgs=true,
 		pins=true, login=true, CACHE=true }
 
+local FEED = { feed=true, ledger=true, uid=true }
+
 local CMDS = {  adjust=true, version=true,
-		feed=true, ledger=true, uid=true,
 		query=true, CACHE=true }
 
 --------------------------------
@@ -57,6 +58,35 @@ local function distill(a)
     end
 end
 
+local function dump(cmd, frt, uid)
+    exec(format('%s/dump-feed.lua %s %s %s', APP, cmd, frt, uid))
+end
+
+local function sndmsg( cmd, fruit)
+    return format('%s %s %s-feed.json', fruit, cmd, fruit)
+end
+
+local function feed(cmd, msg, msgr)
+    if cmd == 'feed' then
+	local fruit = msg:match'%s(%a+)'
+	dump(cmd, fruit, '')
+	msgr:send_msg( sndmsg(cmd, fruit) )
+
+    elseif cmd == 'uid' then
+	local fruit = msg:match'fruit=(%a+)'
+	local uid   = msg:match'uid=([^!&]+)'
+	dump(cmd, fruit, uid)
+	msgr:send_msg( sndmsg(cmd, fruit) )
+
+    elseif cmd == 'ledger' then
+	local fruit = msg:match'fruit=(%a+)'
+	local uid   = msg:match'uid=([^!&]+)'
+	dump(cmd, fruit, uid)
+	msgr:send_msg( sndmsg(cmd, fruit) )
+
+    end
+end
+
 local function handshake(server, tasks, msgr)
     local id, msg = receive(server)
     msg = distill(msg)
@@ -68,11 +98,10 @@ local function handshake(server, tasks, msgr)
 	local cmd = msg:match'%a+'
 	if TASKS[cmd] then
 	    tasks:send_msg(urldecode(msg))
-	    goto ::FIN::
 	end
 	if TABS[cmd] then tabs(msg, msgr) end
+	if FEED[cmd] then feed(cmd, msg, msgr) end
 
-	::FIN::
 	return msg -- msg:match'([^%c]+)%c'
     else
 	return 'Received empty message ;-('
