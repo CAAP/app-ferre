@@ -13,6 +13,7 @@ local context	  = require'lzmq'.context
 local asJSON	  = require'carlos.json'.asJSON
 
 local tabs	= require'carlos.ferre.tabs'
+local vers	= require'carlos.ferre.vers'
 
 local assert	  = assert
 local exec	  = os.execute
@@ -42,8 +43,7 @@ local FEED = { feed=true, ledger=true, uid=true }
 local TABS = {  tabs=true, delete=true, msgs=true,
 		pins=true, login=true, CACHE=true }
 
-local CMDS = {  adjust=true, version=true,
-		CACHE=true }
+local VERS = {  adjust=true, version=true, CACHE=true }
 
 --------------------------------
 -- Local function definitions --
@@ -103,9 +103,11 @@ local function handshake(server, tasks, msgr)
 	elseif TASKS[cmd] then
 	    tasks:send_msg(urldecode(msg))
 
-	elseif FEED[cmd] then feed(cmd, msg, msgr)
+	elseif FEED[cmd] then feed(cmd, msg, msgr) end
 
-	elseif TABS[cmd] then tabs(msg, msgr) end
+	if TABS[cmd] then tabs(msg, msgr) end
+
+	if VERS[cmd] then vers(msg, msgr) end
 
 	return msg -- msg:match'([^%c]+)%c'
     else

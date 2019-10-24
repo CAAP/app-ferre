@@ -305,7 +305,7 @@ print'+\n'
 	addTicket(WEEK, PRECIOS, msg, uid)
 	local qry = format(QUID, 'LIKE', uid)
 	local m = jsonName(fd.first(WEEK.query(qry), function(x) return x end))
-	msgr:send_msgs{'WEEK', format('feed %s', m)}
+	msgr:send_msg(format('feed %s', m))
 	bixolon(uid, WEEK)
 	print(m, '\n')
 
@@ -318,7 +318,7 @@ print'+\n'
     elseif cmd == 'update' then
 	local fruit = msg:match'fruit=(%a+)'
 	addUpdate(msg, PRECIOS, WEEK)
-	msgr:send_msgs{'ADMIN', format('%s update %s', fruit, date('%FT%T', now()):sub(1, 10))}
+	msgr:send_msg(format('%s update %s', fruit, date('%FT%T', now()):sub(1, 10)))
 	print('Data updated correctly\n')
 
     end
