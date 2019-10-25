@@ -59,7 +59,7 @@ local PRINTER	 = 'nc -N 192.168.3.21 9100'
 local DOWNSTREAM = 'ipc://downstream.ipc'
 local UPSTREAM   = 'ipc://upstream.ipc'
 
-local SUBS	 = { 'ticket', 'presupuesto', 'update', 'bixolon' }
+local SUBS	 = { 'ticket', 'presupuesto', 'update', 'bixolon', 'pagado' }
 
 local TABS	 = {tickets = 'uid, tag, prc, clave, desc, costol NUMBER, unidad, precio NUMBER, unitario NUMBER, qty INTEGER, rea INTEGER, totalCents INTEGER, uidSAT',
 		   updates = 'vers INTEGER PRIMARY KEY, clave, campo, valor',
@@ -75,6 +75,7 @@ local CLAUSE	 = 'WHERE tag NOT LIKE "factura" AND uid %s %q'
 local QTKT	 = 'SELECT uid, tag, clave, qty, rea, totalCents, prc "precio" FROM tickets WHERE uid LIKE %q'
 local QHEAD	 = 'SELECT uid, tag, ROUND(SUM(totalCents)/100.0, 2) total from tickets WHERE uid LIKE %q GROUP BY uid'
 local QLPR	 = 'SELECT desc, clave, qty, rea, ROUND(unitario, 2) unitario, unidad, ROUND(totalCents/100.0, 2) subTotal FROM tickets WHERE uid LIKE %q'
+local QPAY	 =  'UPDATE tickets SET tag = "pagado" WHERE uid LIKE %q' 
 
 local DIRTY	 = {clave=true, tbname=true, fruit=true}
 local TOLL	 = {costo=true, impuesto=true, descuento=true, rebaja=true}
@@ -192,6 +193,8 @@ local function addUpdate(msg, conn, conn2) -- conn, conn2
 --    print( concat(u,'\n') )
     for _,q in ipairs(u) do assert(conn2.exec( q )) end
 
+    exec(format('%s/dump-price.lua', APP))
+
     return true
 --]]
 end
@@ -294,12 +297,20 @@ local function which(week) return TODAY==week and WEEK or assert(dbconn( week ))
 while true do
 print'+\n'
     pollin{tasks}
---    print'message received!\n'
     local msg = tasks:recv_msg()
     local cmd = msg:match'%a+'
     print(msg, '\n')
 
-    if cmd == 'ticket' or cmd == 'presupuesto' then
+    if cmd == 'pagado' and msg:match'uid' then
+	local uid = msg:match'uid=([^!]+)'
+--	uid:match'HOY' must be TRUE
+	pcall(WEEK.exec(format(QPAY, uid)))
+	local qry = format(QUID, 'LIKE', uid)
+	local m = jsonName(fd.first(WEEK.query(qry), function(x) return x end))
+	msgr:send_msg(format('feed %s', m))
+	print(m, '\n')
+
+    elseif cmd == 'ticket' or cmd == 'presupuesto' or cmd == 'pagado' then
 	local pid = msg:match'pid=([%d%a]+)'
 	local uid = newUID()..pid
 	addTicket(WEEK, PRECIOS, msg, uid)
@@ -310,7 +321,8 @@ print'+\n'
 	print(m, '\n')
 
     elseif cmd == 'bixolon' then
-	local uid = msg:match'%s([^!]+)'
+	local uid = msg:match'uid=([^!]+)'
+--	local uid = msg:match'%s([^!]+)'
 	local week = uid2week( uid )
 	bixolon(uid, which(week))
 	print('Printing data ...\n')

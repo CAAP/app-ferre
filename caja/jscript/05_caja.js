@@ -1,5 +1,6 @@
 	var caja = {
 	    UPDATED: false,
+	    OLD: false,
 	    UIDS: new Set(),
 	    NAMES: new Map(),
 	    xget: (q,o) => XHR.get( caja.origin + q + '?' + UTILS.asstr(o) ),

@@ -100,25 +100,25 @@
 
 	    caja.emptyBag = () => { caja.UIDS.clear(); caja.UPDATED = false; return TICKET.empty() }
 
-	    caja.print = function(a) {
+	    caja.print = function(a) { // a E { ticket, bixolon, pagado, msgs }
 		if (TICKET.items.size == 0)
 		    return Promise.resolve();
 
-		if (caja.UPDATED && a != 'ticket')
-		    return Promise.resolve();
+		if (caja.OLD && a == 'pagado')
+		    return window.alert('No se puede modificar un ticket que no fue creado HOY!');
 
-		if (a == 'msgs')
-		    return caja.UIDS.forEach(uid => caja.xget(a, {pid: persona.value, uid: uid}));
+		if (caja.UPDATED && a == 'msgs')
+		    return window.alert('El ticket ha sido modificado y debe ser impreso antes de ser enviado!');
 
 		if (!caja.UPDATED && a == 'ticket' )
 		    a = 'bixolon';
 
 		if (!caja.UPDATED)
-		    return caja.UIDS.forEach(uid => XHR.get(caja.origin + a + '?' + uid)); // XXX checar para asi poder usar un objecto como en todos lo casos y fusionar con 'msgs'
+		    return caja.UIDS.forEach(uid => caja.xget(a, {pid: persona.value, uid: uid})); // XXX XHR.get(caja.origin + a + '?' + uid)
 		else {
 		    let objs = ['pid=A'];
 		    TICKET.items.forEach( item => objs.push( 'query=' + TICKET.plain(item) ) );
-		    if (TICKETS.items.size > 4)
+		    if (TICKET.items.size > 4)
 			return caja.xpost(a, objs).then( caja.emptyBag );
 		    else
 			return caja.xget(a, objs).then( caja.emptyBag );
@@ -153,9 +153,11 @@
 	    };
 
 	    caja.add2caja = function(w) {
+		const tr = cajita.querySelector('[data-uid="'+w.uid+'"]');
+		if (tr) { tr.lastChild.textContent = w.tag; return Promise.resolve(true); }
 		let row = cajita.insertRow(0);
 		row.dataset.uid = w.uid;
-		w.nombre = caja.NAMES.get( UTILS.asnum(w.uid.match(/\d+$/)) );
+		w.nombre = caja.NAMES.get( UTILS.asnum(w.uid.match(/\d+$/)) ) || 'CAJA';
 		for (let k of ['time', 'nombre', 'count', 'total']) { row.insertCell().appendChild( document.createTextNode(w[k]) ); }
 		let tag = row.insertCell();
 		tag.classList.add('addme');
@@ -171,12 +173,14 @@
 	(function() {
 	    const cajita = document.getElementById('tabla-fechas');
 	    const UIDS = caja.UIDS;
+	    const TODAY = new Date().toISOString().substring(0, 10);
 
 	    function getUID(e) {
 		const fruit = sessionStorage.fruit;
 		const uid = e.target.parentElement.dataset.uid;
 		UIDS.add( uid );
 		if (UIDS.size > 1) { caja.UPDATED = true; }
+		if (!uid.includes(TODAY)) { caja.OLD = true; }
 		return caja.xget('uid', {uid: uid, fruit: fruit});
 	    }
 

@@ -4,7 +4,7 @@ table { border-spacing: 6px 6px; }
 
 input[type=number] {
     text-align: right;
-    width: 50px;
+    width: 80px;
 }
 
 button[name=cerrar] { color: white; background-color: red; }

@@ -36,7 +36,8 @@ local UPSTREAM   = 'ipc://upstream.ipc'
 local OK	 = response{status='ok'}
 
 local TASKS = { ticket=true, presupuesto=true,
-		update=true, bixolon=true }
+		update=true, bixolon=true,
+		pagado=true }
 
 local FEED = { feed=true, ledger=true, uid=true }
 
