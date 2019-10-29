@@ -98,31 +98,34 @@
 		    .then( TICKET.add );
 	    }
 
-		TICKET.getPrice = getPrice;
+	    TICKET.getPrice = getPrice;
 
-		TICKET.total = cents => {
-			ttotal.textContent = '$' + (cents / 100).toFixed(2);
-			tcount.textContent = TICKET.items.size;
-		};
+	    TICKET.total = cents => {
+		ttotal.textContent = '$' + (cents / 100).toFixed(2);
+		tcount.textContent = TICKET.items.size;
+	    };
 
-		TICKET.extraEmpty = () => {
-			ttotal.textContent = '';
-			tcount.textContent = '';
-		};
+	    TICKET.extraEmpty = () => {
+		ttotal.textContent = '';
+		tcount.textContent = '';
+	    };
 
-		ferre.emptyBag = (a) => {
-			TICKET.empty();
-			if (a=='tabs')
-			    return Promise.resolve(true);
-			else
-			    return ferre.xget('delete', {pid: Number(persona.value)});
-		};
+	    ferre.emptyBag = (a) => {
+		TICKET.empty();
+		if (a=='tabs')
+		    return Promise.resolve(true);
+		else
+		    return ferre.xget('delete', {pid: Number(persona.value)});
+	    };
 
-		ferre.addItem = e => {
-		    if (!persona.disabled) { return; }
-		    const clave = UTILS.asnum(e.target.parentElement.dataset.clave);
-		    add2bag(clave);
-		};
+	    ferre.addItem = e => {
+		if (!persona.disabled) { return; }
+		const clave = UTILS.asnum(e.target.parentElement.dataset.clave);
+		if (MISS)
+		    return TICKET.miss( clave ); // XXX check this OUT
+		else
+		    return add2bag(clave);
+	    };
 
 	    ferre.print = function(a) {
 		const pid = Number(persona.value);
@@ -131,7 +134,9 @@
 
 		if (pid == 0) { TICKET.empty(); return Promise.resolve(); }
 
-		if (a == 'destinos') { a = destinos.value; };
+		if (ferre.MISS) { ferre.MISS = false; a = 'miss'; }
+
+		if (a == 'destinos') { a = destinos.value; } // choices
 
 		if (a == 'surtir') { return Promise.resolve(); } // temporary XXX
 
@@ -144,24 +149,25 @@
 			.then( () => ferre.emptyBag(a), () => { TICKET.myticket.style.visibility = 'visible'} )
 			.then( ferre.nadie );
 		} else {
-		return ferre.xget(a, objs)
+		    return ferre.xget(a, objs)
 			.then( () => ferre.emptyBag(a), () => { TICKET.myticket.style.visibility = 'visible'} )
 			.then( ferre.nadie );
 		}
 	    };
 
-	    ['ticket', 'presupuesto', 'surtir'].forEach( lbl => {
+	    ['ticket', 'presupuesto', 'surtir', 'faltantes'].forEach( lbl => {
 		    let opt = document.createElement('option');
 		    opt.value = lbl;
 		    opt.appendChild(document.createTextNode(lbl));
 		    destino.appendChild(opt);
 	    });
 
+	    destino.lastChild.disabled = true;
+
 	})();
 
 	// PEOPLE - Multi-User support
 	(function() {
-	    var PINS   = new Map();
 	    var NAMES  = new Map();
 
 	    const tcount = document.getElementById(TICKET.tcountID);
@@ -175,8 +181,6 @@
 	    opt.value = 0;
 	    opt.label = '';
 	    opt.selected = true;
-
-	    ferre.PINS = PINS;
 
 	    let nadie = () => { opt.selected = true; persona.disabled = false; mensaje.innerHTML = ''; sesion.innerHTML = ''; }
 

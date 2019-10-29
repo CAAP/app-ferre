@@ -76,6 +76,13 @@
 		    ferre.message( e.data );
 		}, false);
 
+		esource.addEventListener("miss", function(e) {
+		    elbl.innerHTML = "miss event";
+		    console.log("miss event received");
+		    ferre.MISS = true;
+		    TICKET.empty();
+		}, false);
+
 		esource.addEventListener("uid", function(e) {
 		    elbl.innerHTML = "uid event";
 		    console.log("uid event received");

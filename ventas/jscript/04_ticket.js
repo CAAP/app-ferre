@@ -160,6 +160,33 @@
 		israbatt2(q, row, false);
 	    }
 
+	    function displayMissing(q) {
+		let row = TICKET.bag.insertRow(0);
+		row.classList.add('bold');
+//		row.title = q.desc.substr(0,3); // TRYING OUT LOCATION XXX
+		row.dataset.clave = q.clave;
+		// DATOS INFO
+		let uid = row.insertCell();
+		uid.appendChild( document.createTextNode( q.id ) ); // q.clave XXX
+//		uid.classList.add('highlight');
+//		uid.ondblclick = toggleView;
+		let desc = row.insertCell();
+		desc.colSpan = 2;
+		if (q.faltante) { desc.classList.add('faltante'); }
+		desc.appendChild( document.createTextNode( q.desc ) );
+		if (TICKET.lookUp) { desc.onclick = () => { UTILS.clearTable( BROWSE.lis ); BROWSE.doSearch( q.clave ); }; }
+		// TRASH
+		let trash = row.insertCell();
+		trash.classList.add('trashout'); trash.appendChild( document.createTextNode( ' ' ) );
+		trash.onclick = reassure;
+//	BREAK
+		row = TICKET.bag.insertRow(1);
+		row.dataset.clave = q.clave;
+		// DATOS 4 CHANGE
+		let miss = row.insertCell(); miss.colSpan = 4;
+		miss.appendChild( inputE( [['type', 'text'], ['size', 25], ['name', 'obs'], ['value', q.obs]] ) ).select();
+	    }
+
 	    function showItem(q) {
 		let row = TICKET.bag.insertRow();
 		row.dataset.clave = q.clave;
@@ -290,6 +317,11 @@
 		bagTotal();
 	    };
 
+	    TICKET.miss = function(w) {
+		TICKET.myticket.style.visibility = 'visible';
+		TICKET.items.set( w.clave, w );
+		displayMissing( w );
+	    };
 
 	    TICKET.taxes = function(w) {
 		TICKET.myticket.style.visibility = 'visible';
