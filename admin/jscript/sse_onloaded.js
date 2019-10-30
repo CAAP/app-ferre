@@ -65,8 +65,11 @@
 		    elbl.innerHTML = "query event";
 		    console.log('query event ongoing');
 		    if (e.data.length > 5) {
-			let cl = JSON.parse(e.data).clave;
-			admin.setRecord( {clave: cl} );
+			let o = JSON.parse(e.data).clave;
+			if (o.desc.match('VV'))
+			    admin.setRecord( {clave: o.clave} );
+			else
+			    admin.setRecord( o );
 		    } else
 			BROWSE.doSearch(e.data);
 		}, false);
