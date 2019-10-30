@@ -73,6 +73,7 @@
 
 	// TICKET
 	(function() {
+	    const MISS = ferre.MISS;
 	    const PRICE = DATA.STORES.PRICE;
 	    TICKET.bag = document.getElementById( TICKET.bagID );
 	    TICKET.myticket = document.getElementById( TICKET.myticketID );
@@ -134,7 +135,7 @@
 
 		if (pid == 0) { TICKET.empty(); return Promise.resolve(); }
 
-		if (ferre.MISS) { ferre.MISS = false; a = 'miss'; }
+		if (MISS) { ferre.MISS = false; a = 'miss'; }
 
 		if (a == 'destinos') { a = destinos.value; } // choices
 
@@ -169,6 +170,7 @@
 	// PEOPLE - Multi-User support
 	(function() {
 	    var NAMES  = new Map();
+	    const PINS = ferre.PINS;
 
 	    const tcount = document.getElementById(TICKET.tcountID);
 	    const persona = document.getElementById('personas');

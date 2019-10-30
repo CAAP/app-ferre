@@ -25,6 +25,8 @@ local print	  = print
 
 local APP	  = require'carlos.ferre'.APP
 
+local WEEK = require'carlos.ferre'.asweek( require'carlos.ferre'.now() )
+
 -- No more external access after this point
 _ENV = nil -- or M
 
@@ -98,6 +100,12 @@ local function handshake(server, tasks, msgr)
 	send(server, id, '')
 	-- divide & conquer
 	local cmd = msg:match'%a+'
+
+	if cmd == 'adjust' and msg:match( WEEK ) then
+	    tasks:send_msg(urldecode(msg))
+	    return msg
+	end
+
 	if cmd == 'query' then
 	    msgr:send_msg( queryDB( msg ) )
 

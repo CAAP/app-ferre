@@ -69,8 +69,12 @@
 		esource.addEventListener("adjust", function(e) {
 		    elbl.innerHTML = "adjust event";
 		    console.log('adjust event ongoing');
-		    XHR.getJSON( '/ventas/json/' + e.data ).then( data => Promise.all( data.map( updateOne ) ) );
+		    if (e.data.match('json'))
+			XHR.getJSON( '/ventas/json/' + e.data ).then( data => Promise.all( data.map( updateOne ) ) );
+		    else
+			Promise.all( JSON.parse(e.data).map( updateOne ) );
 		}, false);
+
 /*
 		esource.addEventListener("query", function(e) {
 		    elbl.innerHTML = "query event";

@@ -18,6 +18,7 @@ local now		= require'carlos.ferre'.now
 local newUID		= require'carlos.ferre'.newUID
 local uid2week		= require'carlos.ferre'.uid2week
 local asnum		= require'carlos.ferre'.asnum
+local asdata		= require'carlos.ferre'.asdata
 local newTable    	= require'carlos.sqlite'.newTable
 local ticket		= require'carlos.ticket'.ticket
 local dump		= require'carlos.files'.dump
@@ -59,7 +60,7 @@ local PRINTER	 = 'nc -N 192.168.3.21 9100'
 local DOWNSTREAM = 'ipc://downstream.ipc'
 local UPSTREAM   = 'ipc://upstream.ipc'
 
-local SUBS	 = { 'ticket', 'presupuesto', 'update', 'bixolon', 'pagado' }
+local SUBS	 = { 'ticket', 'presupuesto', 'update', 'bixolon', 'pagado', 'adjust' }
 
 local TABS	 = {tickets = 'uid, tag, prc, clave, desc, costol NUMBER, unidad, precio NUMBER, unitario NUMBER, qty INTEGER, rea INTEGER, totalCents INTEGER, uidSAT',
 		   updates = 'vers INTEGER PRIMARY KEY, clave, campo, valor',
@@ -85,6 +86,10 @@ local PRCS	 = {prc1=true, prc2=true, prc3=true}
 local INU	 = 'INSERT INTO updates (clave, campo, valor) VALUES (%s, %q, %s)'
 local UPQ	 = 'UPDATE %q SET %s %s'
 local COSTOL 	 = 'costol = costo*(100+impuesto)*(100-descuento)*(1-rebaja/100.0)'
+
+local FRUIT	 = HOME .. '/ventas/json'
+
+local MEM	 = {}
 
 --------------------------------
 -- Local function definitions --
@@ -124,11 +129,14 @@ local function reformat(v, k)
     return format('%s = %s', k, vv)
 end
 
-local function reformat2(clave)
+local function reformat2(clave, n)
     clave = tointeger(clave) or format('%q', clave) -- "'%s'"
     return function(v, k)
 	local vv = smart(v, k)
-	return format(INU, clave, k, vv)
+	local ret = {n, clave, k, vv}
+	n = n + 1
+	return ret
+--	return format(INU, n, clave, k, vv)
     end
 end
 
@@ -189,11 +197,15 @@ local function addUpdate(msg, conn, conn2) -- conn, conn2
 	if toll then up_costos(w, a) end
     end
 
-    u = fd.reduce(fd.keys(w), fd.filter(sanitize(DIRTY)), fd.map(reformat2(clave)), fd.into, {})
---    print( concat(u,'\n') )
-    for _,q in ipairs(u) do assert(conn2.exec( q )) end
+    u = conn2.count'updates' + 1
 
-    exec(format('%s/dump-price.lua', APP))
+    fd.reduce(fd.keys(w), fd.filter(sanitize(DIRTY)), fd.map(reformat2(clave, u)), into'updates', conn2)
+
+--    u = fd.reduce(fd.keys(w), fd.filter(sanitize(DIRTY)), fd.map(reformat2(clave)), fd.into, {})
+--    print( concat(u,'\n') )
+ --   for _,q in ipairs(u) do assert(conn2.exec( q )) end
+
+--    exec(format('%s/dump-price.lua', APP))
 
     return true
 --]]
@@ -216,6 +228,17 @@ local function dumpFEED(conn, path, qry, clause) -- XXX correct FIN json
     if clause and conn.count( 'tickets', clause ) == 0 then return false end
     dump(path, asJSON(fd.reduce(conn.query(qry), fd.map(toCents), fd.map(addName), fd.into, {})))
     return true
+end
+
+local function dumpFRUIT(conn, vers, week, fruit)
+    if MEM[vers] then return MEM[vers] end
+    local clause = vers > 0 and format('WHERE vers > %d', vers) or ''
+    local ret = asdata(conn, clause, week)
+    if #MEM > 150 then MEM = {} end
+    MEM[vers] = ret
+    return ret
+--    dump(format('%s/%s.json', FRUIT, fruit), asdata(conn, clause, week))
+--    return true
 end
 
 local function fields(a, t) return fd.reduce(a, fd.map(function(k) return t[k] end), fd.into, {}) end
@@ -332,6 +355,16 @@ print'+\n'
 	addUpdate(msg, PRECIOS, WEEK)
 	msgr:send_msg(format('%s update %s', fruit, date('%FT%T', now()):sub(1, 10)))
 	print('Data updated correctly\n')
+
+    elseif cmd == 'adjust' then
+	local vers = asnum(msg:match'vers=(%d+)')
+	local fruit = msg:match'fruit=(%a+)'
+	local week = msg:match'week=([^!&]+)'
+	-- week is THIS WEEK
+	local ret = dumpFRUIT(WEEK, vers, week, fruit)
+	print'Adjust process successful!\n'
+	msgr:send_msg(format('%s adjust %s', fruit, ret))
+--	msgr:send_msg(format('%s adjust %s.json', fruit, fruit))
 
     end
 end
