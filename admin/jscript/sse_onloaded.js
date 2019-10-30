@@ -65,7 +65,7 @@
 		    elbl.innerHTML = "query event";
 		    console.log('query event ongoing');
 		    if (e.data.length > 5) {
-			let o = JSON.parse(e.data).clave;
+			let o = JSON.parse(e.data);
 			if (o.desc.match('VV'))
 			    admin.setRecord( {clave: o.clave} );
 			else
