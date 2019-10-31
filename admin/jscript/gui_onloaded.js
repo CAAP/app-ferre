@@ -172,7 +172,7 @@
 
 	    function fetch(k, f) {
 		if (records.has(k)) {
-		    CHANGES.inplace(k, m => tabla.querySelector('input[name='+m+']').classList.add('modificado'));
+//		    CHANGES.inplace(k, m => tabla.querySelector('input[name='+m+']').classList.add('modificado'));
 		    return f( CHANGES.fetch(k, records.get(k)) );
 		} else
 		return admin.xget('query', {clave: k, fruit: sessionStorage.fruit});
