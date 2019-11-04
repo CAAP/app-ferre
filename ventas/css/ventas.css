@@ -124,6 +124,15 @@ button[name=guardar] { color: white; background-color: blue; }
 
 .checado { background-color: #cbd7ed; }
 
+svg, #immgy {
+    position: relative;
+    top: 10px;
+    left: 5px;
+}
+
+svg:hover #imggy { fill: #3d5a98; }
+
+
 #ticket-total { font: 200% arial; }
 
 #personas {

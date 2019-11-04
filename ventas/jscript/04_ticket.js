@@ -306,8 +306,13 @@
 	    TICKET.add = function(w) {
 		TICKET.myticket.style.visibility = 'visible';
 		TICKET.items.set( w.clave, w );
-		displayItem2( w );
-		bagTotal();
+		if (ferre.MISS)
+		    displayMissing( w );
+		else {
+		    displayItem2( w );
+		    bagTotal();
+		}
+
 	    };
 		
 	    TICKET.show = function(w) {
@@ -315,12 +320,6 @@
 		TICKET.items.set( w.clave, w );
 		showItem2( w );
 		bagTotal();
-	    };
-
-	    TICKET.miss = function(w) {
-		TICKET.myticket.style.visibility = 'visible';
-		TICKET.items.set( w.clave, w );
-		displayMissing( w );
 	    };
 
 	    TICKET.taxes = function(w) {

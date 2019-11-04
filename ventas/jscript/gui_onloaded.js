@@ -73,15 +73,17 @@
 
 	// TICKET
 	(function() {
-	    const MISS = ferre.MISS;
 	    const PRICE = DATA.STORES.PRICE;
 	    TICKET.bag = document.getElementById( TICKET.bagID );
 	    TICKET.myticket = document.getElementById( TICKET.myticketID );
 
+	    const gmiss = document.getElementById('imggy');
 	    const tcount = document.getElementById(TICKET.tcountID);
 	    const ttotal = document.getElementById( TICKET.ttotalID );
 	    const persona = document.getElementById('personas');
 	    const destino = document.getElementById('destinos');
+
+	    let ITEMS = new Map();
 
 	    function uptoCents(q) { return Math.round( 100 * q[q.precio] * q.qty * (1-q.rea/100) ); };
 
@@ -95,7 +97,7 @@
 	    function add2bag(clave) {
 		if (TICKET.items.has( clave )) { console.log('Item is already in the bag.'); return false; }
 		return getPrice( {clave: clave, qty: 1, precio: 'precio1', rea: 0} )
-		    .then( w => Object.assign(w, {totalCents: uptoCents(w)}) )
+		    .then( w => Object.assign(w, {totalCents: uptoCents(w), obs: ''}) )
 		    .then( TICKET.add );
 	    }
 
@@ -113,7 +115,7 @@
 
 	    ferre.emptyBag = (a) => {
 		TICKET.empty();
-		if (a=='tabs')
+		if (ferre.MISS || a=='tabs') // exceptions
 		    return Promise.resolve(true);
 		else
 		    return ferre.xget('delete', {pid: Number(persona.value)});
@@ -122,10 +124,28 @@
 	    ferre.addItem = e => {
 		if (!persona.disabled) { return; }
 		const clave = UTILS.asnum(e.target.parentElement.dataset.clave);
-		if (MISS)
-		    return TICKET.miss( clave ); // XXX check this OUT
+		return add2bag(clave);
+	    };
+
+	    ferre.swap = b => {
+		ferre.MISS = b;
+		let OLD = new Map( TICKET.items );
+		TICKET.empty();
+
+		gmiss.style.fill = b ? 'red' : 'black';
+
+		destino.childNodes.forEach( n => { n.disabled = !n.disabled } );
+
+		if (b) { destino.lastChild.selected = true; } else { destino.firstChild.selected = true; }
+
+		let a = [];
+		if (ITEMS.size > 0) {
+		    ITEMS.forEach( o => a.push(o) );
+		    return ferre.recreate( a )
+				.then( () => { ITEMS = OLD } );
+		}
 		else
-		    return add2bag(clave);
+		    ITEMS = OLD;
 	    };
 
 	    ferre.print = function(a) {
@@ -135,7 +155,7 @@
 
 		if (pid == 0) { TICKET.empty(); return Promise.resolve(); }
 
-		if (MISS) { ferre.MISS = false; a = 'miss'; }
+//		if (ferre.MISS) { a = 'miss'; } // ferre.MISS = false;  XXX there's "faltantes"
 
 		if (a == 'destinos') { a = destinos.value; } // choices
 
@@ -184,7 +204,16 @@
 	    opt.label = '';
 	    opt.selected = true;
 
-	    let nadie = () => { opt.selected = true; persona.disabled = false; mensaje.innerHTML = ''; sesion.innerHTML = ''; }
+	    let nadie = () => {
+		if (ferre.MISS) {
+		    ferre.swap(!ferre.MISS);
+		    return ferre.print('tabs');
+		}
+
+		opt.selected = true;
+		persona.disabled = false;
+		mensaje.innerHTML = ''; sesion.innerHTML = '';
+	    }
 
 	    let fetchMe = o => {
 		if (TICKET.items.has( o.clave )) {
@@ -234,7 +263,7 @@
 		    mensaje.innerHTML = a[2];
 	    };
 
-	    ferre.logout = () => ferre.print('tabs');
+	    ferre.logout = () => ferre.print('tabs'); // XXX ferre.MISS ? 'faltantes' : 'tabs'
 
 	    XHR.getJSON('/json/people.json').then(
 		a => a.forEach( p => {
