@@ -233,7 +233,7 @@ end
 local function dumpFRUIT(conn, vers, week, fruit)
     if MEM[vers] then return MEM[vers] end
     local clause = vers > 0 and format('WHERE vers > %d', vers) or ''
-    local ret = asdata(conn, clause, week)
+    local ret = asJSON(asdata(conn, clause, week))
     if #MEM > 150 then MEM = {} end
     MEM[vers] = ret
     return ret

@@ -2,11 +2,10 @@
 
 local fd	= require'carlos.fold'
 
-local asJSON	= require'carlos.json'.asJSON
 local stream	= require'carlos.ferre'.stream
+local dump	= require'carlos.files'.dump
+local asJSON	= require'json'.encode
 
-local open	= io.open
-local concat	= table.concat
 local unpack	= table.unpack
 local format	= string.format
 local assert	= assert
@@ -22,10 +21,5 @@ local fruit, week, vers = unpack(arg)
 
 local DEST = HOME .. '/ventas/json'
 
-local FIN  = open(format('%s/%s.json', DEST, fruit), 'w')
-
-    FIN:write'['
-    FIN:write( concat(fd.reduce(stream(week, vers), fd.into, {}), ',\n') )
-    FIN:write']'
-    FIN:close()
+dump(format('%s/%s.json', DEST, fruit), asJSON(fd.reduce(stream(week, vers), fd.flat, {})))
 
