@@ -41,7 +41,7 @@ local OK	 = response{status='ok'}
 
 local TASKS = { ticket=true, presupuesto=true,
 		update=true, bixolon=true,
-		pagado=true }
+		pagado=true, faltante=true }
 
 local FEED = { feed=true, ledger=true, uid=true }
 

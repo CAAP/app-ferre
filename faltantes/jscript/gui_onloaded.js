@@ -77,13 +77,11 @@
 	    TICKET.bag = document.getElementById( TICKET.bagID );
 	    TICKET.myticket = document.getElementById( TICKET.myticketID );
 
+	    const gmiss = document.getElementById('imggy');
 	    const tcount = document.getElementById(TICKET.tcountID);
 	    const ttotal = document.getElementById( TICKET.ttotalID );
 	    const persona = document.getElementById('personas');
 	    const destino = document.getElementById('destinos');
-
-	    const alink = document.createElement('a');
-	    alink.href = '/faltantes';
 
 	    function uptoCents(q) { return Math.round( 100 * q[q.precio] * q.qty * (1-q.rea/100) ); };
 
@@ -115,7 +113,7 @@
 
 	    ferre.emptyBag = (a) => {
 		TICKET.empty();
-		if (a=='tabs') // ferre.MISS || ; exceptions
+		if (ferre.MISS || a=='tabs') // exceptions
 		    return Promise.resolve(true);
 		else
 		    return ferre.xget('delete', {pid: Number(persona.value)});
@@ -127,7 +125,18 @@
 		return add2bag(clave);
 	    };
 
-	    ferre.swap = () => ferre.print('tabs').then( () => alink.click() );
+	    ferre.swap = b => {
+		ferre.MISS = b;
+		let OLD = new Map( TICKET.items );
+		TICKET.empty();
+
+		gmiss.style.fill = b ? 'red' : 'black';
+
+		destino.childNodes.forEach( n => { n.disabled = !n.disabled } );
+
+		if (b) { destino.lastChild.selected = true; } else { destino.firstChild.selected = true; }
+
+	    };
 
 	    ferre.print = function(a) {
 		const pid = Number(persona.value);
@@ -145,6 +154,9 @@
 
 		TICKET.items.forEach( item => objs.push( 'query=' + TICKET.plain(item) ) );
 
+	    TICKET.plain = o => VARS.map( v => { return (v + '+' + o[v] || '') } ).join('+');
+
+
 		if (TICKET.items.size > 4) {
 		    return ferre.xpost(a, objs)
 			.then( () => ferre.emptyBag(a), () => { TICKET.myticket.style.visibility = 'visible'} )
@@ -156,20 +168,19 @@
 		}
 	    };
 
-	    ['ticket', 'presupuesto', 'surtir', 'faltante'].forEach( lbl => {
+	    ['faltantes', 'sutir'].forEach( lbl => {
 		    let opt = document.createElement('option');
 		    opt.value = lbl;
 		    opt.appendChild(document.createTextNode(lbl));
 		    destino.appendChild(opt);
 	    });
 
-	    destino.lastChild.disabled = true;
-
 	})();
 
 	// PEOPLE - Multi-User support
 	(function() {
 	    var NAMES  = new Map();
+	    var LOGS = new Map();
 	    const PINS = ferre.PINS;
 
 	    const tcount = document.getElementById(TICKET.tcountID);
@@ -238,30 +249,18 @@
 		    mensaje.innerHTML = a[2];
 	    };
 
-	    ferre.logout = () => ferre.print('tabs');
+	    ferre.logout = () => ferre.print('faltantes');
 
 	    XHR.getJSON('/json/people.json').then(
 		a => a.forEach( p => {
 		    const pid = Number(p.id);
 		    PINS.set(pid, 0); // initialize to 0
 		    NAMES.set(pid, p.nombre.toUpperCase());
+		    LOGS.set(pid, p.acceso);
 		    let opt = document.createElement('option');
 		    opt.value = pid;
 		    opt.appendChild(document.createTextNode(p.nombre));
 		    persona.appendChild(opt); } ) );
 	})();
 
-/*
- *
- *
-	    let tID;
 
-	    function replay() {
-		console.log('Logged timeout!');
-		tID = setTimeout(replay, 15000);
-	    }
-
-	    setTimeout(replay, 15000);
-*
-*
-*/

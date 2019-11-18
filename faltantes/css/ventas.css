@@ -1,0 +1,218 @@
+table { border-spacing: 6px 6px; }
+
+input[type=number] {
+    text-align: right;
+    width: 50px;
+}
+
+button[name=cerrar] { color: white; background-color: red; }
+
+button[name=guardar] { color: white; background-color: blue; }
+
+.azul { background-color: white; filter: drop-shadow(4px 4px 2px black); }
+
+.azul:hover { transform: scale(1.2); }
+
+.bold td { font-weight: bold; }
+
+.encontrado { background-color: #aaeedd; }
+
+.precio1 { background-color: #e6ccff; }
+
+.amarillo tr:hover > td { background-color: #ffff97; }
+
+.activo {
+    font: bold 100% arial;
+    color: white;
+    background-color: black;
+    padding: 3px;
+}
+
+.total {
+    font: bold italic 100% arial;
+    text-align: right;
+}
+
+.faltantes { visibility: collapse; }
+
+#switch {
+    visibility: hidden;
+    margin: 20px;
+    margin-top: 0px;
+}
+
+.switch-label {
+    visibility: visible;
+    padding: 5px;
+    background: grey;
+    border-radius: 50px;
+    color: white;
+}
+
+#switch:checked + label {
+    background: #bada55;
+    color: black;
+}
+
+#switch:checked ~ * .faltantes { visibility: visible; }
+
+#switch:checked ~ * .faltante {
+    color: red;
+    text-decoration: line-through;
+}
+
+.pesos { text-align: right; }
+
+.rabatt .total { background-color: #e6ccff; }
+
+.marcado td:hover {
+    cursor:default;
+    font: bold italic 100% arial;
+}
+
+.scrollable {
+    max-height: 300px;
+    overflow: auto;
+}
+
+.tablas {
+    visibility: hidden;
+    cursor: default;
+}
+
+.tablas th {
+    border-bottom: 2px solid black;
+    border-top: 2px solid black;
+}
+
+
+.query {
+    padding-left: 30px;
+    background-color: #ffffff;
+}
+
+.dialogos {
+    z-index: 3;
+    display: inline-block;
+    overflow: auto;
+}
+
+.embiggen { display: none; }
+
+.trashout {
+    background-image: url("svg/trash.svg");
+    background-repeat: no-repeat;
+    background-position: center;
+    cursor: pointer;
+}
+
+.editme {
+    background-image: url("svg/pencil.svg");
+    background-repeat: no-repeat;
+    background-position: center;
+    cursor: pointer;
+}
+
+.highlight {
+    background-image: url("svg/check.svg");
+    background-repeat: no-repeat;
+    background-position: right;
+    cursor: pointer;
+}
+
+.droit { padding-left: 1em; }
+
+.checado { background-color: #cbd7ed; }
+
+svg, #immgy {
+    position: relative;
+    top: 10px;
+    left: 5px;
+}
+
+svg:hover #imggy { fill: #3d5a98; }
+
+
+#ticket-total { font: 200% arial; }
+
+#personas {
+    width: 100px;
+    padding: 0.5rem;
+    border-radius: 4px;
+}
+
+#personas td:hover {
+    cursor:default;
+    font: bold italic 100% arial;
+}
+
+#resultados td { cursor: copy; }
+
+#keys-resultados { visibility: hidden; }
+
+#myhead {
+    display: flex;
+    margin: 4px;
+    padding: 5px;
+    background-color: #3d5a98;
+    align-items: center;
+    align-content: space-between;
+    justify-content: space-between;
+}
+
+#myhead > label { color: #ffffff; }
+
+#pacman {
+    visibility: hidden;
+    padding: 3px;
+    align: middle;
+    z-index: 7;
+}
+
+#busq {
+    padding: 0.5rem;
+    border-radius: 4px;
+    border: 3px solid #ddd;
+    background-image: url("svg/search.svg");
+    background-repeat: no-repeat;
+    background-position: top 50% right 30px;
+    padding-left: 5px;
+}
+
+#login { padding: 0.5rem; }
+
+#login input {
+    border-radius: 4px;
+    border: 3px solid #ddd;
+    padding-left: 5px;
+}
+
+#main { 
+    width: 95%;
+    padding: 5px;
+    margin-top: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-content: space-between;
+}
+
+#buscar {
+    padding: 5px;
+    order: 1;
+}
+
+#mensajes {
+    font: 95% arial;
+    text-decoration: underline;
+    padding-left: 10px;
+    order: 2;
+}
+
+#laderecha {
+    order: 2;
+    padding: 5px;
+}
+
+td { font: bold 75% arial; }
+
+

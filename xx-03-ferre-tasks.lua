@@ -60,7 +60,7 @@ local PRINTER	 = 'nc -N 192.168.3.21 9100'
 local DOWNSTREAM = 'ipc://downstream.ipc'
 local UPSTREAM   = 'ipc://upstream.ipc'
 
-local SUBS	 = { 'ticket', 'presupuesto', 'update', 'bixolon', 'pagado', 'adjust' }
+local SUBS	 = { 'ticket', 'presupuesto', 'update', 'bixolon', 'pagado', 'adjust', 'faltante' }
 
 local TABS	 = {tickets = 'uid, tag, prc, clave, desc, costol NUMBER, unidad, precio NUMBER, unitario NUMBER, qty INTEGER, rea INTEGER, totalCents INTEGER, uidSAT',
 		   updates = 'vers INTEGER PRIMARY KEY, clave, campo, valor',
@@ -365,6 +365,9 @@ print'+\n'
 	print'Adjust process successful!\n'
 	msgr:send_msg(format('%s adjust %s', fruit, ret))
 --	msgr:send_msg(format('%s adjust %s.json', fruit, fruit))
+
+    elseif cmd == 'faltante' then
+	print( msg )
 
     end
 end
