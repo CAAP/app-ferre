@@ -33,8 +33,10 @@ _ENV = nil -- or M
 -- Local Variables for module-only access
 --
 local ENDPOINT	 = 'tcp://*:5040'
-local DOWNSTREAM = 'ipc://downstream.ipc'
-local UPSTREAM   = 'ipc://upstream.ipc'
+--local DOWNSTREAM = 'ipc://downstream.ipc' --  
+local DOWNSTREAM = 'tcp://*:5050' -- 
+--local UPSTREAM   = 'ipc://upstream.ipc'
+local UPSTREAM	 = 'tcp://localhost:5060'
 local OK	 = response{status='ok'}
 
 local TASKS = { ticket=true, presupuesto=true,
