@@ -26,8 +26,8 @@ _ENV = nil -- or M
 -- Local Variables for module-only access
 --
 local ENDPOINT	 = 'tcp://*:5030'
---local UPSTREAM   = 'ipc://upstream.ipc'
-local UPSTREAM   = 'tcp://*:5060'
+local UPSTREAM   = 'ipc://upstream.ipc'
+--local UPSTREAM   = 'tcp://*:5060'
 local SPIES	 = 'inproc://espias'
 local HELLO      = sse{content='stream'}
 local FRUITS	 = {}
