@@ -100,25 +100,21 @@ local function handshake(server, tasks, msgr)
 	-- send OK  & close socket
 	send(server, id, OK)
 	send(server, id, '')
-	-- divide & conquer
+	----------------------
+	-- divide & conquer --
 	local cmd = msg:match'%a+'
-
-	if cmd == 'adjust' and msg:match( WEEK ) then
-	    tasks:send_msg(urldecode(msg))
-	    return msg
-	end
 
 	if cmd == 'query' then
 	    msgr:send_msg( queryDB( msg ) )
 
-	elseif TASKS[cmd] then
+	elseif TASKS[cmd] or (cmd == 'adjust' and msg:match( WEEK )) then
 	    tasks:send_msg(urldecode(msg))
 
 	elseif FEED[cmd] then feed(cmd, msg, msgr) end
 
-	if TABS[cmd] then tabs(msg, msgr) end
+	if TABS[cmd] then tabs(msg, msgr) end -- because of CACHE
 
-	if VERS[cmd] then vers(msg, msgr) end
+	if VERS[cmd] then vers(msg, msgr) end -- because of CACHE
 
 	return msg -- msg:match'([^%c]+)%c'
     else

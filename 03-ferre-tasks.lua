@@ -10,6 +10,7 @@ local split		= require'carlos.string'.split
 local countN		= require'carlos.string'.count
 local context		= require'lzmq'.context
 local pollin		= require'lzmq'.pollin
+local keypair		= require'lzmq'.keypair
 local dbconn		= require'carlos.ferre'.dbconn
 local asweek		= require'carlos.ferre'.asweek
 local connexec		= require'carlos.ferre'.connexec
@@ -57,8 +58,11 @@ local SEMANA	 = 3600 * 24 * 7
 local HOY	 = date('%d-%b-%y', now())
 local PRINTER	 = 'nc -N 192.168.3.21 9100'
 
-local DOWNSTREAM = 'ipc://downstream.ipc'
-local UPSTREAM   = 'ipc://upstream.ipc'
+local DOWNSTREAM = 'tcp://192.168.3.100:5050' -- 'ipc://downstream.ipc'
+local UPSTREAM   = 'tcp://192.168.3.100:5060' -- 'ipc://upstream.ipc'
+
+local LEDGER	 = 'tcp://149.248.21.161:5610' -- 'vultr'
+local SRVK	 = "*dOG4ev0i<[2H(*GJC2e@6f.cC].$on)OZn{5q%3"
 
 local SUBS	 = { 'ticket', 'presupuesto', 'update', 'bixolon', 'pagado', 'adjust', 'faltante' }
 
@@ -177,10 +181,10 @@ local function addUpdate(msg, conn, conn2) -- conn, conn2
     local clause = format('WHERE clave LIKE %q', clave)
     local toll = found(w, TOLL)
 
-    if w.fecha then w.fecha = HOY end -- only fecha updates!!!XXX
-    if toll then w.fecha = HOY end
+    if w.fecha or toll then w.fecha = HOY end -- add 'fecha' update!!! XXX
+--    if toll then w.fecha = HOY end
 
-    local u = fd.reduce(fd.keys(w), fd.filter(sanitize(DIRTY)), fd.map( reformat ), fd.into, {})
+    local u = fd.reduce(fd.keys(w), fd.filter(sanitize(DIRTY)), fd.map(reformat), fd.into, {})
     if #u == 0 then return false end -- safeguard
     local qry = format(UPQ, 'datos', concat(u, ', '), clause)
 
@@ -251,7 +255,7 @@ local function bixolon(uid, conn)
 
     local data = ticket(head, fd.reduce(conn.query(format(QLPR, uid)), fd.into, {}))
 
-    local skt = popen(PRINTER, 'w')
+    local skt = popen(PRINTER, 'w') -- stdout -- 
     if #data > 8 then
 	data = fd.slice(4, data, fd.into, {})
 	fd.reduce(data, function(v) skt:write(concat(v,'\n'), '\n') end)
@@ -303,6 +307,16 @@ print('\nSuccessfully connected to:', UPSTREAM, '\n')
 --
 -- -- -- -- -- --
 --
+local www = assert(CTX:socket'DEALER')
+
+assert( www:set_id'FA-BJ-01' )
+
+assert( keypair():client(www, SRVK) )
+
+assert( www:connect( LEDGER ) )
+--
+-- -- -- -- -- --
+--
 -- Store PEOPLE values
 --
 do
@@ -331,6 +345,7 @@ print'+\n'
 	local qry = format(QUID, 'LIKE', uid)
 	local m = jsonName(fd.first(WEEK.query(qry), function(x) return x end))
 	msgr:send_msg(format('feed %s', m))
+	www:send_msg( msg ) -- WWW
 	print(m, '\n')
 
     elseif cmd == 'ticket' or cmd == 'presupuesto' or cmd == 'pagado' then
@@ -341,7 +356,15 @@ print'+\n'
 	local m = jsonName(fd.first(WEEK.query(qry), function(x) return x end))
 	msgr:send_msg(format('feed %s', m))
 	bixolon(uid, WEEK)
+	www:send_msg( msg ) -- WWW
 	print(m, '\n')
+
+    elseif cmd == 'update' then
+	local fruit = msg:match'fruit=(%a+)'
+	addUpdate(msg, PRECIOS, WEEK)
+	msgr:send_msg(format('%s update %s', fruit, date('%FT%T', now()):sub(1, 10)))
+	www:send_msg( msg ) -- WWW
+	print('Data updated correctly\n')
 
     elseif cmd == 'bixolon' then
 	local uid = msg:match'uid=([^!]+)'
@@ -349,12 +372,6 @@ print'+\n'
 	local week = uid2week( uid )
 	bixolon(uid, which(week))
 	print('Printing data ...\n')
-
-    elseif cmd == 'update' then
-	local fruit = msg:match'fruit=(%a+)'
-	addUpdate(msg, PRECIOS, WEEK)
-	msgr:send_msg(format('%s update %s', fruit, date('%FT%T', now()):sub(1, 10)))
-	print('Data updated correctly\n')
 
     elseif cmd == 'adjust' then
 	local vers = asnum(msg:match'vers=(%d+)')
