@@ -58,8 +58,8 @@ local SEMANA	 = 3600 * 24 * 7
 local HOY	 = date('%d-%b-%y', now())
 local PRINTER	 = 'nc -N 192.168.3.21 9100'
 
-local DOWNSTREAM = 'tcp://192.168.3.100:5050' -- 'ipc://downstream.ipc'
-local UPSTREAM   = 'tcp://192.168.3.100:5060' -- 'ipc://upstream.ipc'
+local DOWNSTREAM = 'ipc://downstream.ipc' -- 'tcp://192.168.3.100:5050' -- 
+local UPSTREAM   = 'ipc://upstream.ipc' -- 'tcp://192.168.3.100:5060' -- 
 
 local LEDGER	 = 'tcp://149.248.21.161:5610' -- 'vultr'
 local SRVK	 = "*dOG4ev0i<[2H(*GJC2e@6f.cC].$on)OZn{5q%3"
