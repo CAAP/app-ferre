@@ -305,7 +305,7 @@ assert( msgr:connect( UPSTREAM ) )
 
 print('\nSuccessfully connected to:', UPSTREAM, '\n')
 --
--- -- -- -- -- --
+--[[ -- -- -- -- --
 --
 local www = assert(CTX:socket'DEALER')
 
@@ -317,7 +317,7 @@ assert( www:connect( LEDGER ) )
 
 print('\nSuccessfully connected to:', LEDGER, '\n')
 --
--- -- -- -- -- --
+--]] -- -- -- -- --
 --
 -- Store PEOPLE values
 --
@@ -347,7 +347,7 @@ print'+\n'
 	local qry = format(QUID, 'LIKE', uid)
 	local m = jsonName(fd.first(WEEK.query(qry), function(x) return x end))
 	msgr:send_msg(format('feed %s', m))
-	www:send_msg( msg ) -- WWW
+--	www:send_msg( msg ) -- WWW
 	print(m, '\n')
 
     elseif cmd == 'ticket' or cmd == 'presupuesto' or cmd == 'pagado' then
@@ -358,14 +358,14 @@ print'+\n'
 	local m = jsonName(fd.first(WEEK.query(qry), function(x) return x end))
 	msgr:send_msg(format('feed %s', m))
 	bixolon(uid, WEEK)
-	www:send_msg( msg ) -- WWW
+--	www:send_msg( msg ) -- WWW
 	print(m, '\n')
 
     elseif cmd == 'update' then
 	local fruit = msg:match'fruit=(%a+)'
 	addUpdate(msg, PRECIOS, WEEK)
 	msgr:send_msg(format('%s update %s', fruit, date('%FT%T', now()):sub(1, 10)))
-	www:send_msg( msg ) -- WWW
+--	www:send_msg( msg ) -- WWW
 	print('Data updated correctly\n')
 
     elseif cmd == 'bixolon' then
