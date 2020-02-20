@@ -140,10 +140,8 @@ while true do
 	    if mm[1]:match'tcp' then
 		local sk = toint(ev:match'%d+$')
 		if ev:match'DISCONNECTED' then
---		    print( ev, '\n' )
 		    print( 'Bye bye', sayonara(sk), '\n')
 		elseif ev:match'ACCEPTED' then
---		    print( ev, '\n' )
 		    print( handshake(server, sk), '\n' )
 		end
 	    end
