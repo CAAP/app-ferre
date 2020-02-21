@@ -42,15 +42,6 @@ local OK	 = response{status='ok'}
 --------------------------------
 --
 
-local function distill(a)
-    local data = concat(a)
-    if data:match'GET' then
-	return format('%s %s', data:match'GET /(%a+)%?([^%?]+) HTTP')
-    elseif data:match'POST' then
-	return format('%s %s', data:match'POST /(%a+)', data:match'pid=[^%s]+')
-    end
-end
-
 local function handshake(server, tasks, msgr)
     local id, msg = receive(server)
     msg = distill(msg)
@@ -88,6 +79,8 @@ end
 local CTX = context()
 
 local server = assert(CTX:socket'DEALER')
+
+assert( server:immediate(true) ) -- queue to completed connections only
 
 assert(server:connect( DOWNSTREAM ))
 
