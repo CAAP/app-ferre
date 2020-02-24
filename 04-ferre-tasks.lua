@@ -4,27 +4,19 @@
 --
 local fd	  = require'carlos.fold'
 
-local response	  = require'carlos.html'.response
 local urldecode   = require'carlos.ferre'.urldecode
-local receive	  = require'carlos.ferre'.receive
-local send	  = require'carlos.ferre'.send
 local queryDB	  = require'carlos.ferre'.queryDB
 local context	  = require'lzmq'.context
 local pollin	  = require'lzmq'.pollin
-local asJSON	  = require'carlos.json'.asJSON
 
 local tabs	= require'carlos.ferre.tabs'
 local vers	= require'carlos.ferre.vers'
+local feed	= require'carlos.ferre.feed'
 
 local assert	  = assert
-local exec	  = os.execute
-local format	  = string.format
 local concat	  = table.concat
-local format	  = string.format
 
 local print	  = print
-
-local APP	  = require'carlos.ferre'.APP
 
 local WEEK = require'carlos.ferre'.asweek( require'carlos.ferre'.now() )
 
@@ -35,20 +27,30 @@ _ENV = nil -- or M
 --
 local DOWNSTREAM = 'ipc://downstream.ipc' --  
 --local DOWNSTREAM = 'tcp://*:5050' -- 
-local OK	 = response{status='ok'}
+local UPSTREAM   = 'ipc://upstream.ipc'
+--local UPSTREAM	 = 'tcp://localhost:5060'
+local DBASE	 = 'ipc://database.ipc'
+
+local TASKS = { ticket=true, presupuesto=true,
+		update=true, bixolon=true,
+		pagado=true, faltante=true }
+
+local FEED = { feed=true, ledger=true, uid=true }
+
+local TABS = {  tabs=true, delete=true, msgs=true,
+		pins=true, login=true, CACHE=true }
+
+local VERS = {  adjust=true, version=true, CACHE=true }
 
 --------------------------------
 -- Local function definitions --
 --------------------------------
 --
 
-local function handshake(server, tasks, msgr)
-    local id, msg = receive(server)
-    msg = distill(msg)
-    if msg then
-	-- send OK  & close socket
-	send(server, id, OK)
-	send(server, id, '')
+local function receive(skt) return concat(skt:recv_msgs(), ' ') end
+
+local function hub(server, tasks, msgr)
+    local msg = receive(server)
 	----------------------
 	-- divide & conquer --
 	local cmd = msg:match'%a+'
@@ -59,16 +61,13 @@ local function handshake(server, tasks, msgr)
 	elseif TASKS[cmd] or (cmd == 'adjust' and msg:match( WEEK )) then
 	    tasks:send_msg(urldecode(msg))
 
-	elseif FEED[cmd] then feed(cmd, msg, msgr) end
+	elseif FEED[cmd] then feed(msg, msgr) end
 
 	if TABS[cmd] then tabs(msg, msgr) end -- because of CACHE
 
 	if VERS[cmd] then vers(msg, msgr) end -- because of CACHE
 
 	return msg -- msg:match'([^%c]+)%c'
-    else
-	return 'Received empty message ;-('
-    end
 end
 
 ---------------------------------
@@ -78,13 +77,25 @@ end
 -- Initilize server(s)
 local CTX = context()
 
-local server = assert(CTX:socket'DEALER')
-
-assert( server:immediate(true) ) -- queue to completed connections only
+local server = assert(CTX:socket'PULL')
 
 assert(server:connect( DOWNSTREAM ))
 
 print('Successfully connected to:', DOWNSTREAM, '\n')
+-- -- -- -- -- --
+--
+local msgr = assert(CTX:socket'PUSH')
+
+assert( msgr:connect( UPSTREAM ) )
+
+print('\nSuccessfully connected to:', UPSTREAM, '\n')
+--- -- -- -- -- --
+--
+local tasks = assert(CTX:socket'PUSH')
+
+assert( tasks:connect( DBASE ) )
+
+print('\nSuccessfully connected to:', DBASE, '\n')
 -- -- -- -- -- --
 --
 
@@ -94,8 +105,9 @@ while true do
 
     if pollin{server} then
 
-	if tasks:events() == 'POLLIN' then
+	if server:events() == 'POLLIN' then
 
+	    print( hub(server, tasks, msgr), '\n' )
 
 	end
 

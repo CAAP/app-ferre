@@ -59,12 +59,16 @@ local server = assert(CTX:socket'STREAM')
 
 assert( server:notify(false) )
 
+assert( server:immediate(true) ) -- queue to completed connections only
+
 assert(server:bind( ENDPOINT ))
 
 print('Successfully bound to:', ENDPOINT, '\n')
 -- -- -- -- -- --
 --
 local tasks = assert(CTX:socket'PUSH') -- DEALER
+
+assert( tasks:immediate(true) ) -- queue to completed connections only
 
 assert(tasks:bind( DOWNSTREAM ))
 
