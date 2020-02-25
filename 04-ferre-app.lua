@@ -6,6 +6,10 @@
 local context	  = require'lzmq'.context
 local proxy	  = require'lzmq'.proxy
 
+local receive	  = require'carlos.ferre'.receive
+local send	  = require'carlos.ferre'.send
+local response	  = require'carlos.html'.response
+
 local assert	  = assert
 local concat	  = table.concat
 local exec	  = os.execute
@@ -22,6 +26,8 @@ _ENV = nil -- or M
 local ENDPOINT	 = 'tcp://*:5040'
 local DOWNSTREAM = 'ipc://downstream.ipc' --  
 --local DOWNSTREAM = 'tcp://*:5050' -- 
+
+local OK	 = response{status='ok'}
 
 --------------------------------
 -- Local function definitions --
@@ -44,11 +50,11 @@ end
 --
 --
 -- DUMP --
---exec(format('%s/dump-price.lua', APP))
+exec(format('%s/dump-price.lua', APP))
 
---exec(format('%s/dump-people.lua', APP))
+exec(format('%s/dump-people.lua', APP))
 
---exec(format('%s/dump-header.lua', APP))
+exec(format('%s/dump-header.lua', APP))
 --
 --
 --
@@ -59,8 +65,6 @@ local server = assert(CTX:socket'STREAM')
 
 assert( server:notify(false) )
 
-assert( server:immediate(true) ) -- queue to completed connections only
-
 assert(server:bind( ENDPOINT ))
 
 print('Successfully bound to:', ENDPOINT, '\n')
@@ -68,7 +72,7 @@ print('Successfully bound to:', ENDPOINT, '\n')
 --
 local tasks = assert(CTX:socket'PUSH') -- DEALER
 
-assert( tasks:immediate(true) ) -- queue to completed connections only
+assert( tasks:immediate(true) ) -- queue outgoing to completed connections only
 
 assert(tasks:bind( DOWNSTREAM ))
 

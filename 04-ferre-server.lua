@@ -11,7 +11,7 @@ local send	  = require'carlos.ferre'.send
 local getFruit	  = require'carlos.ferre'.getFruit
 local pollin	  = require'lzmq'.pollin
 local context	  = require'lzmq'.context
-local sleep	  =require'lbsd'.sleep
+--local sleep	  =require'lbsd'.sleep
 
 local format	  = require'string'.format
 local concat	  = table.concat
@@ -106,16 +106,12 @@ assert( spy:connect( SPIES ) )
 -- ***********
 assert( server:notify(false) )
 
-assert( server:immediate(true) ) -- queue to completed connections only
-
 assert( server:bind( ENDPOINT ) )
 
 print('\nSuccessfully bound to:', ENDPOINT, '\n')
 -- -- -- -- -- --
 --
 local msgs = assert(CTX:socket'PULL')
-
-assert( msgs:immediate(true) ) -- queue to completed connections only
 
 assert( msgs:bind( UPSTREAM ) )
 
@@ -124,8 +120,7 @@ print('\nSuccessfully bound to:', UPSTREAM, '\n')
 ---[[
 --
 print( 'Starting servers ...', '\n' )
-sleep(1)
-
+--sleep(1)
 
 --
 while true do

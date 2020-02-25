@@ -29,7 +29,7 @@ local DOWNSTREAM = 'ipc://downstream.ipc' --
 --local DOWNSTREAM = 'tcp://*:5050' -- 
 local UPSTREAM   = 'ipc://upstream.ipc'
 --local UPSTREAM	 = 'tcp://localhost:5060'
-local DBASE	 = 'ipc://database.ipc'
+local DBSTREAM	 = 'ipc://dbstream.ipc'
 
 local TASKS = { ticket=true, presupuesto=true,
 		update=true, bixolon=true,
@@ -47,10 +47,9 @@ local VERS = {  adjust=true, version=true, CACHE=true }
 --------------------------------
 --
 
-local function receive(skt) return concat(skt:recv_msgs(), ' ') end
+--local function receive(skt) return concat(skt:recv_msgs(), ' ') end
 
-local function hub(server, tasks, msgr)
-    local msg = receive(server)
+local function hub(msg, tasks, msgr)
 	----------------------
 	-- divide & conquer --
 	local cmd = msg:match'%a+'
@@ -86,6 +85,8 @@ print('Successfully connected to:', DOWNSTREAM, '\n')
 --
 local msgr = assert(CTX:socket'PUSH')
 
+assert( msgr:immediate(true) ) -- queue outgoing to completed connections only
+
 assert( msgr:connect( UPSTREAM ) )
 
 print('\nSuccessfully connected to:', UPSTREAM, '\n')
@@ -93,9 +94,11 @@ print('\nSuccessfully connected to:', UPSTREAM, '\n')
 --
 local tasks = assert(CTX:socket'PUSH')
 
-assert( tasks:connect( DBASE ) )
+assert( tasks:immediate(true) ) -- queue outgoing to completed connections only
 
-print('\nSuccessfully connected to:', DBASE, '\n')
+assert( tasks:connect( DBSTREAM ) )
+
+print('\nSuccessfully connected to:', DBSTREAM, '\n')
 -- -- -- -- -- --
 --
 
@@ -107,7 +110,9 @@ while true do
 
 	if server:events() == 'POLLIN' then
 
-	    print( hub(server, tasks, msgr), '\n' )
+	    local msg = server:recv_msg()
+
+	    print( hub(msg, tasks, msgr), '\n' )
 
 	end
 
