@@ -58,7 +58,7 @@ local SEMANA	 = 3600 * 24 * 7
 local HOY	 = date('%d-%b-%y', now())
 local PRINTER	 = 'nc -N 192.168.3.21 9100'
 
-local DBSTREAM	 = 'ipc://dbstream.ipc'
+local WEEKSTREAM = 'ipc://weekstream.ipc'
 -- 'tcp://192.168.3.100:5050' -- 
 local UPSTREAM   = 'ipc://upstream.ipc'
 -- 'tcp://192.168.3.100:5060' -- 
@@ -192,9 +192,9 @@ local CTX = context()
 
 local tasks = assert(CTX:socket'PULL')
 
-assert(tasks:bind( DBSTREAM ))
+assert(tasks:bind( WEEKSTREAM ))
 
-print('\nSuccessfully bound to:', DBSTREAM)
+print('\nSuccessfully bound to:', WEEKSTREAM)
 --
 -- -- -- -- -- --
 --
@@ -208,7 +208,7 @@ print('\nSuccessfully connected to:', UPSTREAM, '\n')
 --
 --[[ -- -- -- -- --
 --
-local www = assert(CTX:socket'DEALER')
+local www = assert(CTX:socket'REQ')
 
 assert( www:set_id'FA-BJ-01' )
 

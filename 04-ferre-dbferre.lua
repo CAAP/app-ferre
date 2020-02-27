@@ -167,7 +167,7 @@ print('\nSuccessfully bound to:', FERRESTREAM)
 --
 --[[ -- -- -- -- --
 --
-local www = assert(CTX:socket'DEALER')
+local www = assert(CTX:socket'REQ')
 
 assert( www:set_id'FA-BJ-01' )
 

@@ -2,8 +2,10 @@
 
 -- Import Section
 --
+local reduce	  = require'carlos.fold'.reduce
 local urldecode   = require'carlos.ferre'.urldecode
 local queryDB	  = require'carlos.ferre'.queryDB
+local receive	  = require'carlos.ferre'.receive
 local context	  = require'lzmq'.context
 local pollin	  = require'lzmq'.pollin
 
@@ -15,22 +17,32 @@ local concat	  = table.concat
 
 local print	  = print
 
---local WEEK = require'carlos.ferre'.asweek( require'carlos.ferre'.now() )
+local WEEK = require'carlos.ferre'.asweek( require'carlos.ferre'.now() )
 
 -- No more external access after this point
 _ENV = nil -- or M
 
 -- Local Variables for module-only access
 --
-local DOWNSTREAM  = 'ipc://downstream.ipc' --  
 local UPSTREAM    = 'ipc://upstream.ipc'
 local STREAM	  = 'ipc://stream.ipc'
+
+local WEEK = { ticket=true, presupuesto=true,
+		pagado=true }
+
+local FERRE = { update=true, faltante=true }
+
+local FEED = { feed=true, ledger=true, uid=true }
+
+local INMEM = { tabs=true, delete=true, msgs=true,
+		pins=true, login=true,
+		adjust=true, version=true,
+		CACHE=true }
 
 --------------------------------
 -- Local function definitions --
 --------------------------------
 --
-
 
 ---------------------------------
 -- Program execution statement --
@@ -39,29 +51,16 @@ local STREAM	  = 'ipc://stream.ipc'
 -- Initilize server(s)
 local CTX = context()
 
+local stream = assert(CTX:socket'ROUTER')
 
-local server = assert(CTX:socket'PULL')
+assert( stream:mandatory(true) ) -- causes error in case of unroutable peer
 
-assert(server:connect( DOWNSTREAM ))
+assert( stream:bind( STREAM ) )
 
-print('Successfully connected to:', DOWNSTREAM, '\n')
+print('\nSuccessfully bound to:', STREAM, '\n')
 
--- -- -- -- -- --
+--[[ -- -- -- -- --
 --
-
-local tasks = assert(CTX:socket'DEALER')
-
-assert( tasks:immediate(true) )
-
-assert( tasks:set_id'TASKS01' )
-
-assert( tasks:connect( STREAM ) )
-
-print('\nSuccessfully connected to:', STREAM, '\n')
-
--- -- -- -- -- --
---
-
 local msgr = assert(CTX:socket'PUSH')
 
 assert( msgr:immediate(true) ) -- queue outgoing to completed connections only
@@ -69,34 +68,40 @@ assert( msgr:immediate(true) ) -- queue outgoing to completed connections only
 assert( msgr:connect( UPSTREAM ) )
 
 print('\nSuccessfully connected to:', UPSTREAM, '\n')
-
---
 --]] -- -- -- -- --
 --
 
-tasks:send_msg'OK'
+--
+-- -- -- -- -- --
+--
+
+--
+-- -- -- -- -- --
+--
 
 while true do
     print'+\n'
 
-    pollin{server}
+    pollin{stream}
 
-	    local msg = server:recv_msg()
+    local id, msg = receive( stream )
+	msg = concat(msg, ' ')
+	print(id, msg, '\n')
 
-	    print(msg, '\n')
-
+	if id:match'TASK' then
 	    ----------------------
 	    -- divide & conquer --
+	    ----------------------
 	    local cmd = msg:match'%a+'
 
-	    if cmd == 'query' then
-	        msgr:send_msg( queryDB( msg ) )
+	    if INMEM[cmd] then
+		print( stream:send_msgs{'inmem', msg} )
 
-	    elseif cmd == 'bixolon' then
-
-	    else
-		tasks:send_msg( msg )
+	    elseif WEEK[cmd] then
+		stream:send_msgs{'week', msg}
 
 	    end
+
+	end
 
 end
