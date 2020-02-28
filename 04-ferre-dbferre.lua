@@ -10,11 +10,9 @@ local context		= require'lzmq'.context
 local pollin		= require'lzmq'.pollin
 local keypair		= require'lzmq'.keypair
 local dbconn		= require'carlos.ferre'.dbconn
-
-local receive		= require'carlos.ferre'.receive
-
 local now		= require'carlos.ferre'.now
 local asnum		= require'carlos.ferre'.asnum
+local asJSON		= require'json'.encode
 
 local format	= string.format
 local tointeger = math.tointeger
@@ -36,12 +34,10 @@ _ENV = nil -- or M
 --
 local HOY	 = date('%d-%b-%y', now())
 
-local FERRESTREAM = 'ipc://ferrestream.ipc'
+local STREAM = 'ipc://stream.ipc'
 
 local LEDGER	 = 'tcp://149.248.21.161:5610' -- 'vultr'
 local SRVK	 = "*dOG4ev0i<[2H(*GJC2e@6f.cC].$on)OZn{5q%3"
-
-local SUBS	 = { 'update', 'faltante' }
 
 local DIRTY	 = {clave=true, tbname=true, fruit=true}
 local TOLL	 = {costo=true, impuesto=true, descuento=true, rebaja=true}
@@ -100,7 +96,7 @@ local function up_precios(conn, w, clause)
     return a, w
 end
 
-local function addUpdate(msg, conn, conn2) -- conn, conn2
+local function addUpdate(msg, conn)
     local w = {}
     for k,v in msg:gmatch'([%a%d]+)=([^&]+)' do w[k] = asnum(v) end
 
@@ -128,6 +124,8 @@ local function addUpdate(msg, conn, conn2) -- conn, conn2
 	local a = up_precios(conn, w, clause)
 	if toll then up_costos(w, a) end
     end
+
+    return w
 
     -- XXX move to dbweek
     u = conn2.count'updates' + 1
@@ -159,11 +157,15 @@ print("ferre DBs was successfully open\n")
 --
 local CTX = context()
 
-local tasks = assert(CTX:socket'ROUTER')
+local tasks = assert(CTX:socket'DEALER')
 
-assert(tasks:bind( FERRESTREAM ))
+assert( tasks:immediate(true) )
 
-print('\nSuccessfully bound to:', FERRESTREAM)
+assert( tasks:set_id'ferredb' )
+
+assert(tasks:connect( STREAM ))
+
+print('\nSuccessfully connected to:', STREAM)
 --
 --[[ -- -- -- -- --
 --
@@ -193,14 +195,10 @@ print'+\n'
 
     if cmd == 'update' then
 	local fruit = msg:match'fruit=(%a+)'
-	addUpdate(msg, PRECIOS, WEEK)
-
-	tasks:
---	msgr:send_msg(format('%s update %s', fruit, date('%FT%T', now()):sub(1, 10)))
---	XXX move to dbweek
+	local ret = addUpdate(msg, PRECIOS)
+	tasks:send_msgs{'weekdb', asJSON(ret)}
 
 --	www:send_msg( msg ) -- WWW
-	print('Data updated correctly\n')
 
 
     elseif cmd == 'faltante' then

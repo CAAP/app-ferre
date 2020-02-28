@@ -98,10 +98,12 @@ while true do
 		print( stream:send_msgs{'inmem', msg} )
 
 	    elseif WEEK[cmd] then
-		stream:send_msgs{'week', msg}
+		stream:send_msgs{'weekdb', msg}
 
 	    end
 
+	elseif id:match'ferredb' then
+	    stream:send_msgs{}
 	end
 
 end
