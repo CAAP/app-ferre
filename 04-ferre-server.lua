@@ -106,6 +106,8 @@ assert( spy:connect( SPIES ) )
 -- ***********
 assert( server:notify(false) )
 
+assert( server:alive(true) )
+
 assert( server:bind( ENDPOINT ) )
 
 print('\nSuccessfully bound to:', ENDPOINT, '\n')
@@ -124,8 +126,7 @@ print( 'Starting servers ...', '\n' )
 
 --
 while true do
-
-    print'+\n'
+print'+\n'
 
     if pollin{msgs, spy} then
 

@@ -6,6 +6,7 @@ local fd		= require'carlos.fold'
 
 local into		= require'carlos.sqlite'.into
 local asJSON		= require'json'.encode
+local fromJSON		= require'json'.decode
 local split		= require'carlos.string'.split
 local countN		= require'carlos.string'.count
 local context		= require'lzmq'.context
@@ -14,7 +15,6 @@ local keypair		= require'lzmq'.keypair
 local dbconn		= require'carlos.ferre'.dbconn
 local asweek		= require'carlos.ferre'.asweek
 local connexec		= require'carlos.ferre'.connexec
-local receive		= require'carlos.ferre'.receive
 local now		= require'carlos.ferre'.now
 local newUID		= require'carlos.ferre'.newUID
 local uid2week		= require'carlos.ferre'.uid2week
@@ -58,7 +58,7 @@ local SEMANA	 = 3600 * 24 * 7
 local HOY	 = date('%d-%b-%y', now())
 local PRINTER	 = 'nc -N 192.168.3.21 9100'
 
-local WEEKSTREAM = 'ipc://weekstream.ipc'
+local STREAM = 'ipc://stream.ipc'
 -- 'tcp://192.168.3.100:5050' -- 
 local UPSTREAM   = 'ipc://upstream.ipc'
 -- 'tcp://192.168.3.100:5060' -- 
@@ -84,15 +84,37 @@ local QHEAD	 = 'SELECT uid, tag, ROUND(SUM(totalCents)/100.0, 2) total from tick
 local QLPR	 = 'SELECT desc, clave, qty, rea, ROUND(unitario, 2) unitario, unidad, ROUND(totalCents/100.0, 2) subTotal FROM tickets WHERE uid LIKE %q'
 local QPAY	 =  'UPDATE tickets SET tag = "pagado" WHERE uid LIKE %q' 
 
+local DIRTY	 = {clave=true, tbname=true, fruit=true}
+local ISSTR	 = {desc=true, fecha=true, obs=true, proveedor=true, gps=true, u1=true, u2=true, u3=true, uidPROV=true}
+
 local FRUIT	 = HOME .. '/ventas/json'
 
 local MEM	 = {}
+local VERS	 = {}
 
 --------------------------------
 -- Local function definitions --
 --------------------------------
 --
+local function receive(skt, a)
+    return fd.reduce(function() return skt:recv_msgs(true) end, fd.into, a)
+end
+
 local function round(n, d) return floor(n*10^d+0.5)/10^d end
+
+local function sanitize(b) return function(_,k) return not(b[k]) end end
+
+local function smart(v, k) return ISSTR[k] and format("'%s'", tostring(v):upper()) or (tointeger(v) or tonumber(v) or 0) end
+
+local function reformat2(clave, n)
+    clave = tointeger(clave) or format('%q', clave) -- "'%s'"
+    return function(v, k)
+	n = n + 1
+	local vv = smart(v, k)
+	local ret = {n, clave, k, vv}
+	return ret
+    end
+end
 
 local function process(uid, tag, conn2)
     return function(q)
@@ -139,14 +161,30 @@ local function dumpFEED(conn, path, qry, clause) -- XXX correct FIN json
 end
 
 local function dumpFRUIT(conn, vers, week, fruit)
-    if MEM[vers] then return MEM[vers] end
-    local clause = vers > 0 and format('WHERE vers > %d', vers) or ''
-    local ret = asJSON(asdata(conn, clause, week))
-    if #MEM > 150 then MEM = {} end
+    if #VERS > 500 then VERS,MEM = {},{} end
+
+    if #VERS == 0 then
+	local clause = vers > 0 and format('WHERE vers > %d', vers) or ''
+	local ret = asJSON(asdata(conn, clause, week))
+	VERS[#VERS+1] = ret
+	MEM[vers] = #VERS
+	return ret
+    end
+
+    local k = MEM[vers]
+    if k then
+	if k == #VERS then return VERS[#VERS] else
+	return fd.reduce(MEM, fd.filter(function(v) return v>vers end), fd.map(function(v) return MEM[v]  end), fd.into, {})
+    elseif vers < MEM[1] then
+	local clause = format('WHERE vers > %d', MEM[1], vers)
+    end
+
+
+
+    if #MEM > 500 then MEM = {} end
+    MEM[#MEM+1] = vers
     MEM[vers] = ret
     return ret
---    dump(format('%s/%s.json', FRUIT, fruit), asdata(conn, clause, week))
---    return true
 end
 
 local function fields(a, t) return fd.reduce(a, fd.map(function(k) return t[k] end), fd.into, {}) end
@@ -190,21 +228,25 @@ print("this week DB was successfully open\n")
 --
 local CTX = context()
 
-local tasks = assert(CTX:socket'PULL')
+local tasks = assert(CTX:socket'DEALER')
 
-assert(tasks:bind( WEEKSTREAM ))
+assert( tasks:immediate(true) )
 
-print('\nSuccessfully bound to:', WEEKSTREAM)
+assert( tasks:set_id'weekdb' )
+
+assert(tasks:connect( STREAM ))
+
+print('\nSuccessfully connected to:', STREAM)
 --
 -- -- -- -- -- --
 --
 local msgr = assert(CTX:socket'PUSH')
 
-assert( msgr:immediate(true) ) -- queue outgoing to completed connections only
+assert( msgr:immediate( true ) )
 
 assert( msgr:connect( UPSTREAM ) )
 
-print('\nSuccessfully connected to:', UPSTREAM, '\n')
+print('\nSuccessfully connected to:', UPSTREAM)
 --
 --[[ -- -- -- -- --
 --
@@ -229,6 +271,10 @@ end
 --
 -- -- -- -- -- --
 --
+
+tasks:send_msg'OK'
+
+--
 -- Run loop
 --
 
@@ -236,10 +282,18 @@ local function which(week) return TODAY==week and WEEK or assert(dbconn( week ))
 
 while true do
 print'+\n'
+
     pollin{tasks}
-    local msg = tasks:recv_msg()
+
+    local msg, more = tasks:recv_msg()
     local cmd = msg:match'%a+'
-    print(msg, '\n')
+
+    if more then
+	msg = receive(tasks, {msg})
+	print(concat(msg, '&'), '\n')
+    else
+	print(msg, '\n')
+    end
 
     if cmd == 'pagado' and msg:match'uid' then
 	local uid = msg:match'uid=([^!]+)'
@@ -249,7 +303,6 @@ print'+\n'
 	local m = jsonName(fd.first(WEEK.query(qry), function(x) return x end))
 	msgr:send_msg(format('feed %s', m))
 --	www:send_msg( msg ) -- WWW
-	print(m, '\n')
 
     elseif cmd == 'ticket' or cmd == 'presupuesto' or cmd == 'pagado' then
 	local pid = msg:match'pid=([%d%a]+)'
@@ -260,7 +313,20 @@ print'+\n'
 	msgr:send_msg(format('feed %s', m))
 	bixolon(uid, WEEK)
 --	www:send_msg( msg ) -- WWW
-	print(m, '\n')
+
+    elseif cmd == adjust then
+	getUpdates(msg)
+
+    elseif cmd == 'update' then -- msg from 'ferredb' to be re-routed to 'inmem'
+	local u = WEEK.count'updates'
+	local w = fromJSON( msg[2] )
+	fd.reduce(fd.keys(w), fd.filter(sanitize(DIRTY)), fd.map(reformat2(w.clave, u)), into'updates', WEEK)
+	tasks:send_msgs{'inmem', cmd, asJSON{vers=WEEK.count'updates', week=TODAY}}
+
+    end
+end
+
+--[[
 
     elseif cmd == 'bixolon' then -- XXX should prefer similar to adjust
 	local uid = msg:match'uid=([^!]+)'
@@ -279,9 +345,4 @@ print'+\n'
 	msgr:send_msg(format('%s adjust %s', fruit, ret))
 --	msgr:send_msg(format('%s adjust %s.json', fruit, fruit))
 
-    elseif cmd == 'updates' then -- XXX paste from dbferre
-
-    end
-end
-
-
+--]]

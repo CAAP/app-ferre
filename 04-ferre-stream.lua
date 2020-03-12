@@ -14,6 +14,7 @@ local pollin	  = require'lzmq'.pollin
 
 local assert	  = assert
 local concat	  = table.concat
+local insert	  = table.insert
 
 local print	  = print
 
@@ -28,15 +29,15 @@ local UPSTREAM    = 'ipc://upstream.ipc'
 local STREAM	  = 'ipc://stream.ipc'
 
 local WEEK = { ticket=true, presupuesto=true,
-		pagado=true }
+		pagado=true, adjust=true }
 
-local FERRE = { update=true, faltante=true }
+local FERRE = { update=true, faltante=true, query=true }
 
-local FEED = { feed=true, ledger=true, uid=true }
+local FEED = { feed=true, ledger=true, uid=true } -- bixolon, msgs
 
-local INMEM = { tabs=true, delete=true, msgs=true,
+local INMEM = { tabs=true, delete=true,
 		pins=true, login=true,
-		adjust=true, version=true,
+		version=true,
 		CACHE=true }
 
 --------------------------------
@@ -80,30 +81,41 @@ print('\nSuccessfully connected to:', UPSTREAM, '\n')
 --
 
 while true do
-    print'+\n'
+print'+\n'
 
     pollin{stream}
 
-    local id, msg = receive( stream )
-	msg = concat(msg, ' ')
-	print(id, msg, '\n')
+	local id, msg = receive( stream )
+	local cmd = msg[1]:match'%a+'
+
+	print(id, concat(msg, '&'), '\n')
 
 	if id:match'TASK' then
 	    ----------------------
 	    -- divide & conquer --
 	    ----------------------
-	    local cmd = msg:match'%a+'
-
 	    if INMEM[cmd] then
-		print( stream:send_msgs{'inmem', msg} )
+		insert(msg, 1, 'inmem')
+		print( 'Sent to inmem:', stream:send_msgs(msg), '\n' )
 
 	    elseif WEEK[cmd] then
-		stream:send_msgs{'weekdb', msg}
+		insert(msg, 1, 'weekdb')
+		print( 'Sent to weekdb:', stream:send_msgs(msg), '\n' )
+
+	    elseif FERRE[cmd] then
+		insert(msg, 1, 'ferredb')
+		print( 'Sent to ferredb:', stream:send_msgs(msg), '\n' )
 
 	    end
 
 	elseif id:match'ferredb' then
-	    stream:send_msgs{}
+	    print( 'Received from ferredb\n' )
+	    print( 'Re-routed to', cmd, stream:send_msgs(msg), '\n' )
+
+	elseif id:match'weekdb' then
+	    print( 'Received from weekdb\n' )
+	    print( 'Re-routed to', cmd, stream:send_msgs(msg), '\n' )
+
 	end
 
 end

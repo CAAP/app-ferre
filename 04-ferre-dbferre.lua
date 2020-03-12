@@ -35,6 +35,7 @@ _ENV = nil -- or M
 local HOY	 = date('%d-%b-%y', now())
 
 local STREAM = 'ipc://stream.ipc'
+local UPSTREAM = 'ipc://upstream.ipc'
 
 local LEDGER	 = 'tcp://149.248.21.161:5610' -- 'vultr'
 local SRVK	 = "*dOG4ev0i<[2H(*GJC2e@6f.cC].$on)OZn{5q%3"
@@ -47,25 +48,46 @@ local PRCS	 = {prc1=true, prc2=true, prc3=true}
 local UPQ	 = 'UPDATE %q SET %s %s'
 local COSTOL 	 = 'costol = costo*(100+impuesto)*(100-descuento)*(1-rebaja/100.0)'
 
+local QDESC	 = 'SELECT clave FROM precios WHERE desc LIKE %q ORDER BY desc LIMIT 1'
+
 --------------------------------
 -- Local function definitions --
 --------------------------------
 --
+
+local function byDesc(conn, s)
+    local qry = format(QDESC, s:gsub('*', '%%')..'%%')
+    local o = first(conn.query(qry), function(x) return x end) or {clave=''} -- XXX can return NIL
+    return o.clave
+end
+
+local function byClave(conn, s)
+    local qry = format('SELECT * FROM  datos WHERE clave LIKE %q LIMIT 1', s)
+    local o = fd.first(conn.query(qry), function(x) return x end)
+    return o and asJSON( o ) or ''
+end
+
+local function queryDB(msg, PRECIOS)
+    if msg:match'desc' then
+	local ret = msg:match'desc=([^!]+)'
+	if ret:match'VV' then
+	    return byClave(PRECIOS, byDesc(PRECIOS, ret))
+	else
+	    return byDesc(PRECIOS, ret)
+	end
+
+    elseif msg:match'clave' then
+	local ret = msg:match'clave=([%a%d]+)'
+	return byClave(PRECIOS, ret)
+
+    end
+end
+
 local function smart(v, k) return ISSTR[k] and format("'%s'", tostring(v):upper()) or (tointeger(v) or tonumber(v) or 0) end
 
 local function reformat(v, k)
     local vv = smart(v, k)
     return format('%s = %s', k, vv)
-end
-
-local function reformat2(clave, n)
-    clave = tointeger(clave) or format('%q', clave) -- "'%s'"
-    return function(v, k)
-	local vv = smart(v, k)
-	local ret = {n, clave, k, vv}
-	n = n + 1
-	return ret
-    end
 end
 
 local function found(a, b) return fd.first(fd.keys(a), function(_,k) return b[k] end) end
@@ -127,16 +149,10 @@ local function addUpdate(msg, conn)
 
     return w
 
-    -- XXX move to dbweek
+--[[  XXX move to dbweek
     u = conn2.count'updates' + 1
 
     fd.reduce(fd.keys(w), fd.filter(sanitize(DIRTY)), fd.map(reformat2(clave, u)), into'updates', conn2)
-
---    u = fd.reduce(fd.keys(w), fd.filter(sanitize(DIRTY)), fd.map(reformat2(clave)), fd.into, {})
---    print( concat(u,'\n') )
- --   for _,q in ipairs(u) do assert(conn2.exec( q )) end
-
---    exec(format('%s/dump-price.lua', APP))
 
     return true
 --]]
@@ -167,6 +183,16 @@ assert(tasks:connect( STREAM ))
 
 print('\nSuccessfully connected to:', STREAM)
 --
+-- -- -- -- -- --
+--
+local msgr = assert(CTX:socket'PUSH')
+
+assert( msgr:immediate( true ) )
+
+assert( msgr:connect( UPSTREAM ) )
+
+print('\nSuccessfully connected to:', UPSTREAM)
+--
 --[[ -- -- -- -- --
 --
 local www = assert(CTX:socket'REQ')
@@ -181,6 +207,10 @@ print('\nSuccessfully connected to:', LEDGER, '\n')
 --
 --]] -- -- -- -- --
 --
+
+tasks:send_msg'OK'
+
+--
 -- -- -- -- -- --
 --
 -- Run loop
@@ -188,7 +218,9 @@ print('\nSuccessfully connected to:', LEDGER, '\n')
 
 while true do
 print'+\n'
+
     pollin{tasks}
+
     local msg = tasks:recv_msg()
     local cmd = msg:match'%a+'
     print(msg, '\n')
@@ -196,13 +228,18 @@ print'+\n'
     if cmd == 'update' then
 	local fruit = msg:match'fruit=(%a+)'
 	local ret = addUpdate(msg, PRECIOS)
-	tasks:send_msgs{'weekdb', asJSON(ret)}
+	tasks:send_msgs{'weekdb', 'update', asJSON( ret )}
+
 
 --	www:send_msg( msg ) -- WWW
 
 
     elseif cmd == 'faltante' then
 	print( msg )
+
+    elseif cmd == 'query' then
+	local fruit = msg:match'fruit=(%a+)'
+	msgr:send_msg( format('%s query %s', fruit, queryDB(msg, PRECIOS)) )
 
     end
 end

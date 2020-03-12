@@ -4,11 +4,13 @@
 --
 
 local context	  = require'lzmq'.context
-local proxy	  = require'lzmq'.proxy
+--local proxy	  = require'lzmq'.proxy
+local pollin	  = require'lzmq'.pollin
 
 local receive	  = require'carlos.ferre'.receive
 local send	  = require'carlos.ferre'.send
 local response	  = require'carlos.html'.response
+local split	  = require'carlos.string'.split
 
 local assert	  = assert
 local concat	  = table.concat
@@ -28,6 +30,8 @@ local DOWNSTREAM = 'ipc://downstream.ipc' --
 --local DOWNSTREAM = 'tcp://*:5050' -- 
 
 local OK	 = response{status='ok'}
+
+local MULTI	 = {tabs=true, ticket=true, presupuesto=true}
 
 --------------------------------
 -- Local function definitions --
@@ -55,7 +59,7 @@ exec(format('%s/dump-price.lua', APP))
 exec(format('%s/dump-people.lua', APP))
 
 exec(format('%s/dump-header.lua', APP))
---
+
 --
 --
 -- Initilize server(s)
@@ -68,6 +72,7 @@ assert( server:notify(false) )
 assert(server:bind( ENDPOINT ))
 
 print('Successfully bound to:', ENDPOINT, '\n')
+
 -- -- -- -- -- --
 --
 local tasks = assert(CTX:socket'PUSH') -- DEALER
@@ -77,6 +82,7 @@ assert( tasks:immediate(true) ) -- queue outgoing to completed connections only
 assert(tasks:bind( DOWNSTREAM ))
 
 print('Successfully bound to:', DOWNSTREAM, '\n')
+
 -- -- -- -- -- --
 --
 
@@ -86,13 +92,18 @@ print('Successfully bound to:', DOWNSTREAM, '\n')
 while true do
 print'+\n'
 
+    pollin{server}
+
     local id, msg = receive(server)
     msg = distill(msg)
     if msg then
 	-- send OK
 	send(server, id, OK)
 	----------------------
-	tasks:send_msg(msg)
+	if MULTI[ msg:match'%l+' ] then
+	    tasks:send_msgs( split(msg, '&') )
+	else tasks:send_msg(msg) end
+
 	----------------------
 	print(msg, '\n') -- msg:match'([^%c]+)%c'
     else

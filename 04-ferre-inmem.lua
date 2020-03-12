@@ -3,6 +3,7 @@
 -- Import Section
 --
 local reduce		= require'carlos.fold'.reduce
+local into		= require'carlos.fold'.into
 local context		= require'lzmq'.context
 local pollin		= require'lzmq'.pollin
 
@@ -27,12 +28,16 @@ local UPSTREAM = 'ipc://upstream.ipc'
 local TABS = { tabs=true, delete=true, msgs=true,
 		pins=true, login=true, CACHE=true }
 
-local VERS = { 	adjust=true, version=true, CACHE=true }
+local VERS = { 	version=true, update=true, CACHE=true }
 
 --------------------------------
 -- Local function definitions --
 --------------------------------
 --
+
+local function receive(skt, a)
+    return reduce(function() return skt:recv_msgs(true) end, into, a)
+end
 
 ---------------------------------
 -- Program execution statement --
@@ -79,13 +84,22 @@ local function send( m ) return msgr:send_msg(m) end
 
 while true do
 print'+\n'
+
     pollin{tasks}
-    local msg = tasks:recv_msg()
+
+    local msg, more = tasks:recv_msg()
     local cmd = msg:match'%a+'
-    print(msg, '\n')
+    local pid = msg:match'pid=(%d+)'
+
+    if more then
+	msg = receive(tasks, {msg})
+	print(concat(msg, '&'), '\n')
+    else
+	print(msg, '\n')
+    end
 
     if TABS[cmd] then
-	local ret = tabs( msg )
+	local ret = tabs( cmd, pid, msg )
 	if type(ret) == 'table' then
 	    reduce(ret, send)
 	elseif ret ~= 'OK' then send( ret ) end
@@ -93,7 +107,7 @@ print'+\n'
     end
 
     if VERS[cmd] then
-	local ret = vers( msg )
+	local ret = vers( cmd, msg )
 	if type(ret) == 'table' then
 	    reduce(ret, send)
 	elseif ret ~= 'OK' then send( ret ) end
