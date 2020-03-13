@@ -8,8 +8,8 @@
 		IDB.readDB( PRICE ).openCursor(cursor => {
 		if (cursor) {
 		    let a = cursor.value;
-		    ret.push( a.clave + '\t' + a.desc + '\t' + (a.costol / 1e4).toFixed(2) + '\t' + a.proveedor + '\t' + a.uidPROV );
---		    ret.push( a.clave + '\t' + a.desc + '\t' + a.proveedor + '\t' + (a.costol / 1e4).toFixed(2) );
+--		    ret.push( a.clave + '\t' + a.desc + '\t' + (a.costol / 1e4).toFixed(2) + '\t' + a.proveedor + '\t' + a.uidPROV );
+		    ret.push( a.clave + '\t' + a.desc + '\t' + a.proveedor + '\t' + (a.costol / 1e4).toFixed(2) );
 		    cursor.continue();
 		} else {
 		    let b = new Blob([ret.join('\n')], {type: 'text/html'});

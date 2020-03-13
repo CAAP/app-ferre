@@ -116,7 +116,7 @@
 	    ferre.emptyBag = (a) => {
 		TICKET.empty();
 		if (a=='tabs') // ferre.MISS || ; exceptions
-		    return Promise.resolve(true);
+		    return true;
 		else
 		    return ferre.xget('delete', {pid: Number(persona.value)});
 	    };
@@ -134,11 +134,11 @@
 
 		if ((pid != 0) && (TICKET.items.size == 0)) { return ferre.nadie(); }
 
-		if (pid == 0) { TICKET.empty(); return Promise.resolve(); }
+		if (pid == 0) { TICKET.empty(); return Promise.resolve(true); }
 
-		if (a == 'destinos') { a = destinos.value; } // choices
+		if (a == 'destinos') { a = destinos.value; } // choices; only for CAJA XXX
 
-		if (a == 'surtir') { return Promise.resolve(); } // temporary XXX
+		if (a == 'surtir') { return Promise.resolve(true); } // temporary XXX
 
 		let objs = ['pid='+pid];
 		TICKET.myticket.style.visibility = 'hidden';
@@ -147,11 +147,13 @@
 
 		if (TICKET.items.size > 4) {
 		    return ferre.xpost(a, objs)
-			.then( () => ferre.emptyBag(a), () => { TICKET.myticket.style.visibility = 'visible'} )
+			.then( () => ferre.emptyBag(a) )
+			.catch( () => { TICKET.myticket.style.visibility = 'visible'} )
 			.then( ferre.nadie );
 		} else {
 		    return ferre.xget(a, objs)
-			.then( () => ferre.emptyBag(a), () => { TICKET.myticket.style.visibility = 'visible'} )
+			.then( () => ferre.emptyBag(a) )
+			.catch( () => { TICKET.myticket.style.visibility = 'visible'} )
 			.then( ferre.nadie );
 		}
 	    };
@@ -223,9 +225,8 @@
 		    pcode.value = '';
 		    pcode.disabled = true;
 		    persona.disabled = true;
-		    sessionStorage.pid = pid; // send fruit+pid
 		    sesion.innerHTML = NAMES.get(pid);
-		    ferre.xget('login', sessionStorage);
+		    ferre.xget('login', {pid: pid, fruit: sessionStorage.fruit}); // send fruit+pid
 		} else {
 		    pcode.value = '';
 		    return alert("PIN incorrecto!");

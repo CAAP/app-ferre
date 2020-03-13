@@ -16,7 +16,6 @@ local dbconn		= require'carlos.ferre'.dbconn
 local asweek		= require'carlos.ferre'.asweek
 local connexec		= require'carlos.ferre'.connexec
 local now		= require'carlos.ferre'.now
-local newUID		= require'carlos.ferre'.newUID
 local uid2week		= require'carlos.ferre'.uid2week
 local asnum		= require'carlos.ferre'.asnum
 local asdata		= require'carlos.ferre'.asdata
@@ -34,13 +33,14 @@ local open	= io.open
 local popen	= io.popen
 local date	= os.date
 local exec	= os.execute
+
 local tonumber  = tonumber
 local tostring	= tostring
 local assert	= assert
 local pcall     = pcall
-
 local pairs	= pairs
 local ipairs	= ipairs
+local type	= type
 
 local print	= print
 
@@ -122,7 +122,7 @@ local function process(uid, tag, conn2)
 	for k,v in q:gmatch'([%a%d]+)|([^|]+)' do o[k] = asnum(v) end
 	local lbl = 'u' .. o.precio:match'%d$'
 	local rea = (100-o.rea)/100.0
-	local b = fd.first(conn2.query(format(QRY, o.clave)), function(x) return x end)
+--	local b = fd.first(conn2.query(format(QRY, o.clave)), function(x) return x end)
 	fd.reduce(fd.keys(o), fd.merge, b)
 	b.precio = b[o.precio]; b.unidad = b[lbl];
 	b.prc = o.precio; b.unitario = b.rea > 0 and round(b.precio*rea, 2) or b.precio
@@ -130,14 +130,12 @@ local function process(uid, tag, conn2)
     end
 end
 
--- XXX should use fd.slice instead of fd.reduce XXX
-local function addTicket(conn, conn2, msg, uid)
-    local tag	    = msg:match'%a+'
-    local data 	    = msg:match'&([^!]+)$'
-    if countN(data, 'query=') > 6 then
-	fd.slice(5, fd.wrap(data:gmatch'query=([^&]+)'), fd.map(process(uid, tag, conn2)), into'tickets', conn)
+local function addTicket(conn, msg)
+    remove(msg, 1)
+    if #data > 6 then
+	fd.slice(5, msg, fd.map(process(uid, tag, conn2)), into'tickets', conn)
     else
-	fd.reduce(fd.wrap(data:gmatch'query=([^&]+)'), fd.map(process(uid, tag, conn2)), into'tickets', conn)
+	fd.reduce(msg, fd.map(process(uid, tag, conn2)), into'tickets', conn)
     end
 end
 
@@ -160,31 +158,35 @@ local function dumpFEED(conn, path, qry, clause) -- XXX correct FIN json
     return true
 end
 
-local function dumpFRUIT(conn, vers, week, fruit)
+local function dumpFRUIT(conn, vers, week)
     if #VERS > 500 then VERS,MEM = {},{} end
 
-    if #VERS == 0 then
-	local clause = vers > 0 and format('WHERE vers > %d', vers) or ''
-	local ret = asJSON(asdata(conn, clause, week))
-	VERS[#VERS+1] = ret
-	MEM[vers] = #VERS
-	return ret
+    if #VERS == 0 then goto EMPTY end
+
+    if MEM[vers] then
+	if vers == VERS[#VERS] then return MEM[vers] else
+	return fd.reduce(VERS, fd.filter(function(w) return w>vers end), fd.map(function(w) return MEM[w]  end), fd.into, {}) end
+
+    else
+	if vers < VERS[1] then
+	    local clause = format('WHERE vers > %d AND vers < %d', vers, VERS[1])
+	    insert(VERS, 1, vers)
+	    MEM[vers] = asJSON(asdata(conn, clause, week))
+	    return dumpFRUIT(conn, vers, week, fruit)
+
+	elseif vers > VERS[#VERS] then goto EMPTY
+
+	else return 'OK' end
+
     end
 
-    local k = MEM[vers]
-    if k then
-	if k == #VERS then return VERS[#VERS] else
-	return fd.reduce(MEM, fd.filter(function(v) return v>vers end), fd.map(function(v) return MEM[v]  end), fd.into, {})
-    elseif vers < MEM[1] then
-	local clause = format('WHERE vers > %d', MEM[1], vers)
-    end
-
-
-
-    if #MEM > 500 then MEM = {} end
-    MEM[#MEM+1] = vers
+::EMPTY::
+    local clause = vers > 0 and format('WHERE vers > %d', vers) or ''
+    local ret = asJSON(asdata(conn, clause, week))
+    VERS[#VERS+1] = vers
     MEM[vers] = ret
     return ret
+
 end
 
 local function fields(a, t) return fd.reduce(a, fd.map(function(k) return t[k] end), fd.into, {}) end
@@ -280,6 +282,9 @@ tasks:send_msg'OK'
 
 local function which(week) return TODAY==week and WEEK or assert(dbconn( week )) end
 
+local function send(fruit, ret) msgr:send_msg(format('%s adjust %s', fruit, ret)) end
+
+
 while true do
 print'+\n'
 
@@ -305,17 +310,24 @@ print'+\n'
 --	www:send_msg( msg ) -- WWW
 
     elseif cmd == 'ticket' or cmd == 'presupuesto' or cmd == 'pagado' then
-	local pid = msg:match'pid=([%d%a]+)'
-	local uid = newUID()..pid
-	addTicket(WEEK, PRECIOS, msg, uid)
+	local uid = addTicket(WEEK, msg)
 	local qry = format(QUID, 'LIKE', uid)
 	local m = jsonName(fd.first(WEEK.query(qry), function(x) return x end))
 	msgr:send_msg(format('feed %s', m))
 	bixolon(uid, WEEK)
 --	www:send_msg( msg ) -- WWW
+--]]
 
-    elseif cmd == adjust then
-	getUpdates(msg)
+    elseif cmd == 'adjust' then
+	local vers = asnum(msg:match'vers=(%d+)')
+	local fruit = msg:match'fruit=(%a+)'
+	local week = msg:match'week=([^!&]+)'
+	-- week is THIS WEEK
+	local ret = dumpFRUIT(WEEK, vers, week)
+	if type(ret) == 'table' then
+	    fd.reduce(fruit, ret, send)
+	elseif ret ~= 'OK' then send(fruit, ret)
+	else print"'adjust' not OK!\n" end
 
     elseif cmd == 'update' then -- msg from 'ferredb' to be re-routed to 'inmem'
 	local u = WEEK.count'updates'
@@ -334,15 +346,5 @@ end
 	local week = uid2week( uid )
 	bixolon(uid, which(week))
 	print('Printing data ...\n')
-
-    elseif cmd == 'adjust' then
-	local vers = asnum(msg:match'vers=(%d+)')
-	local fruit = msg:match'fruit=(%a+)'
-	local week = msg:match'week=([^!&]+)'
-	-- week is THIS WEEK
-	local ret = dumpFRUIT(WEEK, vers, week, fruit)
-	print'Adjust process successful!\n'
-	msgr:send_msg(format('%s adjust %s', fruit, ret))
---	msgr:send_msg(format('%s adjust %s.json', fruit, fruit))
 
 --]]

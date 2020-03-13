@@ -46,6 +46,7 @@
 			admin.xget('adjust', Object.assign({}, localStorage, sessionStorage)); // adjust (version) sends: fruit, week, vers
 		}, false);
 
+		// XXX WRONG!! should be done in the server-side instead
 		esource.addEventListener("update", function(e) {
 		    elbl.innerHTML = "update event";
 		    console.log('update event ongoing');

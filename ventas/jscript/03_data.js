@@ -5,8 +5,8 @@
 		PRICE: {
 		    STORE: 'precios',
 		    KEY: 'clave',
-		    FILE: '/ventas/json/precios.json',
-		    VERS: '/ventas/json/version.json',
+		    FILE: '/json/precios.json',
+		    VERS: '/json/version.json',
 		    INDEX: [{key: 'desc'}] // {key: 'faltante'}, {key: 'proveedor'}
 		},
 		VERS: {}
@@ -25,6 +25,8 @@
 		return q;
 	    }
 
+	    const PRICE = DATA.STORES.PRICE;
+
 	    function upgrade(o) {
 		let os = IDB.write2DB( PRICE );
 		return os.get(o.clave).then(q => {if (q) {return Object.assign(q, o);} else {return o;} })
@@ -32,7 +34,6 @@
 		    .then( os.put );
 	    }
 
-	    const PRICE = DATA.STORES.PRICE;
 	    PRICE.MAP = asprice;
 	    PRICE.update = o => {
 		if (o.desc && o.desc.startsWith('VV'))
@@ -42,7 +43,7 @@
 
 	    const VERS = DATA.STORES.VERS;
 	    VERS.check = o => {
-		if (!localStorage.week)
+		if (!localStorage.week) // XXX WTF! should never happen!
 		    return true;
 		if (localStorage.week == o.week && localStorage.vers == o.vers)
 		    return VERS.inplace(o);

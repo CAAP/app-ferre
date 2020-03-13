@@ -10,7 +10,7 @@ local HOME	= require'carlos.ferre'.HOME
 
 _ENV =  nil
 
-local DEST = HOME .. '/ventas/json/precios.json'
+local DEST = HOME .. '/json/precios.json' -- '/ventas/json/precios.json'
 
 local function nulls(w)
     if w.precio2 == 0 then w.precio2 = nil end

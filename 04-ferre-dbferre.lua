@@ -148,14 +148,12 @@ local function addUpdate(msg, conn)
     end
 
     return w
+end
 
---[[  XXX move to dbweek
-    u = conn2.count'updates' + 1
+local function addPrecios(dest, cmd, msg, conn)
+    remove(msg, 1)
 
-    fd.reduce(fd.keys(w), fd.filter(sanitize(DIRTY)), fd.map(reformat2(clave, u)), into'updates', conn2)
-
-    return true
---]]
+    return fd.map(msg, fd.map(), fd.into, {dest, cmd})
 end
 
 ---------------------------------
@@ -228,11 +226,13 @@ print'+\n'
     if cmd == 'update' then
 	local fruit = msg:match'fruit=(%a+)'
 	local ret = addUpdate(msg, PRECIOS)
-	tasks:send_msgs{'weekdb', 'update', asJSON( ret )}
-
+	tasks:send_msgs{'weekdb', cmd, asJSON( ret )}
 
 --	www:send_msg( msg ) -- WWW
 
+
+    elseif cmd == 'ticket' then
+	tasks:send_msgs( addPrecios('weekdb', cmd, msg) )
 
     elseif cmd == 'faltante' then
 	print( msg )

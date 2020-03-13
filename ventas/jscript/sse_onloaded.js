@@ -52,7 +52,7 @@
 		esource.addEventListener("version", function(e) {
 		    elbl.innerHTML = "version event";
 		    console.log('version event ongoing');
-		console.log(e.data);
+	console.log(e.data);
 		    if (!DATA.STORES.VERS.check( JSON.parse(e.data) ))
 			ferre.xget('adjust', Object.assign({}, localStorage, sessionStorage)); // adjust version; sends fruit, week, vers
 		}, false);

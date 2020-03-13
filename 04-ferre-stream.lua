@@ -28,10 +28,10 @@ _ENV = nil -- or M
 local UPSTREAM    = 'ipc://upstream.ipc'
 local STREAM	  = 'ipc://stream.ipc'
 
-local WEEK = { ticket=true, presupuesto=true,
-		pagado=true, adjust=true }
+local WEEK = { pagado=true, adjust=true } -- ticket, presupuesto
 
-local FERRE = { update=true, faltante=true, query=true }
+local FERRE = { update=true, faltante=true, query=true,
+		ticket=true, presupuesto=true}
 
 local FEED = { feed=true, ledger=true, uid=true } -- bixolon, msgs
 
@@ -59,23 +59,6 @@ assert( stream:mandatory(true) ) -- causes error in case of unroutable peer
 assert( stream:bind( STREAM ) )
 
 print('\nSuccessfully bound to:', STREAM, '\n')
-
---[[ -- -- -- -- --
---
-local msgr = assert(CTX:socket'PUSH')
-
-assert( msgr:immediate(true) ) -- queue outgoing to completed connections only
-
-assert( msgr:connect( UPSTREAM ) )
-
-print('\nSuccessfully connected to:', UPSTREAM, '\n')
---]] -- -- -- -- --
---
-
---
--- -- -- -- -- --
---
-
 --
 -- -- -- -- -- --
 --

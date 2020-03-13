@@ -101,7 +101,7 @@ print'+\n'
 	send(server, id, OK)
 	----------------------
 	if MULTI[ msg:match'%l+' ] then
-	    tasks:send_msgs( split(msg, '&') )
+	    tasks:send_msgs( split(msg, '&query=') )
 	else tasks:send_msg(msg) end
 
 	----------------------
