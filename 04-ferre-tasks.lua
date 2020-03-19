@@ -3,20 +3,23 @@
 -- Import Section
 --
 
-local reduce	  = require'carlos.fold'.reduce
-local into	  = require'carlos.fold'.into
-local map	  = require'carlos.fold'.map
+local fd	  = require'carlos.fold'
+
 local urldecode   = require'carlos.ferre'.urldecode
 local newUID	  = require'carlos.ferre'.newUID
 local asnum	  = require'carlos.ferre'.asnum
+local aspath	  = require'carlos.ferre'.aspath
 local asJSON	  = require'json'.encode
 local context	  = require'lzmq'.context
 local pollin	  = require'lzmq'.pollin
+
+local sql	  = require'carlos.sqlite'
 
 --local feed	= require'carlos.ferre.feed'
 --local bixolon   = require'carlos.ferre'.bixolon -- XXX
 
 local assert	  = assert
+local format	  = string.format
 local concat	  = table.concat
 local remove	  = table.remove
 
@@ -35,6 +38,10 @@ local STREAM	  = 'ipc://stream.ipc'
 
 local MULTI	 = {tabs=true, ticket=true, presupuesto=true}
 
+local QRY	 = 'SELECT * FROM precios WHERE clave LIKE %q LIMIT 1'
+
+local FERRE
+
 --------------------------------
 -- Local function definitions --
 --------------------------------
@@ -44,27 +51,25 @@ local function process(uid, tag)
     return function(q)
 	local o = {uid=uid, tag=tag}
 	for k,v in q:gmatch'([%a%d]+)|([^|]+)' do o[k] = asnum(v) end
-	o.lbl = 'u' .. o.precio:match'%d$'
-	o.rea = (100-o.rea)/100.0
-	return asJSON(o)
+	local lbl = 'u' .. o.precio:match'%d$'
+	local rea = (100-o.rea)/100.0
+
+	local b = fd.first(FERRE.query(format(QRY, o.clave)), function(x) return x end)
+	fd.reduce(fd.keys(o), fd.merge, b)
+	b.precio = b[o.precio]; b.unidad = b[lbl];
+	b.prc = o.precio; b.unitario = b.rea > 1 and round(b.precio*rea, 2) or b.precio
+
+	return asJSON(b)
     end
 end
 
---[[
-	local b = fd.first(conn2.query(format(QRY, o.clave)), function(x) return x end)
-	fd.reduce(fd.keys(o), fd.merge, b)
-	b.precio = b[o.precio]; b.unidad = b[o.lbl];
-	b.prc = o.precio; b.unitario = o.rea < 1 and round(b.precio*o.rea, 2) or b.precio
-	return fd.reduce(INDEX, fd.map(function(k) return b[k] or '' end), fd.into, {})
---]]
-
 local function asTicket(cmd, uid, msg)
     remove(msg, 1)
-    return reduce(msg, map(urldecode), map(process(uid, cmd)), into, {cmd})
+    return fd.reduce(msg, fd.map(urldecode), fd.map(process(uid, cmd)), fd.into, {cmd})
 end
 
 local function receive(skt, a)
-    return reduce(function() return skt:recv_msgs(true) end, into, a)
+    return fd.reduce(function() return skt:recv_msgs(true) end, fd.into, a)
 end
 
 ---------------------------------
@@ -93,6 +98,18 @@ assert( tasks:set_id'TASKS01' )
 assert( tasks:connect( STREAM ) )
 
 print('\nSuccessfully connected to:', STREAM, '\n')
+
+-- -- -- -- -- --
+--
+
+do
+    local path = aspath'ferre'
+    FERRE = sql.connect':inmemory:'
+    FERRE.exec(format('ATTACH DATABASE %q AS ferre', path))
+    FERRE.exec'CREATE TABLE precios AS SELECT * FROM ferre.precios'
+    FERRE.exec'DETACH DATABASE ferre'
+end
+
 
 --[[ -- -- -- -- --
 --

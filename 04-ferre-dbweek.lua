@@ -54,8 +54,7 @@ _ENV = nil -- or M
 
 -- Local Variables for module-only access
 --
-local SEMANA	 = 3600 * 24 * 7
-local HOY	 = date('%d-%b-%y', now())
+--local HOY	 = date('%d-%b-%y', now())
 local PRINTER	 = 'nc -N 192.168.3.21 9100'
 
 local STREAM = 'ipc://stream.ipc'
@@ -68,7 +67,7 @@ local SRVK	 = "*dOG4ev0i<[2H(*GJC2e@6f.cC].$on)OZn{5q%3"
 
 local SUBS	 = { 'ticket', 'presupuesto', 'update', 'bixolon', 'pagado', 'adjust', 'faltante' }
 
-local TABS	 = {tickets = 'uid, tag, prc, clave, desc, costol NUMBER, unidad, precio NUMBER, unitario NUMBER, qty INTEGER, rea INTEGER, totalCents INTEGER, uidSAT',
+local TABS	 = {tickets = 'uid, tag, prc, clave, desc, costol NUMBER, unidad, precio NUMBER, unitario NUMBER, qty INTEGER, rea INTEGER, totalCents INTEGER, uidSAT, nombre',
 		   updates = 'vers INTEGER PRIMARY KEY, clave, campo, valor',
 	   	   facturas = 'uid, fapi PRIMARY KEY NOT NULL, rfc NOT NULL, sat NOT NULL'}
 
@@ -76,7 +75,7 @@ local INDEX = fd.reduce(split(TABS.tickets, ',', true), fd.map(function(s) retur
 
 local PEOPLE	 = {A = 'caja'} -- could use 'fruit' id instead XXX
 
-local QRY	 = 'SELECT * FROM precios WHERE clave LIKE %q LIMIT 1'
+--local QRY	 = 'SELECT * FROM precios WHERE clave LIKE %q LIMIT 1'
 local QUID	 = 'SELECT uid, SUBSTR(uid, 12, 5) time, SUM(qty) count, ROUND(SUM(totalCents)/100.0, 2) total, tag FROM tickets WHERE tag NOT LIKE "factura" AND uid %s %q GROUP BY uid'
 local CLAUSE	 = 'WHERE tag NOT LIKE "factura" AND uid %s %q'
 local QTKT	 = 'SELECT uid, tag, clave, qty, rea, totalCents, prc "precio" FROM tickets WHERE uid LIKE %q'
@@ -96,9 +95,7 @@ local VERS	 = {}
 -- Local function definitions --
 --------------------------------
 --
-local function receive(skt, a)
-    return fd.reduce(function() return skt:recv_msgs(true) end, fd.into, a)
-end
+local function receive(skt, a) return fd.reduce(function() return skt:recv_msgs(true) end, fd.into, a) end
 
 local function round(n, d) return floor(n*10^d+0.5)/10^d end
 
@@ -116,33 +113,23 @@ local function reformat2(clave, n)
     end
 end
 
-local function process(uid, tag, conn2)
-    return function(q)
-	local o = {uid=uid, tag=tag}
-	for k,v in q:gmatch'([%a%d]+)|([^|]+)' do o[k] = asnum(v) end
-	local lbl = 'u' .. o.precio:match'%d$'
-	local rea = (100-o.rea)/100.0
---	local b = fd.first(conn2.query(format(QRY, o.clave)), function(x) return x end)
-	fd.reduce(fd.keys(o), fd.merge, b)
-	b.precio = b[o.precio]; b.unidad = b[lbl];
-	b.prc = o.precio; b.unitario = b.rea > 0 and round(b.precio*rea, 2) or b.precio
-	return fd.reduce(INDEX, fd.map(function(k) return b[k] or '' end), fd.into, {})
-    end
-end
-
-local function addTicket(conn, msg)
-    remove(msg, 1)
-    if #data > 6 then
-	fd.slice(5, msg, fd.map(process(uid, tag, conn2)), into'tickets', conn)
-    else
-	fd.reduce(msg, fd.map(process(uid, tag, conn2)), into'tickets', conn)
-    end
-end
+local function indexar(a) return fd.reduce(INDEX, fd.map(function(k) return a[k] or '' end), fd.into, {}) end
 
 local function addName(o)
     local pid = asnum(o.uid:match'P([%d%a]+)')
     o.nombre = pid and PEOPLE[pid] or 'NaP';
     return o
+end
+
+local function addTicket(conn, msg)
+    remove(msg, 1)
+
+    if #msg > 6 then
+	fd.slice(5, msg, fd.map(function(s) return fromJSON(s) end), fd.map(addName), fd.map(indexar), into'tickets', conn)
+    else
+	fd.reduce(msg, fd.map(function(s) return fromJSON(s) end), fd.map(addName), fd.map(indexar), into'tickets', conn)
+    end
+    return fromJSON(msg[1]).uid
 end
 
 local function jsonName(o) return asJSON(addName(o)) end
@@ -293,6 +280,8 @@ print'+\n'
     local msg, more = tasks:recv_msg()
     local cmd = msg:match'%a+'
 
+    if cmd == 'OK' then end
+
     if more then
 	msg = receive(tasks, {msg})
 	print(concat(msg, '&'), '\n')
@@ -311,9 +300,13 @@ print'+\n'
 
     elseif cmd == 'ticket' or cmd == 'presupuesto' or cmd == 'pagado' then
 	local uid = addTicket(WEEK, msg)
+
 	local qry = format(QUID, 'LIKE', uid)
-	local m = jsonName(fd.first(WEEK.query(qry), function(x) return x end))
-	msgr:send_msg(format('feed %s', m))
+	local m = fd.first(WEEK.query(qry), function(x) return x end) -- jsonName()
+	tasks:send_msgs{'inmem', 'feed', m}
+
+	print( 'UID:', uid, '\n' )
+--[[	local qry = format(QUID, 'LIKE', uid)
 	bixolon(uid, WEEK)
 --	www:send_msg( msg ) -- WWW
 --]]

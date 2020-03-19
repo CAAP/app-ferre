@@ -31,7 +31,7 @@ local DOWNSTREAM = 'ipc://downstream.ipc' --
 
 local OK	 = response{status='ok'}
 
-local MULTI	 = {tabs=true, ticket=true, presupuesto=true}
+--local MULTI	 = {tabs=true, ticket=true, presupuesto=true}
 
 --------------------------------
 -- Local function definitions --
@@ -100,7 +100,7 @@ print'+\n'
 	-- send OK
 	send(server, id, OK)
 	----------------------
-	if MULTI[ msg:match'%l+' ] then
+	if msg:match'query=' then -- MULTI[ msg:match'%l+' ]
 	    tasks:send_msgs( split(msg, '&query=') )
 	else tasks:send_msg(msg) end
 

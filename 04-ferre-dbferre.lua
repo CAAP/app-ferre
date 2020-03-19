@@ -150,12 +150,6 @@ local function addUpdate(msg, conn)
     return w
 end
 
-local function addPrecios(dest, cmd, msg, conn)
-    remove(msg, 1)
-
-    return fd.map(msg, fd.map(), fd.into, {dest, cmd})
-end
-
 ---------------------------------
 -- Program execution statement --
 ---------------------------------
@@ -230,9 +224,6 @@ print'+\n'
 
 --	www:send_msg( msg ) -- WWW
 
-
-    elseif cmd == 'ticket' then
-	tasks:send_msgs( addPrecios('weekdb', cmd, msg) )
 
     elseif cmd == 'faltante' then
 	print( msg )

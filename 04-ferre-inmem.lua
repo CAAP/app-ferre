@@ -9,6 +9,7 @@ local pollin		= require'lzmq'.pollin
 
 local tabs		= require'carlos.ferre.tabs'
 local vers		= require'carlos.ferre.vers'
+local feed		= require'carlos.ferre.feed'
 
 local concat 	= table.concat
 local assert	= assert
@@ -29,6 +30,8 @@ local TABS = { tabs=true, delete=true, msgs=true,
 		pins=true, login=true, CACHE=true }
 
 local VERS = { 	version=true, update=true, CACHE=true }
+
+local FEED = { feed=true, ledger=true } -- CACHE
 
 --------------------------------
 -- Local function definitions --
@@ -96,6 +99,11 @@ print'+\n'
 	print(concat(msg, '&'), '\n')
     else
 	print(msg, '\n')
+    end
+
+    if FEED[cmd] then
+	if not(more) then cmd, msg = 'CACHE', msg:match'%s%a+' end
+	local ret = feed( cmd, msg )
     end
 
     if TABS[cmd] then

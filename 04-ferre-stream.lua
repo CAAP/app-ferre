@@ -28,16 +28,17 @@ _ENV = nil -- or M
 local UPSTREAM    = 'ipc://upstream.ipc'
 local STREAM	  = 'ipc://stream.ipc'
 
-local WEEK = { pagado=true, adjust=true } -- ticket, presupuesto
+local WEEK = { pagado=true, adjust=true,
+		ticket=true, presupuesto=true }
 
-local FERRE = { update=true, faltante=true, query=true,
-		ticket=true, presupuesto=true}
+local FERRE = { update=true, faltante=true, query=true }
 
 local FEED = { feed=true, ledger=true, uid=true } -- bixolon, msgs
 
 local INMEM = { tabs=true, delete=true,
 		pins=true, login=true,
 		version=true,
+		feed=true,
 		CACHE=true }
 
 --------------------------------
