@@ -134,6 +134,7 @@ do
     local path = aspath'ferre'
     PRECIOS.exec(format('ATTACH DATABASE %q AS ferre', path))
     PRECIOS.exec'CREATE TABLE precios AS SELECT * FROM ferre.precios'
+    PRECIOS.exec'CREATE TABLE datos AS SELECT * FROM ferre.datos'
     PRECIOS.exec'DETACH DATABASE ferre'
 end
 
@@ -158,7 +159,9 @@ tasks:send_msg'OK'
 while true do
 print'+\n'
 
-    pollin{server}
+    pollin{server, tasks}
+
+
 
 	    local msg, more = server:recv_msg()
 	    local cmd = msg:match'%a+'

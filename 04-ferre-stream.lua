@@ -94,7 +94,10 @@ print'+\n'
 
 	elseif id:match'ferredb' then
 	    print( 'Received from ferredb\n' )
-	    print( 'Re-routed to', cmd, stream:send_msgs(msg), '\n' )
+	    if cmd == 'WORKER' then
+		print'Re-routing messages to WORKERS'
+		reduce(WORKERS, function(w) msg[1] = w; stream:send_msgs(msg) end)
+	    else print( 'Re-routed to', cmd, stream:send_msgs(msg), '\n' ) end
 
 	elseif id:match'weekdb' then
 	    print( 'Received from weekdb\n' )

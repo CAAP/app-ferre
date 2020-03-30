@@ -191,8 +191,10 @@ print'+\n'
 
     if cmd == 'update' then
 	local fruit = msg:match'fruit=(%a+)'
-	local ret = addUpdate(msg, PRECIOS)
-	tasks:send_msgs{'weekdb', cmd, asJSON( ret )}
+	local ret = asJSON( addUpdate(msg, PRECIOS) )
+	tasks:send_msgs{'weekdb', cmd, ret}
+	tasks:send_msgs{'WORKER', cmd, ret}
+
 
 --	www:send_msg( msg ) -- WWW
 

@@ -289,27 +289,30 @@ print'+\n'
 	print(msg, '\n')
     end
 
-    if cmd == 'pagado' and msg:match'uid' then
-	local uid = msg:match'uid=([^!]+)'
---	uid:match'HOY' must be TRUE
-	pcall(WEEK.exec(format(QPAY, uid)))
-	local qry = format(QUID, 'LIKE', uid)
-	local m = jsonName(fd.first(WEEK.query(qry), function(x) return x end))
-	msgr:send_msg(format('feed %s', m))
---	www:send_msg( msg ) -- WWW
-
-    elseif cmd == 'ticket' or cmd == 'presupuesto' or cmd == 'pagado' then
+    if cmd == 'ticket' or cmd == 'presupuesto' or cmd == 'pagado' then
 	local uid = addTicket(WEEK, msg)
 
 	local qry = format(QUID, 'LIKE', uid)
 	local m = fd.first(WEEK.query(qry), function(x) return x end) -- jsonName()
-	tasks:send_msgs{'inmem', 'feed', m}
+	tasks:send_msgs{'inmem', 'feed', asJSON(m)}
 
 	print( 'UID:', uid, '\n' )
 --[[	local qry = format(QUID, 'LIKE', uid)
 	bixolon(uid, WEEK)
 --	www:send_msg( msg ) -- WWW
 --]]
+
+    elseif cmd == 'update' then -- msg from 'ferredb' to be re-routed to 'inmem'
+	local u = WEEK.count'updates'
+	local w = fromJSON( msg[2] )
+	fd.reduce(fd.keys(w), fd.filter(sanitize(DIRTY)), fd.map(reformat2(w.clave, u)), into'updates', WEEK)
+	tasks:send_msgs{'inmem', cmd, asJSON{vers=WEEK.count'updates', week=TODAY}}
+
+    end
+
+end
+
+--[[
 
     elseif cmd == 'adjust' then
 	local vers = asnum(msg:match'vers=(%d+)')
@@ -322,16 +325,14 @@ print'+\n'
 	elseif ret ~= 'OK' then send(fruit, ret)
 	else print"'adjust' not OK!\n" end
 
-    elseif cmd == 'update' then -- msg from 'ferredb' to be re-routed to 'inmem'
-	local u = WEEK.count'updates'
-	local w = fromJSON( msg[2] )
-	fd.reduce(fd.keys(w), fd.filter(sanitize(DIRTY)), fd.map(reformat2(w.clave, u)), into'updates', WEEK)
-	tasks:send_msgs{'inmem', cmd, asJSON{vers=WEEK.count'updates', week=TODAY}}
-
-    end
-end
-
---[[
+    if cmd == 'pagado' and msg:match'uid' then
+	local uid = msg:match'uid=([^!]+)'
+--	uid:match'HOY' must be TRUE
+	pcall(WEEK.exec(format(QPAY, uid)))
+	local qry = format(QUID, 'LIKE', uid)
+	local m = jsonName(fd.first(WEEK.query(qry), function(x) return x end))
+	msgr:send_msg(format('feed %s', m))
+--	www:send_msg( msg ) -- WWW
 
     elseif cmd == 'bixolon' then -- XXX should prefer similar to adjust
 	local uid = msg:match'uid=([^!]+)'
