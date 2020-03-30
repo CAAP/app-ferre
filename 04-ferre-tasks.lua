@@ -36,16 +36,44 @@ local DOWNSTREAM  = 'ipc://downstream.ipc' --
 local UPSTREAM    = 'ipc://upstream.ipc'
 local STREAM	  = 'ipc://stream.ipc'
 
-local MULTI	 = {tabs=true, ticket=true, presupuesto=true}
+local ISTKT 	  = {ticket=true, presupuesto=true} -- tabs=true
 
-local QRY	 = 'SELECT * FROM precios WHERE clave LIKE %q LIMIT 1'
+local QRY	  = 'SELECT * FROM precios WHERE clave LIKE %q LIMIT 1'
 
-local FERRE
+local PRECIOS	  = sql.connect':inmemory:'
 
 --------------------------------
 -- Local function definitions --
 --------------------------------
 --
+
+local function byDesc(conn, s)
+    local qry = format(QDESC, s:gsub('*', '%%')..'%%')
+    local o = fd.first(conn.query(qry), function(x) return x end) or {clave=''} -- XXX can return NIL
+    return o.clave
+end
+
+local function byClave(conn, s)
+    local qry = format('SELECT * FROM  datos WHERE clave LIKE %q LIMIT 1', s)
+    local o = fd.first(conn.query(qry), function(x) return x end)
+    return o and asJSON( o ) or ''
+end
+
+local function queryDB(msg)
+    if msg:match'desc' then
+	local ret = msg:match'desc=([^!]+)'
+	if ret:match'VV' then
+	    return byClave(PRECIOS, byDesc(PRECIOS, ret))
+	else
+	    return byDesc(PRECIOS, ret)
+	end
+
+    elseif msg:match'clave' then
+	local ret = msg:match'clave=([%a%d]+)'
+	return byClave(PRECIOS, ret)
+
+    end
+end
 
 local function process(uid, tag)
     return function(q)
@@ -54,7 +82,7 @@ local function process(uid, tag)
 	local lbl = 'u' .. o.precio:match'%d$'
 	local rea = (100-o.rea)/100.0
 
-	local b = fd.first(FERRE.query(format(QRY, o.clave)), function(x) return x end)
+	local b = fd.first(PRECIOS.query(format(QRY, o.clave)), function(x) return x end)
 	fd.reduce(fd.keys(o), fd.merge, b)
 	b.precio = b[o.precio]; b.unidad = b[lbl];
 	b.prc = o.precio; b.unitario = b.rea > 1 and round(b.precio*rea, 2) or b.precio
@@ -104,14 +132,13 @@ print('\nSuccessfully connected to:', STREAM, '\n')
 
 do
     local path = aspath'ferre'
-    FERRE = sql.connect':inmemory:'
-    FERRE.exec(format('ATTACH DATABASE %q AS ferre', path))
-    FERRE.exec'CREATE TABLE precios AS SELECT * FROM ferre.precios'
-    FERRE.exec'DETACH DATABASE ferre'
+    PRECIOS.exec(format('ATTACH DATABASE %q AS ferre', path))
+    PRECIOS.exec'CREATE TABLE precios AS SELECT * FROM ferre.precios'
+    PRECIOS.exec'DETACH DATABASE ferre'
 end
 
 
---[[ -- -- -- -- --
+---[[ -- -- -- -- --
 --
 
 local msgr = assert(CTX:socket'PUSH')
@@ -149,10 +176,14 @@ print'+\n'
 	    ----------------------
 	    if cmd == 'bixolon' then
 
+	    elseif cmd == 'query' then
+		local fruit = msg:match'fruit=(%a+)'
+		msgr:send_msg( format('%s query %s', fruit, queryDB(msg)) )
+
 	    else
 		if more then
-		-- ticket, presupuesto & tabs are multi-part msgs
-		    if MULTI[cmd] then
+
+		    if ISTKT[cmd] then
 	 		local uid = newUID()..pid
 			msg = asTicket(cmd, uid, msg)
 		    end

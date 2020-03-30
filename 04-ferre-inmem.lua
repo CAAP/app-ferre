@@ -104,22 +104,21 @@ print'+\n'
     if FEED[cmd] then
 	if not(more) then cmd, msg = 'CACHE', msg:match'%s%a+' end
 	local ret = feed( cmd, msg )
-    end
 
-    if TABS[cmd] then
+    elseif TABS[cmd] then
 	local ret = tabs( cmd, pid, msg )
 	if type(ret) == 'table' then
 	    reduce(ret, send)
 	elseif ret ~= 'OK' then send( ret ) end
 	print'OK tabs!\n'
-    end
 
-    if VERS[cmd] then
+    elseif VERS[cmd] then
 	local ret = vers( cmd, msg )
 	if type(ret) == 'table' then
 	    reduce(ret, send)
 	elseif ret ~= 'OK' then send( ret ) end
 	print'OK vers!\n'
+
     end
 
 end
