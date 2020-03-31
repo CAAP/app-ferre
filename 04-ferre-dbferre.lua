@@ -13,6 +13,7 @@ local dbconn		= require'carlos.ferre'.dbconn
 local now		= require'carlos.ferre'.now
 local asnum		= require'carlos.ferre'.asnum
 local asJSON		= require'json'.encode
+local fromJSON		= require'json'.decode
 
 local format	= string.format
 local tointeger = math.tointeger
@@ -90,17 +91,11 @@ local function up_precios(conn, w, clause)
     return a, w
 end
 
-local function addUpdate(msg, conn)
-    local w = {}
-    for k,v in msg:gmatch'([%a%d]+)=([^&]+)' do w[k] = asnum(v) end
-
+local function addUpdate(conn, w)
     local clave  = w.clave
     local tbname = w.tbname
     local clause = format('WHERE clave LIKE %q', clave)
     local toll = found(w, TOLL)
-
-    if w.fecha or toll then w.fecha = HOY end -- add 'fecha' update!!! XXX
---    if toll then w.fecha = HOY end
 
     local u = fd.reduce(fd.keys(w), fd.filter(sanitize(DIRTY)), fd.map(reformat), fd.into, {})
     if #u == 0 then return false end -- safeguard
@@ -190,11 +185,11 @@ print'+\n'
     print(msg, '\n')
 
     if cmd == 'update' then
-	local fruit = msg:match'fruit=(%a+)'
-	local ret = asJSON( addUpdate(msg, PRECIOS) )
+	local w = fromJSON( msg:match'{[^}]+}' )
+	local fruit = w.fruit
+	local ret = asJSON( addUpdate(PRECIOS, w) )
 	tasks:send_msgs{'weekdb', cmd, ret}
-	tasks:send_msgs{'WORKER', cmd, ret}
-
+--]]
 
 --	www:send_msg( msg ) -- WWW
 

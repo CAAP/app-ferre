@@ -3,6 +3,7 @@
 -- Import Section
 --
 local reduce	  = require'carlos.fold'.reduce
+local keys	  = require'carlos.fold'.keys
 local urldecode   = require'carlos.ferre'.urldecode
 local queryDB	  = require'carlos.ferre'.queryDB
 local receive	  = require'carlos.ferre'.receive
@@ -28,19 +29,20 @@ _ENV = nil -- or M
 local UPSTREAM    = 'ipc://upstream.ipc'
 local STREAM	  = 'ipc://stream.ipc'
 
-local WEEK = { pagado=true, adjust=true,
+local WEEK 	  = { pagado=true, adjust=true,
 		ticket=true, presupuesto=true }
 
-local FERRE = { update=true, faltante=true, query=true }
+local FERRE 	  = { update=true, faltante=true, query=true }
 
-local FEED = { feed=true, ledger=true, uid=true } -- bixolon, msgs
+local FEED 	  = { feed=true, ledger=true, uid=true } -- bixolon, msgs
 
-local INMEM = { tabs=true, delete=true,
+local INMEM 	  = { tabs=true, delete=true,
 		pins=true, login=true,
 		version=true,
 		feed=true,
 		CACHE=true }
 
+local WORKERS	  = {}
 --------------------------------
 -- Local function definitions --
 --------------------------------
@@ -90,13 +92,16 @@ print'+\n'
 		insert(msg, 1, 'ferredb')
 		print( 'Sent to ferredb:', stream:send_msgs(msg), '\n' )
 
+	    elseif cmd == 'OK' then
+		WORKERS[id] = true
+
 	    end
 
 	elseif id:match'ferredb' then
 	    print( 'Received from ferredb\n' )
 	    if cmd == 'WORKER' then
 		print'Re-routing messages to WORKERS'
-		reduce(WORKERS, function(w) msg[1] = w; stream:send_msgs(msg) end)
+		reduce(keys(WORKERS), function(_,w) msg[1] = w; stream:send_msgs(msg) end)
 	    else print( 'Re-routed to', cmd, stream:send_msgs(msg), '\n' ) end
 
 	elseif id:match'weekdb' then

@@ -7,6 +7,7 @@
 	    const pins = ferre.PINS;
 	    const STORES = DATA.STORES;
 	    const spin = document.getElementById('pacman');
+	    const persona = document.getElementById('personas');
 
 		function ready() { spin.style.visibility = 'hidden'; }
 
@@ -92,9 +93,9 @@
 		esource.addEventListener("logout", function(e) {
 		    elbl.innerHTML = "logout event";
 		    console.log("logout event received");
-		    if( e.data.match(/\d+/) == sessionStorage.pid ) {
-			TICKET.empty();
-			return ferre.logout();
+		    if( e.data.match(/\d+/) == Number(persona.value) ) {
+			TICKET.empty(); ferre.logout();
+			return true;
 		    }
 		}, false);
 
