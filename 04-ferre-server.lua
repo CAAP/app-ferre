@@ -72,6 +72,9 @@ end
 
 local function switch(msgs, server)
     local m = msgs:recv_msg()
+
+    print(m, '\n')
+
     local fruit = m:match'^%a+'
     if fruit and FRUITS[fruit] then
 	m = m:match'%a+%s([^!]+)' or 'SSE :empty'

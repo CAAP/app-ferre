@@ -125,14 +125,14 @@ local function addTicket(conn, msg)
     remove(msg, 1)
 
     if #msg > 6 then
-	fd.slice(5, msg, fd.map(function(s) return fromJSON(s) end), fd.map(addName), fd.map(indexar), into'tickets', conn)
+	fd.slice(5, msg, fd.map(function(s) return fromJSON(s) end), fd.map(indexar), into'tickets', conn)
     else
-	fd.reduce(msg, fd.map(function(s) return fromJSON(s) end), fd.map(addName), fd.map(indexar), into'tickets', conn)
+	fd.reduce(msg, fd.map(function(s) return fromJSON(s) end), fd.map(indexar), into'tickets', conn)
     end
     return fromJSON(msg[1]).uid
 end
 
-local function jsonName(o) return asJSON(addName(o)) end
+--local function jsonName(o) return asJSON(addName(o)) end
 
 local function toCents(w)
     if w.total then w.total = format('%.2f', w.total) end
@@ -291,15 +291,19 @@ print'+\n'
 
     if cmd == 'ticket' or cmd == 'presupuesto' or cmd == 'pagado' then
 	local uid = addTicket(WEEK, msg)
+	insert(msg, 1, 'ticket')
+	insert(msg, 1, 'inmem')
+	tasks:send_msgs(msg)
 
+	print( 'UID:', uid, '\n' )
+--[[	
 	local qry = format(QUID, 'LIKE', uid)
 	local m = fd.first(WEEK.query(qry), function(x) return x end) -- jsonName()
 	tasks:send_msgs{'inmem', 'feed', asJSON(m)}
 
-	print( 'UID:', uid, '\n' )
---[[	local qry = format(QUID, 'LIKE', uid)
+	local qry = format(QUID, 'LIKE', uid)
 	bixolon(uid, WEEK)
---	www:send_msg( msg ) -- WWW
+	www:send_msg( msg ) -- WWW
 --]]
 
     elseif cmd == 'update' then -- msg from 'ferredb' to be re-routed to 'inmem'

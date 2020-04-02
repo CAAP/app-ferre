@@ -29,24 +29,26 @@ _ENV = nil -- or M
 local UPSTREAM    = 'ipc://upstream.ipc'
 local STREAM	  = 'ipc://stream.ipc'
 
-local WEEK 	  = { pagado=true, adjust=true,
-		ticket=true, presupuesto=true }
+local WEEK 	  = { ticket=true, presupuesto=true } -- pagado 		
 
-local FERRE 	  = { update=true, faltante=true, query=true }
+local FERRE 	  = { update=true, faltante=true }
 
-local FEED 	  = { feed=true, ledger=true, uid=true } -- bixolon, msgs
+local FEED 	  = { feed=true, ledger=true, uid=true, adjust=true, bixolon=true }
 
 local INMEM 	  = { tabs=true, delete=true,
-		pins=true, login=true,
-		version=true,
-		feed=true,
-		CACHE=true }
+			pins=true, login=true, -- CACHE
+			version=true, -- CACHE
+			CACHE=true }
 
-local WORKERS	  = {}
 --------------------------------
 -- Local function definitions --
 --------------------------------
 --
+
+local function sendAll(skt, tag, msg)
+    insert(msg, 1, tag)
+    print( 'Sent to', tag, skt:send_msgs(msg), '\n' )
+end
 
 ---------------------------------
 -- Program execution statement --
@@ -76,33 +78,21 @@ print'+\n'
 
 	print(id, concat(msg, '&'), '\n')
 
-	if id:match'TASK' then
+	if cmd == 'OK' then
+
+	elseif id:match'app' then
 	    ----------------------
 	    -- divide & conquer --
 	    ----------------------
-	    if INMEM[cmd] then
-		insert(msg, 1, 'inmem')
-		print( 'Sent to inmem:', stream:send_msgs(msg), '\n' )
+	    if INMEM[cmd] then sendAll( stream, 'inmem', msg )
 
-	    elseif WEEK[cmd] then
-		insert(msg, 1, 'weekdb')
-		print( 'Sent to weekdb:', stream:send_msgs(msg), '\n' )
+	    elseif WEEK[cmd] then sendAll( stream, 'weekdb', msg )
 
-	    elseif FERRE[cmd] then
-		insert(msg, 1, 'ferredb')
-		print( 'Sent to ferredb:', stream:send_msgs(msg), '\n' )
-
-	    elseif cmd == 'OK' then
-		WORKERS[id] = true
-
-	    end
+	    elseif FERRE[cmd] then sendAll( stream, 'ferredb', msg ) end
 
 	elseif id:match'ferredb' then
 	    print( 'Received from ferredb\n' )
-	    if cmd == 'WORKER' then
-		print'Re-routing messages to WORKERS'
-		reduce(keys(WORKERS), function(_,w) msg[1] = w; stream:send_msgs(msg) end)
-	    else print( 'Re-routed to', cmd, stream:send_msgs(msg), '\n' ) end
+	    print( 'Re-routed to', cmd, stream:send_msgs(msg), '\n' )
 
 	elseif id:match'weekdb' then
 	    print( 'Received from weekdb\n' )
@@ -111,3 +101,15 @@ print'+\n'
 	end
 
 end
+
+--[[
+		insert(msg, 1, 'inmem')
+		print( 'Sent to inmem:', stream:send_msgs(msg), '\n' )
+
+		insert(msg, 1, 'weekdb')
+		print( 'Sent to weekdb:', stream:send_msgs(msg), '\n' )
+
+		insert(msg, 1, 'ferredb')
+		print( 'Sent to ferredb:', stream:send_msgs(msg), '\n' )
+
+--]]
