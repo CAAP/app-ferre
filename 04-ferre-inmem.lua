@@ -18,6 +18,7 @@ local feed		= require'carlos.ferre.feed'
 local asweek		= require'carlos.ferre'.asweek
 local now		= require'carlos.ferre'.now
 local aspath		= require'carlos.ferre'.aspath
+local uid2week		= require'carlos.ferre'.uid2week
 
 local concat 	= table.concat
 local remove	= table.remove
@@ -26,10 +27,9 @@ local type	= type
 local format	= string.format
 local print	= print
 
-local TICKETS	= connect':inmemory:'
-
 local WEEK 	= asweek( now() )
-local TODAY
+
+--local TODAY
 
 -- No more external access after this point
 _ENV = nil -- or M
@@ -43,15 +43,21 @@ local BIXOLON	 = 'ipc://bixolon.ipc'
 local TABS	 = { tabs=true, delete=true, msgs=true,
 		     pins=true, login=true, CACHE=true }
 local VERS	 = { version=true, update=true, CACHE=true }
-local FEED	 = { feed=true, ledger=true, ticket=true } -- CACHE
+local FEED	 = { uid=true } -- adjust, feed=true, ledger=true
+local PRINT	 = { ticket=true, bixolon=true }
 
 local SUID	 = 'SELECT uid, SUBSTR(uid, 12, 5) time, SUM(qty) count, ROUND(SUM(totalCents)/100.0, 2) total, tag, nombre FROM tickets WHERE tag NOT LIKE "factura" GROUP BY uid'
 local SLPR	 = 'SELECT desc, clave, qty, rea, ROUND(unitario, 2) unitario, unidad, ROUND(totalCents/100.0, 2) subTotal, uid FROM tickets'
 
 local QUID	 = 'SELECT * FROM uids WHERE uid LIKE %q LIMIT 1'
 local QLPR	 = 'SELECT * FROM lpr WHERE uid LIKE %q'
+local QTKT	 = 'SELECT uid, tag, clave, qty, rea, totalCents, prc "precio" FROM tickets WHERE uid LIKE %q'
 
 local INDEX
+
+local DB	= {}
+
+--local TICKETS	= connect':inmemory:'
 
 --------------------------------
 -- Local function definitions --
@@ -62,33 +68,62 @@ local function receive(skt, a)
     return fd.reduce(function() return skt:recv_msgs(true) end, fd.into, a)
 end
 
-local function some()
-    local qry = format(QUID, '>', TODAY)
-end
-
 local function indexar(a) return fd.reduce(INDEX, fd.map(function(k) return a[k] or '' end), fd.into, {}) end
 
-local function bixolon(uid)
+local function mail(fruit, cmd)
+    return function(a)
+	return format('%s %s %s', fruit, cmd, asJSON(a))
+    end
+end
+
+local function addDB(week)
+    local conn = connect':inmemory:'
+    DB[week] = conn
+    assert( conn.exec(format('ATTACH DATABASE %q AS week', aspath(week))) )
+    assert( conn.exec'CREATE TABLE tickets AS SELECT * FROM week.tickets' )
+    assert( conn.exec'DETACH DATABASE week' )
+    assert( conn.exec(format('CREATE VIEW uids AS %s', SUID)) )
+    assert( conn.exec(format('CREATE VIEW lpr AS %s', SLPR)) )
+    return conn
+end
+
+local function getConn(uid)
+    local week = uid2week(uid)
+    return DB[week] or addDB(week)
+end
+
+local function header(uid, conn) return fd.first(conn.query(format(QUID, uid)), function(x) return x end) end
+
+local function bixolon(uid, conn)
     local qry = format(QLPR, uid)
-    return fd.reduce(TICKETS.query(qry), fd.into, {})
+    return fd.reduce(conn.query(qry), fd.into, {})
 end
 
 local function addAll(msg)
+    local uid = fromJSON(msg[1]).uid
+    local conn = getConn(uid)
     if #msg > 6 then
-	fd.slice(5, msg, fd.map(function(s) return fromJSON(s) end), fd.map(indexar), into'tickets', TICKETS)
+	fd.slice(5, msg, fd.map(function(s) return fromJSON(s) end), fd.map(indexar), into'tickets', conn)
     else
-	fd.reduce(msg, fd.map(function(s) return fromJSON(s) end), fd.map(indexar), into'tickets', TICKETS)
+	fd.reduce(msg, fd.map(function(s) return fromJSON(s) end), fd.map(indexar), into'tickets', conn)
     end
-    return fromJSON(msg[1]).uid
+    return uid, conn
 end
 
-local function switch(cmd, msg)
+local function switch(cmd, msg, send)
     if cmd == 'ticket' then
 	remove(msg, 1)
-	local uid = addAll(msg)
-	local qry = format(QUID, uid)
-	local m =  fd.first(TICKETS.query(qry), function(x) return x end)
-	return uid, m
+	local uid, conn = addAll(msg)
+	local m = header(uid, conn)
+	--
+	send( format('feed %s', asJSON(m)) )
+	return uid, ticket(m, bixolon(uid, conn))
+    elseif cmd == 'bixolon' then
+	local uid = msg:match'uid=([^!]+)'
+	local conn = getConn(uid)
+	local m = header(uid, conn)
+	--
+	return uid, ticket(m, bixolon(uid, conn))
     end
 end
 
@@ -100,15 +135,9 @@ end
 --
 
 do
-    assert( TICKETS.exec(format('ATTACH DATABASE %q AS week', aspath(WEEK))) )
-    assert( TICKETS.exec'CREATE TABLE tickets AS SELECT * FROM week.tickets' )
-    assert( TICKETS.exec'DETACH DATABASE week' )
-    assert( TICKETS.exec(format('CREATE VIEW uids AS %s', SUID)) )
-    assert( TICKETS.exec(format('CREATE VIEW lpr AS %s', SLPR)) )
-
-    INDEX = TICKETS.header'tickets'
-
-print('items in tickets:', TICKETS.count'tickets', '\n')
+    local conn = addDB( WEEK )
+    INDEX = conn.header'tickets'
+    print('items in tickets:', conn.count'tickets', '\n')
 end
 
 -- -- -- -- -- --
@@ -159,6 +188,8 @@ tasks:send_msg'OK'
 
 local function send( m ) return msgr:send_msg(m) end
 
+local function deliver( skt ) return function(m, i) skt:send_msg( m ) end end
+
 --
 --
 -- Run loop
@@ -180,11 +211,19 @@ print'+\n'
 	print(msg, '\n')
     end
 
-    if FEED[cmd] then
-	local uid, m = switch(cmd, msg)
-	send( format('feed %s', asJSON(m)) )
-	printer:send_msgs( ticket(m, bixolon(uid)) )
+    if PRINT[cmd] then
+	local uid, m = switch(cmd, msg, send)
+	printer:send_msgs( m )
 	print('UID:', uid)
+    end
+
+    if FEED[cmd] then
+	local fruit = msg:match'fruit=(%a+)'
+	local uid   = msg:match'uid=([^!&]+)'
+	local conn = getConn(uid)
+	local qry = format(QTKT, uid)
+	fd.reduce(conn.query(qry), fd.map(mail(fruit, cmd)), deliver, msgr)
+	print'OK feed!\n'
     end
 
     if TABS[cmd] then

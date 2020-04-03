@@ -33,11 +33,12 @@ local WEEK 	  = { ticket=true, presupuesto=true } -- pagado
 
 local FERRE 	  = { update=true, faltante=true }
 
-local FEED 	  = { feed=true, ledger=true, uid=true, adjust=true, bixolon=true }
+local FEED 	  = { feed=true, ledger=true, adjust=true }
 
 local INMEM 	  = { tabs=true, delete=true,
 			pins=true, login=true, -- CACHE
 			version=true, -- CACHE
+			bixolon=true, uid=true,
 			CACHE=true }
 
 --------------------------------

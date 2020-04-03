@@ -85,7 +85,11 @@
 		esource.addEventListener("uid", function(e) {
 		    elbl.innerHTML = "uid event";
 		    console.log("uid event received");
-		    XHR.getJSON('json/' + e.data).then( a => a.forEach( add2bag ));
+		    const data = e.data;
+		    if (data.includes('json'))
+			XHR.getJSON('json/' + data).then( a => a.forEach( add2bag ) );
+		    else
+			add2bag(JSON.parse( data));
 		}, false);
 
 		esource.addEventListener("feed", function(e) {
@@ -94,7 +98,7 @@
 		    const data = e.data;
 		    if (data.includes('json')) {
 			caja.reset();
-			XHR.getJSON('json/' + data).then(a => a.forEach( add2caja ));
+			XHR.getJSON('json/' + data).then( a => a.forEach( add2caja ) );
 		    }
 		    else
 			add2caja(JSON.parse( data ));
