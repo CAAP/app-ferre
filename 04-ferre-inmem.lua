@@ -16,7 +16,6 @@ local tabs		= require'carlos.ferre.tabs'
 local vers		= require'carlos.ferre.vers'
 local feed		= require'carlos.ferre.feed'
 local asweek		= require'carlos.ferre'.asweek
-local now		= require'carlos.ferre'.now
 local aspath		= require'carlos.ferre'.aspath
 local uid2week		= require'carlos.ferre'.uid2week
 
@@ -27,9 +26,9 @@ local type	= type
 local format	= string.format
 local print	= print
 
-local WEEK 	= asweek( now() )
+local WEEK 	= asweek( os.time() ) -- now
 
---local TODAY
+local TODAY	= os.date('%F', os.time()) -- now
 
 -- No more external access after this point
 _ENV = nil -- or M
@@ -43,7 +42,7 @@ local BIXOLON	 = 'ipc://bixolon.ipc'
 local TABS	 = { tabs=true, delete=true, msgs=true,
 		     pins=true, login=true, CACHE=true }
 local VERS	 = { version=true, update=true, CACHE=true }
-local FEED	 = { uid=true } -- adjust, feed=true, ledger=true
+local FEED	 = { uid=true, feed=true, ledger=true } -- adjust
 local PRINT	 = { ticket=true, bixolon=true }
 
 local SUID	 = 'SELECT uid, SUBSTR(uid, 12, 5) time, SUM(qty) count, ROUND(SUM(totalCents)/100.0, 2) total, tag, nombre FROM tickets WHERE tag NOT LIKE "factura" GROUP BY uid'
@@ -54,7 +53,6 @@ local QLPR	 = 'SELECT * FROM lpr WHERE uid LIKE %q'
 local QTKT	 = 'SELECT uid, tag, clave, qty, rea, totalCents, prc "precio" FROM tickets WHERE uid LIKE %q'
 
 local INDEX
-
 local DB	= {}
 
 --local TICKETS	= connect':inmemory:'
@@ -68,13 +66,15 @@ local function receive(skt, a)
     return fd.reduce(function() return skt:recv_msgs(true) end, fd.into, a)
 end
 
-local function indexar(a) return fd.reduce(INDEX, fd.map(function(k) return a[k] or '' end), fd.into, {}) end
+local function deliver( skt ) return function(m, i) skt:send_msg( m ) end end
 
 local function mail(fruit, cmd)
     return function(a)
 	return format('%s %s %s', fruit, cmd, asJSON(a))
     end
 end
+
+local function indexar(a) return fd.reduce(INDEX, fd.map(function(k) return a[k] or '' end), fd.into, {}) end
 
 local function addDB(week)
     local conn = connect':inmemory:'
@@ -115,18 +115,37 @@ local function switch(cmd, msg, send)
 	remove(msg, 1)
 	local uid, conn = addAll(msg)
 	local m = header(uid, conn)
-	--
 	send( format('feed %s', asJSON(m)) )
 	return uid, ticket(m, bixolon(uid, conn))
     elseif cmd == 'bixolon' then
 	local uid = msg:match'uid=([^!]+)'
 	local conn = getConn(uid)
 	local m = header(uid, conn)
-	--
 	return uid, ticket(m, bixolon(uid, conn))
     end
 end
 
+local function commute(cmd, msg, msgr)
+    if cmd == 'uid' then
+	local fruit = msg:match'fruit=(%a+)'
+	local uid   = msg:match'uid=([^!&]+)'
+	local conn = getConn(uid)
+	local qry = format(QTKT, uid)
+	return fruit, conn, qry
+    elseif cmd == 'feed' then
+	local fruit = msg:match'%s(%a+)'
+	local conn = DB[WEEK]
+	local qry = format('SELECT * FROM uids WHERE uid > %q', TODAY)
+	return fruit, conn, qry
+    elseif cmd == 'ledger' then
+	local fruit = msg:match'fruit=(%a+)'
+	local uid   = msg:match'uid=([^!&]+)'
+	local conn = getConn(uid)
+	local qry = format('SELECT * FROM uids WHERE uid LIKE "%s%%"', uid)
+	return fruit, conn, qry
+    end
+
+end
 ---------------------------------
 -- Program execution statement --
 ---------------------------------
@@ -188,8 +207,6 @@ tasks:send_msg'OK'
 
 local function send( m ) return msgr:send_msg(m) end
 
-local function deliver( skt ) return function(m, i) skt:send_msg( m ) end end
-
 --
 --
 -- Run loop
@@ -218,10 +235,7 @@ print'+\n'
     end
 
     if FEED[cmd] then
-	local fruit = msg:match'fruit=(%a+)'
-	local uid   = msg:match'uid=([^!&]+)'
-	local conn = getConn(uid)
-	local qry = format(QTKT, uid)
+	local fruit, conn, qry = commute(cmd, msg)
 	fd.reduce(conn.query(qry), fd.map(mail(fruit, cmd)), deliver, msgr)
 	print'OK feed!\n'
     end
