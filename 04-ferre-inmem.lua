@@ -135,7 +135,7 @@ local function commute(cmd, msg, msgr)
     elseif cmd == 'feed' then
 	local fruit = msg:match'%s(%a+)'
 	local conn = DB[WEEK]
-	local qry = format('SELECT * FROM uids WHERE uid > %q', TODAY)
+	local qry = format('SELECT * FROM uids WHERE uid > "%s%%"', TODAY)
 	return fruit, conn, qry
     elseif cmd == 'ledger' then
 	local fruit = msg:match'fruit=(%a+)'

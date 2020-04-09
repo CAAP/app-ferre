@@ -109,7 +109,12 @@
 		    console.log("ledger event received");
 		    const data = e.data;
 		    caja.refresh();
-		    XHR.getJSON('json/' + data).then(a => a.forEach( add2fecha ));
+		    if (data.includes('json')) {
+			caja.reset();
+			XHR.getJSON('json/' + data).then( a => a.forEach( add2fecha ) );
+		    }
+		    else
+			add2fecha(JSON.parse( data ));
 		}, false);
 
 	})();

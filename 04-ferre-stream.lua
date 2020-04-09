@@ -39,6 +39,7 @@ local INMEM 	  = { tabs=true, delete=true,
 			pins=true, login=true, -- CACHE
 			version=true, -- CACHE
 			bixolon=true, uid=true,
+			feed=true,
 			CACHE=true }
 
 --------------------------------

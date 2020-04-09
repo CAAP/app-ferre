@@ -22,6 +22,7 @@ local insert	  = table.insert
 
 local print	  = print
 local stdout	  = io.stdout
+local popen	  = io.popen
 
 -- No more external access after this point
 _ENV = nil -- or M
@@ -40,7 +41,7 @@ local PRINTER	 = 'nc -N 192.168.3.21 9100'
 local function receive(skt) return reduce(function() return skt:recv_msgs(true) end, into, {}) end
 
 local function bixolon( data )
-    local skt = stdout -- popen(PRINTER, 'w')
+    local skt = popen(PRINTER, 'w')
     if #data > 8 then
 	data = slice(4, data, into, {})
 	reduce(data, function(v) skt:write(concat(v,'\n'), '\n') end)

@@ -77,7 +77,7 @@ end
 local function byDesc(conn, s)
     local qry = format(QDESC, s:gsub('*', '%%')..'%')
     local o = fd.first(conn.query(qry), function(x) return x end)
-    return (o.clave or '')
+    return (o and o.clave or '')
 end
 
 local function byClave(conn, s)
