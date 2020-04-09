@@ -208,7 +208,6 @@ print('\nSuccessfully connected to:', LEDGER, '\n')
 --
 -- Store PEOPLE values
 --
--
 -- -- -- -- -- --
 --
 
@@ -249,21 +248,17 @@ print'+\n'
     elseif cmd == 'update' then -- msg from 'ferredb' to be re-routed to 'inmem'
 	local u = WEEK.count'updates' + 1
 	local w = fromJSON( msg[2] )
-	local clave = tointeger(clave) or format('%q', clave)
+	local clave = tointeger(w.clave) or format('%q', w.clave)
 	local fruit = w.fruit
 
 	w.store = 'PRICE'; w.tbname = nil; w.fruit = nil;
 
 	local msg = asJSON{w, {vers=u, week=TODAY, store='VERS'}}
-	local q = format('INSERT INTO updates values(%d, %s, %q)', u, clave, msg)
-	assert(WEEK.exec( q ))
+	local q = format("INSERT INTO updates VALUES (%d, %s, '%s')", u, clave, msg)
+	assert( WEEK.exec( q ) )
 
-	tasks:send_msgs{'inmem', cmd, q, fruit, msg}
---[[
-	fd.reduce(fd.keys(w), fd.filter(sanitize(DIRTY)), fd.map(reformat2(w.clave, u)), into'updates', WEEK)
-	insert(msg, 1, 'inmem')
-	tasks:send_msgs(msg)
---]]
+	tasks:send_msgs{'inmem', cmd, q, asJSON{vers=u, week=TODAY}}
+
 	print( 'vers:', u, '\n' )
 
     end

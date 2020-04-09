@@ -24,11 +24,14 @@ local remove	= table.remove
 local assert	= assert
 local type	= type
 local format	= string.format
+local tointeger = math.tointeger
 local print	= print
 
 local WEEK 	= asweek( os.time() ) -- now
 
 local TODAY	= os.date('%F', os.time()) -- now
+
+local HR	= os.time()
 
 -- No more external access after this point
 _ENV = nil -- or M
@@ -77,6 +80,12 @@ local function mail(fruit, cmd)
     end
 end
 
+local function mymsg(fruit, cmd)
+    return function(a)
+	return format('%s %s %s', fruit, cmd, a.msg)
+    end
+end
+
 local function sanitize(b) return function(_,k) return not(b[k]) end end
 
 local function smart(v, k) return ISSTR[k] and format("'%s'", tostring(v):upper()) or (tointeger(v) or tonumber(v) or 0) end
@@ -89,6 +98,14 @@ local function reformat2(clave, n)
 	local ret = {n, clave, k, vv}
 	return ret
     end
+end
+
+local function weeks(w)
+    local t = HR
+    local wks = {WEEK}
+    while w < wks[#wks] do t = t - 3600*24*7; wks[#wks+1] = asweek(t) end
+    remove(wks) -- itself
+    return wks
 end
 
 local function indexar(a) return fd.reduce(INDEX, fd.map(function(k) return a[k] or '' end), fd.into, {}) end
@@ -105,6 +122,14 @@ local function addDB(week, ups)
     assert( conn.exec(format('CREATE VIEW uids AS %s', SUID)) )
     assert( conn.exec(format('CREATE VIEW lpr AS %s', SLPR)) )
     return conn
+end
+
+local function tryDB(conn, week, vers)
+    local k = vers > 0 and 'WHERE vers > '.. vers or ''
+    local qry = format('INSERT INTO messages SELECT msg FROM week.updates %s', k)
+    assert( conn.exec(format('ATTACH DATABASE %q AS week', aspath(week))) )
+    assert( conn.exec(qry) )
+    assert( conn.exec'DETACH DATABASE week' )
 end
 
 local function getConn(uid)
@@ -271,7 +296,7 @@ print'+\n'
     if cmd == 'update' then
 	local conn = DB[WEEK]
 	assert(conn.exec( msg[2] ))
-	msgs:send_msg(format('%s adjust %s', msg[3], msg[4])) -- fruit & msg
+	msg = msg[#msg] -- vers as json
     end
 
     if VERS[cmd] then
@@ -282,6 +307,26 @@ print'+\n'
 	print'OK vers!\n'
     end
 
+    if cmd == 'adjust' then
+	local vers = tointeger(msg:match'vers=(%d+)')
+	local fruit = msg:match'fruit=(%a+)'
+	local week = msg:match'week=([^!&]+)'
+	-- week is NOT this WEEK
+	if week < WEEK then
+	    local conn = connect':inmemory:'
+	    assert( conn.exec'CREATE TABLE messages (msg)' )
+	    local wks = weeks(week)
+	    while week < WEEK do
+		tryDB( conn, week, vers )
+		week = remove(wks)
+		vers = 0
+	    end
+	    fd.reduce(conn.query'SELECT * FROM messages', fd.map(mymsg(fruit, cmd)), deliver, msgr)
+	end
+	-- week IS this WEEK
+	local conn = DB[WEEK]
+	local qry = format('SELECT msg FROM updates where vers > %d', vers)
+	fd.reduce(conn.query(qry), fd.map(mymsg(fruit, cmd)), deliver, msgr)
+    end
+
 end
-
-

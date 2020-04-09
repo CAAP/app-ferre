@@ -27,6 +27,10 @@ local remove	  = table.remove
 local exec	  = os.execute
 local format	  = string.format
 local print	  = print
+local tostring	  = tostring
+local tonumber	  = tonumber
+local tointeger   = math.tointeger
+local pcall	  = pcall
 
 local APP	  = require'carlos.ferre'.APP
 
