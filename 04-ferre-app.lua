@@ -66,6 +66,7 @@ local QDESC	 = 'SELECT clave FROM datos WHERE desc LIKE %q ORDER BY desc LIMIT 1
 -- Local function definitions --
 --------------------------------
 --
+local function round(n, d) return floor(n*10^d+0.5)/10^d end
 
 local function sanitize(b) return function(_,k) return not(b[k]) end end
 
