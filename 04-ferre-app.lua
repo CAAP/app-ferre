@@ -188,8 +188,6 @@ end
 
 --
 -- DUMP --
-exec(format('%s/dump-price.lua', APP))
-
 exec(format('%s/dump-people.lua', APP))
 
 exec(format('%s/dump-header.lua', APP))
@@ -255,6 +253,7 @@ print'+\n'
 	if cmd == 'query' then
 	    local fruit = msg:match'fruit=(%a+)'
 	    msgr:send_msg( format('%s query %s', fruit, queryDB(msg)) )
+
 	else
 	    ----------------------
 	    -- pre-process & store updates

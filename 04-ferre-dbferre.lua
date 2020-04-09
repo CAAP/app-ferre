@@ -201,40 +201,4 @@ print'+\n'
 end
 
 
---[[
-
-local function byDesc(conn, s)
-    local qry = format(QDESC, s:gsub('*', '%%')..'%%')
-    local o = first(conn.query(qry), function(x) return x end) or {clave=''} -- XXX can return NIL
-    return o.clave
-end
-
-local function byClave(conn, s)
-    local qry = format('SELECT * FROM  datos WHERE clave LIKE %q LIMIT 1', s)
-    local o = fd.first(conn.query(qry), function(x) return x end)
-    return o and asJSON( o ) or ''
-end
-
-local function queryDB(msg, PRECIOS)
-    if msg:match'desc' then
-	local ret = msg:match'desc=([^!]+)'
-	if ret:match'VV' then
-	    return byClave(PRECIOS, byDesc(PRECIOS, ret))
-	else
-	    return byDesc(PRECIOS, ret)
-	end
-
-    elseif msg:match'clave' then
-	local ret = msg:match'clave=([%a%d]+)'
-	return byClave(PRECIOS, ret)
-
-    end
-end
-
-
-    elseif cmd == 'query' then
-	local fruit = msg:match'fruit=(%a+)'
-	msgr:send_msg( format('%s query %s', fruit, queryDB(msg, PRECIOS)) )
---]]
-
 

@@ -45,6 +45,9 @@ local VERS	 = { version=true, update=true, CACHE=true }
 local FEED	 = { uid=true, feed=true, ledger=true } -- adjust
 local PRINT	 = { ticket=true, bixolon=true }
 
+local DIRTY	 = {clave=true, tbname=true, fruit=true}
+local ISSTR	 = {desc=true, fecha=true, obs=true, proveedor=true, gps=true, u1=true, u2=true, u3=true, uidPROV=true}
+
 local SUID	 = 'SELECT uid, SUBSTR(uid, 12, 5) time, SUM(qty) count, ROUND(SUM(totalCents)/100.0, 2) total, tag, nombre FROM tickets WHERE tag NOT LIKE "factura" GROUP BY uid'
 local SLPR	 = 'SELECT desc, clave, qty, rea, ROUND(unitario, 2) unitario, unidad, ROUND(totalCents/100.0, 2) subTotal, uid FROM tickets'
 
@@ -74,13 +77,30 @@ local function mail(fruit, cmd)
     end
 end
 
+local function sanitize(b) return function(_,k) return not(b[k]) end end
+
+local function smart(v, k) return ISSTR[k] and format("'%s'", tostring(v):upper()) or (tointeger(v) or tonumber(v) or 0) end
+
+local function reformat2(clave, n)
+    clave = tointeger(clave) or format('%q', clave) -- "'%s'"
+    return function(v, k)
+	n = n + 1
+	local vv = smart(v, k)
+	local ret = {n, clave, k, vv}
+	return ret
+    end
+end
+
 local function indexar(a) return fd.reduce(INDEX, fd.map(function(k) return a[k] or '' end), fd.into, {}) end
 
-local function addDB(week)
+local function addDB(week, ups)
     local conn = connect':inmemory:'
     DB[week] = conn
     assert( conn.exec(format('ATTACH DATABASE %q AS week', aspath(week))) )
     assert( conn.exec'CREATE TABLE tickets AS SELECT * FROM week.tickets' )
+    if ups then
+	assert( conn.exec'CREATE TABLE updates AS SELECT * FROM week.updates' )
+    end
     assert( conn.exec'DETACH DATABASE week' )
     assert( conn.exec(format('CREATE VIEW uids AS %s', SUID)) )
     assert( conn.exec(format('CREATE VIEW lpr AS %s', SLPR)) )
@@ -89,7 +109,7 @@ end
 
 local function getConn(uid)
     local week = uid2week(uid)
-    return DB[week] or addDB(week)
+    return DB[week] or addDB(week, false)
 end
 
 local function header(uid, conn) return fd.first(conn.query(format(QUID, uid)), function(x) return x end) end
@@ -154,7 +174,7 @@ end
 --
 
 do
-    local conn = addDB( WEEK )
+    local conn = addDB( WEEK, true )
     INDEX = conn.header'tickets'
     print('items in tickets:', conn.count'tickets', '\n')
 end
@@ -246,6 +266,12 @@ print'+\n'
 	    fd.reduce(ret, send)
 	elseif ret ~= 'OK' then send( ret ) end
 	print'OK tabs!\n'
+    end
+
+    if cmd == 'update' then
+	local conn = DB[WEEK]
+	assert(conn.exec( msg[2] ))
+	msgs:send_msg(format('%s adjust %s', msg[3], msg[4])) -- fruit & msg
     end
 
     if VERS[cmd] then
