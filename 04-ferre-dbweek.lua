@@ -68,12 +68,10 @@ local SRVK	 = "*dOG4ev0i<[2H(*GJC2e@6f.cC].$on)OZn{5q%3"
 local SUBS	 = { 'ticket', 'presupuesto', 'update', 'bixolon', 'pagado', 'adjust', 'faltante' }
 
 local TABS	 = {tickets = 'uid, tag, prc, clave, desc, costol NUMBER, unidad, precio NUMBER, unitario NUMBER, qty INTEGER, rea INTEGER, totalCents INTEGER, uidSAT, nombre',
-		   updates = 'vers INTEGER PRIMARY KEY, clave, campo, valor',
+		   updates = 'vers INTEGER PRIMARY KEY, clave, msg', -- campo, valor
 	   	   facturas = 'uid, fapi PRIMARY KEY NOT NULL, rfc NOT NULL, sat NOT NULL'}
 
 local INDEX = fd.reduce(split(TABS.tickets, ',', true), fd.map(function(s) return s:match'%w+' end), fd.into, {})
-
-local PEOPLE	 = {A = 'caja'} -- could use 'fruit' id instead XXX
 
 --local QRY	 = 'SELECT * FROM precios WHERE clave LIKE %q LIMIT 1'
 local QUID	 = 'SELECT uid, SUBSTR(uid, 12, 5) time, SUM(qty) count, ROUND(SUM(totalCents)/100.0, 2) total, tag FROM tickets WHERE tag NOT LIKE "factura" AND uid %s %q GROUP BY uid'
@@ -97,8 +95,6 @@ local VERS	 = {}
 --
 local function receive(skt, a) return fd.reduce(function() return skt:recv_msgs(true) end, fd.into, a) end
 
-local function round(n, d) return floor(n*10^d+0.5)/10^d end
-
 local function sanitize(b) return function(_,k) return not(b[k]) end end
 
 local function smart(v, k) return ISSTR[k] and format("'%s'", tostring(v):upper()) or (tointeger(v) or tonumber(v) or 0) end
@@ -115,12 +111,6 @@ end
 
 local function indexar(a) return fd.reduce(INDEX, fd.map(function(k) return a[k] or '' end), fd.into, {}) end
 
-local function addName(o)
-    local pid = asnum(o.uid:match'P([%d%a]+)')
-    o.nombre = pid and PEOPLE[pid] or 'NaP';
-    return o
-end
-
 local function addTicket(conn, msg)
     remove(msg, 1)
 
@@ -130,19 +120,6 @@ local function addTicket(conn, msg)
 	fd.reduce(msg, fd.map(function(s) return fromJSON(s) end), fd.map(indexar), into'tickets', conn)
     end
     return fromJSON(msg[1]).uid
-end
-
---local function jsonName(o) return asJSON(addName(o)) end
-
-local function toCents(w)
-    if w.total then w.total = format('%.2f', w.total) end
-    return w
-end
-
-local function dumpFEED(conn, path, qry, clause) -- XXX correct FIN json
-    if clause and conn.count( 'tickets', clause ) == 0 then return false end
-    dump(path, asJSON(fd.reduce(conn.query(qry), fd.map(toCents), fd.map(addName), fd.into, {})))
-    return true
 end
 
 local function dumpFRUIT(conn, vers, week)
@@ -174,28 +151,6 @@ local function dumpFRUIT(conn, vers, week)
     MEM[vers] = ret
     return ret
 
-end
-
-local function fields(a, t) return fd.reduce(a, fd.map(function(k) return t[k] end), fd.into, {}) end
-
-local function bixolon(uid, conn)
-    local HEAD = {'tag', 'uid', 'total', 'nombre'}
-    local DATOS = {'clave', 'desc', 'qty', 'rea', 'unitario', 'subTotal'}
-
-    local head = addName(fd.first(conn.query(format(QHEAD, uid)), function(x) return x end))
-
-    local data = ticket(head, fd.reduce(conn.query(format(QLPR, uid)), fd.into, {}))
-
-    local skt = popen(PRINTER, 'w') -- stdout -- 
-    if #data > 8 then
-	data = fd.slice(4, data, fd.into, {})
-	fd.reduce(data, function(v) skt:write(concat(v,'\n'), '\n') end)
-    else
-	skt:write( concat(data,'\n') )
-    end
-    skt:close()
-
-    return true
 end
 
 ---------------------------------
@@ -253,11 +208,7 @@ print('\nSuccessfully connected to:', LEDGER, '\n')
 --
 -- Store PEOPLE values
 --
-do
-    local people = assert( dbconn'personas' )
-    fd.reduce(people.query'SELECT * FROM empleados', fd.rejig(function(o) return o.nombre, asnum(o.id) end), fd.merge, PEOPLE)
-end
---
+-
 -- -- -- -- -- --
 --
 
@@ -266,11 +217,6 @@ tasks:send_msg'OK'
 --
 -- Run loop
 --
-
-local function which(week) return TODAY==week and WEEK or assert(dbconn( week )) end
-
-local function send(fruit, ret) msgr:send_msg(format('%s adjust %s', fruit, ret)) end
-
 
 while true do
 print'+\n'
@@ -297,20 +243,28 @@ print'+\n'
 
 	print( 'UID:', uid, '\n' )
 --[[	
-	local qry = format(QUID, 'LIKE', uid)
-	local m = fd.first(WEEK.query(qry), function(x) return x end) -- jsonName()
-	tasks:send_msgs{'inmem', 'feed', asJSON(m)}
-
-	local qry = format(QUID, 'LIKE', uid)
-	bixolon(uid, WEEK)
 	www:send_msg( msg ) -- WWW
 --]]
 
     elseif cmd == 'update' then -- msg from 'ferredb' to be re-routed to 'inmem'
-	local u = WEEK.count'updates'
+	local u = WEEK.count'updates' + 1
 	local w = fromJSON( msg[2] )
+	local clave = tointeger(clave) or format('%q', clave)
+	local fruit = w.fruit
+
+	w.store = 'PRICE'; w.tbname = nil; w.fruit = nil;
+
+	local msg = asJSON{w, {vers=u, week=TODAY, store='VERS'}}
+	local q = format('INSERT INTO updates values(%d, %s, %q)', u, clave, msg)
+	assert(WEEK.exec( q ))
+
+	tasks:send_msgs{'inmem', cmd, q, fruit, msg}
+--[[
 	fd.reduce(fd.keys(w), fd.filter(sanitize(DIRTY)), fd.map(reformat2(w.clave, u)), into'updates', WEEK)
-	tasks:send_msgs{'inmem', cmd, asJSON{vers=WEEK.count'updates', week=TODAY}}
+	insert(msg, 1, 'inmem')
+	tasks:send_msgs(msg)
+--]]
+	print( 'vers:', u, '\n' )
 
     end
 
@@ -337,12 +291,5 @@ end
 	local m = jsonName(fd.first(WEEK.query(qry), function(x) return x end))
 	msgr:send_msg(format('feed %s', m))
 --	www:send_msg( msg ) -- WWW
-
-    elseif cmd == 'bixolon' then -- XXX should prefer similar to adjust
-	local uid = msg:match'uid=([^!]+)'
---	local uid = msg:match'%s([^!]+)'
-	local week = uid2week( uid )
-	bixolon(uid, which(week))
-	print('Printing data ...\n')
 
 --]]
