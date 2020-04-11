@@ -30,6 +30,7 @@ local print	  = print
 local tostring	  = tostring
 local tonumber	  = tonumber
 local tointeger   = math.tointeger
+local floor	  = math.floor
 local pcall	  = pcall
 
 local APP	  = require'carlos.ferre'.APP
