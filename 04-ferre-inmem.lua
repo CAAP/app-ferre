@@ -61,8 +61,6 @@ local QTKT	 = 'SELECT uid, tag, clave, qty, rea, totalCents, prc "precio" FROM t
 local INDEX
 local DB	= {}
 
---local TICKETS	= connect':inmemory:'
-
 --------------------------------
 -- Local function definitions --
 --------------------------------

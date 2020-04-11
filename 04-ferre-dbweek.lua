@@ -241,9 +241,6 @@ print'+\n'
 	tasks:send_msgs(msg)
 
 	print( 'UID:', uid, '\n' )
---[[	
-	www:send_msg( msg ) -- WWW
---]]
 
     elseif cmd == 'update' then -- msg from 'ferredb' to be re-routed to 'inmem'
 	local u = WEEK.count'updates' + 1
@@ -266,18 +263,6 @@ print'+\n'
 end
 
 --[[
-
-    elseif cmd == 'adjust' then
-	local vers = asnum(msg:match'vers=(%d+)')
-	local fruit = msg:match'fruit=(%a+)'
-	local week = msg:match'week=([^!&]+)'
-	-- week is THIS WEEK
-	local ret = dumpFRUIT(WEEK, vers, week)
-	if type(ret) == 'table' then
-	    fd.reduce(fruit, ret, send)
-	elseif ret ~= 'OK' then send(fruit, ret)
-	else print"'adjust' not OK!\n" end
-
     if cmd == 'pagado' and msg:match'uid' then
 	local uid = msg:match'uid=([^!]+)'
 --	uid:match'HOY' must be TRUE
@@ -286,5 +271,4 @@ end
 	local m = jsonName(fd.first(WEEK.query(qry), function(x) return x end))
 	msgr:send_msg(format('feed %s', m))
 --	www:send_msg( msg ) -- WWW
-
 --]]

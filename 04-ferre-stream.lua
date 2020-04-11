@@ -33,7 +33,7 @@ local WEEK 	  = { ticket=true, presupuesto=true } -- pagado
 
 local FERRE 	  = { update=true, faltante=true }
 
-local INMEM 	  = { tabs=true, delete=true,
+local INMEM 	  = { tabs=true, delete=true, msgs=true,
 			pins=true, login=true, -- CACHE
 			version=true, -- CACHE
 			bixolon=true,
@@ -104,13 +104,4 @@ print'+\n'
 end
 
 --[[
-		insert(msg, 1, 'inmem')
-		print( 'Sent to inmem:', stream:send_msgs(msg), '\n' )
-
-		insert(msg, 1, 'weekdb')
-		print( 'Sent to weekdb:', stream:send_msgs(msg), '\n' )
-
-		insert(msg, 1, 'ferredb')
-		print( 'Sent to ferredb:', stream:send_msgs(msg), '\n' )
-
 --]]
