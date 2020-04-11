@@ -4,14 +4,10 @@
 --
 local fd		= require'carlos.fold'
 
-local into		= require'carlos.sqlite'.into
-local split		= require'carlos.string'.split
 local context		= require'lzmq'.context
 local pollin		= require'lzmq'.pollin
 local keypair		= require'lzmq'.keypair
 local dbconn		= require'carlos.ferre'.dbconn
-local now		= require'carlos.ferre'.now
-local asnum		= require'carlos.ferre'.asnum
 local asJSON		= require'json'.encode
 local fromJSON		= require'json'.decode
 
@@ -33,8 +29,6 @@ _ENV = nil -- or M
 
 -- Local Variables for module-only access
 --
-local HOY	 = date('%d-%b-%y', now())
-
 local STREAM = 'ipc://stream.ipc'
 local UPSTREAM = 'ipc://upstream.ipc'
 

@@ -6,7 +6,6 @@
 local fd	  = require'carlos.fold'
 
 local context	  = require'lzmq'.context
---local proxy	  = require'lzmq'.proxy
 local pollin	  = require'lzmq'.pollin
 local asJSON	  = require'json'.encode
 
@@ -48,7 +47,7 @@ local STREAM 	 = 'ipc://stream.ipc'
 
 local OK	 = response{status='ok'}
 
-local PRECIOS	 = connect':inmemory:'
+local PRECIOS	 = assert( connect':inmemory:' )
 
 local PID	 = { A = 'caja' }
 
