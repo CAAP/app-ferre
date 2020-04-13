@@ -147,6 +147,8 @@ local function process(uid, persona, tag)
     end
 end
 
+local QRY2	  = 'SELECT desc FROM precios WHERE clave LIKE %q LIMIT 1'
+
 local function process2(uid, persona, tag)
     return function(q)
 	local o = {uid=uid, tag=tag, nombre=persona}
@@ -155,8 +157,7 @@ local function process2(uid, persona, tag)
 	o.rea = o.rea or 0
 	local rea = (100-o.rea)/100.0
 
-	local b = {}
---	local b = fd.first(PRECIOS.query(format(QRY, o.clave)), function(x) return x end)
+	local b = fd.first(PRECIOS.query(format(QRY2, o.clave)), function(x) return x end)
 	fd.reduce(fd.keys(o), fd.merge, b)
 	b.prc = o.precio;
 	b.precio = o.prc:match'[%d%.]+'
@@ -168,7 +169,7 @@ local function process2(uid, persona, tag)
 end
 
 local function asTicket(cmd, uid, persona, msg)
-    remove(msg, 1)
+    remove(msg, 1) -- pid
     return fd.reduce(msg, fd.map(urldecode), fd.map(process2(uid, persona, cmd)), fd.into, {cmd})
 end
 

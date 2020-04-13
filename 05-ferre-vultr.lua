@@ -35,12 +35,20 @@ _ENV = nil -- or M
 local LEDGER	 = 'tcp://149.248.21.161:5610' -- 'vultr'
 local SRVK	 = "*dOG4ev0i<[2H(*GJC2e@6f.cC].$on)OZn{5q%3"
 
-local QDESC	 = 'SELECT clave FROM precios WHERE desc LIKE %q ORDER BY desc LIMIT 1'
+--local QDESC	 = 'SELECT clave FROM precios WHERE desc LIKE %q ORDER BY desc LIMIT 1'
+local QTKTS	 = 'SELECT MAX(uid) uid FROM tickets'
 
+local VERS	 = {}
 --------------------------------
 -- Local function definitions --
 --------------------------------
 --
+local function getVers(conn)
+    local vers = conn.count'updates'
+    local uid = fd.first(conn.query( QTKTS ), function(x) return x end).uid:sub(1,19)
+    VERS = {vers=vers, uid=uid}
+    return VERS
+end
 
 ---------------------------------
 -- Program execution statement --
@@ -55,7 +63,7 @@ assert( conn.exec(format('ATTACH DATABASE %q AS ferre', path)) )
 assert( conn.exec'CREATE TABLE datos AS SELECT * FROM ferre.datos' )
 assert( conn.exec'DETACH DATABASE ferre' )
 
-assert( conn.exec(format('ATTACH DATABASE %q AS week', aspath(week))) )
+assert( conn.exec(format('ATTACH DATABASE %q AS week', aspath(WEEK))) )
 assert( conn.exec'CREATE TABLE tickets AS SELECT * FROM week.tickets' )
 assert( conn.exec'CREATE TABLE updates AS SELECT * FROM week.updates' )
 assert( conn.exec'DETACH DATABASE week' )
@@ -82,7 +90,7 @@ print('\nSuccessfully connected to:', LEDGER)
 -- -- -- -- -- --
 --
 
-www:send_msg'OK'
+www:send_msg'Hi'
 
 --
 -- -- -- -- -- --
@@ -93,7 +101,7 @@ www:send_msg'OK'
 while true do
 print'+\n'
 
-    pollin{tasks}
+    pollin{www}
 
     local msg = tasks:recv_msg()
     local cmd = msg:match'%a+'
@@ -114,6 +122,4 @@ print'+\n'
 
     end
 end
-
-
 
