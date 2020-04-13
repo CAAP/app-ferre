@@ -2,7 +2,8 @@
 
 	(function() {
 	    const VARS = ['id', 'clave', 'qty', 'rea', 'precio', 'totalCents']; // XXX
-	    const EVARS = ['id', 'desc', 'qty', 'rea', 'precio', 'subTotal' ]; // clave
+	    const EVARS = ['id', 'desc', 'qty', 'rea', 'precio', 'subTotal']; // clave
+	    const XVARS = ['clave', 'desc', 'qty', 'rea', 'precio', 'totalCents', 'prc', 'costol'];
 
 	    TICKET.items = new Map();
 
@@ -250,6 +251,11 @@
 	    }
 
 	    TICKET.plain = o => VARS.map( v => { return (v + '+' + o[v] || '') } ).join('+');
+
+	    TICKET.xplain = function(o) {
+		o.prc = o.precios[o.precio];
+		return XVARS.map( v => { return (v + '+' + o[v] || '') } ).join('+');
+	    };
 
 	    TICKET.update = function(e) {
 		let tr = e.target.parentElement.parentElement;

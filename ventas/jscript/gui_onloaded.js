@@ -143,7 +143,7 @@
 		let objs = ['pid='+pid];
 		TICKET.myticket.style.visibility = 'hidden';
 
-		TICKET.items.forEach( item => objs.push( 'query=' + TICKET.plain(item) ) );
+		TICKET.items.forEach( item => objs.push( 'query=' + TICKET.xplain(item) ) );
 
 		if (TICKET.items.size > 4) {
 		    return ferre.xpost(a, objs)

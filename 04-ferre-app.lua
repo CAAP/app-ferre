@@ -147,9 +147,28 @@ local function process(uid, persona, tag)
     end
 end
 
+local function process2(uid, persona, tag)
+    return function(q)
+	local o = {uid=uid, tag=tag, nombre=persona}
+	for k,v in q:gmatch'([%a%d]+)|([^|]+)' do o[k] = asnum(v) end
+--	local lbl = 'u' .. o.precio:match'%d$'
+	local rea = (100-o.rea)/100.0
+
+	local b = {}
+--	local b = fd.first(PRECIOS.query(format(QRY, o.clave)), function(x) return x end)
+	fd.reduce(fd.keys(o), fd.merge, b)
+	b.prc = o.precio;
+	b.precio = o.prc:match'[%d%.]+'
+	b.unitario = b.precio
+	b.unidad = o.prc:match'[%u]+' or ''
+
+	return asJSON(b)
+    end
+end
+
 local function asTicket(cmd, uid, persona, msg)
     remove(msg, 1)
-    return fd.reduce(msg, fd.map(urldecode), fd.map(process(uid, persona, cmd)), fd.into, {cmd})
+    return fd.reduce(msg, fd.map(urldecode), fd.map(process2(uid, persona, cmd)), fd.into, {cmd})
 end
 
 
