@@ -152,6 +152,7 @@ local function process2(uid, persona, tag)
 	local o = {uid=uid, tag=tag, nombre=persona}
 	for k,v in q:gmatch'([%a%d]+)|([^|]+)' do o[k] = asnum(v) end
 --	local lbl = 'u' .. o.precio:match'%d$'
+	o.rea = o.rea or 0
 	local rea = (100-o.rea)/100.0
 
 	local b = {}
@@ -159,7 +160,7 @@ local function process2(uid, persona, tag)
 	fd.reduce(fd.keys(o), fd.merge, b)
 	b.prc = o.precio;
 	b.precio = o.prc:match'[%d%.]+'
-	b.unitario = b.precio
+	b.unitario = b.rea > 1 and round(b.precio*rea, 2) or b.precio
 	b.unidad = o.prc:match'[%u]+' or ''
 
 	return asJSON(b)
