@@ -3,7 +3,7 @@
 	(function() {
 	    const VARS = ['id', 'clave', 'qty', 'rea', 'precio', 'totalCents']; // XXX
 	    const EVARS = ['id', 'desc', 'qty', 'rea', 'precio', 'subTotal']; // clave
-	    const XVARS = ['clave', 'desc', 'qty', 'rea', 'precio', 'totalCents', 'prc', 'costol'];
+	    const XVARS = ['id', 'clave', 'qty', 'rea', 'precio', 'totalCents', 'prc', 'costol'];
 
 	    TICKET.items = new Map();
 
