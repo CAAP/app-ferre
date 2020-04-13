@@ -36,7 +36,7 @@
 			XHR.get( ferre.origin + 'CACHE?' + e.data )
 		    } else {
 			esource.close();
-			ssevent();
+			return ssevent();
 		    }
 		}, false);
 
