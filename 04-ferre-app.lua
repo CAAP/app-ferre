@@ -160,7 +160,7 @@ local function process2(uid, persona, tag)
 	local b = fd.first(PRECIOS.query(format(QRY2, o.clave)), function(x) return x end)
 	fd.reduce(fd.keys(o), fd.merge, b)
 	b.prc = o.precio;
-	b.precio = o.prc:match'[%d%.]+'
+	b.precio = o.prc:match'[%d%.]+' or o.prc
 	b.unitario = b.rea > 1 and round(b.precio*rea, 2) or b.precio
 	b.unidad = o.prc:match'[%u]+' or ''
 
@@ -265,7 +265,7 @@ print'+\n'
 
     pollin{server}
 
-    local id, msg = receive(server)
+    local id, msg = receive(server, true)
     msg = distill(msg)
     local cmd = msg:match'%a+'
 

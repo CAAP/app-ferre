@@ -19,6 +19,7 @@ local fromJSON		= require'json'.decode
 local format	= string.format
 local tointeger = math.tointeger
 local concat 	= table.concat
+local unpack	= table.unpack
 local date	= os.date
 local tonumber  = tonumber
 local tostring	= tostring
@@ -40,25 +41,43 @@ local LEDGER	 = 'tcp://149.248.21.161:5610' -- 'vultr'
 local SRVK	 = "*dOG4ev0i<[2H(*GJC2e@6f.cC].$on)OZn{5q%3"
 
 local QTKTS	 = 'SELECT MAX(uid) uid FROM tickets'
+
+local conn = assert( connect':inmemory:' )
+
 --------------------------------
 -- Local function definitions --
 --------------------------------
 --
-local function getVers(conn)
-    local vers = conn.count'updates'
-    local uid = fd.first(conn.query( QTKTS ), function(x) return x end).uid:sub(1,19)
-    VERS = {vers=vers, uid=uid}
-    return VERS
+local function receive(skt, a)
+    return fd.reduce(function() return skt:recv_msgs(true) end, fd.into, a)
 end
 
+local function wired(w)
+    local tag = w.tag
+    return {tag, asJSON(w)}
+end
+
+local function wired(cmd, s) return {cmd, s} end
+
+local function switch(msg)
+    local _, v, old = unpack(msg)
+
+    if v == 'vers' then
+	local q = format('SELECT * FROM updates WHERE vers > %d', old)
+	fd.reduce(conn.query(q), fd.map(), fd.into, {})
+
+    elseif v == 'uid' then
+	local q = format('SELECT * FROM tickets WHERE uid > %q', old)
+	fd.reduce(conn.query(q), fd.map(wired), fd.into, {})
+
+    end
+end
 ---------------------------------
 -- Program execution statement --
 ---------------------------------
 --
 -- Database connection(s)
 --
-local conn = assert( connect':inmemory:' )
-
 local path = aspath'ferre'
 assert( conn.exec(format('ATTACH DATABASE %q AS ferre', path)) )
 assert( conn.exec'CREATE TABLE datos AS SELECT * FROM ferre.datos' )
@@ -74,7 +93,6 @@ print("ferre & week DBs was successfully open\n")
 local vers = conn.count'updates'
 local uid = fd.first(conn.query( QTKTS ), function(x) return x end).uid -- :sub(1,19)
 
-print('vers:', vers, 'uid:', uid, '\n')
 -- -- -- -- -- --
 --
 -- Initialize server
@@ -83,7 +101,7 @@ local CTX = context()
 
 local www = assert(CTX:socket'DEALER')
 
-assert( www:immediate(true) )
+--assert( www:immediate(true) )
 
 assert( www:set_id'FA-BJ-01' )
 
@@ -96,7 +114,9 @@ print('\nSuccessfully connected to:', LEDGER)
 -- -- -- -- -- --
 --
 
-www:send_msgs{'Hi', asJSON{vers=vers, uid=uid}}
+local vv = asJSON{vers=vers, uid=uid}
+print(vv, '\n')
+www:send_msgs{'Hi', vv}
 
 --
 -- -- -- -- -- --
@@ -111,7 +131,6 @@ print'+\n'
 
     local msg, more = www:recv_msg()
     local cmd = msg:match'%a+'
-    local pid = msg:match'pid=(%d+)'
 
     if more then
 	msg = receive(www, {msg})
@@ -124,6 +143,8 @@ print'+\n'
 --	tasks:send_msgs{'weekdb', cmd, ret}
 
     elseif cmd == 'adjust' then
+	local q = switch(msg)
+	fd.reduce(q, function(a) www:send_msgs(a) end)
 
     elseif cmd == 'OK' then break end
 end
