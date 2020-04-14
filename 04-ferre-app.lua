@@ -179,7 +179,7 @@ local function distill(a)
     if data:match'GET' then
 	return format('%s %s', data:match'GET /(%a+)%?([^%?]+) HTTP')
     elseif data:match'POST' then
-	return format('%s %s', data:match'POST /(%a+)', data:match'pid=[^%s]+')
+	return format('%s %s', data:match'POST /(%a+)', data:match'pid=[^%?]+')
     end
 end
 

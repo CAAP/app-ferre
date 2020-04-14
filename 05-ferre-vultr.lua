@@ -41,6 +41,7 @@ local LEDGER	 = 'tcp://149.248.21.161:5610' -- 'vultr'
 local SRVK	 = "*dOG4ev0i<[2H(*GJC2e@6f.cC].$on)OZn{5q%3"
 
 local QTKTS	 = 'SELECT MAX(uid) uid FROM tickets'
+local UVERS	 = 'SELECT *, "update" tag FROM datos WHERE clave IN (SELECT DISTINCT(clave) FROM updates WHERE vers > %d)'
 
 local conn = assert( connect':inmemory:' )
 
@@ -57,18 +58,16 @@ local function wired(w)
     return {tag, asJSON(w)}
 end
 
-local function wired(cmd, s) return {cmd, s} end
-
 local function switch(msg)
     local _, v, old = unpack(msg)
 
     if v == 'vers' then
-	local q = format('SELECT * FROM updates WHERE vers > %d', old)
-	fd.reduce(conn.query(q), fd.map(), fd.into, {})
+	local q = format(UVERS, old)
+	return fd.reduce(conn.query(q), fd.map(wired), fd.into, {})
 
     elseif v == 'uid' then
 	local q = format('SELECT * FROM tickets WHERE uid > %q', old)
-	fd.reduce(conn.query(q), fd.map(wired), fd.into, {})
+	return fd.reduce(conn.query(q), fd.map(wired), fd.into, {})
 
     end
 end
