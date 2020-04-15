@@ -87,7 +87,7 @@ end
 
 local function addUpdate(conn, w)
     local clave  = w.clave
-    local tbname = w.tbname
+--    local tbname = w.tbname
     local clause = format('WHERE clave LIKE %q', clave)
     local toll = found(w, TOLL)
 
@@ -180,7 +180,6 @@ print'+\n'
 
     if cmd == 'update' then
 	local w = fromJSON( msg:match'{[^}]+}' )
-	local fruit = w.fruit
 	local ret = asJSON( addUpdate(PRECIOS, w) )
 	tasks:send_msgs{'weekdb', cmd, ret}
 --]]

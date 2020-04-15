@@ -253,7 +253,7 @@
 	    TICKET.plain = o => VARS.map( v => { return (v + '+' + o[v] || '') } ).join('+');
 
 	    TICKET.xplain = function(o) {
-		o.prc = o.precios[o.precio];
+		o.prc = encodeURIComponent(o.precios[o.precio]);
 		return XVARS.map( v => { return (v + '+' + o[v] || '') } ).join('+');
 	    };
 

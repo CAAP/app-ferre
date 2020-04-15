@@ -220,9 +220,10 @@
 		if (costos.has(k)) { compute(clave, k); }
 	    };
 
+	    //
 	    function update(clave, o) {
 		if (o.desc) { o.desc = o.desc.replace(/\s+$/, '').replace(/^\s+/, ''); }
-		return XHR.get(admin.origin + 'update?' + UTILS.encPpties(Object.assign(o,{clave: clave, tbname: 'datos', fruit: sessionStorage.fruit})));
+		return XHR.get(admin.origin + 'update?' + UTILS.encPpties(Object.assign(o,{clave: clave}))); // , tbname: 'datos', fruit: sessionStorage.fruit
 	    }
 
 	    admin.enviar = function(fecha) {

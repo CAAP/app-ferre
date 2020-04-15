@@ -112,7 +112,7 @@ local function updateOne(conn, msg)
     for k,v in msg:gmatch'([%a%d]+)=([^&]+)' do w[k] = asnum(v) end
 
     local clave  = w.clave
-    local tbname = w.tbname
+--    local tbname = w.tbname
     local clause = format('WHERE clave LIKE %q', clave)
     local toll = found(w, TOLL)
 
