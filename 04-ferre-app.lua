@@ -284,7 +284,7 @@ print'+\n'
 	    ----------------------
 	    -- pre-process & store updates
 	    if cmd == 'update' then
-		msg = format('update %s', updateOne(PRECIOS, msg))
+		msg = format('update %s', updateOne(PRECIOS, urldecode(msg)))
 	    end
 	    ----------------------
 	    -- convert into MULTI-part msgs
