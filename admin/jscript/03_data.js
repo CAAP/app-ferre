@@ -5,8 +5,8 @@
 		PRICE: {
 		    STORE: 'precios',
 		    KEY: 'clave',
-		    FILE: '/ventas/json/precios.json',
-		    VERS: '/ventas/json/version.json',
+		    FILE: '/json/precios.json',
+		    VERS: '/json/version.json',
 		    INDEX: [{key: 'desc'}] // {key: 'faltante'}, {key: 'proveedor'}
 		},
 		VERS: {}
