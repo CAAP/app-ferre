@@ -54,6 +54,9 @@ local conn = assert( connect':inmemory:' )
 local function receive(skt, a)
     return fd.reduce(function() return skt:recv_msgs(true) end, fd.into, a)
 end
+
+local function plain(a) return asJSON(a) end
+
 --[[
 local function wired(w)
     local tag = w.tag
@@ -65,11 +68,11 @@ local function switch(msg)
 
     if v == 'vers' then
 	local q = format(UVERS, old)
-	return fd.reduce(conn.query(q), fd.into, {'update', vers}) --  fd.map(wired)
+	return fd.reduce(conn.query(q), fd.map(plain), fd.into, {'update', vers}) --  fd.map(wired)
 
     elseif v == 'uid' then
 	local q = format('SELECT * FROM tickets WHERE uid > %q', old)
-	return fd.reduce(conn.query(q), fd.into, {'ticket'}) --  fd.map(wired)
+	return fd.reduce(conn.query(q), fd.map(plain), fd.into, {'ticket'}) --  fd.map(wired)
     end
 end
 ---------------------------------
@@ -114,11 +117,11 @@ print('\nSuccessfully connected to:', LEDGER)
 --
 -- -- -- -- -- --
 --
-
-local vv = asJSON{vers=vers, uid=uid}
-print(vv, '\n')
-www:send_msgs{'Hi', vv}
-
+do
+    local vv = asJSON{vers=vers, uid=uid}
+    print(vv, '\n')
+    www:send_msgs{'Hi', vv}
+end
 --
 -- -- -- -- -- --
 --
@@ -145,7 +148,7 @@ print'+\n'
 
     elseif cmd == 'adjust' then
 	local q = switch(msg)
-	print( asJSON(q) )
+	www:send_msgs(q)
 --	fd.reduce(q, function(a) www:send_msgs(a) end)
 
     elseif cmd == 'OK' then break end
