@@ -41,7 +41,9 @@ local LEDGER	 = 'tcp://149.248.21.161:5610' -- 'vultr'
 local SRVK	 = "*dOG4ev0i<[2H(*GJC2e@6f.cC].$on)OZn{5q%3"
 
 local QTKTS	 = 'SELECT MAX(uid) uid FROM tickets'
-local UVERS	 = 'SELECT *, "update" tag FROM datos WHERE clave IN (SELECT DISTINCT(clave) FROM updates WHERE vers > %d)' -- XXX difficult very hard because vers!!!
+local UVERS	 = 'SELECT *, "update" tag, %d vers FROM datos WHERE clave IN (SELECT DISTINCT(clave) FROM updates WHERE vers > %d)' -- XXX difficult very hard because vers!!!
+
+local vers	 = 0
 
 local conn = assert( connect':inmemory:' )
 
@@ -63,7 +65,7 @@ local function switch(msg)
 
     if v == 'vers' then
 	local q = format(UVERS, old)
-	return fd.reduce(conn.query(q), fd.map(wired), fd.into, {})
+	return fd.reduce(conn.query(q), fd.map(wired), fd.into, {vers=vers})
 
     elseif v == 'uid' then
 	local q = format('SELECT * FROM tickets WHERE uid > %q', old)
@@ -90,7 +92,7 @@ assert( conn.exec'DETACH DATABASE week' )
 print("ferre & week DBs was successfully open\n")
 
 -- XXX "select distinct(clave) from updates" should be a table
-local vers = conn.count'updates' -- XXX select count(*) from (select distinct(clave) from updates)
+vers = conn.count'updates' -- XXX select count(*) from (select distinct(clave) from updates)
 local uid = fd.first(conn.query( QTKTS ), function(x) return x end).uid or '0'
 
 -- -- -- -- -- --
