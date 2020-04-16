@@ -41,7 +41,7 @@ local LEDGER	 = 'tcp://149.248.21.161:5610' -- 'vultr'
 local SRVK	 = "*dOG4ev0i<[2H(*GJC2e@6f.cC].$on)OZn{5q%3"
 
 local QTKTS	 = 'SELECT MAX(uid) uid FROM tickets'
-local UVERS	 = 'SELECT *, "update" tag, %d vers FROM datos WHERE clave IN (SELECT DISTINCT(clave) FROM updates WHERE vers > %d)' -- XXX difficult very hard because vers!!!
+local UVERS	 = 'SELECT * FROM datos WHERE clave IN (SELECT PRINTF("%%s", clave) FROM updates WHERE vers > %d GROUP BY clave)'
 
 local vers	 = 0
 
@@ -54,23 +54,22 @@ local conn = assert( connect':inmemory:' )
 local function receive(skt, a)
     return fd.reduce(function() return skt:recv_msgs(true) end, fd.into, a)
 end
-
+--[[
 local function wired(w)
     local tag = w.tag
     return {tag, asJSON(w)}
 end
-
+--]]
 local function switch(msg)
     local _, v, old = unpack(msg)
 
     if v == 'vers' then
 	local q = format(UVERS, old)
-	return fd.reduce(conn.query(q), fd.map(wired), fd.into, {vers=vers})
+	return fd.reduce(conn.query(q), fd.into, {'update', vers}) --  fd.map(wired)
 
     elseif v == 'uid' then
 	local q = format('SELECT * FROM tickets WHERE uid > %q', old)
-	return fd.reduce(conn.query(q), fd.map(wired), fd.into, {})
-
+	return fd.reduce(conn.query(q), fd.into, {'ticket'}) --  fd.map(wired)
     end
 end
 ---------------------------------
@@ -146,7 +145,8 @@ print'+\n'
 
     elseif cmd == 'adjust' then
 	local q = switch(msg)
-	fd.reduce(q, function(a) www:send_msgs(a) end)
+	print( asJSON(q) )
+--	fd.reduce(q, function(a) www:send_msgs(a) end)
 
     elseif cmd == 'OK' then break end
 end
