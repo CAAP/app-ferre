@@ -122,37 +122,6 @@ local function addTicket(conn, msg)
     return fromJSON(msg[1]).uid
 end
 
-local function dumpFRUIT(conn, vers, week)
-    if #VERS > 500 then VERS,MEM = {},{} end
-
-    if #VERS == 0 then goto EMPTY end
-
-    if MEM[vers] then
-	if vers == VERS[#VERS] then return MEM[vers] else
-	return fd.reduce(VERS, fd.filter(function(w) return w>vers end), fd.map(function(w) return MEM[w]  end), fd.into, {}) end
-
-    else
-	if vers < VERS[1] then
-	    local clause = format('WHERE vers > %d AND vers < %d', vers, VERS[1])
-	    insert(VERS, 1, vers)
-	    MEM[vers] = asJSON(asdata(conn, clause, week))
-	    return dumpFRUIT(conn, vers, week, fruit)
-
-	elseif vers > VERS[#VERS] then goto EMPTY
-
-	else return 'OK' end
-
-    end
-
-::EMPTY::
-    local clause = vers > 0 and format('WHERE vers > %d', vers) or ''
-    local ret = asJSON(asdata(conn, clause, week))
-    VERS[#VERS+1] = vers
-    MEM[vers] = ret
-    return ret
-
-end
-
 ---------------------------------
 -- Program execution statement --
 ---------------------------------

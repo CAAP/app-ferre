@@ -90,7 +90,7 @@ assert( conn.exec'DETACH DATABASE week' )
 print("ferre & week DBs was successfully open\n")
 
 local vers = conn.count'updates'
-local uid = fd.first(conn.query( QTKTS ), function(x) return x end).uid -- :sub(1,19)
+local uid = fd.first(conn.query( QTKTS ), function(x) return x end).uid or '0'
 
 -- -- -- -- -- --
 --
