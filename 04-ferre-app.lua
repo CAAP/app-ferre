@@ -147,30 +147,9 @@ local function process(uid, persona, tag)
     end
 end
 
-local QRY2	  = 'SELECT desc FROM precios WHERE clave LIKE %q LIMIT 1'
-
-local function process2(uid, persona, tag)
-    return function(q)
-	local o = {uid=uid, tag=tag, nombre=persona}
-	for k,v in q:gmatch'([%a%d]+)|([^|]+)' do o[k] = asnum(v) end
---	local lbl = 'u' .. o.precio:match'%d$'
-	o.rea = o.rea or 0
-	local rea = (100-o.rea)/100.0
-
-	local b = fd.first(PRECIOS.query(format(QRY2, o.clave)), function(x) return x end)
-	fd.reduce(fd.keys(o), fd.merge, b)
-	b.prc = o.precio;
-	b.precio = o.prc:match'[%d%.]+' or o.prc
-	b.unitario = b.rea > 1 and round(b.precio*rea, 2) or b.precio
-	b.unidad = o.prc:match'[%u]+' or ''
-
-	return asJSON(b)
-    end
-end
-
 local function asTicket(cmd, uid, persona, msg)
     remove(msg, 1) -- pid
-    return fd.reduce(msg, fd.map(urldecode), fd.map(process2(uid, persona, cmd)), fd.into, {cmd})
+    return fd.reduce(msg, fd.map(urldecode), fd.map(process(uid, persona, cmd)), fd.into, {cmd})
 end
 
 
@@ -290,7 +269,7 @@ print'+\n'
 	    -- convert into MULTI-part msgs
 	    if msg:match'query=' then
 		local ret = split(msg, '&query=')
-		if ISTKT[cmd] then
+		if ISTKT[cmd] and ret then -- ret is not nil
 		    local pid = asnum( msg:match'pid=([%d%a]+)' )
 	 	    local uid = newUID()..pid
 		    ret = asTicket(cmd, uid, PID[pid] or 'NaP', ret)
