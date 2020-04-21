@@ -19,6 +19,7 @@ local now		= require'carlos.ferre'.now
 local uid2week		= require'carlos.ferre'.uid2week
 local asnum		= require'carlos.ferre'.asnum
 local asdata		= require'carlos.ferre'.asdata
+local dump		= require'carlos.files'.dump
 local newTable    	= require'carlos.sqlite'.newTable
 local ticket		= require'carlos.ticket'.ticket
 
