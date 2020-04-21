@@ -1,4 +1,4 @@
-#! /usr/bin/env lua53
+#! /usr/bin/env lua
 
 -- Import Section
 --
@@ -21,7 +21,6 @@ local asnum		= require'carlos.ferre'.asnum
 local asdata		= require'carlos.ferre'.asdata
 local newTable    	= require'carlos.sqlite'.newTable
 local ticket		= require'carlos.ticket'.ticket
-local dump		= require'carlos.files'.dump
 
 local format	= string.format
 local floor	= math.floor
@@ -46,8 +45,9 @@ local print	= print
 
 local stdout	= io.stdout
 
-local HOME	= require'carlos.ferre'.HOME
 local APP	= require'carlos.ferre'.APP
+
+local PATH	= require'carlos.ferre'.HOME .. '/json/version.json'
 
 -- No more external access after this point
 _ENV = nil -- or M
@@ -84,8 +84,6 @@ local QPAY	 =  'UPDATE tickets SET tag = "pagado" WHERE uid LIKE %q'
 local DIRTY	 = {clave=true, tbname=true, fruit=true}
 local ISSTR	 = {desc=true, fecha=true, obs=true, proveedor=true, gps=true, u1=true, u2=true, u3=true, uidPROV=true}
 
-local FRUIT	 = HOME .. '/ventas/json'
-
 local MEM	 = {}
 local VERS	 = {}
 
@@ -93,6 +91,11 @@ local VERS	 = {}
 -- Local function definitions --
 --------------------------------
 --
+local function dumpit(v)
+    exec(format('%s/dump-price.lua', APP))
+    dump(PATH, v)
+end
+
 local function receive(skt, a) return fd.reduce(function() return skt:recv_msgs(true) end, fd.into, a) end
 
 local function sanitize(b) return function(_,k) return not(b[k]) end end
@@ -186,6 +189,8 @@ tasks:send_msg'OK'
 -- Run loop
 --
 
+local k = 0
+
 while true do
 print'+\n'
 
@@ -223,10 +228,13 @@ print'+\n'
 	local q = format("INSERT INTO updates VALUES (%d, %s, '%s')", u, clave, msg)
 	assert( WEEK.exec( q ) )
 
-	tasks:send_msgs{'inmem', cmd, q, asJSON{vers=u, week=TODAY}}
+	local v = asJSON{vers=u, week=TODAY}
+	tasks:send_msgs{'inmem', cmd, q, v}
 
 	print( 'vers:', u, '\n' )
 
+	k = k+1
+	if k%10 == 0 then dumpit(v) end
     end
 
 end
