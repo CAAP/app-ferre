@@ -11,7 +11,7 @@ local send	  = require'carlos.ferre'.send
 local getFruit	  = require'carlos.ferre'.getFruit
 local pollin	  = require'lzmq'.pollin
 local context	  = require'lzmq'.context
---local sleep	  =require'lbsd'.sleep
+local pid	  = require'lzmq'.pid
 
 local format	  = require'string'.format
 local concat	  = table.concat
@@ -45,7 +45,7 @@ local function distill(msg)
 end
 
 local function id2fruit( id, sk )
-    local fruit = getFruit( FRUITS )
+    local fruit = pid() -- getFruit( FRUITS )
     FRUITS[fruit] = id
     SKS[sk] = fruit
     return fruit
@@ -53,6 +53,9 @@ end
 
 local function handshake(server, sk)
     local id, msg = receive(server, true)
+print(id:byte(1, #id))
+--    local e = fd.first({id:byte(1,#id)}, function(c) return c < 0 end)
+--    if msg == nil then send(server, id, ''); return 'Handshake Error' end
     local fruit = id2fruit(id, sk)
 	send(server, id, HELLO)
 	send(server, id, ssevent('fruit', fruit))
@@ -125,7 +128,6 @@ print('\nSuccessfully bound to:', UPSTREAM, '\n')
 ---[[
 --
 print( 'Starting servers ...', '\n' )
---sleep(1)
 
 --
 while true do
@@ -154,7 +156,3 @@ print'+\n'
 end
 ---]]
 
-
---[[
-
---]]
