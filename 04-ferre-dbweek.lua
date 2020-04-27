@@ -1,4 +1,4 @@
-#! /usr/bin/env lua
+#! /usr/bin/env lua53
 
 -- Import Section
 --
