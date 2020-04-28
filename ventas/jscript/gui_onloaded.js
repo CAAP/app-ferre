@@ -195,20 +195,18 @@
 	    let fetchMe = o => {
 		if (TICKET.items.has( o.clave )) {
 		    console.log('Item is already in the bag.');
-		    return Promise.resolve(false);
+		    return Promise.resolve(true);
 		} else
 		    return TICKET.getPrice( o ).then( TICKET.add );
 	    };
 
-//	    let recreateOne = o => fetchMe(o).then(() => {tcount.textContent = TICKET.items.size;});
-
-	    let recreate = a => Promise.all( a.map( fetchMe ) ).then( () => Promise.resolve() ).then( () => {tcount.textContent = TICKET.items.size;} );
+//	    let recreate = a => Promise.all( a.map( fetchMe ) ).then( () => Promise.resolve() ).then( () => {tcount.textContent = TICKET.items.size;} );
 
 	    ferre.nadie = nadie;
 
 	    ferre.fetchMe = fetchMe;
 
-	    ferre.recreate = recreate;
+	    ferre.recreate = a => a.forEach( fetchMe );
 
 	    ferre.tab = () => {
 		const pid = Number(persona.value);
