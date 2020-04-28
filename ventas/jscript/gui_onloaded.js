@@ -190,19 +190,23 @@
 		opt.selected = true;
 		persona.disabled = false;
 		mensaje.innerHTML = ''; sesion.innerHTML = '';
-	    }
+	    };
 
 	    let fetchMe = o => {
 		if (TICKET.items.has( o.clave )) {
 		    console.log('Item is already in the bag.');
-		    return false;
+		    return Promise.resolve(false);
 		} else
 		    return TICKET.getPrice( o ).then( TICKET.add );
-	    }
+	    };
+
+//	    let recreateOne = o => fetchMe(o).then(() => {tcount.textContent = TICKET.items.size;});
 
 	    let recreate = a => Promise.all( a.map( fetchMe ) ).then( () => Promise.resolve() ).then( () => {tcount.textContent = TICKET.items.size;} );
 
 	    ferre.nadie = nadie;
+
+	    ferre.fetchMe = fetchMe;
 
 	    ferre.recreate = recreate;
 
@@ -252,17 +256,3 @@
 		    persona.appendChild(opt); } ) );
 	})();
 
-/*
- *
- *
-	    let tID;
-
-	    function replay() {
-		console.log('Logged timeout!');
-		tID = setTimeout(replay, 15000);
-	    }
-
-	    setTimeout(replay, 15000);
-*
-*
-*/

@@ -87,7 +87,7 @@
 		esource.addEventListener("uid", function(e) {
 		    elbl.innerHTML = "uid event";
 		    console.log("uid event received");
-		    XHR.getJSON('/caja/json/' + e.data).then( ferre.recreate );
+		    ferre.fetchMe(JSON.parse( e.data ));
 		}, false);
 
 		esource.addEventListener("logout", function(e) {

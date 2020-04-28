@@ -89,7 +89,7 @@
 		    if (data.includes('json'))
 			XHR.getJSON('json/' + data).then( a => a.forEach( add2bag ) );
 		    else
-			add2bag(JSON.parse( data));
+			add2bag(JSON.parse( data ));
 		}, false);
 
 		esource.addEventListener("feed", function(e) {
