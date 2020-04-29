@@ -8,13 +8,15 @@ local sse	  = require'carlos.html'.response
 local ssevent	  = require'carlos.ferre'.ssevent
 local receive	  = require'carlos.ferre'.receive
 local send	  = require'carlos.ferre'.send
-local getFruit	  = require'carlos.ferre'.getFruit
+--local getFruit	  = require'carlos.ferre'.getFruit
 local pollin	  = require'lzmq'.pollin
 local context	  = require'lzmq'.context
 local pid	  = require'lzmq'.pid
 
 local format	  = require'string'.format
 local concat	  = table.concat
+local insert	  = table.insert
+local remove	  = table.remove
 local assert	  = assert
 local print	  = print
 local pairs	  = pairs
@@ -30,6 +32,10 @@ local UPSTREAM   = 'ipc://upstream.ipc'
 --local UPSTREAM   = 'tcp://*:5060'
 local SPIES	 = 'inproc://espias'
 local HELLO      = sse{content='stream'}
+
+local FRTS	   = {'apple', 'apricot', 'avocado', 'banana', 'berry', 'cherry', 'coconut', 'cucumber', 'fig', 'grape', 'raisin', 'guava', 'pepper', 'corn', 'plum', 'kiwi', 'lemon', 'lime', 'lychee', 'mango', 'melon', 'olive', 'orange', 'durian', 'longan', 'pea', 'peach', 'pear', 'prune', 'pine', 'pomelo', 'pome', 'quince', 'rhubarb', 'mamey', 'soursop', 'granate', 'sapote'}
+
+
 local FRUITS	 = {}
 local SKS	 = {}
 
@@ -45,7 +51,7 @@ local function distill(msg)
 end
 
 local function id2fruit( id, sk )
-    local fruit = pid() -- getFruit( FRUITS )
+    local fruit = remove(FRTS) -- pid()
     FRUITS[fruit] = id
     SKS[sk] = fruit
     return fruit
@@ -92,6 +98,7 @@ local function sayonara(sk)
     if not fruit then return ':empty' end
     FRUITS[fruit] = nil
     SKS[sk] = nil
+    insert(FRTS, fruit)
     return fruit
 end
 
