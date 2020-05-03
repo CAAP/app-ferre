@@ -138,7 +138,7 @@ local WEEK = assert( dbconn( TODAY, true ) )
 
 fd.reduce(fd.keys(TABS), function(schema, tbname) connexec(WEEK, format(newTable, tbname, schema)) end)
 
-print("this week DB was successfully open\n")
+print(TODAY, "DB was successfully open\n")
 -- -- -- -- -- --
 --
 -- Initialize server
@@ -218,7 +218,7 @@ print'+\n'
 	print( 'UID:', uid, '\n' )
 
     elseif cmd == 'update' then -- msg from 'ferredb' to be re-routed to 'inmem'
-	local u = WEEK.count'updates' + 1
+	local u = fd.first(WEEK.query'SELECT MAX(vers) vers FROM updates', function(x) return x end).vers + 1 -- WEEK.count'updates' + 1
 	local w = fromJSON( msg[2] )
 	local clave = tointeger(w.clave) or format('%q', w.clave)
 	local fruit = w.fruit

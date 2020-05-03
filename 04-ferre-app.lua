@@ -8,6 +8,7 @@ local fd	  = require'carlos.fold'
 local context	  = require'lzmq'.context
 local pollin	  = require'lzmq'.pollin
 local asJSON	  = require'json'.encode
+local fromJSON    = require'json'.decode
 
 local receive	  = require'carlos.ferre'.receive
 local send	  = require'carlos.ferre'.send
@@ -66,6 +67,13 @@ local QDESC	 = 'SELECT clave FROM datos WHERE desc LIKE %q ORDER BY desc LIMIT 1
 -- Local function definitions --
 --------------------------------
 --
+
+local function recvmsg(skt, a)
+    return fd.reduce(function() return skt:recv_msgs(true) end, fd.into, a)
+end
+
+
+
 local function round(n, d) return floor(n*10^d+0.5)/10^d end
 
 local function sanitize(b) return function(_,k) return not(b[k]) end end
@@ -107,10 +115,7 @@ local function queryDB(msg)
     end
 end
 
-local function updateOne(conn, msg)
-    local w = {}
-    for k,v in msg:gmatch'([%a%d]+)=([^&]+)' do w[k] = asnum(v) end
-
+local function updateOne(conn, w)
     local clave  = w.clave
 --    local tbname = w.tbname
     local clause = format('WHERE clave LIKE %q', clave)
@@ -242,7 +247,18 @@ tasks:send_msg'OK'
 while true do
 print'+\n'
 
-    pollin{server}
+    pollin{server, tasks}
+
+    if tasks:events() == 'POLLIN' then
+	local msg = recvmsg(tasks, {})
+	local cmd = msg[1]:match'%a+'
+	if cmd == 'updatex' then
+	    msg = format('update %s', updateOne(PRECIOS, fromJSON(msg[2])))
+
+	    tasks:send_msg( msg )
+	end
+
+    else --if server:events() == 'POLLIN' then
 
     local id, msg = receive(server, true)
     msg = distill(msg)
@@ -263,7 +279,9 @@ print'+\n'
 	    ----------------------
 	    -- pre-process & store updates
 	    if cmd == 'update' then
-		msg = format('update %s', updateOne(PRECIOS, urldecode(msg)))
+		local w = {}
+		for k,v in urldecode(msg):gmatch'([%a%d]+)=([^&]+)' do w[k] = asnum(v) end
+		msg = format('update %s', updateOne(PRECIOS, w))
 	    end
 	    ----------------------
 	    -- convert into MULTI-part msgs
@@ -284,6 +302,8 @@ print'+\n'
     end
 
     send(server, id, '') -- close socket
+
+    end
 
 end
 

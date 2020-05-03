@@ -25,6 +25,7 @@ local tonumber  = tonumber
 local tostring	= tostring
 local assert	= assert
 local pcall     = pcall
+local exec	= os.execute
 
 local pairs	= pairs
 
@@ -37,10 +38,12 @@ _ENV = nil -- or M
 
 -- Local Variables for module-only access
 --
+local STREAM	 = 'ipc://stream.ipc'
 local LEDGER	 = 'tcp://149.248.21.161:5610' -- 'vultr'
 local SRVK	 = "*dOG4ev0i<[2H(*GJC2e@6f.cC].$on)OZn{5q%3"
 
 local QTKTS	 = 'SELECT MAX(uid) uid FROM tickets'
+local QVERS	 = 'SELECT MAX(vers) vers FROM updates'
 local UVERS	 = 'SELECT * FROM datos WHERE clave IN (SELECT PRINTF("%%s", clave) FROM updates WHERE vers > %d GROUP BY clave)'
 
 local vers	 = 0
@@ -93,8 +96,8 @@ assert( conn.exec'DETACH DATABASE week' )
 
 print("ferre & week DBs was successfully open\n")
 
--- XXX "select distinct(clave) from updates" should be a table
-vers = conn.count'updates' -- XXX select count(*) from (select distinct(clave) from updates)
+--vers = conn.count'updates' -- XXX select count(*) from (select distinct(clave) from updates)
+vers = fd.first(conn.query( QVERS ), function(x) return x end).vers or 0
 local uid = fd.first(conn.query( QTKTS ), function(x) return x end).uid or '0'
 
 -- -- -- -- -- --
@@ -105,15 +108,25 @@ local CTX = context()
 
 local www = assert(CTX:socket'DEALER')
 
---assert( www:immediate(true) )
-
-assert( www:set_id'FA-BJ-01' )
+assert( www:set_id'FA-CA-01' )
 
 assert( keypair():client(www, SRVK) )
 
 assert( www:connect( LEDGER ) )
 
 print('\nSuccessfully connected to:', LEDGER)
+--
+-- -- -- -- -- --
+--
+local msgr = assert(CTX:socket'DEALER')
+
+assert( msgr:set_id'FA-CA-01' )
+
+assert( msgr:connect( STREAM ) )
+
+assert( msgr:send_msg'OK' )
+
+print('\nSuccessfully connected to:', STREAM)
 --
 -- -- -- -- -- --
 --
@@ -124,6 +137,7 @@ do
 end
 --
 -- -- -- -- -- --
+--
 --
 -- Run loop
 --
@@ -144,12 +158,11 @@ print'+\n'
     end
 
     if cmd == 'update' then
---	tasks:send_msgs{'weekdb', cmd, ret}
+	msgr:send_msgs{'app', 'updatex', msg[2]}
 
-    elseif cmd == 'adjust' then
-	local q = switch(msg)
-	www:send_msgs(q)
---	fd.reduce(q, function(a) www:send_msgs(a) end)
+--    elseif cmd == 'adjust' then
+--	local q = switch(msg)
+--	www:send_msgs(q)
 
     elseif cmd == 'OK' then break end
 end
