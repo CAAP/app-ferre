@@ -218,7 +218,7 @@ print'+\n'
 	print( 'UID:', uid, '\n' )
 
     elseif cmd == 'update' then -- msg from 'ferredb' to be re-routed to 'inmem'
-	local u = fd.first(WEEK.query'SELECT MAX(vers) vers FROM updates', function(x) return x end).vers + 1 -- WEEK.count'updates' + 1
+	local u = (fd.first(WEEK.query'SELECT MAX(vers) vers FROM updates', function(x) return x end).vers or 0) + 1 -- WEEK.count'updates' + 1
 	local w = fromJSON( msg[2] )
 	local clave = tointeger(w.clave) or format('%q', w.clave)
 	local fruit = w.fruit
