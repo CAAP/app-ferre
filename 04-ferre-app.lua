@@ -254,8 +254,8 @@ print'+\n'
 	local cmd = msg[1]:match'%a+'
 	if cmd == 'updatex' then
 	    msg = format('update %s', updateOne(PRECIOS, fromJSON(msg[2])))
-
 	    tasks:send_msg( msg )
+	    print(msg, '\n')
 	end
 
     else --if server:events() == 'POLLIN' then
