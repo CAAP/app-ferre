@@ -63,6 +63,8 @@ local COSTOL 	  = 'costol = costo*(100+impuesto)*(100-descuento)*(1-rebaja/100.0
 
 local QDESC	 = 'SELECT clave FROM datos WHERE desc LIKE %q ORDER BY desc LIMIT 1'
 
+local UUID	 = {}
+
 --------------------------------
 -- Local function definitions --
 --------------------------------
@@ -158,12 +160,14 @@ local function asTicket(cmd, uid, persona, msg)
 end
 
 
-local function distill(a)
+local function distill(a, server)
     local data = concat(a)
     if data:match'GET' then
 	return format('%s %s', data:match'GET /(%a+)%?([^%?]+) HTTP')
     elseif data:match'POST' then
-	return format('%s %s', data:match'POST /(%a+)', data:match'pid=[^%?]+')
+	local _, msg = receive(server, true)
+	local data2 = concat(msg)
+	return format('%s %s', data:match'POST /(%a+)', data2:match'pid=[^%?]+')
     end
 end
 
@@ -261,7 +265,7 @@ print'+\n'
     else --if server:events() == 'POLLIN' then
 
     local id, msg = receive(server, true)
-    msg = distill(msg)
+    msg = distill(msg, server)
     local cmd = msg:match'%a+'
 
     if msg then
@@ -289,7 +293,9 @@ print'+\n'
 		local ret = split(msg, '&query=')
 		if ISTKT[cmd] and ret then -- ret is not nil
 		    local pid = asnum( msg:match'pid=([%d%a]+)' )
-	 	    local uid = newUID()..pid
+		    local uuid = msg:match'uuid=(%x+)'
+		    if uuid and not(UUID[uuid]) then UUID[uuid] = newUID()..pid end
+	 	    local uid = uuid and UUID[uuid] or newUID()..pid
 		    ret = asTicket(cmd, uid, PID[pid] or 'NaP', ret)
 		end
 		tasks:send_msgs( ret )

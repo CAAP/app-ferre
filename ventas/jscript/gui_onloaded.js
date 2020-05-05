@@ -142,26 +142,28 @@
 
 		TICKET.myticket.style.visibility = 'hidden';
 
-		local M = TICKET.items.size;
+		let M = TICKET.items.size;
 
-		if (M > 10) {
+/*		if (M > 10) {
 		    let ret = [];
+		    let uuid = Math.random().toString(36).substr(2);
+		    let items = Array.from(TICKET.items.values());
 		    for(let i=0; i<M;) {
-			let objs = ['pid='+pid, 'uuid='+];
-			TICKET.items.slice(i,i+10).forEach( item => objs.push( 'query=' + TICKET.plain(item) ) );
+			let objs = ['pid='+pid, 'uuid='+uuid];
+			items.slice(i,i+8).forEach( item => objs.push( 'query=' + TICKET.plain(item) ) );
 			ret.push( objs );
-			i += 10;
+			i += 8;
 		    }
 		    return Promise.all( ret.map(o => ferre.xpost(a, o)) )
 			.then( () => ferre.emptyBag(a) )
 			.catch( () => { TICKET.myticket.style.visibility = 'visible'} )
 			.then( ferre.nadie );
-		}
+		} */
 
 		let objs = ['pid='+pid];
 		TICKET.items.forEach( item => objs.push( 'query=' + TICKET.plain(item) ) );
 
-		if (M > 4) {
+		if (M > 8) {
 		    return ferre.xpost(a, objs)
 			.then( () => ferre.emptyBag(a) )
 			.catch( () => { TICKET.myticket.style.visibility = 'visible'} )
