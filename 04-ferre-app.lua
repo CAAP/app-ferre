@@ -164,10 +164,10 @@ local function distill(a, server)
     local data = concat(a)
     if data:match'GET' then
 	return format('%s %s', data:match'GET /(%a+)%?([^%?]+) HTTP')
-    elseif data:match'POST' then
-	local _, msg = receive(server, true)
-	local data2 = concat(msg)
-	return format('%s %s', data:match'POST /(%a+)', data2:match'pid=[^%?]+')
+--    elseif data:match'POST' then
+--	local _, msg = receive(server, true)
+--	local data2 = concat(msg)
+--	return format('%s %s', data:match'POST /(%a+)', data:match'pid=[^%?]+')
     end
 end
 

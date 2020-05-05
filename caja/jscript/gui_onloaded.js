@@ -154,7 +154,8 @@
 
 	    caja.add2caja = function(w) {
 		const tr = cajita.querySelector('[data-uid="'+w.uid+'"]');
-		if (tr) { tr.lastChild.textContent = w.tag; return Promise.resolve(true); }
+		if (tr) { cajita.removeChild(tr); }
+//		if (tr) { tr.lastChild.textContent = w.tag; return Promise.resolve(true); }
 		let row = cajita.insertRow(0);
 		row.dataset.uid = w.uid;
 		w.nombre = caja.NAMES.get( UTILS.asnum(w.uid.match(/\d+$/)) ) || 'CAJA';

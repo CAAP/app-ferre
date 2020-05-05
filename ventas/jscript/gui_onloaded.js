@@ -144,7 +144,7 @@
 
 		let M = TICKET.items.size;
 
-/*		if (M > 10) {
+		if (M > 8) {
 		    let ret = [];
 		    let uuid = Math.random().toString(36).substr(2);
 		    let items = Array.from(TICKET.items.values());
@@ -154,13 +154,13 @@
 			ret.push( objs );
 			i += 8;
 		    }
-		    return Promise.all( ret.map(o => ferre.xpost(a, o)) )
+		    return Promise.all( ret.map(o => ferre.xget(a, o)) )
 			.then( () => ferre.emptyBag(a) )
 			.catch( () => { TICKET.myticket.style.visibility = 'visible'} )
 			.then( ferre.nadie );
-		} */
+		}
 
-		let objs = ['pid='+pid];
+/*		let objs = ['pid='+pid];
 		TICKET.items.forEach( item => objs.push( 'query=' + TICKET.plain(item) ) );
 
 		if (M > 8) {
@@ -168,12 +168,12 @@
 			.then( () => ferre.emptyBag(a) )
 			.catch( () => { TICKET.myticket.style.visibility = 'visible'} )
 			.then( ferre.nadie );
-		} else {
+		} else { */
 		    return ferre.xget(a, objs)
 			.then( () => ferre.emptyBag(a) )
 			.catch( () => { TICKET.myticket.style.visibility = 'visible'} )
 			.then( ferre.nadie );
-		}
+//		}
 	    };
 
 	    ['ticket', 'presupuesto', 'surtir', 'faltante'].forEach( lbl => {
