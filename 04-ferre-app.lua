@@ -64,6 +64,7 @@ local COSTOL 	  = 'costol = costo*(100+impuesto)*(100-descuento)*(1-rebaja/100.0
 local QDESC	 = 'SELECT clave FROM datos WHERE desc LIKE %q ORDER BY desc LIMIT 1'
 
 local UUID	 = {}
+local CACHE	 = {}
 
 --------------------------------
 -- Local function definitions --
@@ -154,20 +155,34 @@ local function process(uid, persona, tag)
     end
 end
 
-local function asTicket(cmd, uid, persona, msg)
-    remove(msg, 1) -- pid
-    return fd.reduce(msg, fd.map(urldecode), fd.map(process(uid, persona, cmd)), fd.into, {cmd})
-end
-
-
 local function distill(a, server)
     local data = concat(a)
     if data:match'GET' then
 	return format('%s %s', data:match'GET /(%a+)%?([^%?]+) HTTP')
---    elseif data:match'POST' then
---	local _, msg = receive(server, true)
---	local data2 = concat(msg)
---	return format('%s %s', data:match'POST /(%a+)', data:match'pid=[^%?]+')
+    end
+end
+
+local function asTicket(items, uid, persona, cmd, ret)
+    remove(items, 1) -- pid
+    return fd.reduce(items, fd.map(urldecode), fd.map(process(uid, persona, cmd)), fd.into, ret)
+end
+
+local function isuuid(its, cmd, pid, uuid, len)
+    if uuid then
+	if not(UUID[uuid]) then
+	    UUID[uuid] = newUID()..pid
+	    CACHE[uuid] = {cmd}
+	end
+	local w = asTicket(its, UUID[uuid], PID[pid] or 'NaP', cmd, CACHE[uuid])
+	local N = #w
+	if len == N then
+	    UUID[uuid] = nil
+	    CACHE[uuid] = nil
+	    return w
+	else return {'uuid', N} end
+    else
+	local uid = newUID()..pid
+	return asTicket(its, uid, PID[pid] or 'NaP', cmd, {cmd})
     end
 end
 
@@ -294,9 +309,9 @@ print'+\n'
 		if ISTKT[cmd] and ret then -- ret is not nil
 		    local pid = asnum( msg:match'pid=([%d%a]+)' )
 		    local uuid = msg:match'uuid=(%x+)'
-		    if uuid and not(UUID[uuid]) then UUID[uuid] = newUID()..pid end
-	 	    local uid = uuid and UUID[uuid] or newUID()..pid
-		    ret = asTicket(cmd, uid, PID[pid] or 'NaP', ret)
+		    local length = msg:match'length=(%d+)'
+		    ret = isuuid(ret, cmd, pid, uuid, length)
+--		    ret = asTicket(cmd, uid, PID[pid] or 'NaP', ret)
 		end
 		tasks:send_msgs( ret )
 	    else tasks:send_msg( msg ) end

@@ -149,7 +149,7 @@
 		    let uuid = Math.random().toString(36).substr(2);
 		    let items = Array.from(TICKET.items.values());
 		    for(let i=0; i<M;) {
-			let objs = ['pid='+pid, 'uuid='+uuid];
+			let objs = ['pid='+pid, 'uuid='+uuid, 'length='+(M+1)];
 			items.slice(i,i+8).forEach( item => objs.push( 'query=' + TICKET.plain(item) ) );
 			ret.push( objs );
 			i += 8;
@@ -160,9 +160,9 @@
 			.then( ferre.nadie );
 		}
 
-/*		let objs = ['pid='+pid];
+		let objs = ['pid='+pid];
 		TICKET.items.forEach( item => objs.push( 'query=' + TICKET.plain(item) ) );
-
+/*
 		if (M > 8) {
 		    return ferre.xpost(a, objs)
 			.then( () => ferre.emptyBag(a) )
