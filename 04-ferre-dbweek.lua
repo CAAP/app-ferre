@@ -97,7 +97,7 @@ local function dumpit(v)
     dump(PATH, v)
 end
 
-local function receive(skt, a) return fd.reduce(function() return skt:recv_msgs(true) end, fd.into, a) end
+local function receive(skt, a) return fd.reduce(function() return skt:msgs(true) end, fd.into, a) end
 
 local function sanitize(b) return function(_,k) return not(b[k]) end end
 

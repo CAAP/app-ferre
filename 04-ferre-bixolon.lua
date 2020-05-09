@@ -9,7 +9,6 @@ local into	  = require'carlos.fold'.into
 
 local urldecode   = require'carlos.ferre'.urldecode
 local queryDB	  = require'carlos.ferre'.queryDB
-local receive	  = require'carlos.ferre'.receive
 local context	  = require'lzmq'.context
 local pollin	  = require'lzmq'.pollin
 
@@ -37,8 +36,6 @@ local PRINTER	 = 'nc -N 192.168.3.21 9100'
 -- Local function definitions --
 --------------------------------
 --
-
-local function receive(skt) return reduce(function() return skt:recv_msgs(true) end, into, {}) end
 
 local function bixolon( data )
     local skt = popen(PRINTER, 'w')
@@ -73,7 +70,7 @@ print'+\n'
 
     pollin{server}
 
-	local msg = receive(server)
+	local msg = server:recv_msgs() -- receive(server)
 
 	bixolon( msg )
 

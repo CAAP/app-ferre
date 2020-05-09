@@ -71,12 +71,6 @@ local CACHE	 = {}
 --------------------------------
 --
 
-local function recvmsg(skt, a)
-    return fd.reduce(function() return skt:recv_msgs(true) end, fd.into, a)
-end
-
-
-
 local function round(n, d) return floor(n*10^d+0.5)/10^d end
 
 local function sanitize(b) return function(_,k) return not(b[k]) end end
@@ -269,7 +263,7 @@ print'+\n'
     pollin{server, tasks}
 
     if tasks:events() == 'POLLIN' then
-	local msg = recvmsg(tasks, {})
+	local msg = tasks:recv_msgs(true)
 	local cmd = msg[1]:match'%a+'
 	if cmd == 'updatex' then
 	    msg = format('update %s', updateOne(PRECIOS, fromJSON(msg[2])))

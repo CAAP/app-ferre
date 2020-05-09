@@ -67,7 +67,7 @@ local DB	= {}
 --
 
 local function receive(skt, a)
-    return fd.reduce(function() return skt:recv_msgs(true) end, fd.into, a)
+    return fd.reduce(function() return skt:msgs(true) end, fd.into, a)
 end
 
 local function deliver( skt ) return function(m, i) skt:send_msg( m ) end end
