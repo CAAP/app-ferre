@@ -173,7 +173,7 @@ local function isuuid(its, cmd, pid, uuid, len)
 	    UUID[uuid] = nil
 	    CACHE[uuid] = nil
 	    return w
-	else return {'uuid', N} end
+	else return {'uuid', uuid, N, len} end
     else
 	local uid = newUID()..pid
 	return asTicket(its, uid, PID[pid] or 'NaP', cmd, {cmd})
@@ -302,7 +302,7 @@ print'+\n'
 		local ret = split(msg, '&query=')
 		if ISTKT[cmd] and ret then -- ret is not nil
 		    local pid = asnum( msg:match'pid=([%d%a]+)' )
-		    local uuid = msg:match'uuid=(%x+)'
+		    local uuid = msg:match'uuid=(%w+)'
 		    local length = msg:match'length=(%d+)'
 		    ret = isuuid(ret, cmd, pid, uuid, length)
 --		    ret = asTicket(cmd, uid, PID[pid] or 'NaP', ret)
