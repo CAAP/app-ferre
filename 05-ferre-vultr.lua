@@ -55,7 +55,7 @@ local conn = assert( connect':inmemory:' )
 --------------------------------
 --
 local function receive(skt, a)
-    return fd.reduce(function() return skt:recv_msgs(true) end, fd.into, a)
+    return fd.reduce(function() return skt:msgs(true) end, fd.into, a)
 end
 
 local function plain(a) return asJSON(a) end
@@ -108,7 +108,7 @@ local CTX = context()
 
 local www = assert(CTX:socket'DEALER')
 
-assert( www:set_id'FA-CA-01' )
+assert( www:set_id'FA-BJ-01' )
 
 assert( keypair():client(www, SRVK) )
 
@@ -120,7 +120,7 @@ print('\nSuccessfully connected to:', LEDGER)
 --
 local msgr = assert(CTX:socket'DEALER')
 
-assert( msgr:set_id'FA-CA-01' )
+assert( msgr:set_id'FA-BJ-01' )
 
 assert( msgr:connect( STREAM ) )
 
@@ -160,9 +160,9 @@ print'+\n'
     if cmd == 'update' then
 	msgr:send_msgs{'app', 'updatex', msg[2]}
 
---    elseif cmd == 'adjust' then
---	local q = switch(msg)
---	www:send_msgs(q)
+    elseif cmd == 'adjust' then
+	local q = switch(msg)
+	www:send_msgs(q)
 
     elseif cmd == 'OK' then break end
 end
