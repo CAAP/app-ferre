@@ -55,7 +55,7 @@ local conn = assert( connect':inmemory:' )
 --------------------------------
 --
 local function receive(skt, a)
-    return fd.reduce(function() return skt:recv_msgs(true) end, fd.into, a)
+    return fd.reduce(function() return skt:msgs(true) end, fd.into, a)
 end
 
 local function plain(a) return asJSON(a) end
@@ -151,14 +151,14 @@ print'+\n'
     local cmd = msg:match'%a+'
 
     if more then
-	msg = receive(www, {msg})
+	msg = receive(www, {msg}) -- www:recv_msgs(true) -- 
 	print(concat(msg, '&'), '\n')
     else
 	print(msg, '\n')
     end
 
     if cmd == 'update' then
-	msgr:send_msgs{'app', 'updatex', msg[2]}
+	msgr:send_msgs{'app', 'updatex', msg[2]} -- msg[1]
 
 --    elseif cmd == 'adjust' then
 --	local q = switch(msg)
