@@ -275,9 +275,9 @@ print'+\n'
 
     local id, msg = receive(server, true)
     msg = distill(msg, server)
-    local cmd = msg:match'%a+'
 
     if msg then
+	local cmd = msg:match'%a+'
 	-- send OK
 	send(server, id, OK)
 	----------------------

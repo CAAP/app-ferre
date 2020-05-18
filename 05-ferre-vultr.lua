@@ -108,7 +108,7 @@ local CTX = context()
 
 local www = assert(CTX:socket'DEALER')
 
-assert( www:set_id'FA-CA-01' )
+assert( www:set_id'FA-BJ-01' )
 
 assert( keypair():client(www, SRVK) )
 
@@ -120,7 +120,7 @@ print('\nSuccessfully connected to:', LEDGER)
 --
 local msgr = assert(CTX:socket'DEALER')
 
-assert( msgr:set_id'FA-CA-01' )
+assert( msgr:set_id'FA-BJ-01' )
 
 assert( msgr:connect( STREAM ) )
 
@@ -160,9 +160,9 @@ print'+\n'
     if cmd == 'update' then
 	msgr:send_msgs{'app', 'updatex', msg[2]} -- msg[1]
 
---    elseif cmd == 'adjust' then
---	local q = switch(msg)
---	www:send_msgs(q)
+    elseif cmd == 'adjust' then
+	local q = switch(msg)
+	www:send_msgs(q)
 
     elseif cmd == 'OK' then break end
 end

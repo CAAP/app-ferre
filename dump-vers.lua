@@ -17,7 +17,7 @@ _ENV =  nil
 -- if db file exists and 'updates' tb exists then returns count
 local function which( db )
     local conn = assert( dbconn( db ) ) -- if there's a missing db-file, raises ERROR
-    local N = first(conn.query'SELECT MAX(vers) vers FROM updates', function(x) return x end).vers -- conn.count'updates'
+    local N = first(conn.query'SELECT MAX(vers) vers FROM updates', function(x) return x end).vers or 0 -- conn.count'updates'
     conn.close()
     return N
 end

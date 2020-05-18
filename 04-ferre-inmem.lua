@@ -273,7 +273,6 @@ print'+\n'
 
     if PRINT[cmd] then
 	local uid, m = switch(cmd, msg, send)
-print(concat(m , '&'))
 	printer:send_msgs( m )
 	print('UID:', uid)
     end
