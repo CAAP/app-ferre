@@ -12,6 +12,7 @@ local send	  = require'carlos.ferre'.send
 local pollin	  = require'lzmq'.pollin
 local context	  = require'lzmq'.context
 local pid	  = require'lzmq'.pid
+local monitor	  = require'carlos.zmq'.monitor
 
 local format	  = require'string'.format
 local concat	  = table.concat
@@ -58,10 +59,7 @@ local function id2fruit( id, sk )
 end
 
 local function handshake(server, sk)
-    local id, msg = receive(server, true)
-print(id:byte(1, #id))
---    local e = fd.first({id:byte(1,#id)}, function(c) return c < 0 end)
---    if msg == nil then send(server, id, ''); return 'Handshake Error' end
+    local id = server:recv_msgs()[1] -- receive(server, true)
     local fruit = id2fruit(id, sk)
 	send(server, id, HELLO)
 	send(server, id, ssevent('fruit', fruit))
@@ -112,9 +110,7 @@ local CTX = context()
 local server = assert(CTX:socket'STREAM')
 -- -- -- -- -- --
 -- * MONITOR *
-local spy = assert(CTX:socket'PAIR')
-assert( server:monitor( SPIES ) )
-assert( spy:connect( SPIES ) )
+local spy = monitor(CTX, server, SPIES)
 -- -- -- -- -- --
 -- ***********
 assert( server:notify(false) )
@@ -147,10 +143,9 @@ print'+\n'
 	end
 
 	if spy:events() == 'POLLIN' then
-	    local ev, mm = receive(spy)
-	    print( ev, '\n' )
-	    if mm[1]:match'tcp' then
-		local sk = toint(ev:match'%d+$')
+	    local ev, sk, addr = spy:receive() -- receive(spy)
+	    print( ev, sk, addr, '\n' )
+	    if addr:match'tcp' then
 		if ev:match'DISCONNECTED' then
 		    print( 'Bye bye', sayonara(sk), '\n')
 		elseif ev:match'ACCEPTED' then

@@ -17,3 +17,4 @@
 
 	    clearTable: tb => { while (tb.firstChild) { tb.removeChild( tb.firstChild ); } }
 	};
+
