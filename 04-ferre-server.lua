@@ -9,10 +9,11 @@ local ssevent	  = require'carlos.ferre'.ssevent
 local receive	  = require'carlos.ferre'.receive
 local send	  = require'carlos.ferre'.send
 --local getFruit	  = require'carlos.ferre'.getFruit
+local monitor	  = require'carlos.zmq'.monitor
 local pollin	  = require'lzmq'.pollin
 local context	  = require'lzmq'.context
 local pid	  = require'lzmq'.pid
-local monitor	  = require'carlos.zmq'.monitor
+local hex	  = require'lints'.hex
 
 local format	  = require'string'.format
 local concat	  = table.concat
@@ -144,7 +145,7 @@ print'+\n'
 
 	if spy:events() == 'POLLIN' then
 	    local ev, sk, addr = spy:receive() -- receive(spy)
-	    print( ev, sk, addr, '\n' )
+	    print( ev, hex(sk), addr, '\n' )
 	    if addr:match'tcp' then
 		if ev:match'DISCONNECTED' then
 		    print( 'Bye bye', sayonara(sk), '\n')

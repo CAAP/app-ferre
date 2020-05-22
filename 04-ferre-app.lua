@@ -9,6 +9,7 @@ local context	  = require'lzmq'.context
 local pollin	  = require'lzmq'.pollin
 local asJSON	  = require'json'.encode
 local fromJSON    = require'json'.decode
+local pktb	  = require'lmpack'.table
 
 local receive	  = require'carlos.ferre'.receive
 local send	  = require'carlos.ferre'.send
@@ -161,7 +162,7 @@ local function asTicket(items, uid, persona, cmd, ret)
     return fd.reduce(items, fd.map(urldecode), fd.map(process(uid, persona, cmd)), fd.into, ret)
 end
 
-local function isuuid(its, cmd, pid, uuid, len)
+local function isuuid(its, cmd, pid, uuid, M)
     if uuid then
 	if not(UUID[uuid]) then
 	    UUID[uuid] = newUID()..pid
@@ -169,11 +170,11 @@ local function isuuid(its, cmd, pid, uuid, len)
 	end
 	local w = asTicket(its, UUID[uuid], PID[pid] or 'NaP', cmd, CACHE[uuid])
 	local N = #w
-	if len == N then
+	if M == N then
 	    UUID[uuid] = nil
 	    CACHE[uuid] = nil
 	    return w
-	else return {'uuid', uuid, N, len} end
+	else return {'uuid', uuid, N, M} end
     else
 	local uid = newUID()..pid
 	return asTicket(its, uid, PID[pid] or 'NaP', cmd, {cmd})
@@ -303,7 +304,7 @@ print'+\n'
 		if ISTKT[cmd] and ret then -- ret is not nil
 		    local pid = asnum( msg:match'pid=([%d%a]+)' )
 		    local uuid = msg:match'uuid=(%w+)'
-		    local length = msg:match'length=(%d+)'
+		    local length = tointeger(msg:match'length=(%d+)')
 		    ret = isuuid(ret, cmd, pid, uuid, length)
 --		    ret = asTicket(cmd, uid, PID[pid] or 'NaP', ret)
 		end
