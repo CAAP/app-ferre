@@ -49,7 +49,7 @@
 	    }
 
 	    function precios(q) {
-		if ((q.precio2 == 0) && (q.precio3 == 0)) { return document.createTextNode( q.precios.precio1 ); }
+		if (!(q.precio2 || q.precio3)) { return document.createTextNode( q.precios.precio1 ); }
 		let ret = document.createElement('select');
 		ret.addEventListener('change', TICKET.update);
 		ret.name = 'precio';
@@ -57,6 +57,7 @@
 		    let opt = document.createElement('option');
 		    opt.value = k; opt.selected = (q.precio == k);
 		    opt.appendChild( document.createTextNode( q.precios[k] ) );
+		    TICKET.tips(opt, q.precios[k])
 		    ret.appendChild(opt);
 		}
 		return ret;

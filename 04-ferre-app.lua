@@ -216,6 +216,8 @@ exec(format('%s/dump-people.lua', APP))
 
 exec(format('%s/dump-header.lua', APP))
 
+exec(format('%s/dump-units.lua', APP))
+
 --
 --
 -- Initilize server(s)
@@ -295,6 +297,7 @@ print'+\n'
 	    if cmd == 'update' then
 		local w = {}
 		for k,v in urldecode(msg):gmatch'([%a%d]+)=([^&]+)' do w[k] = asnum(v) end
+		for k,v in urldecode(msg):gmatch'([%a%d]+)=&' do w[k] = '' end
 		msg = format('update %s', updateOne(PRECIOS, w))
 	    end
 	    ----------------------

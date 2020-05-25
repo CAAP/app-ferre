@@ -51,7 +51,7 @@ local PRINT	 = { ticket=true, bixolon=true }
 local DIRTY	 = {clave=true, tbname=true, fruit=true}
 local ISSTR	 = {desc=true, fecha=true, obs=true, proveedor=true, gps=true, u1=true, u2=true, u3=true, uidPROV=true}
 
-local SUID	 = 'SELECT uid, SUBSTR(uid, 12, 5) time, SUM(qty) count, ROUND(SUM(totalCents)/100.0, 2) total, tag, nombre FROM tickets WHERE tag NOT LIKE "factura" GROUP BY uid'
+local SUID	 = 'SELECT uid, SUBSTR(uid, 12, 5) time, COUNT(uid) count, ROUND(SUM(totalCents)/100.0, 2) total, tag, nombre FROM tickets WHERE tag NOT LIKE "factura" GROUP BY uid'
 local SLPR	 = 'SELECT desc, clave, qty, rea, ROUND(unitario, 2) unitario, unidad, ROUND(totalCents/100.0, 2) subTotal, uid FROM tickets'
 
 local QUID	 = 'SELECT * FROM uids WHERE uid LIKE %q LIMIT 1'

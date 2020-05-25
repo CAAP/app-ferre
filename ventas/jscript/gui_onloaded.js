@@ -65,6 +65,8 @@
 
 	    BROWSE.query = o => ferre.xget('query', o);
 
+	    BROWSE.tips = ferre.tips;
+
 	    ferre.keyPressed = BROWSE.keyPressed;
 	    ferre.startSearch = BROWSE.startSearch;
 	    ferre.scroll = e => {if (BROWSE.lis.childElementCount > 0) {return BROWSE.scroll(e)} };
@@ -102,6 +104,8 @@
 	    }
 
 	    TICKET.getPrice = getPrice;
+
+	    TICKET.tips = ferre.tips;
 
 	    TICKET.total = cents => {
 		ttotal.textContent = '$' + (cents / 100).toFixed(2);

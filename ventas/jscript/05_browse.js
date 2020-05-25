@@ -16,6 +16,7 @@
 		Object.keys( precios ).forEach( k => {
 		    let pesos = row.insertCell();
 		    pesos.classList.add('total'); pesos.appendChild( document.createTextNode( precios[k] ) );
+		    BROWSE.tips(pesos, precios[k]);
 		    if (k == 'precio1') { pesos.classList.add(k); }
 		} );
 	// INVENTARIO

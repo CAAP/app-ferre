@@ -50,7 +50,6 @@
 	(function() {
 	    admin.origin = document.location.origin+':5040/';
 	    DATA.inplace = q => {let r = document.body.querySelector('tr[data-clave="'+q.clave+'"]'); if (r) {UTILS.clearTable(r); BROWSE.rows(q,r); r.classList.add('updated'); } return q;};
-//	    DATA.inplace = () => Promise.resolve(true);
 
 	    let mymenu = document.getElementById("menu");
 
@@ -96,6 +95,11 @@
 	    let records = new Map()
 	    let fields = new Set();
 	    let suppliers = new Map();
+	    let unit1 = new Map();
+	    let unit2 = new Map();
+	    let unit3 = new Map();
+	    let units = new Map([['u1', unit1], ['u2', unit2], ['u3', unit3]]);
+	    let UNITS = [];
 	    let CLIP = false;
 
 	    let asnum = UTILS.asnum;
@@ -137,37 +141,84 @@
 		return opt;
 	    }
 
-	    function getSuppliers() {
+	    function selects(lbl, cell, f) {
+		let ch = document.createElement('select'); ch.name = lbl;
+		cell.appendChild( ch ); f(ch, lbl);
+		return ch;
+	    }
+
+	    function getSuppliers(el) {
 		return XHR.getJSON('/json/proveedores.json').then( a => {
-		    const ch = choices('', true);
-		    tabla.querySelector('select[name="proveedor"]').appendChild( ch );
-		    suppliers.set('nadie', ch);
+		    const ch = choices('', true); el.appendChild( ch );
+		    suppliers.set('none', ch);
 		    return Promise.resolve(a);
 		} ).then( a => a.forEach( p => {
 		    const ch = choices(p.nombre, false);
-		    suppliers.set(p.nombre, ch);
-		    tabla.querySelector('select[name="proveedor"]').appendChild( ch );
+		    suppliers.set(p.nombre, ch); el.appendChild( ch );
+	// XXX XXX XXX
+		    el.parentElement.appendChild( document.createTextNode('') );
 		} ) );
+	    }
+
+	    function getUnits(el, lbl) {
+		const ch = choices('', true); el.appendChild( ch );
+		units.get(lbl).set('none', ch);
+		UNITS.forEach( u => {
+		    const ch = choices(u.unidad, false); ch.title = u.desc;
+		    units.get(lbl).set(u.unidad, ch); el.appendChild( ch );
+	// XXX XXX XXX
+		    el.parentElement.appendChild( document.createTextNode('') );
+		} );
+	    }
+
+	    function clearChoices() {
+		[suppliers, unit1, unit2, unit3].forEach( m => m.get('none').selected = true);
+	// XXX XXX XXX
+		[suppliers, unit1, unit2, unit3].forEach( m => {
+			let el = m.get('none').parentElement.parentElement;
+			el.removeChild( el.lastChild );
+		} );
 	    }
 
 	    admin.reset = () => {
 		UTILS.clearTable( tabla );
-		if (suppliers.has('nadie')) { suppliers.get('nadie').selected = true; }
+		clearChoices();
 		tkt.style.visibility = 'visible';
 	    };
 
-		// XXX
+	    function derived() {
+		const ie = document.createElement('input'); ie.type = 'text';
+		ie.size = 4; ie.name = lbl+'_p'; ie.disabled = true;
+		el.parentElement.appendChild(document.createTextNode(' de '));
+		el.parentElement.appendChild( ie );
+	    }
+
+	    function setChoice(v, m) {
+		if (v && m.has(v)) {
+		    m.get(v).selected = true;
+		//XXX XXX XXX
+			let el = m.get('none').parentElement.parentElement;
+			el.removeChild( el.lastChild );
+			el.appendChild(document.createTextNode(''));
+		}
+		else {
+		    m.get('none').selected = true;
+		//XXX XXX XXX
+			let el = m.get('none').parentElement.parentElement;
+			el.removeChild( el.lastChild );
+			el.appendChild(document.createTextNode(v || ''));
+		}
+	    }
+
 	    function setfields( o ) {
 		tkt.dataset.clave = o.clave;
 		let costol = o.costol
 		let a = Object.assign({}, o, {costol: (costol/1e4).toFixed(2)});
 		Array.from(fields).filter( k => k.startsWith('prc') ).forEach( k => {a[k.replace('prc', 'precio')] = (a[k]*costol/1e4).toFixed(2)} );
 		fields.forEach( k => {tabla.querySelector('input[name='+k+']').value = a[k] || '' } );
-		const p = o.proveedor;
-		if (p && suppliers.has(p))
-		    suppliers.get(p).selected = true;
-		else
-		    suppliers.get('nadie').selected = true;
+		// choices
+		setChoice(o.proveedor, suppliers);
+		units.forEach((u, k) => setChoice(o[k], u));
 	    }
 
 	    function fetch(k, f) {
@@ -203,12 +254,12 @@
 	    };
 
 	    admin.cancelar = () => {
-		    records.clear();
-		    CHANGES.clear();
-		    cleanMark();
-		    tkt.querySelectorAll('input').forEach(i => { i.value = ''});
-		    tkt.dataset.clave = '';
-		    suppliers.get('nadie').selected = true;
+		records.clear();
+		CHANGES.clear();
+		cleanMark();
+		tkt.querySelectorAll('input').forEach(i => { i.value = ''});
+		tkt.dataset.clave = '';
+		clearChoices();
 	    };
 
 	    admin.anUpdate = function(e) {
@@ -236,7 +287,7 @@
 	    };
 
 	    function addField(k) {
-		if (k.startsWith('u')) { return; } // already taken into account by prc_
+		if (k.startsWith('u')) { return; } // already taken into account by prc_ (u1, u2, u3) & proveedor (uidPROV)
 		let row = tabla.insertRow();
 		// input && defaults
 		row.insertCell().appendChild( document.createTextNode(k.replace('prc', 'precio')) );
@@ -251,17 +302,18 @@
 				  cell.classList.add('clip'); cell.onclick = setClip; break;
 		    case 'costo': inputs(row, 'costol', false); break;
 		    case 'fecha': ie.disabled = true; break;
-		    case 'proveedor': k = 'uidPROV'; ie.name = k; // fields.add( 'uidPROV' ); ie.name = 'uidPROV'; 
-				      let ch = document.createElement('select'); ch.name = 'proveedor';
-				      cell.colSpan = 2; cell.appendChild( ch );
-				      cell = row.insertCell(); getSuppliers(); break;
+		    case 'proveedor': cell.colSpan = 2;
+				      selects(k, cell, getSuppliers);
+				      cell = row.insertCell();
+				      k = 'uidPROV'; ie.name = k; break;
 		}
-		if (k.startsWith('prc')) { inputs(row, k.replace('prc', 'u'), false).disabled = false; inputs(row, k.replace('prc', 'precio'), false); }
+		if (k.startsWith('prc')) { selects(k.replace('prc', 'u'), row.insertCell(), getUnits); inputs(row, k.replace('prc', 'precio'), false); }
 		if (costos.has(k)) { ie.type = 'number'; }
 		cell.appendChild( ie );
  		fields.add( k );
 	    }
 
+	    XHR.getJSON('/json/units.json').then(a => a.forEach( u => UNITS.push(u) ));
 	    XHR.getJSON('/json/header.json').then(a => a.forEach( addField ));
 
 	})();
