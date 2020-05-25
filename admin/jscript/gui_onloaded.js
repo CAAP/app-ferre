@@ -175,8 +175,7 @@
 		[suppliers, unit1, unit2, unit3].forEach( m => m.get('none').selected = true);
 	// XXX XXX XXX
 		[suppliers, unit1, unit2, unit3].forEach( m => {
-			let el = m.get('none').parentElement.parentElement;
-			el.removeChild( el.lastChild );
+	m.get('none').parentElement.parentElement.lastChild.replaceWith(document.createTextNode(''));
 		} );
 	    }
 
@@ -197,16 +196,12 @@
 		if (v && m.has(v)) {
 		    m.get(v).selected = true;
 		//XXX XXX XXX
-			let el = m.get('none').parentElement.parentElement;
-			el.removeChild( el.lastChild );
-			el.appendChild(document.createTextNode(''));
+	m.get('none').parentElement.parentElement.lastChild.replaceWith(document.createTextNode(''));
 		}
 		else {
 		    m.get('none').selected = true;
 		//XXX XXX XXX
-			let el = m.get('none').parentElement.parentElement;
-			el.removeChild( el.lastChild );
-			el.appendChild(document.createTextNode(v || ''));
+	m.get('none').parentElement.parentElement.lastChild.replaceWith(document.createTextNode(v || ''));
 		}
 	    }
 
