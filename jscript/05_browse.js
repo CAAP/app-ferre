@@ -19,15 +19,17 @@
 		    BROWSE.tips(pesos, precios[k]);
 		    if (k == 'precio1') { pesos.classList.add(k); }
 		} );
+
+	    };
 	// INVENTARIO
 		// TRASH
+/*		    // 
 		let MM = Object.keys( precios ).length;
 		for (let i = 0; i < (3-MM); i++)
 		    row.insertCell().appendChild(document.createTextNode(' '));
 		let agg = row.insertCell();
 		agg.classList.add('faltantes');
-		agg.appendChild( document.createTextNode('ADD') );
-	    };
+		agg.appendChild( document.createTextNode('ADD') ); */
 
 	    function newItem(a, j) {
 		let row = BROWSE.lis.insertRow(j);
