@@ -9,7 +9,7 @@ local context	  = require'lzmq'.context
 local pollin	  = require'lzmq'.pollin
 local asJSON	  = require'json'.encode
 local fromJSON    = require'json'.decode
-local pktb	  = require'lmpack'.table
+--local pktb	  = require'lmpack'.table
 
 local receive	  = require'carlos.ferre'.receive
 local send	  = require'carlos.ferre'.send
