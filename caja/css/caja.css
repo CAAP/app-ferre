@@ -17,6 +17,10 @@ button[name=guardar] { color: white; background-color: blue; }
 
 .amarillo tr:hover > td { background-color: #ffff97; }
 
+button[name=facturar] { color: white; background-color: #218406; }
+
+button:disabled { background-color: black; }
+
 .activo {
     font: bold 100% arial;
     color: white;

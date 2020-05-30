@@ -56,6 +56,18 @@
 	    caja.menuToggle = p => { mymenu.style.display = p ? 'inline' : 'none'; };
 	})();
 
+	// FACTURAR
+	(function() {
+	    const butt = document.querySelector('button[name="facturar"]');
+
+	    caja.taxme = function(w) {
+		if (!w.uidSAT)
+		    butt.disabled = true;
+		return w;
+	    };
+
+	})();
+
 	// PEOPLE
 	(function() {
 	    const persona = document.getElementById('personas');
@@ -148,6 +160,7 @@
 		return IDB.readDB( PRICE )
 		    .get( clave )
 		    .then( w => { if (w) { return Object.assign( o, w, {id: clave} ) } else { return Promise.reject() } } )
+		    .then( caja.taxme ) // can be taxed?
 		    .then( TICKET.show ) // instead of TICKET.add
 		    .catch( e => console.log(e) );
 	    };

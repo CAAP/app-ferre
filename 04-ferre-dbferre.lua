@@ -178,14 +178,10 @@ print'+\n'
     local cmd = msg:match'%a+'
     print(msg, '\n')
 
-    if cmd == 'update' then
-	local w = fromJSON( msg:match'{[^}]+}' )
+    if cmd == 'update' and msg:match'{' then
+	local w = fromJSON( msg:sub(msg:find'{', #msg) )
 	local ret = asJSON( addUpdate(PRECIOS, w) )
 	tasks:send_msgs{'weekdb', cmd, ret}
---]]
-
---	www:send_msg( msg ) -- WWW
-
 
     elseif cmd == 'faltante' then
 	print( msg )
