@@ -23,6 +23,7 @@ local split	  = require'carlos.string'.split
 local connect	  = require'carlos.sqlite'.connect
 
 local assert	  = assert
+local pairs	  = pairs
 local concat	  = table.concat
 local remove	  = table.remove
 local exec	  = os.execute
@@ -85,15 +86,15 @@ local function reformat(v, k)
     return format('%s = %s', k, vv)
 end
 
-local function byDesc(conn, s)
+local function byDesc(s)
     local qry = format(QDESC, s:gsub('*', '%%')..'%')
-    local o = fd.first(conn.query(qry), function(x) return x end)
+    local o = fd.first(PRECIOS.query(qry), function(x) return x end)
     return (o and o.clave or '')
 end
 
-local function byClave(conn, s)
+local function byClave(s)
     local qry = format('SELECT * FROM  datos WHERE clave LIKE %q LIMIT 1', s)
-    local o = fd.first(conn.query(qry), function(x) return x end)
+    local o = fd.first(PRECIOS.query(qry), function(x) return x end)
     return o and asJSON( o ) or ''
 end
 
@@ -101,19 +102,19 @@ local function queryDB(msg)
     if msg:match'desc' then
 	local ret = msg:match'desc=([^!&]+)'
 	if ret:match'VV' then
-	    return byClave(PRECIOS, byDesc(PRECIOS, ret))
+	    return byClave(byDesc(ret))
 	else
-	    return byDesc(PRECIOS, ret)
+	    return byDesc(ret)
 	end
 
     elseif msg:match'clave' then
 	local ret = msg:match'clave=([%a%d]+)'
-	return byClave(PRECIOS, ret)
+	return byClave(ret)
 
     end
 end
 
-local function updateOne(conn, w)
+local function updateOne(w)
     local clave  = w.clave
 --    local tbname = w.tbname
     local clause = format('WHERE clave LIKE %q', clave)
@@ -125,13 +126,21 @@ local function updateOne(conn, w)
     if #u == 0 then return false end -- safeguard
     local qry = format(UPQ, 'datos', concat(u, ', '), clause)
 
-    pcall(conn.exec( qry ))
+    pcall(PRECIOS.exec( qry ))
     if toll then
 	qry = format(UPQ, 'datos', COSTOL, clause)
-	pcall(conn.exec( qry ))
+	pcall(PRECIOS.exec( qry ))
     end
 
     return asJSON(w)
+end
+
+local function setBlank(clave)
+    local w = fd.first(PRECIOS.query(QRY:format(clave)), function(x) return x end)
+    for k in pairs(w) do w[k] = ISSTR[k] and '' or 0 end
+    w.clave = clave
+    w.desc = 'VVVVV'
+    return w
 end
 
 local function process(uid, persona, tag)
@@ -200,11 +209,8 @@ do
 
     PRECIOS.exec'CREATE VIEW precios AS SELECT clave, desc, fecha, u1, ROUND(prc1*costol/1e4,2) precio1, u2, ROUND(prc2*costol/1e4,2) precio2, u3, ROUND(prc3*costol/1e4,2) precio3, PRINTF("%d", costol) costol, uidSAT, proveedor, uidPROV FROM datos'
 
-print('items in datos:', PRECIOS.count'datos', '\n')
-
-print('items in precios:', PRECIOS.count'precios', '\n')
-
-
+    print('items in datos:', PRECIOS.count'datos', '\n')
+    print('items in precios:', PRECIOS.count'precios', '\n')
 end
 
 -- -- -- -- -- --
@@ -269,7 +275,7 @@ print'+\n'
 	local msg = tasks:recv_msgs(true)
 	local cmd = msg[1]:match'%a+'
 	if cmd == 'updatex' then
-	    msg = format('update %s', updateOne(PRECIOS, fromJSON(msg[2])))
+	    msg = format('update %s', updateOne(fromJSON(msg[2])))
 	    tasks:send_msg( msg )
 	    print(msg, '\n')
 	end
@@ -298,7 +304,13 @@ print'+\n'
 		local w = {}
 		for k,v in urldecode(msg):gmatch'([%a%d]+)=([^&]+)' do w[k] = asnum(v) end
 		for k,v in urldecode(msg):gmatch'([%a%d]+)=&' do w[k] = '' end
-		msg = format('update %s', updateOne(PRECIOS, w))
+		msg = format('update %s', updateOne(w))
+	    end
+	    ----------------------
+	    -- delete entry aka set 'desc' to 'VVVV'
+	    if cmd == 'eliminar' then
+		local clave = msg:match'clave=([%a%d]+)'
+		msg = format('update %s', updateOne(setBlank(clave)))
 	    end
 	    ----------------------
 	    -- convert into MULTI-part msgs

@@ -145,20 +145,9 @@ assert( msgr:immediate( true ) )
 assert( msgr:connect( UPSTREAM ) )
 
 print('\nSuccessfully connected to:', UPSTREAM)
+
 --
---[[ -- -- -- -- --
---
-local www = assert(CTX:socket'REQ')
-
-assert( www:set_id'FA-BJ-01' )
-
-assert( keypair():client(www, SRVK) )
-
-assert( www:connect( LEDGER ) )
-
-print('\nSuccessfully connected to:', LEDGER, '\n')
---
---]] -- -- -- -- --
+-- -- -- -- -- --
 --
 
 tasks:send_msg'OK'

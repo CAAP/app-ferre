@@ -262,6 +262,8 @@
 		e.target.classList.add('modificado');
 		let k = e.target.name;
 		let v = e.target.value;
+		if ((k=='desc') && v.includes('VVV'))
+		    alert('Si deseas eliminar esta clave haz click en "eliminar"!');
 		CHANGES.update(clave, k, v);
 		if (costos.has(k)) { compute(clave, k); }
 	    };
@@ -271,6 +273,13 @@
 		if (o.desc) { o.desc = o.desc.replace(/\s+$/, '').replace(/^\s+/, ''); }
 		return XHR.get(admin.origin + 'update?' + UTILS.encPpties(Object.assign(o,{clave: clave}))); // , tbname: 'datos', fruit: sessionStorage.fruit
 	    }
+
+	    admin.eliminar = () => {
+		const clave = tkt.dataset.clave;    
+		if (window.confirm('Estas seguro de eliminar la clave ' + clave + '?'))
+		    XHR.get(admin.origin + 'eliminar?clave=' + clave)
+		    .then( admin.cancelar );
+	    };
 
 	    admin.enviar = function(fecha) {
 		const clave = asnum(tkt.dataset.clave);

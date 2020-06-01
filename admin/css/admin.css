@@ -11,6 +11,8 @@ button[name=cerrar] { color: white; background-color: red; }
 
 button[name=guardar] { color: white; background-color: blue; }
 
+button[name=cancelar] { color: white; background-color: #218406; }
+
 .azul { background-color: white; filter: drop-shadow(4px 4px 2px black); }
 
 .azul:hover { transform: scale(1.2); }
