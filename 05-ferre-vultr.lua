@@ -120,7 +120,7 @@ print('\nSuccessfully connected to:', LEDGER)
 --
 local msgr = assert(CTX:socket'DEALER')
 
-assert( msgr:set_id'FA-BJ-01' )
+assert( msgr:set_id'vultr' )
 
 assert( msgr:connect( STREAM ) )
 

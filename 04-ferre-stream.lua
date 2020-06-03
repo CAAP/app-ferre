@@ -99,7 +99,7 @@ print'+\n'
 	    print( 'Received from weekdb\n' )
 	    print( 'Re-routed to', cmd, stream:send_msgs(msg), '\n' )
 
-	elseif id:match'FA-' then
+	elseif id:match'vultr' then
 	    print( 'Received from', id, '\n' )
 	    print( 'Re-routed to', cmd, stream:send_msgs(msg), '\n' )
 
