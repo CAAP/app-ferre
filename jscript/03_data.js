@@ -43,7 +43,9 @@
 	    PRICE.MAP = asprice;
 	    PRICE.update = o => {
 		if (o.desc && o.desc.startsWith('VV'))
-		    return IDB.write2DB( PRICE ).delete( asnum(o.clave) );
+		    return IDB.write2DB( PRICE )
+			    .delete( asnum(o.clave) )
+			    .then( DATA.inplace );
 		return upgrade( o ).then( DATA.inplace );
 	    };
 

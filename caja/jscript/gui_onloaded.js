@@ -49,6 +49,7 @@
 	// CAJA
 	(function() {
 	    caja.origin = document.location.origin+':5040/';
+
 	    DATA.inplace = () => Promise.resolve(true);
 
 	    let mymenu = document.getElementById("menu");

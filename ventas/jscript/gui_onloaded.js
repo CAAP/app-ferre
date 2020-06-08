@@ -49,7 +49,15 @@
 	// FERRE
 	(function() {
 	    ferre.origin = document.location.origin+':5040/';
-	    DATA.inplace = q => {let r = document.body.querySelector('tr[data-clave="'+q.clave+'"]'); if (r) {UTILS.clearTable(r); BROWSE.rows(q,r);} return q;};
+
+	    DATA.inplace = q => {
+		let r = document.body.querySelector('tr[data-clave="'+q.clave+'"]');
+		if (r && !q.desc.includes('VV')) {
+		    UTILS.clearTable(r);
+		    BROWSE.rows(q,r);
+		}
+		return q;
+	    };
 
 	    ferre.getUID = e => ferre.xget('uid', {uid: e.target.innerHTML, fruit: sessionStorage.fruit});
 	})();
