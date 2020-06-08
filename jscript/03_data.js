@@ -30,11 +30,12 @@
 
 	    const PRICE = DATA.STORES.PRICE;
 	    const UU = ['u1', 'u2', 'u3'];
+	    const asnum = UTILS.asnum;
 
 	    function upgrade(o) {
 		let os = IDB.write2DB( PRICE );
 		UU.forEach( u => { if (o[u]) { o[u] = o[u].substring(o[u].search(/_/)+1); } } );
-		return os.get(o.clave).then(q => {if (q) {return Object.assign(q, o);} else {return o;} })
+		return os.get( asnum(o.clave) ).then(q => {if (q) {return Object.assign(q, o);} else {return o;} })
 		    .then( asprice )
 		    .then( os.put );
 	    }
@@ -42,7 +43,7 @@
 	    PRICE.MAP = asprice;
 	    PRICE.update = o => {
 		if (o.desc && o.desc.startsWith('VV'))
-		    return IDB.write2DB( PRICE ).delete( o.clave );
+		    return IDB.write2DB( PRICE ).delete( asnum(o.clave) );
 		return upgrade( o ).then( DATA.inplace );
 	    };
 

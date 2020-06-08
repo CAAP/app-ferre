@@ -53,15 +53,16 @@ local OK	 = response{status='ok'}
 local PRECIOS	 = assert( connect':inmemory:' )
 
 local PID	 = { A = 'caja' }
+local RFC	 = {}
 
-local ISTKT 	  = {ticket=true, presupuesto=true}
-local TOLL	  = {costo=true, impuesto=true, descuento=true, rebaja=true}
-local DIRTY	  = {clave=true, tbname=true, fruit=true}
-local ISSTR	  = {desc=true, fecha=true, obs=true, proveedor=true, gps=true, u1=true, u2=true, u3=true, uidPROV=true}
+local ISTKT 	 = {ticket=true, presupuesto=true}
+local TOLL	 = {costo=true, impuesto=true, descuento=true, rebaja=true}
+local DIRTY	 = {clave=true, tbname=true, fruit=true}
+local ISSTR	 = {desc=true, fecha=true, obs=true, proveedor=true, gps=true, u1=true, u2=true, u3=true, uidPROV=true}
 
-local QRY	  = 'SELECT * FROM precios WHERE clave LIKE %q LIMIT 1'
-local UPQ	  = 'UPDATE %q SET %s %s'
-local COSTOL 	  = 'costol = costo*(100+impuesto)*(100-descuento)*(1-rebaja/100.0)'
+local QRY	 = 'SELECT * FROM datos WHERE clave LIKE %q LIMIT 1'
+local UPQ	 = 'UPDATE %q SET %s %s'
+local COSTOL 	 = 'costol = costo*(100+impuesto)*(100-descuento)*(1-rebaja/100.0)'
 
 local QDESC	 = 'SELECT clave FROM datos WHERE desc LIKE %q ORDER BY desc LIMIT 1'
 
@@ -205,6 +206,7 @@ do
     path = aspath'personas'
     PRECIOS.exec(format('ATTACH DATABASE %q AS people', path))
     fd.reduce(PRECIOS.query'SELECT * FROM empleados', fd.map(function(p) return p.nombre end), fd.into, PID)
+    fd.reduce(PRECIOS.query'SELECT * FROM clientes', fd.map(function(p) return p.nombre end), fd.into, RFC)
     PRECIOS.exec'DETACH DATABASE people'
 
     PRECIOS.exec'CREATE VIEW precios AS SELECT clave, desc, fecha, u1, ROUND(prc1*costol/1e4,2) precio1, u2, ROUND(prc2*costol/1e4,2) precio2, u3, ROUND(prc3*costol/1e4,2) precio3, PRINTF("%d", costol) costol, uidSAT, proveedor, uidPROV FROM datos'
@@ -296,6 +298,11 @@ print'+\n'
 	if cmd == 'query' then
 	    local fruit = msg:match'fruit=(%a+)'
 	    msgr:send_msg( format('%s query %s', fruit, queryDB(msg)) )
+
+	elseif cmd == 'rfc' then
+	    local fruit = msg:match'fruit=(%a+)'
+	    local rfc = msg:match'rfc=(%a+)'
+--	    msgr:send_msg( format('%s query %s', fruit, queryDB(msg)) )
 
 	else
 	    ----------------------

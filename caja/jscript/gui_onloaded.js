@@ -59,9 +59,10 @@
 	// FACTURAR
 	(function() {
 	    const butt = document.querySelector('button[name="facturar"]');
+	    butt.disabled = false;
 
 	    caja.taxme = function(w) {
-		if (!w.uidSAT)
+		if (!(butt.disabled || w.uidSAT))
 		    butt.disabled = true;
 		return w;
 	    };
@@ -91,6 +92,7 @@
 
 	    const cajita = document.getElementById('tabla-caja');
 	    const persona = document.getElementById('personas');
+	    const butt = document.querySelector('button[name="facturar"]');
 
 	    TICKET.bag = document.getElementById( TICKET.bagID );
 	    TICKET.myticket = document.getElementById( TICKET.myticketID );
@@ -110,7 +112,12 @@
 
 	    UTILS.redondeo = x => x; // TEMPORAL x FACTURAR
 
-	    caja.emptyBag = () => { caja.UIDS.clear(); caja.UPDATED = false; return TICKET.empty() }
+	    caja.emptyBag = () => {
+		caja.UIDS.clear();
+		caja.UPDATED = false;
+		butt.disabled = false;
+		return TICKET.empty();
+	    }
 
 	    caja.print = function(a) { // a E { ticket, bixolon, pagado, msgs }
 		if (TICKET.items.size == 0)
@@ -217,6 +224,38 @@
 		if (fecha.length > 0)
 		    return caja.xget('ledger', {fruit: sessionStorage.fruit, uid: fecha+'T'});
 	    };
+
+	})();
+
+
+	// FACTURAR
+	(function() {
+	    let tabla = document.getElementById('taxes');
+
+	    let dub = false;
+	    function addField(k) {
+		let row = dub ? tabla.rows.item(tabla.rows.length-1) : tabla.insertRow();
+		// input & defaults
+		let cell = row.insertCell();
+		let ie = document.createElement('input');
+		ie.type = 'text'; ie.size = 8; ie.name = k;
+		ie.placeholder = k;
+		// specifics
+		switch(k) {
+		    case 'razonSocial':
+		    case 'calle':
+				ie.size = 35; cell.colSpan = 2; break;
+		    case 'correo': ie.size = 20; cell.colSpan = 2; break;
+		    default: dub = !dub;
+		}
+		cell.appendChild( ie );
+	    }
+
+	    caja.getRFC = function(e) {
+		caja.xget('rfc', {fruit: sessionStorage.fruit, rfc: e.value.toUpperCase()});
+	    };
+
+	    XHR.getJSON('/json/rfc.json').then(a => a.forEach( addField ));
 
 	})();
 

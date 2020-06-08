@@ -19,7 +19,7 @@ local function escape(a) return fd.reduce(a, fd.map(function(x) return format('%
 local function getHeader()
     local conn = dbconn'personas'
     local ret = escape(conn.header'clientes')
-    remove(ret, 2) -- rfc
+    remove(ret, 1) -- rfc
     remove(ret) -- fapi
     ret = concat(ret, ', ')
     return format('%s [%s]', 'taxes', ret)

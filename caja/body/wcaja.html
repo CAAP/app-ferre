@@ -23,10 +23,10 @@
     </div>
 
     <div id="ticket" class="tablas">
-	<section class="">
+	<section>
 	    <table>
 		<tbody>
-			<tr><td><button name="cerrar" onclick="caja.emptyBag()">Cancelar</button>&emsp;<button name="facturar" onclick="" disabled>Facturar</button>&emsp;<button onclick="caja.print('ticket')">Imprimir</button></td><td>&emsp;</td><td><label id="ticket-total" class="total"></label><label id="ticket-count"></label></td></tr>
+			<tr><td><button name="cerrar" onclick="caja.emptyBag()">Cancelar</button>&emsp;<button name="facturar" onclick="">Facturar</button>&emsp;<button onclick="caja.print('ticket')">Imprimir</button></td><td>&emsp;</td><td><label id="ticket-total" class="total"></label><label id="ticket-count"></label></td></tr>
 		    <tr><td><select name="persona" id="personas" accesskey="c"></select>&emsp;<button onclick="caja.print('msgs')">Enviar</button></td></tr>
 		</tbody>
 	    </table>
@@ -41,6 +41,16 @@
 		</tfoot>
 	    </table>
 	</section>
+    </div>
+
+    <div id="factura" class="tablas">
+	<section> <table>
+	    <dt><thead>
+		<tr><td><input id="" type="search" size=15 accesskey="b" placeholder="RFC" onkeyup="caja.getRFC(this)">
+	    </dt></thead>
+	    <tbody id="taxes">
+	    </tbody>
+	</section> </table>
     </div>
 
 </section>

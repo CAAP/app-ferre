@@ -16,6 +16,7 @@ local HOME	= require'carlos.ferre'.HOME
 
 _ENV =  nil
 
+-- HEADER for ADMIN
 local DEST = HOME .. '/json/header.json'
 
 local conn = dbconn'ferre'
@@ -29,6 +30,20 @@ insert(ret, 2, remove(ret)) -- proveedor
 remove(ret) -- uidSAT
 insert(ret, 6, remove(ret)) -- rebaja
 remove(ret) -- costol
+
+dump( DEST, asJSON(ret) )
+
+-- HEADER for CAJA -> RFC
+local DEST = HOME .. '/json/rfc.json'
+
+local conn = dbconn'personas'
+
+local ret = conn.header'clientes'
+
+conn.close()
+
+remove(ret) -- fapi
+remove(ret, 1) -- rfc
 
 dump( DEST, asJSON(ret) )
 
