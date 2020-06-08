@@ -52,9 +52,12 @@
 
 	    DATA.inplace = q => {
 		let r = document.body.querySelector('tr[data-clave="'+q.clave+'"]');
-		if (r && !q.desc.includes('VV')) {
-		    UTILS.clearTable(r);
-		    BROWSE.rows(q,r);
+		if (r) {
+		    if (!q.desc.includes('VV')) {
+			UTILS.clearTable(r);
+			BROWSE.rows(q,r);
+		    }
+		    r.classList.add('updated');
 		}
 		return q;
 	    };
