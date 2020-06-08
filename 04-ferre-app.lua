@@ -60,7 +60,7 @@ local TOLL	 = {costo=true, impuesto=true, descuento=true, rebaja=true}
 local DIRTY	 = {clave=true, tbname=true, fruit=true}
 local ISSTR	 = {desc=true, fecha=true, obs=true, proveedor=true, gps=true, u1=true, u2=true, u3=true, uidPROV=true}
 
-local QRY	 = 'SELECT * FROM datos WHERE clave LIKE %q LIMIT 1'
+local QRY	 = 'SELECT * FROM precios WHERE clave LIKE %q LIMIT 1'
 local UPQ	 = 'UPDATE %q SET %s %s'
 local COSTOL 	 = 'costol = costo*(100+impuesto)*(100-descuento)*(1-rebaja/100.0)'
 
@@ -137,7 +137,7 @@ local function updateOne(w)
 end
 
 local function setBlank(clave)
-    local w = fd.first(PRECIOS.query(QRY:format(clave)), function(x) return x end)
+    local w = fd.first(PRECIOS.query(QRY:format(clave):gsub('precios', 'datos')), function(x) return x end)
     for k in pairs(w) do w[k] = ISSTR[k] and '' or 0 end
     w.clave = clave
     w.desc = 'VVVVV'
