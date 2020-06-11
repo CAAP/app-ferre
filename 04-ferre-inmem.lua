@@ -57,7 +57,7 @@ local QTKT	 = 'SELECT uid, tag, clave, qty, rea, totalCents, prc "precio" FROM t
 
 local SUID	 = 'CREATE VIEW uids AS SELECT uid, SUBSTR(uid, 12, 5) time, COUNT(uid) count, ROUND(SUM(totalCents)/100.0, 2) total, tag, nombre FROM tickets WHERE tag NOT LIKE "factura" GROUP BY uid'
 local SLPR	 = 'CREATE VIEW lpr AS SELECT desc, clave, qty, rea, ROUND(unitario, 2) unitario, unidad, ROUND(totalCents/100.0, 2) subTotal, uid FROM tickets'
-local SALES	 = 'CREATE VIEW sales AS SELECT SUBSTR(uid,1,10) day, SUBSTR(uid,12,5) hour, ((SUBSTR(uid,12,2)-9)*60 + SUBSTR(uid, 15, 2))/10 mins, uid, nombre, totalCents, qty FROM tickets WHERE uid > %q'
+local SALES	 = 'CREATE VIEW sales AS SELECT SUBSTR(uid,1,10) day, SUBSTR(uid,12,5) hour, ((SUBSTR(uid,12,2)-9)*60 + SUBSTR(uid, 15, 2))/10 mins, uid, nombre, totalCents, qty FROM tickets'
 
 local INDEX
 local DB	= {}

@@ -53,7 +53,6 @@ local OK	 = response{status='ok'}
 local PRECIOS	 = assert( connect':inmemory:' )
 
 local PID	 = { A = 'caja' }
-local RFC	 = {}
 
 local ISTKT 	 = {ticket=true, presupuesto=true}
 local TOLL	 = {costo=true, impuesto=true, descuento=true, rebaja=true}
@@ -113,6 +112,12 @@ local function queryDB(msg)
 	return byClave(ret)
 
     end
+end
+
+local function queryRFC(rfc)
+    local QRY = format('SELECT * FROM clientes WHERE rfc LIKE "%s%%" LIMIT 1', rfc)
+    local ans = fd.first(PRECIOS.query(QRY), function(x) return x end)
+    return asJSON( ans or '' )
 end
 
 local function updateOne(w)
@@ -206,7 +211,7 @@ do
     path = aspath'personas'
     PRECIOS.exec(format('ATTACH DATABASE %q AS people', path))
     fd.reduce(PRECIOS.query'SELECT * FROM empleados', fd.map(function(p) return p.nombre end), fd.into, PID)
-    fd.reduce(PRECIOS.query'SELECT * FROM clientes', fd.map(function(p) return p.nombre end), fd.into, RFC)
+    PRECIOS.exec'CREATE TABLE clientes AS SELECT * FROM people.clientes'
     PRECIOS.exec'DETACH DATABASE people'
 
     PRECIOS.exec'CREATE VIEW precios AS SELECT clave, desc, fecha, u1, ROUND(prc1*costol/1e4,2) precio1, u2, ROUND(prc2*costol/1e4,2) precio2, u3, ROUND(prc3*costol/1e4,2) precio3, PRINTF("%d", costol) costol, uidSAT, proveedor, uidPROV FROM datos'
@@ -302,7 +307,7 @@ print'+\n'
 	elseif cmd == 'rfc' then
 	    local fruit = msg:match'fruit=(%a+)'
 	    local rfc = msg:match'rfc=(%a+)'
---	    msgr:send_msg( format('%s query %s', fruit, queryDB(msg)) )
+	    msgr:send_msg( format('%s rfc %s', fruit, queryRFC(rfc)) )
 
 	else
 	    ----------------------

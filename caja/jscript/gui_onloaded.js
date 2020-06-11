@@ -253,7 +253,11 @@
 	    }
 
 	    caja.getRFC = function(e) {
-		caja.xget('rfc', {fruit: sessionStorage.fruit, rfc: e.value.toUpperCase()});
+		const ans = e.value.toUpperCase().trim();
+		if (ans.length > 2)
+		    caja.xget('rfc', {fruit: sessionStorage.fruit, rfc: ans});
+		else
+		    return false;
 	    };
 
 	    XHR.getJSON('/json/rfc.json').then(a => a.forEach( addField ));
