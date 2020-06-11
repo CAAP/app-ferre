@@ -328,7 +328,6 @@ print'+\n'
 		    local uuid = msg:match'uuid=(%w+)'
 		    local length = tointeger(msg:match'length=(%d+)')
 		    ret = isuuid(ret, cmd, pid, uuid, length)
---		    ret = asTicket(cmd, uid, PID[pid] or 'NaP', ret)
 		end
 		tasks:send_msgs( ret )
 	    else tasks:send_msg( msg ) end
