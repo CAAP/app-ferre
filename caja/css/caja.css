@@ -57,6 +57,13 @@ button:disabled { background-color: black; }
     border-top: 2px solid black;
 }
 
+.oculto {
+    position: absolute;
+    top: -40px;
+    right: -60px;
+    visibility: collapse;
+}
+
 .query {
     padding-left: 30px;
     background-color: #ffffff;

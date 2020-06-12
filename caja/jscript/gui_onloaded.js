@@ -194,6 +194,7 @@
 	// LEDGER
 	(function() {
 	    const cajita = document.getElementById('tabla-fechas');
+	    const ctls = document.getElementById('fechas');
 	    const UIDS = caja.UIDS;
 	    const TODAY = new Date().toISOString().substring(0, 10);
 
@@ -226,12 +227,15 @@
 		    return caja.xget('ledger', {fruit: sessionStorage.fruit, uid: fecha+'T'});
 	    };
 
+	    caja.toggleDates = () => ctls.classList.toggle('oculto');
+
 	})();
 
 
 	// FACTURAR
 	(function() {
-	    let tabla = document.getElementById('taxes');
+	    const tabla = document.getElementById('taxes');
+	    const ctls = document.getElementById('factura');
 
 	    let dub = false;
 	    function addField(k) {
@@ -259,6 +263,10 @@
 		else
 		    return false;
 	    };
+
+	    caja.setRFC = () => UTILS.forObj(caja.RFC, k => {ctls.querySelector('input[name='+k+']').value = caja.RFC[k] || '' } );
+
+	    caja.toggleRFC = () => ctls.classList.toggle('oculto');
 
 	    XHR.getJSON('/json/rfc.json').then(a => a.forEach( addField ));
 
