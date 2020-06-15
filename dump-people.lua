@@ -34,6 +34,15 @@ dump( DEST, asJSON(fd.reduce(conn.query(QRY), fd.into, {})) )
 
 ---------------------------------------
 
+DEST = HOME .. '/json/clientes.json'
+
+QRY = 'SELECT * FROM clientes ORDER BY rfc ASC'
+
+dump( DEST, asJSON(fd.reduce(conn.query(QRY), fd.into, {})) )
+
+---------------------------------------
+
+
 conn.close()
 
 
