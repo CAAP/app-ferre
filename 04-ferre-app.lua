@@ -115,9 +115,9 @@ local function queryDB(msg)
 end
 
 local function queryRFC(rfc)
-    local QRY = format('SELECT * FROM clientes WHERE rfc LIKE "%s%%" LIMIT 1', rfc)
-    local ans = fd.first(PRECIOS.query(QRY), function(x) return x end)
-    return asJSON( ans or '' )
+    local QRY = format('SELECT * FROM clientes WHERE rfc LIKE "%s%%" LIMIT 4', rfc)
+    local ans = fd.reduce(PRECIOS.query(QRY), fd.into, {})
+    return #ans > 0 and asJSON(ans) or '[]'
 end
 
 local function updateOne(w)

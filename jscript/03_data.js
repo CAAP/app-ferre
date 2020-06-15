@@ -9,7 +9,13 @@
 		    VERS: '/json/version.json',
 		    INDEX: [{key: 'desc'}] // {key: 'faltante'}, {key: 'proveedor'}
 		},
-		VERS: {}
+		VERS: {},
+		CUSTOMERS: {
+		    STORE: 'clientes',
+		    KEY: 'rfc',
+		    FILE: '/json/clientes.json',
+		    INDEX: [{key: 'razonSocial'}]
+		}
 	    }
 	};
 

@@ -234,6 +234,25 @@
 
 	// FACTURAR
 	(function() {
+	    const row = document.getElementById('my-rfc');
+
+	    caja.getRFC = function(e) {
+		const ans = e.value.toUpperCase().trim();
+		if (ans.length > 2)
+		    caja.xget('rfc', {fruit: sessionStorage.fruit, rfc: ans});
+		else
+		    return false;
+	    };
+
+	    caja.addRFC = function(a) {
+		const p = row.parentNode;
+		while (row.nextSibling)
+		    p.removeChild(row.nextSibling);
+		a.forEach( o => p.insertRow().insertCell().appendChild( document.createTextNode(o.rfc) ) );
+	    };
+
+	})();
+/*
 	    const tabla = document.getElementById('taxes');
 	    const ctls = document.getElementById('factura');
 
@@ -244,7 +263,7 @@
 		let cell = row.insertCell();
 		let ie = document.createElement('input');
 		ie.type = 'text'; ie.size = 8; ie.name = k;
-		ie.placeholder = k;
+		ie.placeholder = k; ie.disabled = true;
 		// specifics
 		switch(k) {
 		    case 'razonSocial':
@@ -256,19 +275,10 @@
 		cell.appendChild( ie );
 	    }
 
-	    caja.getRFC = function(e) {
-		const ans = e.value.toUpperCase().trim();
-		if (ans.length > 2)
-		    caja.xget('rfc', {fruit: sessionStorage.fruit, rfc: ans});
-		else
-		    return false;
-	    };
-
-	    caja.setRFC = () => UTILS.forObj(caja.RFC, k => {ctls.querySelector('input[name='+k+']').value = caja.RFC[k] || '' } );
+	    caja.setRFC = () => UTILS.forObj(caja.RFC, k => { ctls.querySelector('input[name='+k+']').value = caja.RFC[k] || ''; } );
 
 	    caja.toggleRFC = () => ctls.classList.toggle('oculto');
 
 	    XHR.getJSON('/json/rfc.json').then(a => a.forEach( addField ));
 
-	})();
-
+*/

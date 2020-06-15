@@ -4,8 +4,6 @@
 
 	    const elbl = document.getElementById('eventos');
 	    const flbl = document.getElementById('frutas');
-	    const tlbl = document.getElementById('taxes');
-	    const rfc  = document.getElementById('my-rfc');
 	    const STORES = DATA.STORES;
 
 	    const add2caja  = caja.add2caja;
@@ -85,9 +83,7 @@
 */
 
 		esource.addEventListener("rfc", function(e) {
-		    const o = JSON.parse(e.data);
-		    rfc.textContent = o.rfc;
-		    caja.RFC = o;
+		    caja.addRFC( JSON.parse(e.data) );
 		}, false);
 
 		esource.addEventListener("uid", function(e) {
