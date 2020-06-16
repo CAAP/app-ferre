@@ -14,7 +14,7 @@
 		    STORE: 'clientes',
 		    KEY: 'rfc',
 		    FILE: '/json/clientes.json',
-		    INDEX: [{key: 'razonSocial'}]
+		    INDEX: [{key: 'razonSocial'}, {key: 'rfc'}]
 		}
 	    }
 	};

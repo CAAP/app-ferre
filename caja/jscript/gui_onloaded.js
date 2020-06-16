@@ -42,7 +42,7 @@
 			    return ifLoad(store);
 			}
 		   })))
-		   .then(() => { STORES.PRICE.INDEX = 'desc'; });
+		   .then(() => { STORES.PRICE.INDEX = 'desc'; STORES.CUSTOMERS.INDEX = 'rfc'; });
 
 	})();
 
@@ -235,22 +235,55 @@
 	// FACTURAR
 	(function() {
 	    const row = document.getElementById('my-rfc');
+	    const p = row.parentNode;
+	    let CUSTOMERS = DATA.STORES.CUSTOMERS;
+	    const IDBKeyRange = window.IDBKeyRange || window.webkitIDBKeyRange || window.msIDBKeyRange;
+	    const NN = 4;
 
-	    caja.getRFC = function(e) {
-		const ans = e.value.toUpperCase().trim();
-		if (ans.length > 2)
-		    caja.xget('rfc', {fruit: sessionStorage.fruit, rfc: ans});
-		else
-		    return false;
-	    };
-
-	    caja.addRFC = function(a) {
-		const p = row.parentNode;
+	    function wipe() {
 		while (row.nextSibling)
 		    p.removeChild(row.nextSibling);
-		a.forEach( o => p.insertRow().insertCell().appendChild( document.createTextNode(o.rfc) ) );
-	    };
+	    }
 
+	    function setRFC(el) {
+		return function(e) {
+		    const rfc = e.target.textContent;
+		    el.value = rfc;
+		    IDB.readDB( CUSTOMERS ).get( rfc ).then(o => { el.title = o.razonSocial; }, er => console.log('Error searching RFC: '+ er));
+		    wipe();
+		};
+	    }
+
+	    function browse(e) {
+		const ff = setRFC(e);
+		let k = 0;
+		return function(cursor) {
+		    if (!cursor) { return Promise.reject('No suitable value found!'); }
+		    const o = cursor.value;
+		    const cell = p.insertRow().insertCell();
+		    cell.appendChild( document.createTextNode(o.rfc) );
+		    cell.classList.add('addme');
+		    cell.onclick = ff;
+		    if (++k == NN) { return true; }
+		    cursor.continue();
+		};
+	    }
+
+	    caja.getRFC = function(e) {
+		switch (e.key || e.which) {
+		    case 'Escape':
+		    case 'Esc':
+		    case 27:
+			e.target.value = "";
+			break;
+		    default: break;
+		}
+		wipe();
+		if (e.value.length == 0) { return Promise.resolve(false); }
+		const ans = e.value.toUpperCase().trim();
+		if (ans.length > 7) { return Promise.resolve(false); } 
+		return IDB.readDB( CUSTOMERS ).index(IDBKeyRange.lowerBound(ans, true), 'next', browse(e)).catch(er => console.log('Error searching by RFC: '+er));
+	    };
 	})();
 /*
 	    const tabla = document.getElementById('taxes');

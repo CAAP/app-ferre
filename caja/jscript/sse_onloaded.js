@@ -82,10 +82,6 @@
 		}, false);
 */
 
-		esource.addEventListener("rfc", function(e) {
-		    caja.addRFC( JSON.parse(e.data) );
-		}, false);
-
 		esource.addEventListener("uid", function(e) {
 		    elbl.innerHTML = "uid event";
 		    console.log("uid event received");

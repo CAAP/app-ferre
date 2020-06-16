@@ -43,7 +43,7 @@
 	    function browsing(j, M) {
 		let k = 0;
 		return function(cursor) {
-		    if (!cursor) { return Promise.reject('Not suitable value found!'); } // XXX STILL necessary ????
+		    if (!cursor) { return Promise.reject('No suitable value found!'); } // XXX STILL necessary ????
 		    newItem(cursor.value, j); k++;
 		    if (k == M) { return true; }
 		    cursor.continue();
