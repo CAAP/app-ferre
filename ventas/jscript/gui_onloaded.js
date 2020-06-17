@@ -177,18 +177,10 @@
 
 		let objs = ['pid='+pid];
 		TICKET.items.forEach( item => objs.push( 'query=' + TICKET.plain(item) ) );
-/*
-		if (M > 8) {
-		    return ferre.xpost(a, objs)
+		return ferre.xget(a, objs)
 			.then( () => ferre.emptyBag(a) )
 			.catch( () => { TICKET.myticket.style.visibility = 'visible'} )
 			.then( ferre.nadie );
-		} else { */
-		    return ferre.xget(a, objs)
-			.then( () => ferre.emptyBag(a) )
-			.catch( () => { TICKET.myticket.style.visibility = 'visible'} )
-			.then( ferre.nadie );
-//		}
 	    };
 
 	    ['ticket', 'presupuesto', 'surtir', 'faltante'].forEach( lbl => {

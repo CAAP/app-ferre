@@ -120,7 +120,7 @@
 		return TICKET.empty();
 	    }
 
-	    caja.print = function(a) { // a E { ticket, bixolon, pagado, msgs }
+	    caja.print = function(a) { // a E { ticket, bixolon, msgs } // , pagado
 		if (TICKET.items.size == 0)
 		    return Promise.resolve();
 
@@ -135,13 +135,27 @@
 
 		if (!caja.UPDATED)
 		    return caja.UIDS.forEach(uid => caja.xget(a, {pid: persona.value, uid: uid})); // XXX XHR.get(caja.origin + a + '?' + uid)
+
 		else {
+		    let M = TICKET.items.size;
+			
+// XXX change in case RFC is added
+		    if (M > 8) {
+			let ret = [];
+			let uuid = Math.random().toString(36).substr(2);
+			let items = Array.from(TICKET.items.values());
+			for(let i=0; i<M;) {
+			    let objs = ['pid='+A, 'uuid='+uuid, 'length='+(M+1)];
+			    items.slice(i,i+8).forEach( item => objs.push( 'query=' + TICKET.plain(item) ) );
+			    ret.push( objs );
+			    i += 8;
+			}
+			return Promise.all( ret.map(o => ferre.xget(a, o)) ).then( caja.emptyBag );
+		    }
+
 		    let objs = ['pid=A'];
 		    TICKET.items.forEach( item => objs.push( 'query=' + TICKET.plain(item) ) );
-		    if (TICKET.items.size > 4)
-			return caja.xpost(a, objs).then( caja.emptyBag );
-		    else
-			return caja.xget(a, objs).then( caja.emptyBag );
+		    return caja.xget(a, objs).then( caja.emptyBag );
 		}
 	    };
 
