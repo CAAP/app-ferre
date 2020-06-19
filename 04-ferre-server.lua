@@ -118,6 +118,8 @@ assert( server:notify(false) )
 
 assert( server:alive(true) )
 
+assert( server:linger(0) )
+
 assert( server:bind( ENDPOINT ) )
 
 print('\nSuccessfully bound to:', ENDPOINT, '\n')
