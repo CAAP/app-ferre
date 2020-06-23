@@ -8,8 +8,8 @@ local sse	  = require'carlos.html'.response
 local ssevent	  = require'carlos.ferre'.ssevent
 local receive	  = require'carlos.ferre'.receive
 local send	  = require'carlos.ferre'.send
---local getFruit	  = require'carlos.ferre'.getFruit
 local monitor	  = require'carlos.zmq'.monitor
+
 local pollin	  = require'lzmq'.pollin
 local context	  = require'lzmq'.context
 local pid	  = require'lzmq'.pid
@@ -31,7 +31,6 @@ _ENV = nil -- or M
 --
 local ENDPOINT	 = 'tcp://*:5030'
 local UPSTREAM   = 'ipc://upstream.ipc'
---local UPSTREAM   = 'tcp://*:5060'
 local SPIES	 = 'inproc://espias'
 local HELLO      = sse{content='stream'}
 
@@ -92,13 +91,20 @@ local function switch(msgs, server)
     end
 end
 
-local function sayonara(sk)
+local function sayonara(server, sk)
     local fruit = SKS[sk]
     if not fruit then return ':empty' end
+    send(server, FRUITS[fruit], '') -- close socket
     FRUITS[fruit] = nil
     SKS[sk] = nil
     insert(FRTS, fruit)
     return fruit
+end
+
+local function default(server)
+    local id = server:recv_msg(true) -- receive(server, true)
+    send(server, id, '') -- close socket
+    return 'not supported'
 end
 
 ---------------------------------
@@ -119,6 +125,8 @@ assert( server:notify(false) )
 assert( server:alive(true) )
 
 assert( server:linger(0) )
+
+assert( server:timeout(3) )
 
 assert( server:bind( ENDPOINT ) )
 
@@ -150,9 +158,11 @@ print'+\n'
 	    print( ev, hex(sk), addr, '\n' )
 	    if addr:match'tcp' then
 		if ev:match'DISCONNECTED' then
-		    print( 'Bye bye', sayonara(sk), '\n')
+		    print( 'Bye bye', sayonara(server, sk), '\n')
 		elseif ev:match'ACCEPTED' then
 		    print( handshake(server, sk), '\n' )
+--		elseif ev:match'LISTENING' then
+--		    print('Event', ev, default(server), '\n')
 		end
 	    end
 	end

@@ -9,7 +9,7 @@ local context	  = require'lzmq'.context
 local pollin	  = require'lzmq'.pollin
 local asJSON	  = require'json'.encode
 local fromJSON    = require'json'.decode
---local pktb	  = require'lmpack'.table
+local hex	  = require'lints'.hex
 
 local receive	  = require'carlos.ferre'.receive
 local send	  = require'carlos.ferre'.send
@@ -21,6 +21,7 @@ local urldecode	  = require'carlos.ferre'.urldecode
 local response	  = require'carlos.html'.response
 local split	  = require'carlos.string'.split
 local connect	  = require'carlos.sqlite'.connect
+local monitor	  = require'carlos.zmq'.monitor
 
 local assert	  = assert
 local pairs	  = pairs
@@ -47,6 +48,7 @@ _ENV = nil -- or M
 local ENDPOINT	 = 'tcp://*:5040'
 local UPSTREAM	 = 'ipc://upstream.ipc'
 local STREAM 	 = 'ipc://stream.ipc'
+local SPIES	 = 'inproc://espias'
 
 local OK	 = response{status='ok'}
 
@@ -237,8 +239,16 @@ exec(format('%s/dump-units.lua', APP))
 local CTX = context()
 
 local server = assert(CTX:socket'STREAM')
-
+-- -- -- -- -- --
+-- * MONITOR *
+local spy = monitor(CTX, server, SPIES)
+-- -- -- -- -- --
+-- ***********
 assert( server:notify(false) )
+
+assert( server:linger(0) )
+
+assert( server:timeout(3) )
 
 assert(server:bind( ENDPOINT ))
 
@@ -276,7 +286,7 @@ tasks:send_msg'OK'
 while true do
 print'+\n'
 
-    pollin{server, tasks}
+    pollin{spy, tasks}
 
     if tasks:events() == 'POLLIN' then
 	local msg = tasks:recv_msgs(true)
@@ -287,10 +297,14 @@ print'+\n'
 	    print(msg, '\n')
 	end
 
-    else --if server:events() == 'POLLIN' then
+    end
 
-    local id, msg = receive(server, true)
-    msg = distill(msg, server)
+    if spy:events() == 'POLLIN' then
+	local ev, sk, addr = spy:receive()
+	    print( ev, hex(sk), addr, '\n' )
+	    if addr:match'tcp' and ev:match'ACCEPTED' then
+		local id, msg = receive(server)
+		msg = distill(msg, server)
 
     if msg then
 	local cmd = msg:match'%a+'
@@ -343,9 +357,10 @@ print'+\n'
 
     end
 
-    send(server, id, '') -- close socket
+	    send(server, id, '') -- close socket
+
+	end
 
     end
 
 end
-
