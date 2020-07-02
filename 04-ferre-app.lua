@@ -6,7 +6,8 @@
 local fd	  = require'carlos.fold'
 
 local context	  = require'lzmq'.context
-local pollin	  = require'lzmq'.pollin
+local sbind	  = require'socket'.bind
+local sselect	  = require'socket'.select
 local asJSON	  = require'json'.encode
 local fromJSON    = require'json'.decode
 local hex	  = require'lints'.hex
@@ -24,7 +25,9 @@ local connect	  = require'carlos.sqlite'.connect
 local monitor	  = require'carlos.zmq'.monitor
 
 local assert	  = assert
+local ipairs	  = ipairs
 local pairs	  = pairs
+local getmetatable= getmetatable
 local concat	  = table.concat
 local remove	  = table.remove
 local exec	  = os.execute
@@ -45,7 +48,7 @@ _ENV = nil -- or M
 
 -- Local Variables for module-only access
 --
-local ENDPOINT	 = 'tcp://*:5040'
+local ENDPOINT	 = 5040 -- 'tcp://*:5040'
 local UPSTREAM	 = 'ipc://upstream.ipc'
 local STREAM 	 = 'ipc://stream.ipc'
 local SPIES	 = 'inproc://espias'
@@ -167,10 +170,9 @@ local function process(uid, persona, tag)
     end
 end
 
-local function distill(a, server)
-    local data = concat(a)
-    if data:match'GET' then
-	return format('%s %s', data:match'GET /(%a+)%?([^%?]+) HTTP')
+local function distill(s)
+    if s:match'GET' then
+	return format('%s %s', s:match'GET /(%a+)%?([^%?]+) HTTP')
     end
 end
 
@@ -196,6 +198,35 @@ local function isuuid(its, cmd, pid, uuid, M)
 	local uid = newUID()..pid
 	return asTicket(its, uid, PID[pid] or 'NaP', cmd, {cmd})
     end
+end
+
+local function switch(cmd, msg, tasks)
+    ----------------------
+    -- pre-process & store updates
+    if cmd == 'update' then
+	local w = {}
+	for k,v in urldecode(msg):gmatch'([%a%d]+)=([^&]+)' do w[k] = asnum(v) end
+	for k,v in urldecode(msg):gmatch'([%a%d]+)=&' do w[k] = '' end
+	msg = format('update %s', updateOne(w))
+    end
+    ----------------------
+    -- delete entry aka set 'desc' to 'VVVV'
+    if cmd == 'eliminar' then
+	local clave = msg:match'clave=([%a%d]+)'
+	msg = format('update %s', updateOne(setBlank(clave)))
+    end
+    ----------------------
+    -- convert into MULTI-part msgs
+    if msg:match'query=' then
+	local ret = split(msg, '&query=')
+	if ISTKT[cmd] and ret then -- ret is not nil
+	    local pid = asnum( msg:match'pid=([%d%a]+)' )
+	    local uuid = msg:match'uuid=(%w+)'
+	    local length = tointeger(msg:match'length=(%d+)')
+	    ret = isuuid(ret, cmd, pid, uuid, length)
+	end
+	tasks:send_msgs( ret )
+    else tasks:send_msg( msg ) end
 end
 
 ---------------------------------
@@ -236,26 +267,17 @@ exec(format('%s/dump-units.lua', APP))
 --
 --
 -- Initilize server(s)
-local CTX = context()
 
-local server = assert(CTX:socket'STREAM')
--- -- -- -- -- --
--- * MONITOR *
-local spy = monitor(CTX, server, SPIES)
--- -- -- -- -- --
--- ***********
-assert( server:notify(false) )
+local server = assert( sbind('*', ENDPOINT) )
 
-assert( server:linger(0) )
+assert( server:settimeout(0) )
 
-assert( server:timeout(3) )
-
-assert(server:bind( ENDPOINT ))
-
-print('Successfully bound to:', ENDPOINT, '\n')
+print('Successfully bound to port:', ENDPOINT, '\n')
 
 -- -- -- -- -- --
 --
+
+local CTX = context()
 
 local msgr = assert(CTX:socket'PUSH')
 
@@ -281,35 +303,29 @@ print('\nSuccessfully connected to:', STREAM, '\n')
 -- -- -- -- -- --
 --
 
-tasks:send_msg'OK'
+local MM = getmetatable( tasks )
+function MM:dirty() return self:events() == 'POLLIN' end
+function MM:getfd() return self:fd() end
 
-while true do
-print'+\n'
-
-    pollin{spy, tasks}
-
-    if tasks:events() == 'POLLIN' then
-	local msg = tasks:recv_msgs(true)
-	local cmd = msg[1]:match'%a+'
-	if cmd == 'updatex' then
-	    msg = format('update %s', updateOne(fromJSON(msg[2])))
-	    tasks:send_msg( msg )
-	    print(msg, '\n')
-	end
-
+local function tasksev()
+    local msg = tasks:recv_msgs(true)
+    local cmd = msg[1]:match'%a+'
+    if cmd == 'updatex' then
+	msg = format('update %s', updateOne(fromJSON(msg[2])))
+	tasks:send_msg( msg )
+	print(msg, '\n')
     end
+end
 
-    if spy:events() == 'POLLIN' then
-	local ev, sk, addr = spy:receive()
-	    print( ev, hex(sk), addr, '\n' )
-	    if addr:match'tcp' and ev:match'ACCEPTED' then
-		local id, msg = receive(server)
-		msg = distill(msg, server)
-
-    if msg then
+local function serverev()
+    local sk = assert( server:accept() )
+    assert( sk:settimeout(2) )
+    local msg, e = sk:receive()
+    if not e then
+	msg = distill(msg)
 	local cmd = msg:match'%a+'
 	-- send OK
-	send(server, id, OK)
+	sk:send(OK)
 	----------------------
 	print(msg, '\n')
 	----------------------
@@ -326,41 +342,27 @@ print'+\n'
 	else
 	    ----------------------
 	    -- pre-process & store updates
-	    if cmd == 'update' then
-		local w = {}
-		for k,v in urldecode(msg):gmatch'([%a%d]+)=([^&]+)' do w[k] = asnum(v) end
-		for k,v in urldecode(msg):gmatch'([%a%d]+)=&' do w[k] = '' end
-		msg = format('update %s', updateOne(w))
-	    end
-	    ----------------------
-	    -- delete entry aka set 'desc' to 'VVVV'
-	    if cmd == 'eliminar' then
-		local clave = msg:match'clave=([%a%d]+)'
-		msg = format('update %s', updateOne(setBlank(clave)))
-	    end
-	    ----------------------
-	    -- convert into MULTI-part msgs
-	    if msg:match'query=' then
-		local ret = split(msg, '&query=')
-		if ISTKT[cmd] and ret then -- ret is not nil
-		    local pid = asnum( msg:match'pid=([%d%a]+)' )
-		    local uuid = msg:match'uuid=(%w+)'
-		    local length = tointeger(msg:match'length=(%d+)')
-		    ret = isuuid(ret, cmd, pid, uuid, length)
-		end
-		tasks:send_msgs( ret )
-	    else tasks:send_msg( msg ) end
+	    switch(cmd, msg, tasks)
 	end
-
-    else
-	print'Received empty message ;-(\n'
-
     end
+    sk:close()
+end
 
-	    send(server, id, '') -- close socket
+local SKTS = {server, tasks}
+SKTS[server] = serverev
+SKTS[tasks] = tasksev
 
-	end
+-- -- -- -- -- --
+--
 
-    end
+tasks:send_msg'OK'
+
+while true do
+
+    print'+\n'
+
+    local sks = sselect(SKTS, nil, -1)
+
+    for _,s in ipairs(sks) do SKTS[s]() end
 
 end
