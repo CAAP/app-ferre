@@ -11,6 +11,7 @@ local sselect	  = require'socket'.select
 local asJSON	  = require'json'.encode
 local fromJSON    = require'json'.decode
 local hex	  = require'lints'.hex
+local posix	  = require'posix.signal'
 
 local receive	  = require'carlos.ferre'.receive
 local send	  = require'carlos.ferre'.send
@@ -38,6 +39,7 @@ local tonumber	  = tonumber
 local tointeger   = math.tointeger
 local floor	  = math.floor
 local pcall	  = pcall
+local exit	  = os.exit
 
 local APP	  = require'carlos.ferre'.APP
 
@@ -283,6 +285,8 @@ local msgr = assert(CTX:socket'PUSH')
 
 assert( msgr:immediate(true) ) -- queue outgoing to completed connections only
 
+assert( msgr:linger(0) )
+
 assert( msgr:connect( UPSTREAM ) )
 
 print('\nSuccessfully connected to:', UPSTREAM, '\n')
@@ -294,11 +298,25 @@ local tasks = assert(CTX:socket'DEALER')
 
 assert( tasks:immediate(true) )
 
+assert( tasks:linger(0) )
+
 assert( tasks:set_id'app' )
 
 assert( tasks:connect( STREAM ) )
 
 print('\nSuccessfully connected to:', STREAM, '\n')
+
+-- -- -- -- -- --
+--
+
+local function shutdown()
+    print('\nSignal received...\n')
+    print('\nBye bye ...\n')
+    exit(true, true)
+end
+
+posix.signal(posix.SIGTERM, shutdown)
+posix.signal(posix.SIGINT, shutdown)
 
 -- -- -- -- -- --
 --

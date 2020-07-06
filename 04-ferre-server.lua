@@ -14,6 +14,7 @@ local pollin	  = require'lzmq'.pollin
 local context	  = require'lzmq'.context
 local pid	  = require'lzmq'.pid
 local hex	  = require'lints'.hex
+local posix	  = require'posix.signal'
 
 local format	  = require'string'.format
 local concat	  = table.concat
@@ -139,8 +140,21 @@ assert( msgs:bind( UPSTREAM ) )
 
 print('\nSuccessfully bound to:', UPSTREAM, '\n')
 
----[[
+-- -- -- -- -- --
 --
+
+local function shutdown()
+    print('\nSignal received...\n')
+    print('\nBye bye ...\n')
+    exit(true, true)
+end
+
+posix.signal(posix.SIGTERM, shutdown)
+posix.signal(posix.SIGINT, shutdown)
+
+-- -- -- -- -- --
+--
+
 print( 'Starting servers ...', '\n' )
 
 --
