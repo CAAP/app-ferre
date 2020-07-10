@@ -4,8 +4,6 @@
 --
 local reduce	  = require'carlos.fold'.reduce
 local keys	  = require'carlos.fold'.keys
-local urldecode   = require'carlos.ferre'.urldecode
-local queryDB	  = require'carlos.ferre'.queryDB
 local receive	  = require'carlos.ferre'.receive
 local context	  = require'lzmq'.context
 local pollin	  = require'lzmq'.pollin
@@ -62,6 +60,8 @@ local stream = assert(CTX:socket'ROUTER')
 
 assert( stream:mandatory(true) ) -- causes error in case of unroutable peer
 
+assert( stream:linger(0) )
+
 assert( stream:bind( STREAM ) )
 
 print('\nSuccessfully bound to:', STREAM, '\n')
@@ -103,10 +103,9 @@ print'+\n'
 	    print( 'Received from', id, '\n' )
 	    print( 'Re-routed to', cmd, stream:send_msgs(msg), '\n' )
 
-
 	end
 
 end
 
---[[
---]]
+print'Shutting down...'
+

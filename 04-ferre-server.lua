@@ -24,6 +24,7 @@ local assert	  = assert
 local print	  = print
 local pairs	  = pairs
 local toint	  = math.tointeger
+local exit	  = os.exit
 
 -- No more external access after this point
 _ENV = nil -- or M
