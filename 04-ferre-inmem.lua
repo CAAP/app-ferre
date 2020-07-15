@@ -25,6 +25,7 @@ local assert	= assert
 local type	= type
 local format	= string.format
 local tointeger = math.tointeger
+local env	= os.getenv
 local print	= print
 
 local WEEK 	= asweek( os.time() ) -- now
@@ -38,8 +39,7 @@ _ENV = nil -- or M
 
 -- Local Variables for module-only access
 --
-local STREAM	 = 'ipc://stream.ipc'
-local UPSTREAM	 = 'ipc://upstream.ipc'
+local STREAM	 = env'STREAM_IPC'
 local BIXOLON	 = 'ipc://bixolon.ipc'
 
 local TABS	 = { tabs=true, delete=true, msgs=true,
@@ -155,22 +155,23 @@ local function addAll(msg)
     return uid, conn
 end
 
-local function switch(cmd, msg, send)
+local function switch(cmd, msg, tasks)
     if cmd == 'ticket' then
 	remove(msg, 1)
 	local uid, conn = addAll(msg)
 	local m = header(uid, conn)
-	send( format('feed %s', asJSON(m)) )
+	tasks:send_msgs{'SSE', 'feed', asJSON(m)}
 	return uid, ticket(m, bixolon(uid, conn))
     elseif cmd == 'bixolon' then
-	local uid = msg:match'uid=([^!]+)'
+	local uid = msg[2]:match'uid=([^!]+)'
 	local conn = getConn(uid)
 	local m = header(uid, conn)
 	return uid, ticket(m, bixolon(uid, conn))
     end
 end
 
-local function commute(cmd, msg, msgr)
+local function commute(cmd, msg)
+	msg = msg[2]
     if cmd == 'uid' then
 	local fruit = msg:match'fruit=(%a+)'
 	local uid   = msg:match'uid=([^!&]+)'
@@ -178,7 +179,7 @@ local function commute(cmd, msg, msgr)
 	local qry = format(QTKT, uid)
 	return fruit, conn, qry
     elseif cmd == 'feed' then
-	local fruit = msg:match'%s(%a+)'
+	local fruit = msg
 	local conn = DB[WEEK]
 	local qry = format('SELECT * FROM uids WHERE uid > "%s%%"', TODAY)
 	return fruit, conn, qry
@@ -219,17 +220,6 @@ assert( tasks:set_id'inmem' )
 assert( tasks:connect( STREAM ) )
 
 print('\nSuccessfully connected to:', STREAM)
-
---
--- -- -- -- -- --
---
-local msgr = assert(CTX:socket'PUSH')
-
-assert( msgr:immediate( true ) )
-
-assert( msgr:connect( UPSTREAM ) )
-
-print('\nSuccessfully connected to:', UPSTREAM)
 --
 -- -- -- -- -- --
 --
@@ -250,7 +240,7 @@ tasks:send_msg'OK'
 -- -- -- -- -- --
 --
 
-local function send( m ) return msgr:send_msg(m) end
+local function send( m ) tasks:send_msgs{'SSE', m} end
 
 --
 --
@@ -262,31 +252,25 @@ print'+\n'
 
     pollin{tasks}
 
-    local msg, more = tasks:recv_msg()
-    local cmd = msg:match'%a+'
-    local pid = msg:match'pid=(%d+)'
+    local msg = tasks:recv_msgs(true)
+    local cmd = msg[1]
 
-    if more then
-	msg = receive(tasks, {msg})
-	print(concat(msg, '&'), '\n')
-    else
-	print(msg, '\n')
-    end
+    print(concat(msg, '&'), '\n')
 
     if PRINT[cmd] then
-	local uid, m = switch(cmd, msg, send)
+	local uid, m = switch(cmd, msg, tasks)
 	printer:send_msgs( m )
 	print('UID:', uid)
     end
 
     if FEED[cmd] then
 	local fruit, conn, qry = commute(cmd, msg)
-	fd.reduce(conn.query(qry), fd.map(mail(fruit, cmd)), deliver, msgr)
+--XXX	fd.reduce(conn.query(qry), fd.map(mail(fruit, cmd)), deliver, msgr)
 	print'OK feed!\n'
     end
 
     if TABS[cmd] then
-	local ret = tabs( cmd, pid, msg )
+	local ret = tabs( msg )
 	if type(ret) == 'table' then
 	    fd.reduce(ret, send)
 	elseif ret ~= 'OK' then send( ret ) end
@@ -300,7 +284,7 @@ print'+\n'
     end
 
     if VERS[cmd] then
-	local ret = vers( cmd, msg )
+	local ret = vers( msg )
 	if type(ret) == 'table' then
 	    fd.reduce(ret, send)
 	elseif ret ~= 'OK' then send( ret ) end
@@ -308,6 +292,7 @@ print'+\n'
     end
 
     if cmd == 'adjust' then
+	
 	local vers = tointeger(msg:match'vers=(%d+)')
 	local fruit = msg:match'fruit=(%a+)'
 	local week = msg:match'week=([^!&]+)'
@@ -321,12 +306,12 @@ print'+\n'
 		week = remove(wks)
 		vers = 0
 	    end
-	    fd.reduce(conn.query'SELECT * FROM messages', fd.map(mymsg(fruit, cmd)), deliver, msgr)
+--XXX	    fd.reduce(conn.query'SELECT * FROM messages', fd.map(mymsg(fruit, cmd)), deliver, msgr)
 	end
 	-- week IS this WEEK
 	local conn = DB[WEEK]
 	local qry = format('SELECT msg FROM updates where vers > %d', vers)
-	fd.reduce(conn.query(qry), fd.map(mymsg(fruit, cmd)), deliver, msgr)
+-- XXX	fd.reduce(conn.query(qry), fd.map(mymsg(fruit, cmd)), deliver, msgr)
     end
 
 end

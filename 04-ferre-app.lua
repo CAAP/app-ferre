@@ -6,29 +6,22 @@
 local fd	  = require'carlos.fold'
 
 local context	  = require'lzmq'.context
-local sbind	  = require'socket'.bind
-local sselect	  = require'socket'.select
+local pollin	  = require'lzmq'.pollin
 local asJSON	  = require'json'.encode
 local fromJSON    = require'json'.decode
-local hex	  = require'lints'.hex
 local posix	  = require'posix.signal'
 
-local receive	  = require'carlos.ferre'.receive
-local send	  = require'carlos.ferre'.send
 local aspath	  = require'carlos.ferre'.aspath
 local now	  = require'carlos.ferre'.now
 local asnum	  = require'carlos.ferre'.asnum
 local newUID	  = require'carlos.ferre'.newUID
 local urldecode	  = require'carlos.ferre'.urldecode
-local response	  = require'carlos.html'.response
 local split	  = require'carlos.string'.split
 local connect	  = require'carlos.sqlite'.connect
-local monitor	  = require'carlos.zmq'.monitor
 
 local assert	  = assert
 local ipairs	  = ipairs
 local pairs	  = pairs
-local getmetatable= getmetatable
 local concat	  = table.concat
 local remove	  = table.remove
 local exec	  = os.execute
@@ -45,18 +38,13 @@ local APP	  = require'carlos.ferre'.APP
 
 local HOY	  = os.date('%d-%b-%y', now())
 
+local STREAM	  = os.getenv'STREAM_IPC'
+
 -- No more external access after this point
 _ENV = nil -- or M
 
 -- Local Variables for module-only access
 --
-local ENDPOINT	 = 5040 -- 'tcp://*:5040'
-local UPSTREAM	 = 'ipc://upstream.ipc'
-local STREAM 	 = 'ipc://stream.ipc'
-local SPIES	 = 'inproc://espias'
-
-local OK	 = response{status='ok'}
-
 local PRECIOS	 = assert( connect':inmemory:' )
 
 local PID	 = { A = 'caja' }
@@ -172,12 +160,6 @@ local function process(uid, persona, tag)
     end
 end
 
-local function distill(s)
-    if s:match'GET' then
-	return format('%s %s', s:match'GET /(%a+)%?([^%?]+) HTTP')
-    end
-end
-
 local function asTicket(items, uid, persona, cmd, ret)
     remove(items, 1) -- pid
     return fd.reduce(items, fd.map(urldecode), fd.map(process(uid, persona, cmd)), fd.into, ret)
@@ -202,39 +184,54 @@ local function isuuid(its, cmd, pid, uuid, M)
     end
 end
 
-local function switch(cmd, msg, tasks)
+local function switch(msg, tasks)
+    local cmd = msg[1]
     ----------------------
     -- pre-process & store updates
     if cmd == 'update' then
+	msg = msg[2]
 	local w = {}
 	for k,v in urldecode(msg):gmatch'([%a%d]+)=([^&]+)' do w[k] = asnum(v) end
 	for k,v in urldecode(msg):gmatch'([%a%d]+)=&' do w[k] = '' end
-	msg = format('update %s', updateOne(w))
+	msg = {'update', updateOne(w)} -- format('update %s', updateOne(w))
     end
     ----------------------
     -- delete entry aka set 'desc' to 'VVVV'
     if cmd == 'eliminar' then
-	local clave = msg:match'clave=([%a%d]+)'
-	msg = format('update %s', updateOne(setBlank(clave)))
+	local clave = msg[2]:match'clave=([%a%d]+)'
+	msg = {'update', updateOne(setBlank(clave))} -- format('update %s', updateOne(setBlank(clave)))
     end
     ----------------------
     -- convert into MULTI-part msgs
-    if msg:match'query=' then
+    if msg[2]:match'query=' then
+	msg = msg[2]
 	local ret = split(msg, '&query=')
 	if ISTKT[cmd] and ret then -- ret is not nil
-	    local pid = asnum( msg:match'pid=([%d%a]+)' )
+	    local pid = asnum(msg:match'pid=([%d%a]+)')
 	    local uuid = msg:match'uuid=(%w+)'
 	    local length = tointeger(msg:match'length=(%d+)')
 	    ret = isuuid(ret, cmd, pid, uuid, length)
 	end
 	tasks:send_msgs( ret )
-    else tasks:send_msg( msg ) end
+    else tasks:send_msgs( msg ) end
 end
 
 ---------------------------------
 -- Program execution statement --
 ---------------------------------
 --
+--
+
+local function shutdown()
+    print('\nSignal received...\n')
+    print('\nBye bye ...\n')
+    exit(true, true)
+end
+
+posix.signal(posix.SIGTERM, shutdown)
+posix.signal(posix.SIGINT, shutdown)
+
+-- -- -- -- -- --
 --
 
 do
@@ -270,29 +267,7 @@ exec(format('%s/dump-units.lua', APP))
 --
 -- Initilize server(s)
 
-local server = assert( sbind('*', ENDPOINT) )
-
-assert( server:settimeout(0) )
-
-print('Successfully bound to port:', ENDPOINT, '\n')
-
--- -- -- -- -- --
---
-
 local CTX = context()
-
-local msgr = assert(CTX:socket'PUSH')
-
-assert( msgr:immediate(true) ) -- queue outgoing to completed connections only
-
-assert( msgr:linger(0) )
-
-assert( msgr:connect( UPSTREAM ) )
-
-print('\nSuccessfully connected to:', UPSTREAM, '\n')
-
--- -- -- -- -- --
---
 
 local tasks = assert(CTX:socket'DEALER')
 
@@ -306,81 +281,46 @@ assert( tasks:connect( STREAM ) )
 
 print('\nSuccessfully connected to:', STREAM, '\n')
 
--- -- -- -- -- --
---
-
-local function shutdown()
-    print('\nSignal received...\n')
-    print('\nBye bye ...\n')
-    exit(true, true)
-end
-
-posix.signal(posix.SIGTERM, shutdown)
-posix.signal(posix.SIGINT, shutdown)
-
--- -- -- -- -- --
---
-
-local MM = getmetatable( tasks )
-function MM:dirty() return self:events() == 'POLLIN' end
-function MM:getfd() return self:fd() end
-
-local function tasksev()
-    local msg = tasks:recv_msgs(true)
-    local cmd = msg[1]:match'%a+'
-    if cmd == 'updatex' then
-	msg = format('update %s', updateOne(fromJSON(msg[2])))
-	tasks:send_msg( msg )
-	print(msg, '\n')
-    end
-end
-
-local function serverev()
-    local sk = assert( server:accept() )
-    assert( sk:settimeout(2) )
-    local msg, e = sk:receive()
-    if not e then
-	msg = distill(msg)
-	local cmd = msg:match'%a+'
-	-- send OK
-	sk:send(OK)
-	----------------------
-	print(msg, '\n')
-	----------------------
-	-- reply queries
-	if cmd == 'query' then
-	    local fruit = msg:match'fruit=(%a+)'
-	    msgr:send_msg( format('%s query %s', fruit, queryDB(msg)) )
-
-	elseif cmd == 'rfc' then
-	    local fruit = msg:match'fruit=(%a+)'
-	    local rfc = msg:match'rfc=(%a+)'
-	    msgr:send_msg( format('%s rfc %s', fruit, queryRFC(rfc)) )
-
-	else
-	    ----------------------
-	    -- pre-process & store updates
-	    switch(cmd, msg, tasks)
-	end
-    end
-    sk:close()
-end
-
-local SKTS = {server, tasks}
-SKTS[server] = serverev
-SKTS[tasks] = tasksev
-
--- -- -- -- -- --
---
-
 tasks:send_msg'OK'
+
+-- -- -- -- -- --
+--
 
 while true do
 
     print'+\n'
 
-    local sks = sselect(SKTS, nil, -1)
+    pollin{tasks}
 
-    for _,s in ipairs(sks) do SKTS[s]() end
+    if tasks:events() == 'POLLIN' then
+	local msg = tasks:recv_msgs(true)
+	local cmd = msg[1]
+
+	print(concat(msg, '&'), '\n')
+
+	if cmd == 'updatex' then
+	    tasks:send_msgs{'update', updateOne( fromJSON(msg[2]) )}
+
+	----------------------
+	-- reply queries
+	----------------------
+
+	elseif cmd == 'query' then
+	    local fruit = msg[2]:match'fruit=(%a+)'
+	    tasks:send_msgs{'SSE', fruit, 'query', queryDB(msg)}
+
+	elseif cmd == 'rfc' then
+	    msg = msg[2]
+	    local fruit = msg:match'fruit=(%a+)'
+	    local rfc = msg:match'rfc=(%a+)'
+	    tasks:send_msgs{'SSE', fruit, 'rfc', queryRFC(rfc)}
+
+	else
+	    ----------------------
+	    -- pre-process & store updates
+	    switch(msg, tasks)
+	end
+
+    end
 
 end
