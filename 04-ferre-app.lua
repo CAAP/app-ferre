@@ -307,7 +307,7 @@ while true do
 
 	elseif cmd == 'query' then
 	    local fruit = msg[2]:match'fruit=(%a+)'
-	    tasks:send_msgs{'SSE', fruit, 'query', queryDB(msg)}
+	    tasks:send_msgs{'SSE', fruit, 'query', queryDB(msg[2])}
 
 	elseif cmd == 'rfc' then
 	    msg = msg[2]
