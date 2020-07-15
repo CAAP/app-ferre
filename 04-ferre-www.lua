@@ -178,7 +178,7 @@ while true do
 
     if msgr:events() == 'POLLIN' then
 
-	local msg = concat(msgr:recv_msgs(true), '&')
+	local msg = concat(msgr:recv_msgs(true), ' ')
 
 	print(msg, '\n')
 

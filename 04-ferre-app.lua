@@ -296,7 +296,7 @@ while true do
 	local msg = tasks:recv_msgs(true)
 	local cmd = msg[1]
 
-	print(concat(msg, '&'), '\n')
+	print(concat(msg, ' '), '\n')
 
 	if cmd == 'updatex' then
 	    tasks:send_msgs{'update', updateOne( fromJSON(msg[2]) )}

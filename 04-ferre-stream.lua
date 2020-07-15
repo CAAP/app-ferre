@@ -92,7 +92,7 @@ print'+\n'
 	local id, msg = receive( stream )
 	local cmd = msg[1]
 
-	print(id, concat(msg, '&'), '\n')
+	print(id, concat(msg, ' '), '\n')
 
 	if cmd == 'OK' then
 

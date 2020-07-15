@@ -255,7 +255,7 @@ print'+\n'
     local msg = tasks:recv_msgs(true)
     local cmd = msg[1]
 
-    print(concat(msg, '&'), '\n')
+    print(concat(msg, ' '), '\n')
 
     if PRINT[cmd] then
 	local uid, m = switch(cmd, msg, tasks)
