@@ -56,12 +56,7 @@ _ENV = nil -- or M
 -- Local Variables for module-only access
 --
 --local HOY	 = date('%d-%b-%y', now())
-local PRINTER	 = 'nc -N 192.168.3.21 9100'
-
 local STREAM = 'ipc://stream.ipc'
--- 'tcp://192.168.3.100:5050' -- 
-local UPSTREAM   = 'ipc://upstream.ipc'
--- 'tcp://192.168.3.100:5060' -- 
 
 local LEDGER	 = 'tcp://149.248.21.161:5610' -- 'vultr'
 local SRVK	 = "*dOG4ev0i<[2H(*GJC2e@6f.cC].$on)OZn{5q%3"
@@ -154,32 +149,6 @@ assert( tasks:set_id'weekdb' )
 assert(tasks:connect( STREAM ))
 
 print('\nSuccessfully connected to:', STREAM)
---
--- -- -- -- -- --
---
-local msgr = assert(CTX:socket'PUSH')
-
-assert( msgr:immediate( true ) )
-
-assert( msgr:connect( UPSTREAM ) )
-
-print('\nSuccessfully connected to:', UPSTREAM)
---
---[[ -- -- -- -- --
---
-local www = assert(CTX:socket'REQ')
-
-assert( www:set_id'FA-BJ-01' )
-
-assert( keypair():client(www, SRVK) )
-
-assert( www:connect( LEDGER ) )
-
-print('\nSuccessfully connected to:', LEDGER, '\n')
---
---]] -- -- -- -- --
---
--- Store PEOPLE values
 --
 -- -- -- -- -- --
 --
