@@ -187,6 +187,11 @@ end
 local function switch(msg, tasks)
     local cmd = msg[1]
     ----------------------
+    -- short-circuit
+    if cmd == 'tabs' then
+	return tasks:send_msgs(split(concat(msg, ' '), '&query='))
+    end
+    ----------------------
     -- pre-process & store updates
     if cmd == 'update' then
 	msg = msg[2]

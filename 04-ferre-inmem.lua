@@ -253,7 +253,7 @@ print'+\n'
     pollin{tasks}
 
     local msg = tasks:recv_msgs(true)
-    local cmd = msg[1]
+    local cmd = msg[1]:match'%a+'
 
     print(concat(msg, ' '), '\n')
 

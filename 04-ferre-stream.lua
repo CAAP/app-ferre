@@ -90,7 +90,7 @@ print'+\n'
     if stream:events() == 'POLLIN' then
 
 	local id, msg = receive( stream )
-	local cmd = msg[1]
+	local cmd = msg[1]:match'%a+'
 
 	print(id, concat(msg, ' '), '\n')
 
