@@ -135,16 +135,6 @@ assert( tasks:set_id'ferredb' )
 assert(tasks:connect( STREAM ))
 
 print('\nSuccessfully connected to:', STREAM)
---
--- -- -- -- -- --
---
-local msgr = assert(CTX:socket'PUSH')
-
-assert( msgr:immediate( true ) )
-
-assert( msgr:connect( UPSTREAM ) )
-
-print('\nSuccessfully connected to:', UPSTREAM)
 
 --
 -- -- -- -- -- --
@@ -163,17 +153,22 @@ print'+\n'
 
     pollin{tasks}
 
-    local msg = tasks:recv_msg()
-    local cmd = msg:match'%a+'
-    print(msg, '\n')
+    if tasks:events() == 'POLLIN' then
 
-    if cmd == 'update' and msg:match'{' then
-	local w = fromJSON( msg:sub(msg:find'{', #msg) )
+    local msg = tasks:recv_msgs(true)
+    local cmd = msg[1]:match'%a+'
+
+	print(concat(msg, ' '), '\n')
+
+    if cmd == 'update' and msg[2]:match'{' then
+	local w = fromJSON( msg[2] )
 	local ret = asJSON( addUpdate(PRECIOS, w) )
 	tasks:send_msgs{'weekdb', cmd, ret}
 
     elseif cmd == 'faltante' then
-	print( msg )
+	print( cmd )
+
+    end
 
     end
 end
