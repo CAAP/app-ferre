@@ -26,6 +26,7 @@ local tostring	= tostring
 local assert	= assert
 local pcall     = pcall
 local exec	= os.execute
+local exit	= os.exit
 
 local pairs	= pairs
 
@@ -40,7 +41,7 @@ _ENV = nil -- or M
 --
 local STREAM	 = 'ipc://stream.ipc'
 local LEDGER	 = 'tcp://149.248.21.161:5610' -- 'vultr'
-local SRVK	 = "*dOG4ev0i<[2H(*GJC2e@6f.cC].$on)OZn{5q%3"
+local SRVK	 = "YK&>B&}SK^8hF-P/3i^)JlB5mV0T4IJUYRhT{436"
 
 local QTKTS	 = 'SELECT MAX(uid) uid FROM tickets'
 local QVERS	 = 'SELECT MAX(vers) vers FROM updates'
@@ -122,6 +123,8 @@ local msgr = assert(CTX:socket'DEALER')
 
 assert( msgr:set_id'vultr' )
 
+msgr:linger(0)
+
 assert( msgr:connect( STREAM ) )
 
 assert( msgr:send_msg'OK' )
@@ -147,6 +150,8 @@ print'+\n'
 
     pollin{www}
 
+    if www:events() == 'POLLIN' then
+
     local msg, more = www:recv_msg()
     local cmd = msg:match'%a+'
 
@@ -156,14 +161,20 @@ print'+\n'
     else
 	print(msg, '\n')
     end
-
+---[[
     if cmd == 'update' then
+	print('Recieving updates...', '\n')
 	msgr:send_msgs{'app', 'updatex', msg[2]} -- msg[1]
-
+--]]
     elseif cmd == 'adjust' then
+	print('Sending adjust...', '\n')
 	local q = switch(msg)
 	www:send_msgs(q)
 
     elseif cmd == 'OK' then break end
+
+    end
 end
 
+print'Shutting down\n'
+exit(true, true)

@@ -27,7 +27,7 @@ _ENV = nil -- or M
 local STREAM	  = env'STREAM_IPC'
 local SSETCP	  = env'SSE_TCP'
 local LEDGER	  = env'LEDGER'
-local SRVK	  = "*dOG4ev0i<[2H(*GJC2e@6f.cC].$on)OZn{5q%3"
+local SRVK	  = "YK&>B&}SK^8hF-P/3i^)JlB5mV0T4IJUYRhT{436"
 
 local WEEK 	  = { ticket=true, presupuesto=true } -- pagado 		
 
@@ -72,7 +72,7 @@ local stream = assert(CTX:socket'ROUTER')
 
 assert( stream:mandatory(true) ) -- causes error in case of unroutable peer
 
-assert( stream:linger(0) )
+--assert( stream:linger(0) )
 
 assert( stream:bind( STREAM ) )
 
@@ -86,8 +86,6 @@ local www = assert(CTX:socket'DEALER')
 assert( www:set_id'FA-BJ-00' )
 
 assert( keypair():client(www, SRVK) )
-
-www:linger(0)
 
 assert( www:connect( LEDGER ) )
 
