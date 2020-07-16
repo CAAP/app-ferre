@@ -22,6 +22,7 @@ local asdata		= require'carlos.ferre'.asdata
 local dump		= require'carlos.files'.dump
 local newTable    	= require'carlos.sqlite'.newTable
 local ticket		= require'carlos.ticket'.ticket
+local fromMSG		= require'lmpack'.unpack
 
 local format	= string.format
 local floor	= math.floor
@@ -114,11 +115,11 @@ local function addTicket(conn, msg)
     remove(msg, 1)
 
     if #msg > 6 then
-	fd.slice(5, msg, fd.map(function(s) return fromJSON(s) end), fd.map(indexar), into'tickets', conn)
+	fd.slice(5, msg, fd.map(function(s) return fromMSG(s) end), fd.map(indexar), into'tickets', conn)
     else
-	fd.reduce(msg, fd.map(function(s) return fromJSON(s) end), fd.map(indexar), into'tickets', conn)
+	fd.reduce(msg, fd.map(function(s) return fromMSG(s) end), fd.map(indexar), into'tickets', conn)
     end
-    return fromJSON(msg[1]).uid
+    return fromMSG(msg[1]).uid
 end
 
 ---------------------------------

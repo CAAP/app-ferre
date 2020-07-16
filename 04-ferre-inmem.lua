@@ -11,6 +11,7 @@ local into		= require'carlos.sqlite'.into
 local asJSON		= require'json'.encode
 local fromJSON		= require'json'.decode
 local ticket		= require'carlos.ticket'.ticket
+local fromMSG		= require'lmpack'.unpack
 
 local tabs		= require'carlos.ferre.tabs'
 local vers		= require'carlos.ferre.vers'
@@ -70,8 +71,6 @@ local DB	= {}
 local function receive(skt, a)
     return fd.reduce(function() return skt:msgs(true) end, fd.into, a)
 end
-
-local function deliver( skt ) return function(m, i) skt:send_msg( m ) end end
 
 local function mail(fruit, cmd)
     return function(a)
@@ -145,12 +144,12 @@ local function bixolon(uid, conn)
 end
 
 local function addAll(msg)
-    local uid = fromJSON(msg[1]).uid
+    local uid = fromMSG(msg[1]).uid
     local conn = getConn(uid)
     if #msg > 6 then
-	fd.slice(5, msg, fd.map(function(s) return fromJSON(s) end), fd.map(indexar), into'tickets', conn)
+	fd.slice(5, msg, fd.map(function(s) return fromMSG(s) end), fd.map(indexar), into'tickets', conn)
     else
-	fd.reduce(msg, fd.map(function(s) return fromJSON(s) end), fd.map(indexar), into'tickets', conn)
+	fd.reduce(msg, fd.map(function(s) return fromMSG(s) end), fd.map(indexar), into'tickets', conn)
     end
     return uid, conn
 end
@@ -242,6 +241,8 @@ tasks:send_msg'OK'
 
 local function send( m ) tasks:send_msgs{'SSE', m} end
 
+local function deliver( skt ) return function(m, i) skt:send_msgs{'SSE', m} end end
+
 --
 --
 -- Run loop
@@ -251,6 +252,8 @@ while true do
 print'+\n'
 
     pollin{tasks}
+
+    if tasks:events() == 'POLLIN' then
 
     local msg = tasks:recv_msgs(true)
     local cmd = msg[1]:match'%a+'
@@ -265,7 +268,7 @@ print'+\n'
 
     if FEED[cmd] then
 	local fruit, conn, qry = commute(cmd, msg)
---XXX	fd.reduce(conn.query(qry), fd.map(mail(fruit, cmd)), deliver, msgr)
+	fd.reduce(conn.query(qry), fd.map(mail(fruit, cmd)), deliver, tasks)
 	print'OK feed!\n'
     end
 
@@ -312,6 +315,8 @@ print'+\n'
 	local conn = DB[WEEK]
 	local qry = format('SELECT msg FROM updates where vers > %d', vers)
 -- XXX	fd.reduce(conn.query(qry), fd.map(mymsg(fruit, cmd)), deliver, msgr)
+    end
+
     end
 
 end

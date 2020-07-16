@@ -18,6 +18,7 @@ local newUID	  = require'carlos.ferre'.newUID
 local urldecode	  = require'carlos.ferre'.urldecode
 local split	  = require'carlos.string'.split
 local connect	  = require'carlos.sqlite'.connect
+local asMSG	  = require'lmpack'.table
 
 local assert	  = assert
 local ipairs	  = ipairs
@@ -156,7 +157,7 @@ local function process(uid, persona, tag)
 	b.precio = b[o.precio]; b.unidad = b[lbl];
 	b.prc = o.precio; b.unitario = b.rea > 1 and round(b.precio*rea, 2) or b.precio
 
-	return asJSON(b)
+	return asMSG(b) -- XXX  asJSON
     end
 end
 
