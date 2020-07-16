@@ -8,6 +8,7 @@ local receive	  = require'carlos.ferre'.receive
 local posix	  = require'posix.signal'
 local context	  = require'lzmq'.context
 local pollin	  = require'lzmq'.pollin
+local keypair	  = require'lzmq'.keypair
 local mgr	  = require'lmg'
 
 local assert	  = assert
@@ -25,6 +26,8 @@ _ENV = nil -- or M
 --
 local STREAM	  = env'STREAM_IPC'
 local SSETCP	  = env'SSE_TCP'
+local LEDGER	  = env'LEDGER'
+local SRVK	  = "*dOG4ev0i<[2H(*GJC2e@6f.cC].$on)OZn{5q%3"
 
 local WEEK 	  = { ticket=true, presupuesto=true } -- pagado 		
 
@@ -78,6 +81,20 @@ print('\nSuccessfully bound to:', STREAM, '\n')
 -- -- -- -- -- --
 --
 
+local www = assert(CTX:socket'DEALER')
+
+assert( www:set_id'FA-BJ-00' )
+
+assert( keypair():client(www, SRVK) )
+
+www:linger(0)
+
+assert( www:connect( LEDGER ) )
+
+www:send_msg'OK'
+
+print('\nSuccessfully connected to:', LEDGER)
+
 --
 -- -- -- -- -- --
 --
@@ -98,6 +115,9 @@ print'+\n'
 
 	elseif cmd == 'SSE' then
 	    stream:send_msgs( msg )
+
+	elseif cmd == 'updatew' then
+	    www:send_msgs( msg )
 
 	elseif id:match'SSE' then
 	    print( 'Received from SSE\n' )

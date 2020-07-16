@@ -20,7 +20,7 @@ local conn = assert( dbconn'personas' )
 
 local DEST = HOME .. '/json/people.json'
 
-local QRY = 'SELECT id, nombre FROM empleados'
+local QRY = 'SELECT id, nombre, pin FROM empleados'
 
 dump( DEST, asJSON(fd.reduce(conn.query(QRY), fd.into, {})) )
 

@@ -283,7 +283,6 @@ print'+\n'
     if cmd == 'update' then
 	local conn = DB[WEEK]
 	assert(conn.exec( msg[2] ))
-	msg = msg[#msg] -- vers as json
     end
 
     if VERS[cmd] then
@@ -295,7 +294,7 @@ print'+\n'
     end
 
     if cmd == 'adjust' then
-	
+	msg = msg[2]
 	local vers = tointeger(msg:match'vers=(%d+)')
 	local fruit = msg:match'fruit=(%a+)'
 	local week = msg:match'week=([^!&]+)'
@@ -309,12 +308,12 @@ print'+\n'
 		week = remove(wks)
 		vers = 0
 	    end
---XXX	    fd.reduce(conn.query'SELECT * FROM messages', fd.map(mymsg(fruit, cmd)), deliver, msgr)
+	    fd.reduce(conn.query'SELECT * FROM messages', fd.map(mymsg(fruit, cmd)), deliver, tasks)
 	end
 	-- week IS this WEEK
 	local conn = DB[WEEK]
 	local qry = format('SELECT msg FROM updates where vers > %d', vers)
--- XXX	fd.reduce(conn.query(qry), fd.map(mymsg(fruit, cmd)), deliver, msgr)
+ 	fd.reduce(conn.query(qry), fd.map(mymsg(fruit, cmd)), deliver, tasks)
     end
 
     end
