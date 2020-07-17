@@ -83,7 +83,7 @@ print('\nSuccessfully bound to:', STREAM, '\n')
 
 local www = assert(CTX:socket'DEALER')
 
-assert( www:set_id'FA-BJ-00' )
+assert( www:set_id'FA-CA-01' )
 
 assert( keypair():client(www, SRVK) )
 
@@ -100,7 +100,7 @@ print('\nSuccessfully connected to:', LEDGER)
 while true do
 print'+\n'
 
-    pollin{stream}
+    pollin{stream, www}
 
     if stream:events() == 'POLLIN' then
 
@@ -114,7 +114,7 @@ print'+\n'
 	elseif cmd == 'SSE' then
 	    stream:send_msgs( msg )
 
-	elseif cmd == 'updatew' then
+	elseif cmd == 'updatew' or 'Hiw' then
 	    www:send_msgs( msg )
 
 	elseif id:match'SSE' then
@@ -142,6 +142,20 @@ print'+\n'
 	elseif id:match'vultr' then
 	    print( 'Received from', id, '\n' )
 	    print( 'Re-routed to', cmd, stream:send_msgs(msg), '\n' )
+
+	end
+
+    end
+
+    if www:events() == 'POLLIN' then
+	local msg = www:recv_msgs(true)
+	local cmd = msg[1]:match'%a+'
+
+	print(concat(msg, ' '), '\n')
+	print( 'Received from LEDGER\n' )
+
+	if cmd == 'update' then
+	    print( 'Re-routed to', 'app', stream:send_msgs{'app', 'updatex', msg[2]}, '\n' )
 
 	end
 
