@@ -27,12 +27,13 @@ local assert	= assert
 local pcall     = pcall
 local exec	= os.execute
 local exit	= os.exit
+local time	= os.time
 
 local pairs	= pairs
 
 local print	= print
 
-local WEEK	= asweek( os.time() )
+local WEEK	= asweek( time() )
 
 -- No more external access after this point
 _ENV = nil -- or M
@@ -145,36 +146,35 @@ end
 -- Run loop
 --
 
-while true do
+
 print'+\n'
 
-    pollin{www}
+    pollin({www}, 3000)
 
     if www:events() == 'POLLIN' then
 
-    local msg, more = www:recv_msg()
-    local cmd = msg:match'%a+'
+	local msg, more = www:recv_msg()
+	local cmd = msg:match'%a+'
 
-    if more then
-	msg = receive(www, {msg}) -- www:recv_msgs(true) -- 
-	print(concat(msg, '&'), '\n')
-    else
-	print(msg, '\n')
-    end
+	if more then
+	    msg = receive(www, {msg}) -- www:recv_msgs(true) -- 
+	    print(concat(msg, '&'), '\n')
+	else
+	    print(msg, '\n')
+	end
 ---[[
-    if cmd == 'update' then
-	print('Recieving updates...', '\n')
-	msgr:send_msgs{'app', 'updatex', msg[2]} -- msg[1]
+	if cmd == 'update' then
+	    print('Recieving updates...', '\n')
+	    msgr:send_msgs{'app', 'updatex', msg[2]} -- msg[1]
 --]]
-    elseif cmd == 'adjust' then
-	print('Sending adjust...', '\n')
-	local q = switch(msg)
-	www:send_msgs(q)
-
-    elseif cmd == 'OK' then break end
+	elseif cmd == 'adjust' then
+	    print('Sending adjust...', '\n')
+	    local q = switch(msg)
+	    www:send_msgs(q)
+	end
 
     end
-end
+
 
 print'Shutting down\n'
 exit(true, true)
