@@ -81,6 +81,9 @@ local QPAY	 =  'UPDATE tickets SET tag = "pagado" WHERE uid LIKE %q'
 local DIRTY	 = {clave=true, tbname=true, fruit=true}
 local ISSTR	 = {desc=true, fecha=true, obs=true, proveedor=true, gps=true, u1=true, u2=true, u3=true, uidPROV=true}
 
+local MEM	 = {}
+local VERS	 = {}
+
 --------------------------------
 -- Local function definitions --
 --------------------------------
@@ -152,12 +155,6 @@ print('\nSuccessfully connected to:', STREAM)
 --
 
 tasks:send_msg'OK'
-
-do
-    local u = fd.first(WEEK.query'SELECT MAX(vers) vers FROM updates', function(x) return x end).vers or 0
-    local uid = fd.first(WEEK.query'SELECT MAX(uid) uid FROM tickets', function(x) return x end).uid or '0'
-    tasks:send_msgs{'Hiw', asJSON{vers=u, uid=uid}}
-end
 
 --
 -- Run loop

@@ -200,8 +200,8 @@ local function switch(msg, tasks)
 	for k,v in urldecode(msg):gmatch'([%a%d]+)=([^&]+)' do w[k] = asnum(v) end
 	for k,v in urldecode(msg):gmatch'([%a%d]+)=&' do w[k] = '' end
 	if w.fecha or found(w, TOLL) then w.fecha = HOY end
---	msg = {'update', updateOne(w)} -- format('update %s', updateOne(w))
-	return tasks:send_msgs{'updatew', asJSON(w)}
+	msg = {'update', updateOne(w)} -- format('update %s', updateOne(w))
+--	return tasks:send_msgs{'updatew', asJSON(w)}
     end
     ----------------------
     -- delete entry aka set 'desc' to 'VVVV'
