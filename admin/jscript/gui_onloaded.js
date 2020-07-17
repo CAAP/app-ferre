@@ -328,8 +328,10 @@
  		fields.add( k );
 	    }
 
-	    XHR.getJSON('/json/units.json').then(a => a.forEach( u => UNITS.push(u) ));
-	    XHR.getJSON('/json/header.json').then(a => a.forEach( addField ));
+	    XHR.getJSON('/json/units.json')
+			.then(a => a.forEach( u => UNITS.push(u) ))
+			.then( () => XHR.getJSON('/json/header.json') )
+			.then(a => a.forEach( addField ));
 
 	})();
 
