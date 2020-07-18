@@ -174,7 +174,7 @@ while true do
 
     mgr.poll(12)
 
-    pollin({msgr}, 5)
+    pollin({msgr}, 3)
 
     if msgr:events() == 'POLLIN' then
 
