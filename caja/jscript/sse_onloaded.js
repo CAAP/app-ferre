@@ -108,7 +108,6 @@
 		    elbl.innerHTML = "ledger event";
 		    console.log("ledger event received");
 		    const data = e.data;
-		    caja.refresh();
 		    if (data.includes('json')) {
 			caja.reset();
 			XHR.getJSON('json/' + data).then( a => a.forEach( add2fecha ) );

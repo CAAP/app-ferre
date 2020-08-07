@@ -233,12 +233,12 @@
 		tag.onclick = getUID;
 	    };
 
-	    caja.refresh = () => UTILS.clearTable( cajita );
+//	    caja.refresh = () => UTILS.clearTable( cajita );
 
 	    caja.ledger = function(e) {
 		let fecha = e.target.value
 		if (fecha.length > 0)
-		    return caja.xget('ledger', {fruit: sessionStorage.fruit, uid: fecha+'T'});
+		    return caja.xget('ledger', {fruit: sessionStorage.fruit, uid: fecha+'T'}).then( UTILS.clearTable( cajita ) );
 	    };
 
 	    caja.toggleDates = () => ctls.classList.toggle('oculto');

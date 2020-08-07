@@ -1,0 +1,31 @@
+<section id="main">
+
+    <div id="buscar" class="dialogos query">
+	<div> <input id="busq" type="search" size=40 accesskey="b" placeholder="Raz&oacute;n Social" onchange="app.startSearch(event)" onkeyup="app.keyPressed(event)"> </div>
+
+	<section id="resultados" class="tablas">
+        <table onwheel="app.scroll(event)">
+	    <dt>
+            <thead>
+                <tr><th> RFC </th><th> Raz&oacute;n Social </th><th> Correo </th><th> CP </th></tr>
+            </thead>
+	    </dt>
+	    <tbody id="tabla-resultados" class="amarillo" onclick="app.getRecord(event)"></tbody>
+	    <tfoot><tr><th colspan=6><button accesskey="a" onclick="app.scroll({deltaY:0})">&larr;Anterior</button> <label> | </label> <button accesskey="s" onclick="app.scroll({deltaY:1})">Siguiente&rarr;</button></th></tr></tfoot>
+	</table>
+	</section>
+    </div>
+
+    <div id="ticket">
+	<table>
+	    <tbody>
+		    <tr><td><button name="cancelar" onclick="app.cancelar()">Cancelar</button>&emsp;</td><td><button name="guardar" onclick="app.enviar()">Actualizar</button>&emsp;</td><td>&emsp;</td><td><button name="cerrar" onclick="app.eliminar()">Eliminar</button></td></tr>
+	    </tbody>
+	</table>
+	<section>
+	<table>
+	    <tbody id="tabla-cambios" class="amarillo" onchange="app.anUpdate(event)"></tbody>
+	</table>
+	</section>
+    </div>
+</section>
