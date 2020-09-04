@@ -15,7 +15,7 @@ local fromMSG		= require'lmpack'.unpack
 
 local tabs		= require'carlos.ferre.tabs'
 local vers		= require'carlos.ferre.vers'
-local feed		= require'carlos.ferre.feed'
+--local feed		= require'carlos.ferre.feed'
 local asweek		= require'carlos.ferre'.asweek
 local aspath		= require'carlos.ferre'.aspath
 local uid2week		= require'carlos.ferre'.uid2week

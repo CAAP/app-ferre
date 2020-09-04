@@ -19,8 +19,6 @@ local env	= os.getenv
 local assert	= assert
 local print	= print
 
-local getuservalue = debug.getuservalue
-
 -- No more external access after this point
 _ENV = nil -- or M
 

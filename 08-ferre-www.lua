@@ -30,13 +30,23 @@ local SSE	 = env'SSE_PORT'
 local STREAM	 = env'STREAM_IPC'
 local events	 = mgr.events
 
-local FRUITS = {} -- only here are needed | for now XXX
+local client	 = assert( redis.connect('127.0.0.1', '6379') )
+
+local ESTREAM	 = assert( client:get'tcp:sse' )
+local EGET	 = assert( client:get'tcp:get' )
+local MG	 = 'mgconn:active'
 
 --------------------------------
 -- Local function definitions --
 --------------------------------
 --
 local function conn2fruit( c )
+    local fruit = client:rpoplpush('const:fruits', 'const:fruits')
+
+    local skt = c:sock()
+    client:hmset(MG, skt, fruit, fruit, skt)
+    return fruit
+
     local fruit = remove(FRTS) -- pid()
     local skt = c:sock()
     FRUITS[skt] = fruit
@@ -44,24 +54,19 @@ local function conn2fruit( c )
     return fruit
 end
 
-local function sayoonara( fruit )
-    local skt = FRUITS[fruit]
-    FRUITS[fruit] = nil
-    FRUITS[skt] = nil
-    insert(FRTS, fruit)
-    return fruit
+local function connectme( c )
+    local fruit = assert( client:hget(MG, c:sock()) )
+    c:reply(200, '', ESTREAM)
+    c:send('\n\n')
+    c:send( ssevent('fruit', fruit) )
 end
 
-local function broadcast(msg, fruit)
-    if fruit then
-	local skt = FRUITS[fruit]
-	for c in mgr.iter() do if c:sock() == skt then c:send(msg); break; end end
-	return format('Broadcast %s to %s', msg, fruit)
-    else
-	local j = 0
-	for c in mgr.iter() do if FRUITS[c:sock()] then c:send(msg); j = j + 1 end end
-	return format('Message %s broadcasted to %d peers', msg, j)
-    end
+local function sayoonara( c )
+    local skt = c:sock()
+    local fruit = assert( client:hget(MG, skt) )
+    local pid = client:hget(fruit, 'pid') or 'NaP'
+    client:hdel(MG, skt, fruit, pid)
+    return fruit
 end
 
 local function distill(msg)
@@ -70,9 +75,21 @@ local function distill(msg)
     else return 'SSE',':empty' end
 end
 
+local function broadcast(msg, fruit)
+    if fruit then
+	local skt = client:hget(MG, fruit)
+	for c in mgr.iter() do if c:sock() == skt then c:send(msg); break; end end
+	return format('Broadcast %s to %s', msg, fruit)
+    else
+	local j = 0
+	for c in mgr.iter() do if client:hexists(MG, c:sock()) then c:send(msg); j = j + 1 end end
+	return format('Message %s broadcasted to %d peers', msg, j)
+    end
+end
+
 local function switch( m )
     local fruit = m:match'^%a+'
-    if fruit and FRUITS[fruit] then
+    if fruit and client:hexists(MG, fruit) then
 	m = m:match'%a+%s([^!]+)' or 'SSE :empty'
 	return broadcast(ssevent(distill( m )), fruit)
     else
@@ -133,15 +150,11 @@ local function backend(c, ev, ...)
 	print('New fruit:', fruit, '\n')
 
     elseif ev == events.REQUEST then
-	local fruit = assert( FRUITS[c:sock()] )
-	c:reply(200, '', ESTREAM)
-	c:send('\n\n')
-	c:send( ssevent('fruit', fruit) )
+	connectme(c)
 	print'connection established\n'
 
     elseif ev == events.CLOSE then
-	local fruit = assert( FRUITS[c:sock()] )
-	print('bye bye', sayoonara(fruit), '\n')
+	print('bye bye', sayoonara(c), '\n')
 
     end
 end

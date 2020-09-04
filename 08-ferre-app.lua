@@ -30,7 +30,12 @@ local SSETCP	  = env'SSE_TCP'
 local LEDGER	  = env'LEDGER'
 
 local TABS	  = { tabs=true, delete=true, msgs=true,
-			pins=true, login=true, CACHE=true }
+			login=true, CACHE=true } -- pins=true
+
+
+local client	  = assert( redis.connect('127.0.0.1', '6379') )
+
+local MG	 = 'mgconn:active'
 
 
 
@@ -55,6 +60,33 @@ local function sendAll(skt, tag, msg)
 end
 
 local function switch(cmd, msg)
+    local pid = msg[2]:match'pid=(%d+)' or msg[1]:match'pid=(%d+)'
+    local ft = client:hget(MG, pid)
+
+    if cmd == 'login' then
+	local fruit = msg[2]:match'fruit=(%a+)'
+	local ret = {}
+	-- guard against double login by sending message to first session & closing it
+	if ft and ft ~= fruit then ret[1] = format('%s logout pid=%d', ft, pid) end
+	-- in any case
+	client:hset(MG, pid, fruit)
+	client:hset(fruit, 'pid', pid) -- new session opened & saved
+	ret[#ret+1] = join(TABS.has(pid), fruit) -- tabs data, if any
+	return ret -- returns a table | possibly empty
+
+
+    -- store, short-circuit & re-route the message
+    if cmd == 'msgs' then
+	assert( client:exists(ft) )
+	client:hset(ft, 'msgs', msg) -- store msg
+	if ft then
+	    insert(msg, 1, ft)
+	    return concat(msg, ' ')
+	end
+
+    else -- tabs, delete
+
+    end
 end
 
 ---------------------------------
@@ -112,7 +144,7 @@ print'+\n'
 	    ----------------------
 
 	elseif TABS[cmd]  then
-	   tabs(cmd, msg) -- XXX 
+	   tabs(cmd, msg, client)
 
 
 
