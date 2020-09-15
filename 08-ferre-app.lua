@@ -5,6 +5,8 @@
 local reduce	  = require'carlos.fold'.reduce
 local keys	  = require'carlos.fold'.keys
 local receive	  = require'carlos.ferre'.receive
+local newUID	  = require'carlos.ferre'.newUID
+local asnum	  = require'carlos.ferre'.asnum
 local posix	  = require'posix.signal'
 local context	  = require'lzmq'.context
 local pollin	  = require'lzmq'.pollin
@@ -19,6 +21,8 @@ local insert	  = table.insert
 local env	  = os.getenv
 
 local print	  = print
+local type	  = type
+local not	  = not
 
 -- No more external access after this point
 _ENV = nil -- or M
@@ -32,12 +36,9 @@ local LEDGER	  = env'LEDGER'
 local TABS	  = { tabs=true, delete=true, msgs=true,
 			login=true, CACHE=true } -- pins=true
 
-
 local client	  = assert( redis.connect('127.0.0.1', '6379') )
 
 local MG	 = 'mgconn:active'
-
-
 
 local WEEK 	  = { ticket=true, presupuesto=true } -- pagado 		
 
@@ -49,6 +50,10 @@ local INMEM 	  = {   version=true,
 			adjust=true,
 			CACHE=true }
 
+local UUID	 = {}
+
+local CACHE	 = {}
+
 --------------------------------
 -- Local function definitions --
 --------------------------------
@@ -59,7 +64,39 @@ local function sendAll(skt, tag, msg)
     print( 'Sent to', tag, skt:send_msgs(msg), '\n' )
 end
 
-local function switch(cmd, msg)
+local function getUUID(msg, cmd, pid, uuid, M, N)
+    if uuid then
+	if not(UUID[uuid]) then
+	    UUID[uuid] = newUID()..pid
+	    CACHE[uuid] = {}
+	end
+	local uid = UUID[uuid]
+	local w = CACHE[uuid]
+	client:hset(uid, 'cmd', cmd, 'pid', pid)
+	w[#w+1] = msg
+	if M <= (#w * N) then
+	    client:hset(uid, 'data', concat(CACHE[uuid], '&'))
+	    UUID[uuid] = nil
+	    CACHE[uuid] = nil
+	    return uid
+	else return {'uuid', uuid} end
+    else
+	local uid = newUID()..pid
+	client:hset(uid, 'data', msg, 'pid', pid, 'cmd', cmd)
+	return uid
+    end
+end
+
+local function asUUID(msg)
+    local pid = asnum(msg:match'pid=([%d%a]+)')
+    local uuid = msg:match'uuid=(%w+)'
+    local length = tointeger(msg:match'length=(%d+)')
+    local size = tointeger(msg:match'size=(%d+)')
+    local msg = msg:sub(msg:find'query=', -1) -- leaving only query=ITEM_1&query=ITEM_2&query=ITEM_3...
+    return getUUID(msg, cmd, pid, uuid, length, size)
+end
+
+local function tabs(cmd, msg)
     local pid = msg[2]:match'pid=(%d+)' or msg[1]:match'pid=(%d+)'
     local ft = client:hget(MG, pid)
 
@@ -69,22 +106,41 @@ local function switch(cmd, msg)
 	-- guard against double login by sending message to first session & closing it
 	if ft and ft ~= fruit then ret[1] = format('%s logout pid=%d', ft, pid) end
 	-- in any case
-	client:hset(MG, pid, fruit)
-	client:hset(fruit, 'pid', pid) -- new session opened & saved
-	ret[#ret+1] = join(TABS.has(pid), fruit) -- tabs data, if any
+	client:hset(MG, pid, fruit) -- new session open
+	if client:exists(pid) then
+	    ret[#ret+1] = client:hexists(pid, 'msgs')
+	    ret[#ret+1] = client:hexists(pid, 'tabs')
+	end
 	return ret -- returns a table | possibly empty
-
 
     -- store, short-circuit & re-route the message
     if cmd == 'msgs' then
-	assert( client:exists(ft) )
-	client:hset(ft, 'msgs', msg) -- store msg
-	if ft then
-	    insert(msg, 1, ft)
-	    return concat(msg, ' ')
+	insert(msg, 1, '$FRUIT') -- placeholder for FRUIT
+	insert(msg, '\n\n')
+	client:hset(pid, 'msgs', concat(msg, ' ')) -- store msg
+	if ft then -- is session open in any client?
+	    return {client:hget(pid, 'msgs'):gsub('$FRUIT', ft)}
 	end
 
-    else -- tabs, delete
+    elseif cmd == 'tabs' then
+	local uid = asUUID(msg[2])
+	if uid then
+	    local msg = format('$FRUIT pid=%d&%s\n\n', pid, client:hget(uid, 'data'))
+	    client:hdel(uid)
+	    client:hset(pid, 'tabs', msg)
+	end
+	return {': OK\n\n'}
+
+    elseif cmd == 'delete' then
+	client:hdel(pid, 'tabs')
+	return {': OK\n\n'}
+
+--    elseif cmd == 'CACHE' and client:hexists(pid, 'msgs') then
+--	return client:hget(pid, 'msgs'):gsub('$FRUIT', ft)
+
+    else
+	print'\nERROR: Unknown command\n'
+	return {': OK\n\n'}
 
     end
 end
@@ -139,19 +195,21 @@ print'+\n'
 	elseif cmd == 'SSE' then
 	    stream:send_msgs( msg )
 
-	    ----------------------
-	    -- divide & conquer --
-	    ----------------------
-
+	----------------------
+	-- divide & conquer --
+	----------------------
 	elseif TABS[cmd]  then
-	   tabs(cmd, msg, client)
+	    stream:send_msgs( tabs(cmd, msg) )
+
+	----------------------------------
+	-- convert into MULTI-part msgs --
+	----------------------------------
+	elseif msg[2]:match'query=' then -- XXX ISTKT???
+	    local uid = asUUID(msg[2])
+	    if uid then stream:send_msgs{'db', 'uid', uid} end
 
 
-
-	elseif id:match'SSE' then
-	    print( 'Received from SSE\n' )
-	    print( 'Re-routed to', cmd, stream:send_msgs(msg), '\n' )
-
+-- XXX REST & MORE
 	elseif id:match'app' then
 	    ----------------------
 	    -- divide & conquer --
