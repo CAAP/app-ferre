@@ -1,4 +1,5 @@
 local redis = require'redis'
+local concat = table.concat
 
 local client = redis.connect('127.0.0.1', '6379')
 
@@ -14,31 +15,31 @@ local EGET	 = concat({"Content-Type: text/plain",
 "Cache-Control: no-cache", "Access-Control-Allow-Origin: *",
 "Access-Control-Allow-Methods: GET"}, "\r\n")
 
-client:sadd('const:fruits', table.unpack(FRTS))
+assert( client:sadd('const:fruits', table.unpack(FRTS)) )
 
-client:sadd('const:dirty', 'clave', 'tbname', 'fruit')
+assert( client:sadd('const:dirty', 'clave', 'tbname', 'fruit') )
 
-client:sadd('const:istkt', 'ticket', 'presupuesto') -- 'surtir', 'tabs'
+assert( client:sadd('const:istkt', 'ticket', 'presupuesto') ) -- 'surtir', 'tabs'
 
-client:sadd('const:isstr', 'desc', 'fecha', 'proveedor', 'gps', 'u1', 'u2', 'u3', 'uidPROV')
+assert( client:sadd('const:isstr', 'desc', 'fecha', 'proveedor', 'gps', 'u1', 'u2', 'u3', 'uidPROV') )
 
-client:sadd('const:toll', 'costo', 'impuesto', 'descuento', 'rebaja')
+assert( client:sadd('const:toll', 'costo', 'impuesto', 'descuento', 'rebaja') )
 
-client:sadd('const:precios', 'prc1', 'prc2', 'prc3')
-
-
-client:set('sql:costol', 'costol = costo*(100+impuesto)*(100-descuento)*(1-rebaja/100.0)')
-
-client:set('sql:tickets', 'uid, tag, prc, clave, desc, costol NUMBER, unidad, precio NUMBER, unitario NUMBER, qty INTEGER, rea INTEGER, totalCents INTEGER, uidSAT, nombre')
-
-client:set('sql:updates', 'vers INTEGER PRIMARY KEY, clave, msg')
-
-client:set('sql:facturas', 'uid, fapi PRIMARY KEY NOT NULL, rfc NOT NULL, sat NOT NULL')
+assert( client:sadd('const:precios', 'prc1', 'prc2', 'prc3') )
 
 
-client:set('tcp:sse', ESTREAM)
+assert( client:set('sql:costol', 'costol = costo*(100+impuesto)*(100-descuento)*(1-rebaja/100.0)') )
 
-client:set('tcp:get', EGET)
+assert( client:set('sql:tickets', 'uid, tag, prc, clave, desc, costol NUMBER, unidad, precio NUMBER, unitario NUMBER, qty INTEGER, rea INTEGER, totalCents INTEGER, uidSAT, nombre') )
+
+assert( client:set('sql:updates', 'vers INTEGER PRIMARY KEY, clave, msg') )
+
+assert( client:set('sql:facturas', 'uid, fapi PRIMARY KEY NOT NULL, rfc NOT NULL, sat NOT NULL') )
+
+
+assert( client:set('tcp:sse', ESTREAM) )
+
+assert( client:set('tcp:get', EGET) )
 
 
 -- client:sadd('app:tabs', 'tabs', 'delete', 'msgs', 'pins', 'login', 'CACHE')

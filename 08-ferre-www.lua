@@ -46,12 +46,6 @@ local function conn2fruit( c )
     local skt = c:sock()
     client:hmset(MG, skt, fruit, fruit, skt)
     return fruit
-
-    local fruit = remove(FRTS) -- pid()
-    local skt = c:sock()
-    FRUITS[skt] = fruit
-    FRUITS[fruit] = skt
-    return fruit
 end
 
 local function connectme( c )

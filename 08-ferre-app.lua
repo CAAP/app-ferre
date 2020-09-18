@@ -22,7 +22,6 @@ local env	  = os.getenv
 
 local print	  = print
 local type	  = type
-local not	  = not
 
 -- No more external access after this point
 _ENV = nil -- or M
@@ -114,7 +113,7 @@ local function tabs(cmd, msg)
 	return ret -- returns a table | possibly empty
 
     -- store, short-circuit & re-route the message
-    if cmd == 'msgs' then
+    elseif cmd == 'msgs' then
 	insert(msg, 1, '$FRUIT') -- placeholder for FRUIT
 	insert(msg, '\n\n')
 	client:hset(pid, 'msgs', concat(msg, ' ')) -- store msg
