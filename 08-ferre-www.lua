@@ -40,6 +40,8 @@ local MG	 = 'mgconn:active'
 -- Local function definitions --
 --------------------------------
 --
+
+-- XXX assert 'const:fruits' exists & is of type LIST
 local function conn2fruit( c )
     local fruit = client:rpoplpush('const:fruits', 'const:fruits')
 
@@ -141,14 +143,14 @@ end
 local function backend(c, ev, ...)
     if ev == events.ACCEPT then
 	local fruit = conn2fruit(c)
-	print('New fruit:', fruit, '\n')
+	print('\n+\nSSE\tNew fruit:', fruit, '\n')
 
     elseif ev == events.REQUEST then
 	connectme(c)
-	print'connection established\n'
+	print'connection established\n+\n'
 
     elseif ev == events.CLOSE then
-	print('bye bye', sayoonara(c), '\n')
+	print('\n+\nSSE\tbye bye', sayoonara(c), '\n+\n')
 
     end
 end

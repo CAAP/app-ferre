@@ -15,7 +15,7 @@ local EGET	 = concat({"Content-Type: text/plain",
 "Cache-Control: no-cache", "Access-Control-Allow-Origin: *",
 "Access-Control-Allow-Methods: GET"}, "\r\n")
 
-assert( client:sadd('const:fruits', table.unpack(FRTS)) )
+assert( client:lpush('const:fruits', table.unpack(FRTS)) ) -- *LIST*
 
 assert( client:sadd('const:dirty', 'clave', 'tbname', 'fruit') )
 
@@ -45,5 +45,4 @@ assert( client:set('tcp:get', EGET) )
 -- client:sadd('app:tabs', 'tabs', 'delete', 'msgs', 'pins', 'login', 'CACHE')
 
 -- client:sadd('app:vers', 'vers', 'CACHE')
-
 
