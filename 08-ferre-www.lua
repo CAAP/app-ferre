@@ -42,6 +42,7 @@ local MG	 = 'mgconn:active'
 --
 
 -- XXX assert 'const:fruits' exists & is of type LIST
+-- XXX remove all KEYS for fruits, maybe it allows for cache memory?
 local function conn2fruit( c )
     local fruit = client:rpoplpush('const:fruits', 'const:fruits')
 
@@ -136,21 +137,21 @@ local function frontend(c, ev, ...)
 	local _,uri,query,_ = ...
 	print('\nAPP\t', ...)
 	c:reply(200, 'OK', EGET, true)
-	msgr:send_msgs{'app', uri:match'%a+', query}
+	msgr:send_msgs{uri:match'%a+', query} -- 'app', uri:match'%a+', query
     end
 end
 
 local function backend(c, ev, ...)
     if ev == events.ACCEPT then
 	local fruit = conn2fruit(c)
-	print('\n+\nSSE\tNew fruit:', fruit, '\n')
+	print('\n+\n\nbSSE\tNew fruit:', fruit, '\n')
 
     elseif ev == events.REQUEST then
 	connectme(c)
-	print'connection established\n+\n'
+	print'connection established\n\n+\n'
 
     elseif ev == events.CLOSE then
-	print('\n+\nSSE\tbye bye', sayoonara(c), '\n+\n')
+	print('\n+\nSSE\tbye bye', sayoonara(c), '\n+')
 
     end
 end

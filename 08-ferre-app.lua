@@ -30,7 +30,7 @@ _ENV = nil -- or M
 --
 local STREAM	  = env'STREAM_IPC'
 local SSETCP	  = env'SSE_TCP'
-local LEDGER	  = env'LEDGER'
+--local LEDGER	  = env'LEDGER'
 
 local TABS	  = { tabs=true, delete=true, msgs=true,
 			login=true, CACHE=true } -- pins=true
@@ -96,6 +96,12 @@ local function asUUID(msg)
 end
 
 local function tabs(cmd, msg)
+--    if cmd == 'CACHE' then
+--    elseif cmd == 'CACHE' and client:hexists(pid, 'msgs') then
+--	return client:hget(pid, 'msgs'):gsub('$FRUIT', ft)
+--    end
+--    XXX not necessary since login does this already
+
     local pid = msg[2]:match'pid=(%d+)' or msg[1]:match'pid=(%d+)'
     local ft = client:hget(MG, pid)
 
@@ -134,11 +140,8 @@ local function tabs(cmd, msg)
 	client:hdel(pid, 'tabs')
 	return {': OK\n\n'}
 
---    elseif cmd == 'CACHE' and client:hexists(pid, 'msgs') then
---	return client:hget(pid, 'msgs'):gsub('$FRUIT', ft)
-
     else
-	print'\nERROR: Unknown command\n'
+	print('\nERROR: Unknown command', cmd,'\n')
 	return {': OK\n\n'}
 
     end
