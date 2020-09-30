@@ -30,6 +30,7 @@ local client	 = assert( rconnect('127.0.0.1', '6379') )
 local events	 = mgr.events
 
 local MG	 = 'mgconn:active'
+local AP	 = 'app:active'
 local EGET	 = client:get'tcp:get'
 --------------------------------
 -- Local function definitions --
@@ -72,6 +73,7 @@ end
 
 local function shutdown()
     print('\nSignal received...\n')
+    client:del(MG, AP)
     print('\nBye bye ...\n')
     exit(true, true)
 end

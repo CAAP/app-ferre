@@ -9,8 +9,6 @@ local receive	  = require'carlos.ferre'.receive
 local posix	  = require'posix.signal'
 local context	  = require'lzmq'.context
 local pollin	  = require'lzmq'.pollin
-local mgr	  = require'lmg'
-local rconnect	  = require'redis'.connect
 
 local assert	  = assert
 local exit	  = os.exit
@@ -37,8 +35,6 @@ local FERRE 	  = { update=true, faltante=true }
 local INMEM 	  = { version=true, bixolon=true,
 		      uid=true,     feed=true,
 		      ledger=true,  adjust=true } -- CACHE=true
-
-local client	  = assert( rconnect('127.0.0.1', '6379') )
 
 --------------------------------
 -- Local function definitions --
