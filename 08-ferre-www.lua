@@ -3,68 +3,38 @@
 -- Import Section
 --
 
-local redis	= require'redis'
 local mgr	= require'lmg'
 local context	= require'lzmq'.context
 local pollin	= require'lzmq'.pollin
+local rconnect	= require'redis'.connect
 
-local ssevent	  = require'carlos.ferre'.ssevent
+local ssevent	= require'carlos.ferre'.ssevent
+local ssefn	= require'carlos.ferre.sse'
 
 local posix	= require'posix.signal'
 local concat	= table.concat
-local remove	= table.remove
-local insert	= table.insert
 local format	= string.format
 local exit	= os.exit
-local env	= os.getenv
 local assert	= assert
 local print	= print
+
+local STREAM	= os.getenv'STREAM_IPC'
+local HTTP	= os.getenv'HTTP_PORT'
 
 -- No more external access after this point
 _ENV = nil -- or M
 
 -- Local Variables for module-only access
 --
-local ENDPOINT	 = env'HTTP_PORT'
-local SSE	 = env'SSE_PORT'
-local STREAM	 = env'STREAM_IPC'
+local client	 = assert( rconnect('127.0.0.1', '6379') )
 local events	 = mgr.events
 
-local client	 = assert( redis.connect('127.0.0.1', '6379') )
-
-local ESTREAM	 = assert( client:get'tcp:sse' )
-local EGET	 = assert( client:get'tcp:get' )
 local MG	 = 'mgconn:active'
-
+local EGET	 = client:get'tcp:get'
 --------------------------------
 -- Local function definitions --
 --------------------------------
 --
-
--- XXX assert 'const:fruits' exists & is of type LIST
--- XXX remove all KEYS for fruits, maybe it allows for cache memory?
-local function conn2fruit( c )
-    local fruit = client:rpoplpush('const:fruits', 'const:fruits')
-
-    local skt = c:sock()
-    client:hmset(MG, skt, fruit, fruit, skt)
-    return fruit
-end
-
-local function connectme( c )
-    local fruit = assert( client:hget(MG, c:sock()) )
-    c:reply(200, '', ESTREAM)
-    c:send('\n\n')
-    c:send( ssevent('fruit', fruit) )
-end
-
-local function sayoonara( c )
-    local skt = c:sock()
-    local fruit = assert( client:hget(MG, skt) )
-    local pid = client:hget(fruit, 'pid') or 'NaP'
-    client:hdel(MG, skt, fruit, pid)
-    return fruit
-end
 
 local function distill(msg)
     local ev, d = msg:match'(%a+)%s([^!]+)'
@@ -132,7 +102,7 @@ msgr:send_msg'OK'
 -- -- -- -- -- --
 --
 
-local function frontend(c, ev, ...)
+local function httpfn(c, ev, ...)
     if ev == events.REQUEST then
 	local _,uri,query,_ = ...
 	print('\nAPP\t', ...)
@@ -141,35 +111,22 @@ local function frontend(c, ev, ...)
     end
 end
 
-local function backend(c, ev, ...)
-    if ev == events.ACCEPT then
-	local fruit = conn2fruit(c)
-	print('\n+\n\nbSSE\tNew fruit:', fruit, '\n')
+local http = assert( mgr.bind(HTTP, httpfn, 'http') )
 
-    elseif ev == events.REQUEST then
-	connectme(c)
-	print'connection established\n\n+\n'
+print('\nSuccessfully bound to port', HTTP, '\n')
 
-    elseif ev == events.CLOSE then
-	print('\n+\nSSE\tbye bye', sayoonara(c), '\n+')
-
-    end
-end
-
-local app = assert( mgr.bind(ENDPOINT, frontend, 'http') )
-
-print('\nSuccessfully bound to port', ENDPOINT, '\n')
-
-local sse = assert( mgr.bind(SSE, backend, 'http') )
+local sse, SSE = assert( ssefn( mgr ) ) -- assert( mgr.bind(SSE, backend, 'http') )
 
 print('\nSuccessfully bound to port', SSE, '\n')
 
 -- -- -- -- -- --
 --
 
+print('\n\n+\n\n')
+
 while true do
 
-    mgr.poll(12)
+    mgr.poll(120)
 
     pollin({msgr}, 3)
 
@@ -177,9 +134,9 @@ while true do
 
 	local msg = concat(msgr:recv_msgs(true), ' ')
 
-	print(msg, '\n')
+	print('\n+\n\nSTREAM\t', msg, '\n\n+\n')
 
-	print(switch(msg), '\n')
+	switch(msg)
 
     end
 end
