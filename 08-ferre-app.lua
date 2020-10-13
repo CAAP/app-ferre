@@ -6,6 +6,8 @@ local tabs	  = require'carlos.ferre.tabs'
 local asUUID	  = require'carlos.ferre.uuids'
 local reduce	  = require'carlos.fold'.reduce
 local receive	  = require'carlos.ferre'.receive
+
+local rconnect	  = require'redis'.connect
 local posix	  = require'posix.signal'
 local context	  = require'lzmq'.context
 local pollin	  = require'lzmq'.pollin
@@ -14,6 +16,7 @@ local assert	  = assert
 local exit	  = os.exit
 local concat	  = table.concat
 local insert	  = table.insert
+local format	  = string.format
 
 local print	  = print
 local type	  = type
@@ -28,13 +31,17 @@ _ENV = nil -- or M
 local TABS	  = { tabs=true, delete=true,
 		      msgs=true, login=true } -- , CACHE=true, pins=true
 
-local WEEK 	  = { ticket=true, presupuesto=true } -- pagado 		
+local INMEM	  = { query=true, rfc=true }
+
+--local WEEK 	  = { ticket=true, presupuesto=true } -- pagado 		
 
 local FERRE 	  = { update=true, faltante=true }
 
-local INMEM 	  = { version=true, bixolon=true,
-		      uid=true,     feed=true,
-		      ledger=true,  adjust=true } -- CACHE=true
+--local INMEM 	  = { version=true, bixolon=true,
+--		      uid=true,     feed=true,
+--		      ledger=true,  adjust=true } -- CACHE=true
+
+local client	  = assert( rconnect('127.0.0.1', '6379') )
 
 --------------------------------
 -- Local function definitions --
@@ -105,8 +112,8 @@ print'+\n'
 
 	if cmd == 'OK' then
 
---	elseif cmd == 'SSE' then
---	    stream:send_msgs( msg )
+	elseif cmd == 'SSE' then
+	    stream:send_msgs( msg )
 
 	----------------------
 	-- divide & conquer --
@@ -114,24 +121,16 @@ print'+\n'
 	elseif TABS[cmd]  then
 	    broadcast( stream, tabs(cmd, msg) )
 
+	elseif INMEM[cmd] then
+	    insert(msg, 1, 'inmem')
+	    stream:send_msgs(msg)
+
 	----------------------------------
 	-- convert into MULTI-part msgs --
 	----------------------------------
 	elseif msg[2]:match'query=' then -- XXX ISTKT???
-	    local uuid = asUUID(msg[2])
-	    if uuid then stream:send_msgs{'db', cmd, uuid} end
-
-
--- XXX REST & MORE
-	elseif id:match'app' then
-	    ----------------------
-	    -- divide & conquer --
-	    ----------------------
-	    if INMEM[cmd] then sendAll( stream, 'inmem', msg )
-
-	    elseif WEEK[cmd] then sendAll( stream, 'weekdb', msg )
-
-	    elseif FERRE[cmd] then sendAll( stream, 'ferredb', msg ) end
+	    local uuid = asUUID(client, cmd, msg[2])
+	    if uuid then stream:send_msgs{'DB', cmd, uuid} end
 
 	end
 

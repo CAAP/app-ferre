@@ -15,8 +15,10 @@ local EGET	 = concat({"Content-Type: text/plain",
 "Cache-Control: no-cache", "Access-Control-Allow-Origin: *",
 "Access-Control-Allow-Methods: GET"}, "\r\n")
 
-assert( client:lpush('const:fruits', table.unpack(FRTS)) ) -- *LIST*
+--- *LIST* ---
+assert( client:lpush('const:fruits', table.unpack(FRTS)) )
 
+--- *SET* ---
 assert( client:sadd('const:dirty', 'clave', 'tbname', 'fruit') )
 
 assert( client:sadd('const:istkt', 'ticket', 'presupuesto') ) -- 'surtir', 'tabs'
@@ -27,22 +29,23 @@ assert( client:sadd('const:toll', 'costo', 'impuesto', 'descuento', 'rebaja') )
 
 assert( client:sadd('const:precios', 'prc1', 'prc2', 'prc3') )
 
-
+--- *KEY* ---
 assert( client:set('sql:costol', 'costol = costo*(100+impuesto)*(100-descuento)*(1-rebaja/100.0)') )
-
-assert( client:set('sql:tickets', 'uid, tag, prc, clave, desc, costol NUMBER, unidad, precio NUMBER, unitario NUMBER, qty INTEGER, rea INTEGER, totalCents INTEGER, uidSAT, nombre') )
-
-assert( client:set('sql:updates', 'vers INTEGER PRIMARY KEY, clave, msg') )
-
-assert( client:set('sql:facturas', 'uid, fapi PRIMARY KEY NOT NULL, rfc NOT NULL, sat NOT NULL') )
-
 
 assert( client:set('tcp:sse', ESTREAM) )
 
 assert( client:set('tcp:get', EGET) )
 
+--- *HASH* ---
+assert( client:hset('sql:week', 'tickets', 'uid, tag, prc, clave, desc, costol NUMBER, unidad, precio NUMBER, unitario NUMBER, qty INTEGER, rea INTEGER, totalCents INTEGER, uidSAT, nombre') )
 
--- client:sadd('app:tabs', 'tabs', 'delete', 'msgs', 'pins', 'login', 'CACHE')
+assert( client:hset('sql:week', 'updates', 'vers INTEGER PRIMARY KEY, clave, msg'))
 
--- client:sadd('app:vers', 'vers', 'CACHE')
+assert( client:hset('sql:week', 'facturas', 'uid, fapi PRIMARY KEY NOT NULL, rfc NOT NULL, sat NOT NULL'))
+
+assert( client:hset('sql:week', 'uids', 'CREATE TEMP VIEW IF NOT EXISTS uids AS SELECT uid, SUBSTR(uid, 12, 5) time, COUNT(uid) count, ROUND(SUM(totalCents)/100.0, 2) total, tag, nombre FROM tickets WHERE tag NOT LIKE "factura" GROUP BY uid') )
+
+assert( client:hset('sql:week', 'lpr', 'CREATE TEMP VIEW IF NOT EXISTS lpr AS SELECT desc, clave, qty, rea, ROUND(unitario, 2) unitario, unidad, ROUND(totalCents/100.0, 2) subTotal, uid FROM tickets') )
+
+assert( client:hset('sql:week', 'sales', 'CREATE TEMP VIEW IF NOT EXISTS sales AS SELECT SUBSTR(uid,1,10) day, SUBSTR(uid,12,5) hour, ((SUBSTR(uid,12,2)-9)*60 + SUBSTR(uid, 15, 2))/10 mins, uid, nombre, totalCents, qty FROM tickets') )
 
