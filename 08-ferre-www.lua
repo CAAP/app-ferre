@@ -32,11 +32,11 @@ local events	 = mgr.events
 local MG	 = 'mgconn:active'
 local AP	 = 'app:active'
 local EGET	 = client:get'tcp:get'
+
 --------------------------------
 -- Local function definitions --
 --------------------------------
 --
-
 local function distill(msg)
     local ev, d = msg:match'(%a+)%s([^!]+)'
     if ev and d then return ev,d
@@ -133,13 +133,11 @@ while true do
     pollin({msgr}, 3)
 
     if msgr:events() == 'POLLIN' then
-
 	local msg = concat(msgr:recv_msgs(true), ' ')
-
 	print('\n+\n\nSTREAM\t', msg, '\n\n+\n')
-
 	switch(msg)
 
     end
+
 end
 

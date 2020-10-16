@@ -6,22 +6,23 @@ local tabs	  = require'carlos.ferre.tabs'
 local asUUID	  = require'carlos.ferre.uuids'
 local reduce	  = require'carlos.fold'.reduce
 local receive	  = require'carlos.ferre'.receive
+local context	  = require'lzmq'.context
+local pollin	  = require'lzmq'.pollin
+local keypair	  = require'lzmq'.keypair
 
 local rconnect	  = require'redis'.connect
 local posix	  = require'posix.signal'
-local context	  = require'lzmq'.context
-local pollin	  = require'lzmq'.pollin
 
 local assert	  = assert
 local exit	  = os.exit
 local concat	  = table.concat
 local insert	  = table.insert
 local format	  = string.format
-
 local print	  = print
 local type	  = type
 
 local STREAM	  = os.getenv'STREAM_IPC'
+local VULTR	  = os.getenv'VULTR'
 
 -- No more external access after this point
 _ENV = nil -- or M
@@ -29,19 +30,21 @@ _ENV = nil -- or M
 -- Local Variables for module-only access
 --
 local TABS	  = { tabs=true, delete=true,
-		      msgs=true, login=true } -- , CACHE=true, pins=true
+		      msgs=true, login=true }
 
-local INMEM	  = { query=true, rfc=true }
+local INMEM	  = { query=true, rfc=true, bixolon=true,
+		      uid=true,     feed=true,
+		      ledger=true,  adjust=true }
 
 --local WEEK 	  = { ticket=true, presupuesto=true } -- pagado 		
 
-local FERRE 	  = { update=true, faltante=true }
+local FERRE 	  = { update=true, faltante=true, eliminar=true }
 
 --local INMEM 	  = { version=true, bixolon=true,
---		      uid=true,     feed=true,
---		      ledger=true,  adjust=true } -- CACHE=true
 
 local client	  = assert( rconnect('127.0.0.1', '6379') )
+
+local SRVK	  = "YK&>B&}SK^8hF-P/3i^)JlB5mV0T4IJUYRhT{436"
 
 --------------------------------
 -- Local function definitions --
@@ -86,22 +89,36 @@ local stream = assert(CTX:socket'ROUTER')
 
 assert( stream:mandatory(true) ) -- causes error in case of unroutable peer
 
---assert( stream:linger(0) )
-
 assert( stream:bind( STREAM ) )
 
 print('\nSuccessfully bound to:', STREAM, '\n')
 --
 -- -- -- -- -- --
---[[
---]]
+--
+local msgr = assert(CTX:socket'DEALER')
+
+assert( msgr:immediate(true) )
+
+assert( msgr:linger(0) )
+
+assert( msgr:set_id'FA-BJ-101' )
+
+assert( keypair():client(msgr, SRVK) )
+
+assert( msgr:connect( VULTR ) )
+
+print('\nSuccessfully connected to', VULTR, '\n')
+
+msgr:send_msg'OK'
+
+--
 -- -- -- -- -- --
 --
 
 while true do
 print'+\n'
 
-    pollin{stream}
+    pollin{stream, msgr}
 
     if stream:events() == 'POLLIN' then
 
@@ -115,6 +132,12 @@ print'+\n'
 	elseif cmd == 'SSE' then
 	    stream:send_msgs( msg )
 
+	elseif cmd == 'inmem' then
+	    stream:send_msgs( msg )
+
+	elseif cmd == 'vultr' then
+	    msgr:send_msgs( msg )
+
 	----------------------
 	-- divide & conquer --
 	----------------------
@@ -125,6 +148,10 @@ print'+\n'
 	    insert(msg, 1, 'inmem')
 	    stream:send_msgs(msg)
 
+	elseif FERRE[cmd] then
+	    insert(msg, 1, 'DB')
+	    stream:send_msgs(msg)
+
 	----------------------------------
 	-- convert into MULTI-part msgs --
 	----------------------------------
@@ -133,6 +160,13 @@ print'+\n'
 	    if uuid then stream:send_msgs{'DB', cmd, uuid} end
 
 	end
+
+    elseif msgr:events() == 'POLLIN' then
+
+	local id, msg = receive( stream )
+	local cmd = msg[1]:match'%a+'
+
+	print('\nVULTR:', concat(msg, ' '), '\n')
 
     end
 

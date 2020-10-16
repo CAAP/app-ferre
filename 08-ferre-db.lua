@@ -12,20 +12,26 @@ local asweek	  = require'carlos.ferre'.asweek
 local aspath	  = require'carlos.ferre'.aspath
 local dbconn	  = require'carlos.ferre'.dbconn
 local now	  = require'carlos.ferre'.now
+local urldecode	  = require'carlos.ferre'.urldecode
+local context	  = require'lzmq'.context
+local pollin	  = require'lzmq'.pollin
 
 local rconnect	  = require'redis'.connect
 local asJSON	  = require'json'.encode
-local context	  = require'lzmq'.context
-local pollin	  = require'lzmq'.pollin
+local serialize	  = require'binser'.serialize
 local posix	  = require'posix.signal'
 
-local unpack	  = table.unpack
+local concat	  = table.concat
 local tointeger	  = math.tointeger
 local format	  = string.format
 local env	  = os.getenv
 local exit	  = os.exit
+local pairs	  = pairs
+local tonumber    = tonumber
+local tostring	  = tostring
 local print	  = print
 local assert	  = assert
+local pcall	  = pcall
 
 local HOY	  = os.date('%d-%b-%y', now())
 
@@ -38,8 +44,6 @@ local STREAM	  = env'STREAM_IPC'
 
 local QRY	  = 'SELECT * FROM precios WHERE clave LIKE %q LIMIT 1'
 local QUP	  = 'UPDATE %q SET %s %s'
-local QUID	  = 'SELECT * FROM uids WHERE uid LIKE %q LIMIT 1'
-local QLPR	  = 'SELECT * FROM lpr WHERE uid LIKE %q'
 local QTKT	  = 'SELECT uid, tag, clave, qty, rea, totalCents, prc "precio" FROM tickets WHERE uid LIKE %q'
 
 local COSTOL 	  = 'costol = costo*(100+impuesto)*(100-descuento)*(1-rebaja/100.0)'
@@ -64,12 +68,11 @@ local ISSTR	  = fd.reduce(client:smembers'const:isstr', fd.rejig(function(k) ret
 -- Local function definitions --
 --------------------------------
 --
-local function header(uid) return fd.first(WEEK.query(format(QUID, uid)), function(x) return x end) end
-
 local function indexar(a) return fd.reduce(INDEX, fd.map(function(k) return a[k] or '' end), fd.into, {}) end
 
 local function oneItem(o)
-    for k,v in o.data:gmatch'([%a%d]+)|([^|]+)' do o[k] = asnum(v) end
+print('\nData:', o.data, '\n')
+    for k,v in urldecode(o.data):gmatch'([%a%d]+)|([^|]+)' do o[k] = asnum(v) end
     local lbl = 'u' .. o.precio:match'%d$'
     local rea = (100-o.rea)/100.0
     o.data = nil
@@ -88,22 +91,19 @@ local function addTicket(uuid)
 	local uid, tag, pid = client:hget(ID, 'uid'), client:hget(ID, 'cmd'), tointeger(client:hget(ID, 'pid'))
 	local nombre = NOMBRES[pid] or 'NaP'
 	local data = split(client:hget(ID, 'data'):sub(7), '&query=')
+	data = fd.reduce(data, fd.map(function(s) return {data=s, uid=uid, tag=tag, nombre=nombre} end), fd.map(oneItem), fd.map(indexar), fd.into, {})
+	ID = 'queue:tickets:'..uid
+	fd.reduce(data, function(w) client:rpush(ID, serialize(w)) end)
+	client:expire(ID, 120)
 	if #data > 6 then
-	    fd.slice(5, data, fd.map(function(s) return {data=s, uid=uid, tag=tag, nombre=nombre} end), fd.map(oneItem), fd.map(indexar), into'tickets', WEEK)
+	    fd.slice(5, data, into'tickets', WEEK)
 	else
-	    fd.reduce(data, fd.map(function(s) return {data=s, uid=uid, tag=tag, nombre=nombre} end), fd.map(oneItem), fd.map(indexar), into'tickets', WEEK)
+	    fd.reduce(data, into'tickets', WEEK)
 	end
 	return uid
     end
 end
 
-local function lpr(uid, hdr)
-    local qry = format(QLPR, uid)
-    local data = fd.reduce(WEEK.query(qry), fd.into, {})
-    local k = QIDS..uid
-    client:rpush(k, unpack(ticket(hdr, data)))
-    return client:expire(k, 120)
-end
 
 --
 -- -- -- -- -- --
@@ -121,8 +121,24 @@ local function reformat(v, k)
     return format('%s = %s', k, vv)
 end
 
+local function execUP( f )
+    local e,s = pcall(f)
+    return (not(e) and s or '')
+end
+
+local function qryExec(q)
+    local s
+    if q:match'datos' then
+	s = execUP(function() return FERRE.exec(q) end)
+    else
+	s = execUP(function() return WEEK.exec(q) end)
+    end
+    print(q, s, '\n')
+end
+
 local function updateOne(w)
-    local clave = tointeger(w.clave) or format('%q', w.clave)
+    local clave = w.clave
+    local k = QIDS..clave
 --    local tbname = w.tbname
     local clause = format('WHERE clave LIKE %q', clave)
     local toll = found(TOLL, w)
@@ -131,38 +147,47 @@ local function updateOne(w)
 
     local u = fd.reduce(fd.keys(w), fd.filter(sanitize(DIRTY)), fd.map(reformat), fd.into, {})
     if #u == 0 then return false end -- safeguard
-    local qry = format(QUP, 'datos', concat(u, ', '), clause)
+    local qry = format('UPDATE datos SET %s %s', concat(u, ', '), clause)
+    client:rpush(k, qry)
+    client:expire(k, 120)
 
-    pcall(FERRE.exec( qry ))
+    qryExec(qry)
     if toll then
-	qry = format(QUP, 'datos', COSTOL, clause)
-	pcall(FERRE.exec( qry ))
-    end
-
-    local a = fd.reduce(fd.keys(w), fd.filter(sanitize(TOLL)), fd.filter(sanitize(PRCS)), fd.merge, {})
-    local UP = fd.first(FERRE.query(QRY:format(clave)), function(x) return x end) -- new/update as PRECIO
-
-    if toll then -- ALL prices & costol has changed
-	fd.reduce(fd.keys(UP), fd.filter(function(_,k) return k:match'^precio' or k:match'^costo' end), fd.merge, a)
-    elseif found(PRCS, w) then -- only a few prices have changed
-	fd.reduce(PRCS, fd.filter(function(k) return a[k] end), fd.map(function(k) return k:gsub('prc', 'precio') end), fd.rejig(function(k) return UP[k], k end), fd.merge, a)
+	qry = format('UPDATE datos SET %s %s', COSTOL, clause)
+	client:rpush(k, qry)
+	qryExec(qry)
     end
 
     -- ### -- ### -- ### -- ### -- ### --
 
+    local a = {clave=clave, desc=w.desc}
+    if w.desc and w.desc:match'VVV' then goto FEED end
+
+    a = fd.reduce(fd.keys(w), fd.filter(sanitize(TOLL)), fd.filter(sanitize(PRCS)), fd.merge, {}) -- CLONE
+
+    do
+	local UP = fd.first(FERRE.query(QRY:format(clave)), function(x) return x end) -- new/update as PRECIO
+	if toll then -- ALL prices & costol has changed
+	    fd.reduce(fd.keys(UP), fd.filter(function(_,k) return k:match'^precio' or k:match'^costo' end), fd.merge, a)
+	elseif found(PRCS, w) then -- only a few prices have changed
+	    fd.reduce(PRCS, fd.filter(function(k) return a[k] end), fd.map(function(k) return k:gsub('prc', 'precio') end), fd.rejig(function(k) return UP[k], k end), fd.merge, a)
+	end
+    end
+
+    -- ### -- ### -- ### -- ### -- ### --
+::FEED::
+    clave = tointeger(clave) or format('%q', clave)
     u = (fd.first(WEEK.query'SELECT MAX(vers) vers FROM updates', function(x) return x end).vers or 0) + 1
     a.store = 'PRICE'
-    local msg = asJSON{a, {vers=u, week=TODAY, store='VERS'}}
+    local msg = asJSON{a, {vers=u, week=WKDB, store='VERS'}}
     qry = format("INSERT INTO updates VALUES (%d, %s, '%s')", u, clave, msg)
-    assert( WEEK.exec( qry ) )
+    client:rpush(k, qry)
+    qryExec(qry)
 
     local v = asJSON{vers=u, week=WKDB}
     client:set(UVS, v)
-    print( '\nversion:', v, '\n' )
 
-    -- notify cloud service XXX
-
-    return format('version', v)
+    return v
 end
 
 local function setBlank(clave)
@@ -239,20 +264,6 @@ print('\nSuccessfully connected to:', STREAM, '\n')
 
 tasks:send_msg'OK'
 
---[[
--- -- -- -- -- --
---
-local printer = assert(CTX:socket'PUSH')
-
-assert( printer:immediate( true ) )
-
-assert( printer:connect( BIXOLON ) )
-
-print('\nSuccessfully connected to:', BIXOLON)
---
--- -- -- -- -- --
---]]
-
 -- -- -- -- -- --
 --
 
@@ -270,11 +281,9 @@ while true do
 	if cmd == 'ticket' or cmd == 'presupuesto' or cmd == 'pagado' then
 	    local uid = addTicket(msg[2])
 	    if uid then
-		local hdr = header(uid)
-	        tasks:send_msgs('SSE', 'feed', asJSON(hdr))
-		lpr( uid, hdr )
---		printer:send_msg( uid ) XXX
+		tasks:send_msgs{'inmem', 'ticket', uid}
 		print('\nUID:', uid, '\n')		
+	    -- notify cloud service XXX
 	    end
 
 	elseif cmd == 'update' then
@@ -283,33 +292,22 @@ while true do
 	    for k,v in urldecode(msg):gmatch'([%a%d]+)=([^&]+)' do w[k] = asnum(v) end
 	    for k,v in urldecode(msg):gmatch'([%a%d]+)=&' do w[k] = '' end
 	    local vers = updateOne( w )
-	    tasks:send_msgs('SSE', 'version', vers)
+	    tasks:send_msgs{'SSE', 'version', vers}
+	    tasks:send_msgs{'inmem', 'update', w.clave}
 	    print('\nversion:', vers, '\n')
+	    -- notify cloud service XXX
+	    tasks:send_msgs{'vultr', 'update', serialize(w), vers}
 
 	elseif cmd == 'eliminar' then
-	    local clave = msg[2]:match'clave=([%a%d]+)'
+	    local clave = asnum(msg[2]:match'clave=([%a%d]+)')
 	    local vers = updateOne( setBlank(clave) )
-	    tasks:send_msgs('SSE', 'version', vers)
+	    tasks:send_msgs{'SSE', 'version', vers}
+	    tasks:send_msgs{'inmem', 'update', clave}
 	    print('\nversion:', vers, '\n')
-
-
-
-	elseif cmd == 'bixolon' then
-	    local uid = msg[2]:match'uid=([^!]+)'
-	    local hdr = header(uid)
-	    lpr( uid, hdr )
---	    printer:send_msg( uid ) XXX
-
-	elseif cmd == 'uid' then
-	    local fruit = msg[2]:match'fruit=(%a+)'
-	    local uid   = msg[2]:match'uid=([^!&]+)'
-	    local qry = format(QTKT, uid)
-	return fruit, conn, qry
-
-	elseif cmd == 'feed' then
+	    -- notify cloud service XXX
+	    tasks_send_msgs{'vultr', 'eliminar', clave}
 
 	end
-
 
     end
 
