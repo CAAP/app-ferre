@@ -90,7 +90,7 @@ local function addTicket(uuid)
     if client:exists(ID) then
 	local uid, tag, pid = client:hget(ID, 'uid'), client:hget(ID, 'cmd'), tointeger(client:hget(ID, 'pid'))
 	local nombre = NOMBRES[pid] or 'NaP'
-	local data = split(client:hget(ID, 'data'):sub(7), '&query=')
+	local data = split(client:hget(ID, 'data'):sub(7), '&query=') -- may FAIl due to lack of data
 	data = fd.reduce(data, fd.map(function(s) return {data=s, uid=uid, tag=tag, nombre=nombre} end), fd.map(oneItem), fd.map(indexar), fd.into, {})
 	ID = 'queue:tickets:'..uid
 	fd.reduce(data, function(w) client:rpush(ID, serialize(w)) end)
@@ -283,7 +283,8 @@ while true do
 	    if uid then
 		tasks:send_msgs{'inmem', 'ticket', uid}
 		print('\nUID:', uid, '\n')		
-	    -- notify cloud service XXX
+		-- notify cloud service XXX
+		tasks:send_msgs{'vultr', 'ticket', uid}
 	    end
 
 	elseif cmd == 'update' then
@@ -305,7 +306,7 @@ while true do
 	    tasks:send_msgs{'inmem', 'update', clave}
 	    print('\nversion:', vers, '\n')
 	    -- notify cloud service XXX
-	    tasks_send_msgs{'vultr', 'eliminar', clave}
+	    tasks_send_msgs{'vultr', 'eliminar', clave, vers}
 
 	end
 

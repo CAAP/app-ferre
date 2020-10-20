@@ -17,6 +17,7 @@ local assert	  = assert
 local exit	  = os.exit
 local concat	  = table.concat
 local insert	  = table.insert
+local remove	  = table.remove
 local format	  = string.format
 local print	  = print
 local type	  = type
@@ -36,15 +37,13 @@ local INMEM	  = { query=true, rfc=true, bixolon=true,
 		      uid=true,     feed=true,
 		      ledger=true,  adjust=true }
 
---local WEEK 	  = { ticket=true, presupuesto=true } -- pagado 		
-
 local FERRE 	  = { update=true, faltante=true, eliminar=true }
 
---local INMEM 	  = { version=true, bixolon=true,
+--local INMEM 	  = { version=true
 
 local client	  = assert( rconnect('127.0.0.1', '6379') )
 
-local SRVK	  = "YK&>B&}SK^8hF-P/3i^)JlB5mV0T4IJUYRhT{436"
+local SRVK	  = "/*FTjQVb^Hgww&{X*)@m-&D}7Lxk?f5o7mIe=![2"
 
 --------------------------------
 -- Local function definitions --
@@ -66,6 +65,21 @@ local function broadcast(skt, msg)
 	skt:send_msgs{'SSE', msg}
     end
     print( 'Broadcasting', N, 'message(s)\n\n+\n' )
+end
+
+local function switch(msg)
+    local cmd = msg[2]
+    if cmd == 'ticket' then
+	local k = 'queue:tickets:'..msg[3]
+	local ret = client:lrange(k, 0, -1)
+	insert(ret, 1, cmd)
+	return ret
+
+    elseif cmd == 'update' or 'eliminar' then
+	remove(msg, 1)
+	return msg
+
+    end
 end
 
 ---------------------------------
@@ -136,7 +150,8 @@ print'+\n'
 	    stream:send_msgs( msg )
 
 	elseif cmd == 'vultr' then
-	    msgr:send_msgs( msg )
+	    msgr:send_msgs( switch( msg ) )
+	    print'\nVULTR: Message sent for cloud storage\n'
 
 	----------------------
 	-- divide & conquer --

@@ -197,7 +197,7 @@ local function switch( cmd, msg )
 	if week < WKDB then
 	    local conn = connect':inmemory:'
 	    assert( conn.exec'CREATE TABLE messages (msg)' )
-	    local wks = weeks(week)
+	    local wks = weeks(week) -- XXX not defined yet
 	    while week < WKDB do
 		tryDB( conn, week, vers )
 		week = remove(wks)
@@ -329,7 +329,6 @@ while true do
 	    local hdr = lpr( uid )
 	    tasks:send_msgs{'SSE', 'feed', asJSON(hdr)}
 --		printer:send_msg( uid ) XXX
-
 
 	end
     end
