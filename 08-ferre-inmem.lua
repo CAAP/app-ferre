@@ -15,7 +15,7 @@ local connect	  = require'carlos.sqlite'.connect
 local into	  = require'carlos.sqlite'.into
 
 local asJSON	  = require'json'.encode
-local deserializeN = require'binser'.deserializeN
+local dN 	  = require'binser'.deserializeN
 local posix	  = require'posix.signal'
 
 local concat	  = table.concat
@@ -120,7 +120,7 @@ local function update( uid )
 end
 
 local function deserialize(w)
-    local a,i = deserializeN(w, 1)
+    local a,i = dN(w, 1)
     return a
 end
 
@@ -266,22 +266,16 @@ do
     assert( FERRE.exec'DETACH DATABASE ferre' )
     print('items in datos:', FERRE.count'datos', '\n')
 
---[[
-    path = aspath'personas'
-    FERRE.exec(format('ATTACH DATABASE %q AS people', path))
-    fd.reduce(FERRE.query'SELECT * FROM empleados', fd.map(function(p) return p.nombre end), fd.into, PID)
-    FERRE.exec'CREATE TABLE clientes AS SELECT * FROM people.clientes'
-    FERRE.exec'DETACH DATABASE people'
---]]
-
     WEEK = addDB( WKDB, true )
     print('items in tickets:', WEEK.count'tickets', '\n')
 
     -- VERS can be ZERO from now on
     local vers = fd.first(WEEK.query'SELECT MAX(vers) vers FROM updates', function(x) return x end).vers or 0
-    vers = {week=WKDB, vers=vers}
-    client:set( 'app:updates:version', asJSON(vers) )
-    print('\nVersion:', asJSON(vers), '\n') -- tasks:send_msgs{'SSE', format('version %s', asJSON(vers))}
+    if vers > 0 then
+	vers = asJSON{week=WKDB, vers=vers}
+	client:set('app:updates:version', vers)
+    else vers = client:get('app:updates:version') end
+    print('\nVersion:', vers, '\n')
 end
 
 --

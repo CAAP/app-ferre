@@ -184,10 +184,14 @@ local function updateOne(w)
     client:rpush(k, qry)
     qryExec(qry)
 
+    -- notify cloud service XXX
+--    qry = format("INSERT INTO updates VALUES (%d, %s, '%s')", u, clave, asJSON(w))
+--    client:rpush(k, qry)
+
     local v = asJSON{vers=u, week=WKDB}
     client:set(UVS, v)
 
-    return v
+    return v, k
 end
 
 local function setBlank(clave)
@@ -292,21 +296,27 @@ while true do
 	    local w = {}
 	    for k,v in urldecode(msg):gmatch'([%a%d]+)=([^&]+)' do w[k] = asnum(v) end
 	    for k,v in urldecode(msg):gmatch'([%a%d]+)=&' do w[k] = '' end
-	    local vers = updateOne( w )
+	    local vers, k = updateOne( w )
+	    -- notify cloud service XXX
+	    local qrys = client:lrange(k, 0, -1)
+--	    client:rpop(k) -- only for cloud storage
+	    tasks:send_msgs{'vultr', 'update', serialize(qrys), vers}
+
 	    tasks:send_msgs{'SSE', 'version', vers}
 	    tasks:send_msgs{'inmem', 'update', w.clave}
 	    print('\nversion:', vers, '\n')
-	    -- notify cloud service XXX
-	    tasks:send_msgs{'vultr', 'update', serialize(w), vers}
 
 	elseif cmd == 'eliminar' then
 	    local clave = asnum(msg[2]:match'clave=([%a%d]+)')
-	    local vers = updateOne( setBlank(clave) )
+	    local vers, k = updateOne( setBlank(clave) )
+	    -- notify cloud service XXX
+	    local qrys = client:lrange(k, 0, -1)
+--	    qrys[#qrys+1] = client:rpop(k)
+	    tasks_send_msgs{'vultr', 'eliminar', serialize(qrys), vers}
+
 	    tasks:send_msgs{'SSE', 'version', vers}
 	    tasks:send_msgs{'inmem', 'update', clave}
 	    print('\nversion:', vers, '\n')
-	    -- notify cloud service XXX
-	    tasks_send_msgs{'vultr', 'eliminar', clave, vers}
 
 	end
 
