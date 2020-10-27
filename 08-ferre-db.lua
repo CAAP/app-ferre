@@ -52,7 +52,6 @@ local client	  = assert( rconnect('127.0.0.1', '6379') )
 
 local IDS	  = 'app:uuids:'
 local QIDS	  = 'queue:uuids:'
-local UVS	  = 'app:updates:version'
 
 local FERRE, WEEK, INDEX
 
@@ -104,16 +103,17 @@ local function addTicket(uuid)
     end
 end
 
-
 --
 -- -- -- -- -- --
 --
 
 local function found(ks, b) return fd.first(ks, function(k) return b[k] end) end
+
 local function sanitize(ks)
     local kk = fd.reduce(ks, fd.rejig(function(k) return true, k end), fd.merge, {})
     return function(_,k) return not(kk[k]) end
 end
+
 local function smart(v, k) return ISSTR[k] and format("'%s'", tostring(v):upper()) or (tointeger(v) or tonumber(v) or 0) end
 
 local function reformat(v, k)
@@ -184,12 +184,8 @@ local function updateOne(w)
     client:rpush(k, qry)
     qryExec(qry)
 
-    -- notify cloud service XXX
---    qry = format("INSERT INTO updates VALUES (%d, %s, '%s')", u, clave, asJSON(w))
---    client:rpush(k, qry)
-
     local v = asJSON{vers=u, week=WKDB}
-    client:set(UVS, v)
+    client:set('app:updates:version', v)
 
     return v, k
 end
@@ -242,11 +238,6 @@ do
     FERRE.exec'DETACH DATABASE people'
     print("personas DB was successfully read\n")
 end
--- -- -- -- -- --
---
-
--- -- -- -- -- --
---
 
 --
 --
@@ -268,6 +259,26 @@ print('\nSuccessfully connected to:', STREAM, '\n')
 
 tasks:send_msg'OK'
 
+--
+-- -- -- -- -- --
+--
+
+local function notify(k, clave, vers)
+    -- notify cloud service XXX
+    local qrys = client:lrange(k, 0, -1)
+    tasks:send_msgs{'vultr', 'update', serialize(qrys), vers}
+
+    tasks:send_msgs{'SSE', 'version', vers}
+    tasks:send_msgs{'inmem', 'update', clave}
+end
+
+--
+-- -- -- -- -- --
+--
+
+local uptodate = false
+
+--
 -- -- -- -- -- --
 --
 
@@ -297,26 +308,16 @@ while true do
 	    for k,v in urldecode(msg):gmatch'([%a%d]+)=([^&]+)' do w[k] = asnum(v) end
 	    for k,v in urldecode(msg):gmatch'([%a%d]+)=&' do w[k] = '' end
 	    local vers, k = updateOne( w )
-	    -- notify cloud service XXX
-	    local qrys = client:lrange(k, 0, -1)
---	    client:rpop(k) -- only for cloud storage
-	    tasks:send_msgs{'vultr', 'update', serialize(qrys), vers}
-
-	    tasks:send_msgs{'SSE', 'version', vers}
-	    tasks:send_msgs{'inmem', 'update', w.clave}
+	    notify(k, w.clave, vers)
 	    print('\nversion:', vers, '\n')
 
 	elseif cmd == 'eliminar' then
 	    local clave = asnum(msg[2]:match'clave=([%a%d]+)')
 	    local vers, k = updateOne( setBlank(clave) )
-	    -- notify cloud service XXX
-	    local qrys = client:lrange(k, 0, -1)
---	    qrys[#qrys+1] = client:rpop(k)
-	    tasks_send_msgs{'vultr', 'eliminar', serialize(qrys), vers}
-
-	    tasks:send_msgs{'SSE', 'version', vers}
-	    tasks:send_msgs{'inmem', 'update', clave}
+	    notify(k, clave, vers)
 	    print('\nversion:', vers, '\n')
+
+	elseif cmd == 'uptodate' then
 
 	end
 

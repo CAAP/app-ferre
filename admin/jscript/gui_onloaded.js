@@ -7,6 +7,27 @@
 	    document.getElementById('copyright').innerHTML = 'versi&oacute;n ' + 3.0 + ' | cArLoS&trade; &copy;&reg;';
 	})();
 
+	// ADMIN
+	(function() {
+	    admin.origin = document.location.origin+':5040/';
+
+	    DATA.inplace = q => {
+		let r = document.body.querySelector('tr[data-clave="'+q.clave+'"]');
+		if (r) {
+		    if (!q.desc.includes('VV')) {
+			UTILS.clearTable(r);
+			BROWSE.rows(q,r);
+		    }
+		    r.classList.add('updated');
+		}
+		return q;
+	    };
+
+	    let mymenu = document.getElementById("menu");
+
+	    admin.menuToggle = p => { mymenu.style.display = p ? 'inline' : 'none'; };
+	})();
+
 	// Init & Load DBs
 	(function() {
 	    const STORES = DATA.STORES;
@@ -15,7 +36,7 @@
 
 	    function isPriceless(store) {
 		if (store.STORE == 'precios')
-		    return XHR.getJSON(store.VERS)
+		    return XHR.getJSON(admin.origin+'json/version.json')
 			      .then( STORES.VERS.update );
 		else
 		    return Promise.resolve(true);
@@ -44,27 +65,6 @@
 		   })))
 		   .then(() => { STORES.PRICE.INDEX = 'desc'; });
 
-	})();
-
-	// ADMIN
-	(function() {
-	    admin.origin = document.location.origin+':5040/';
-
-	    DATA.inplace = q => {
-		let r = document.body.querySelector('tr[data-clave="'+q.clave+'"]');
-		if (r) {
-		    if (!q.desc.includes('VV')) {
-			UTILS.clearTable(r);
-			BROWSE.rows(q,r);
-		    }
-		    r.classList.add('updated');
-		}
-		return q;
-	    };
-
-	    let mymenu = document.getElementById("menu");
-
-	    admin.menuToggle = p => { mymenu.style.display = p ? 'inline' : 'none'; };
 	})();
 
 	// BROWSE

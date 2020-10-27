@@ -23,7 +23,7 @@ local print	  = print
 local type	  = type
 
 local STREAM	  = os.getenv'STREAM_IPC'
-local VULTR	  = os.getenv'VULTR'
+local VULTR	  = "tcp://192.168.1.110:5630" -- os.getenv'VULTR'
 
 -- No more external access after this point
 _ENV = nil -- or M
@@ -38,8 +38,6 @@ local INMEM	  = { query=true, rfc=true, bixolon=true,
 		      ledger=true,  adjust=true }
 
 local FERRE 	  = { update=true, faltante=true, eliminar=true }
-
---local INMEM 	  = { version=true
 
 local client	  = assert( rconnect('127.0.0.1', '6379') )
 

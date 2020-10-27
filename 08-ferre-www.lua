@@ -108,8 +108,12 @@ local function httpfn(c, ev, ...)
     if ev == events.REQUEST then
 	local _,uri,query,_ = ...
 	print('\nAPP\t', ...)
-	c:reply(200, 'OK', EGET, true)
-	msgr:send_msgs{uri:match'%a+', query} -- 'app', uri:match'%a+', query
+	if uri:match'version.json' then
+	    c:reply(200, client:get'app:updates:version', EGET, true)
+	else
+	    c:reply(200, 'OK', EGET, true)
+	    msgr:send_msgs{uri:match'%a+', query} -- 'app', uri:match'%a+', query
+	end
     end
 end
 

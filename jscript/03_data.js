@@ -6,7 +6,6 @@
 		    STORE: 'precios',
 		    KEY: 'clave',
 		    FILE: '/json/precios.json',
-		    VERS: '/json/version.json',
 		    INDEX: [{key: 'desc'}] // {key: 'faltante'}, {key: 'proveedor'}
 		},
 		VERS: {},

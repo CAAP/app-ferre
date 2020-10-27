@@ -7,6 +7,17 @@
 	    document.getElementById('copyright').innerHTML = 'versi&oacute;n ' + 3.0 + ' | cArLoS&trade; &copy;&reg;';
 	})();
 
+	// CAJA
+	(function() {
+	    caja.origin = document.location.origin+':5040/';
+
+	    DATA.inplace = () => Promise.resolve(true);
+
+	    let mymenu = document.getElementById("menu");
+
+	    caja.menuToggle = p => { mymenu.style.display = p ? 'inline' : 'none'; };
+	})();
+
 	// Init & Load DBs
 	(function() {
 	    const STORES = DATA.STORES;
@@ -15,7 +26,7 @@
 
 	    function isPriceless(store) {
 		if (store.STORE == 'precios')
-		    return XHR.getJSON(store.VERS)
+		    return XHR.getJSON(caja.origin+'json/version.json')
 			      .then( STORES.VERS.update );
 		else
 		    return Promise.resolve(true);
@@ -44,17 +55,6 @@
 		   })))
 		   .then(() => { STORES.PRICE.INDEX = 'desc'; STORES.CUSTOMERS.INDEX = 'rfc'; });
 
-	})();
-
-	// CAJA
-	(function() {
-	    caja.origin = document.location.origin+':5040/';
-
-	    DATA.inplace = () => Promise.resolve(true);
-
-	    let mymenu = document.getElementById("menu");
-
-	    caja.menuToggle = p => { mymenu.style.display = p ? 'inline' : 'none'; };
 	})();
 
 	// FACTURAR

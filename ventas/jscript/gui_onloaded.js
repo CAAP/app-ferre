@@ -7,6 +7,25 @@
 	    document.getElementById('copyright').innerHTML = 'versi&oacute;n ' + 3.0 + ' | cArLoS&trade; &copy;&reg;';
 	})();
 
+	// FERRE
+	(function() {
+	    ferre.origin = document.location.origin+':5040/';
+
+	    DATA.inplace = q => {
+		let r = document.body.querySelector('tr[data-clave="'+q.clave+'"]');
+		if (r) {
+		    if (!q.desc.includes('VV')) {
+			UTILS.clearTable(r);
+			BROWSE.rows(q,r);
+		    }
+		    r.classList.add('updated');
+		}
+		return q;
+	    };
+
+	    ferre.getUID = e => ferre.xget('uid', {uid: e.target.innerHTML, fruit: sessionStorage.fruit});
+	})();
+
 	// Init & Load DBs
 	(function() {
 	    const STORES = DATA.STORES;
@@ -15,7 +34,7 @@
 
 	    function isPriceless(store) {
 		if (store.STORE == 'precios')
-		    return XHR.getJSON(store.VERS)
+		    return XHR.getJSON(ferre.origin+'json/version.json')
 			      .then( STORES.VERS.update );
 		else
 		    return Promise.resolve(true);
@@ -44,25 +63,6 @@
 		   })))
 		   .then(() => { STORES.PRICE.INDEX = 'desc'; });
 
-	})();
-
-	// FERRE
-	(function() {
-	    ferre.origin = document.location.origin+':5040/';
-
-	    DATA.inplace = q => {
-		let r = document.body.querySelector('tr[data-clave="'+q.clave+'"]');
-		if (r) {
-		    if (!q.desc.includes('VV')) {
-			UTILS.clearTable(r);
-			BROWSE.rows(q,r);
-		    }
-		    r.classList.add('updated');
-		}
-		return q;
-	    };
-
-	    ferre.getUID = e => ferre.xget('uid', {uid: e.target.innerHTML, fruit: sessionStorage.fruit});
 	})();
 
 	// BROWSE
