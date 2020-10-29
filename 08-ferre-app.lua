@@ -23,6 +23,8 @@ local print	  = print
 local type	  = type
 
 local STREAM	  = os.getenv'STREAM_IPC'
+local TIENDA	  = os.getenv'TIENDA'
+
 local VULTR	  = "tcp://192.168.1.110:5630" -- os.getenv'VULTR'
 
 -- No more external access after this point
@@ -70,10 +72,10 @@ local function switch(msg)
     if cmd == 'ticket' then
 	local k = 'queue:tickets:'..msg[3]
 	local ret = client:lrange(k, 0, -1)
-	insert(ret, 1, cmd)
+	insert(ret, 1, 'ticketx') -- ADD uid |¬ msg[3]  XXX
 	return ret
 
-    elseif cmd == 'update' or 'eliminar' then
+    elseif cmd == 'updatex' then
 	remove(msg, 1)
 	return msg
 
@@ -113,7 +115,7 @@ assert( msgr:immediate(true) )
 
 assert( msgr:linger(0) )
 
-assert( msgr:set_id'FA-BJ-101' )
+assert( msgr:set_id(TIENDA) )
 
 assert( keypair():client(msgr, SRVK) )
 
@@ -180,6 +182,14 @@ print'+\n'
 	local cmd = msg[1]:match'%a+'
 
 	print('\nVULTR:', concat(msg, ' '), '\n')
+
+	if cmd == 'OK' then
+
+	elseif cmd == 'updatex' then
+	    insert(msg, 1, 'DB')
+	    stream:send_msgs( msg )
+
+	end
 
     end
 
