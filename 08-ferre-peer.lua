@@ -39,6 +39,20 @@ local SRVK	  = "/*FTjQVb^Hgww&{X*)@m-&D}7Lxk?f5o7mIe=![2"
 --------------------------------
 --
 
+local function switch(msg)
+    local cmd = msg[2]
+    if cmd == 'ticket' then
+	local k = 'queue:tickets:'..msg[3]
+	local ret = client:lrange(k, 0, -1)
+	insert(ret, 1, 'ticketx') -- ADD uid |¬ msg[3]  XXX
+	return ret
+
+    elseif cmd == 'updatex' then
+	remove(msg, 1)
+	return msg
+
+    end
+end
 
 ---------------------------------
 -- Program execution statement --
@@ -58,13 +72,20 @@ posix.signal(posix.SIGINT, shutdown)
 --
 local CTX = context()
 
-local stream = assert(CTX:socket'ROUTER')
+local stream = assert(CTX:socket'DEALER')
 
-assert( stream:mandatory(true) ) -- causes error in case of unroutable peer
+assert( stream:immediate(true) )
+
+assert( stream:linger(0) )
+
+assert( msgr:set_id('vultr') )
 
 assert( stream:bind( STREAM ) )
 
-print('\nSuccessfully bound to:', STREAM, '\n')
+print('\nSuccessfully connected to:', STREAM, '\n')
+
+stream:send_msg'OK'
+
 --
 -- -- -- -- -- --
 --
@@ -95,58 +116,27 @@ print'+\n'
 
     if stream:events() == 'POLLIN' then
 
-	local id, msg = receive( stream )
+	local msg = stream:recv_msgs()
 	local cmd = msg[1]:match'%a+'
 
-	print(id, concat(msg, ' '), '\n')
+	print('stream:\t', concat(msg, ' '), '\n')
 
 	if cmd == 'OK' then
-
-	elseif cmd == 'SSE' then
-	    stream:send_msgs( msg )
-
-	elseif cmd == 'inmem' then
-	    stream:send_msgs( msg )
-
-	elseif cmd == 'vultr' then
-	    msgr:send_msgs( switch( msg ) )
-	    print'\nVULTR: Message sent for cloud storage\n'
-
-	----------------------
-	-- divide & conquer --
-	----------------------
-	elseif TABS[cmd]  then
-	    broadcast( stream, tabs(cmd, msg) )
-
-	elseif INMEM[cmd] then
-	    insert(msg, 1, 'inmem')
-	    stream:send_msgs(msg)
-
-	elseif FERRE[cmd] then
-	    insert(msg, 1, 'DB')
-	    stream:send_msgs(msg)
-
-	----------------------------------
-	-- convert into MULTI-part msgs --
-	----------------------------------
-	elseif msg[2]:match'query=' then -- XXX ISTKT???
-	    local uuid = asUUID(client, cmd, msg[2])
-	    if uuid then stream:send_msgs{'DB', cmd, uuid} end
 
 	end
 
     elseif msgr:events() == 'POLLIN' then
 
-	local id, msg = receive( stream )
+	local msg = receive( stream )
 	local cmd = msg[1]:match'%a+'
 
 	print('\nVULTR:', concat(msg, ' '), '\n')
 
 	if cmd == 'OK' then
 
-	elseif cmd == 'updatex' then
-	    insert(msg, 1, 'DB')
-	    stream:send_msgs( msg )
+--	elseif cmd == 'updatex' then
+--	    insert(msg, 1, 'DB')
+--	    stream:send_msgs( msg )
 
 	end
 
