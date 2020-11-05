@@ -1,7 +1,9 @@
 local redis = require'redis'
 local concat = table.concat
 
-local client = redis.connect('127.0.0.1', '6379')
+local REDIS = os.getenv'REDISC'
+
+local client = redis.connect(REDIS, '6379')
 
 assert( client:ping() )
 
