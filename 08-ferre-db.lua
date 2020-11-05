@@ -320,7 +320,7 @@ while true do
 		tasks:send_msgs{'inmem', 'ticket', uid}
 		print('\nUID:', uid, '\n')		
 		-- notify cloud service | external peer
-		tasks:send_msgs{'vultr', 'ticketx', uid}
+		tasks:send_msgs{'peer', 'ticketx', uid}
 	    end
 
 	elseif cmd == 'update' then
@@ -332,7 +332,7 @@ while true do
 	    local q = notify(k, w.clave, vers)
 	    print('\nversion:', vers, '\n')
 	    -- notify cloud service | external peer
-	    tasks:send_msgs{'vultr', 'updatex', clave, vers, q}
+	    tasks:send_msgs{'peer', 'updatex', w.clave, vers, q}
 
 	elseif cmd == 'eliminar' then
 	    local clave = asnum(msg[2]:match'clave=([%a%d]+)')
@@ -340,7 +340,7 @@ while true do
 	    local q = notify(k, clave, vers)
 	    print('\nversion:', vers, '\n')
 	    -- notify cloud service | external peer
-	    tasks:send_msgs{'vultr', 'updatex', clave, vers, q}
+	    tasks:send_msgs{'peer', 'updatex', clave, vers, q}
 
 	elseif cmd == 'updatex' then -- cmd, clave, vers, query in b64&serialized
 	    local vers = XXX -- XXX

@@ -24,6 +24,7 @@ local type	  = type
 
 local STREAM	  = os.getenv'STREAM_IPC'
 local REDIS	  = os.getenv'REDISC'
+local PEER	  = os.getenv'PEER'
 
 -- No more external access after this point
 _ENV = nil -- or M
@@ -38,6 +39,8 @@ local INMEM	  = { query=true, rfc=true, bixolon=true,
 		      ledger=true,  adjust=true }
 
 local FERRE 	  = { update=true, faltante=true, eliminar=true }
+
+local ROUTE	  = { inmem=true, SSE=true, peer=true }
 
 local client	  = assert( rconnect(REDIS, '6379') )
 
@@ -105,6 +108,10 @@ assert( stream:bind( STREAM ) )
 
 print('\nSuccessfully bound to:', STREAM, '\n')
 
+assert( stream:connect( PEER ) )
+
+print('\nSuccessfully connected to:', PEER, '\n')
+
 --
 -- -- -- -- -- --
 --
@@ -123,10 +130,7 @@ print'+\n'
 
 	if cmd == 'OK' then
 
-	elseif cmd == 'SSE' then
-	    stream:send_msgs( msg )
-
-	elseif cmd == 'inmem' then
+	elseif ROUTE[cmd] then
 	    stream:send_msgs( msg )
 
 --[[
