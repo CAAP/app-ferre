@@ -23,8 +23,7 @@ local print	  = print
 local type	  = type
 
 local STREAM	  = os.getenv'STREAM_IPC'
-
---local VULTR	  = "tcp://192.168.1.110:5630" -- os.getenv'VULTR'
+local REDIS	  = os.getenv'REDISC'
 
 -- No more external access after this point
 _ENV = nil -- or M
@@ -40,9 +39,7 @@ local INMEM	  = { query=true, rfc=true, bixolon=true,
 
 local FERRE 	  = { update=true, faltante=true, eliminar=true }
 
-local client	  = assert( rconnect('127.0.0.1', '6379') )
-
-local SRVK	  = "/*FTjQVb^Hgww&{X*)@m-&D}7Lxk?f5o7mIe=![2"
+local client	  = assert( rconnect(REDIS, '6379') )
 
 --------------------------------
 -- Local function definitions --

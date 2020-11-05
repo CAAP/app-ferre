@@ -21,6 +21,7 @@ local print	  = print
 
 local STREAM	  = os.getenv'STREAM_IPC'
 local TIENDA	  = os.getenv'TIENDA'
+local REDIS	  = os.getenv'REDISC'
 
 local VULTR	  = "tcp://192.168.1.110:5630" -- os.getenv'VULTR'
 
@@ -29,7 +30,7 @@ _ENV = nil -- or M
 
 -- Local Variables for module-only access
 --
-local client	  = assert( rconnect('127.0.0.1', '6379') )
+local client	  = assert( rconnect(REDIS, '6379') )
 
 local SRVK	  = "/*FTjQVb^Hgww&{X*)@m-&D}7Lxk?f5o7mIe=![2"
 

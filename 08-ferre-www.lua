@@ -20,13 +20,14 @@ local print	= print
 
 local STREAM	= os.getenv'STREAM_IPC'
 local HTTP	= os.getenv'HTTP_PORT'
+local REDIS	= os.getenv'REDISC'
 
 -- No more external access after this point
 _ENV = nil -- or M
 
 -- Local Variables for module-only access
 --
-local client	 = assert( rconnect('127.0.0.1', '6379') )
+local client	 = assert( rconnect(REDIS, '6379') )
 local events	 = mgr.events
 
 local MG	 = 'mgconn:active'
