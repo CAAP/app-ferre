@@ -37,13 +37,13 @@ assert( client:set('tcp:sse', ESTREAM) )
 assert( client:set('tcp:get', EGET) )
 
 --- *HASH* ---
-assert( client:hset('sql:week', 'tickets', 'tienda', 'uid, tag, prc, clave, desc, costol NUMBER, unidad, precio NUMBER, unitario NUMBER, qty INTEGER, rea INTEGER, totalCents INTEGER, uidSAT, nombre') )
+assert( client:hset('sql:week', 'tickets', 'uid, tag, prc, clave, desc, costol NUMBER, unidad, precio NUMBER, unitario NUMBER, qty INTEGER, rea INTEGER, totalCents INTEGER, uidSAT, nombre') )
 
 assert( client:hset('sql:week', 'updates', 'vers INTEGER PRIMARY KEY, clave, msg'))
 
 assert( client:hset('sql:week', 'queries', 'vers INTEGER PRIMARY KEY, clave, version, query'))
 
-assert( client:hset('sql:week', 'facturas', 'tienda', 'uid, fapi PRIMARY KEY NOT NULL, rfc NOT NULL, sat NOT NULL'))
+assert( client:hset('sql:week', 'facturas', 'uid, fapi PRIMARY KEY NOT NULL, rfc NOT NULL, sat NOT NULL'))
 
 assert( client:hset('sql:week', 'uids', 'CREATE TEMP VIEW IF NOT EXISTS uids AS SELECT uid, SUBSTR(uid, 12, 5) time, COUNT(uid) count, ROUND(SUM(totalCents)/100.0, 2) total, tag, nombre FROM tickets WHERE tag NOT LIKE "factura" GROUP BY uid') )
 
