@@ -130,12 +130,11 @@ print'+\n'
 
     elseif msgr:events() == 'POLLIN' then
 
-	local msg = receive( stream )
-	local cmd = msg[1]:match'%a+'
+	local msg = msgr:recv_msgs()
 
 	print('\nVULTR:', concat(msg, ' '), '\n')
 
-	if cmd == 'OK' then
+	if msg[1] == 'OK' then
 
 --	elseif cmd == 'updatex' then
 --	    insert(msg, 1, 'DB')
