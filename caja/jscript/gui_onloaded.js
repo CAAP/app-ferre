@@ -193,7 +193,7 @@
 //		if (tr) { tr.lastChild.textContent = w.tag; return Promise.resolve(true); }
 		let row = cajita.insertRow(0);
 		row.dataset.uid = w.uid;
-		w.nombre = caja.NAMES.get( UTILS.asnum(w.uid..substr(19).match(/\d+/)) ) || 'CAJA';
+		w.nombre = caja.NAMES.get( UTILS.asnum(w.uid.substr(19).match(/\d+/)) ) || 'CAJA';
 		for (let k of ['time', 'nombre', 'count', 'total']) { row.insertCell().appendChild( document.createTextNode(w[k]) ); }
 		let tag = row.insertCell();
 		tag.classList.add('addme');
