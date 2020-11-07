@@ -3,9 +3,10 @@
 -- Import Section
 --
 local reduce	  = require'carlos.fold'.reduce
+local into	  = require'carlos.fold'.into
 local receive	  = require'carlos.ferre'.receive
 local context	  = require'lzmq'.context
-local proxy	  = require'lzmq'.proxy
+local pollin	  = require'lzmq'.pollin
 local keypair	  = require'lzmq'.keypair
 
 local rconnect	  = require'redis'.connect
@@ -20,17 +21,17 @@ local format	  = string.format
 local print	  = print
 
 local STREAM	  = os.getenv'STREAM_IPC'
+local PEER	  = os.getenv'PEER_IPC'
 local TIENDA	  = os.getenv'TIENDA'
 local REDIS	  = os.getenv'REDISC'
+
+local TOK	  = "tcp://192.168.2.56:5630" -- os.getenv'VULTR'
 
 -- No more external access after this point
 _ENV = nil -- or M
 
 -- Local Variables for module-only access
 --
-local PEER	  = "tcp://*:5630"
-local VULTR	  = "tcp://*:5610"
-
 local client	  = assert( rconnect(REDIS, '6379') )
 
 local SRVK	  = "/*FTjQVb^Hgww&{X*)@m-&D}7Lxk?f5o7mIe=![2"
@@ -45,7 +46,7 @@ local function switch(msg)
     if cmd == 'ticketx' then
 	local uid = msg[2]
 	local k = 'queue:tickets:'..uid
-	fd.reduce(client:lrange(k, 0, -1), fd.into, msg)
+	reduce(client:lrange(k, 0, -1), into, msg)
 	return true
 
     elseif cmd == 'updatex' then
@@ -75,20 +76,24 @@ posix.signal(posix.SIGINT, shutdown)
 --
 local CTX = context()
 
-local stream = assert(CTX:socket'XSUB')
+local stream = assert(CTX:socket'DEALER')
+
+assert( stream:immediate(true) )
 
 assert( stream:linger(0) )
 
---assert( stream:set_id('peer') )
+assert( stream:set_id('peer') )
 
 assert( stream:bind( PEER ) )
 
 print('\nSuccessfully bound to:', PEER, '\n')
 
+stream:send_msg'OK'
+
 --
 -- -- -- -- -- --
 --
-local msgr = assert(CTX:socket'XPUB')
+local msgr = assert(CTX:socket'PUB')
 
 assert( msgr:linger(0) )
 
@@ -96,13 +101,47 @@ assert( msgr:linger(0) )
 
 --assert( keypair():client(msgr, SRVK) )
 
-assert( msgr:bind( VULTR ) )
+assert( msgr:connect( TOK ) )
 
-print('\nSuccessfully bound to', VULTR, '\n')
+print('\nSuccessfully connected to', TOK, '\n')
+
+--msgr:send_msg'OK'
 
 --
 -- -- -- -- -- --
 --
 
-proxy(stream, msgr)
+while true do
+print'+\n'
+
+    pollin{stream, msgr}
+
+    if stream:events() == 'POLLIN' then
+
+	local msg = stream:recv_msgs()
+
+	print('stream:', concat(msg, ' '), '\n')
+
+	if switch(msg) then
+	    msgr:send_msgs( msg )
+	end
+
+
+    elseif msgr:events() == 'POLLIN' then
+
+	local msg = msgr:recv_msgs()
+
+	print('\nVULTR:', concat(msg, ' '), '\n')
+
+	if msg[1] == 'OK' then
+
+--	elseif cmd == 'updatex' then
+--	    insert(msg, 1, 'DB')
+--	    stream:send_msgs( msg )
+
+	end
+
+    end
+
+end
 

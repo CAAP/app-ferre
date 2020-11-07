@@ -24,7 +24,7 @@ local type	  = type
 
 local STREAM	  = os.getenv'STREAM_IPC'
 local REDIS	  = os.getenv'REDISC'
-local PEER	  = os.getenv'PEER'
+local PEER	  = os.getenv'PEER_IPC'
 
 -- No more external access after this point
 _ENV = nil -- or M
