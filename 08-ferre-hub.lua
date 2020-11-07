@@ -5,7 +5,7 @@
 local reduce	  = require'carlos.fold'.reduce
 local receive	  = require'carlos.ferre'.receive
 local context	  = require'lzmq'.context
-local proxy	  = require'lzmq'.proxy
+local pollin	  = require'lzmq'.pollin
 local keypair	  = require'lzmq'.keypair
 
 local rconnect	  = require'redis'.connect
@@ -19,18 +19,17 @@ local remove	  = table.remove
 local format	  = string.format
 local print	  = print
 
-local STREAM	  = os.getenv'STREAM_IPC'
 local TIENDA	  = os.getenv'TIENDA'
 local REDIS	  = os.getenv'REDISC'
+local PEER	  = os.getenv'PEER'
+
+local VULTR	  = os.getenv'VULTR'
 
 -- No more external access after this point
 _ENV = nil -- or M
 
 -- Local Variables for module-only access
 --
-local PEER	  = "tcp://*:5630"
-local VULTR	  = "tcp://*:5610"
-
 local client	  = assert( rconnect(REDIS, '6379') )
 
 local SRVK	  = "/*FTjQVb^Hgww&{X*)@m-&D}7Lxk?f5o7mIe=![2"
@@ -75,11 +74,13 @@ posix.signal(posix.SIGINT, shutdown)
 --
 local CTX = context()
 
-local stream = assert(CTX:socket'XSUB')
+local stream = assert(CTX:socket'ROUTER')
+
+assert( stream:immediate(true) )
 
 assert( stream:linger(0) )
 
---assert( stream:set_id('peer') )
+assert( stream:set_id('peer') )
 
 assert( stream:bind( PEER ) )
 
@@ -92,17 +93,47 @@ local msgr = assert(CTX:socket'XPUB')
 
 assert( msgr:linger(0) )
 
---assert( msgr:set_id(TIENDA) )
-
 --assert( keypair():client(msgr, SRVK) )
 
 assert( msgr:bind( VULTR ) )
 
-print('\nSuccessfully bound to', VULTR, '\n')
+print('\nSuccessfully connected to', VULTR, '\n')
 
 --
 -- -- -- -- -- --
 --
 
-proxy(stream, msgr)
+while true do
+print'+\n'
+
+    pollin{stream, msgr}
+
+    if stream:events() == 'POLLIN' then
+
+	local msg = stream:recv_msgs()
+
+	print('stream:', concat(msg, ' '), '\n')
+
+	if switch(msg) then
+	    msgr:send_msgs( msg )
+	end
+
+
+    elseif msgr:events() == 'POLLIN' then
+
+	local msg = msgr:recv_msgs()
+
+	print('\nVULTR:', concat(msg, ' '), '\n')
+
+	if msg[1] == 'OK' then
+
+--	elseif cmd == 'updatex' then
+--	    insert(msg, 1, 'DB')
+--	    stream:send_msgs( msg )
+
+	end
+
+    end
+
+end
 
