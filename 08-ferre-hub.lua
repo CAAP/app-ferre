@@ -2,8 +2,6 @@
 
 -- Import Section
 --
-local reduce	  = require'carlos.fold'.reduce
-local receive	  = require'carlos.ferre'.receive
 local context	  = require'lzmq'.context
 local proxy	  = require'lzmq'.proxy
 local keypair	  = require'lzmq'.keypair
@@ -13,10 +11,6 @@ local posix	  = require'posix.signal'
 
 local assert	  = assert
 local exit	  = os.exit
-local concat	  = table.concat
-local insert	  = table.insert
-local remove	  = table.remove
-local format	  = string.format
 local print	  = print
 
 local STREAM	  = os.getenv'STREAM_IPC'
@@ -28,34 +22,18 @@ _ENV = nil -- or M
 
 -- Local Variables for module-only access
 --
-local PEER	  = "tcp://*:5630"
-local VULTR	  = "tcp://*:5610"
+local TIK	  = "tcp://*:5610"
+local TOK	  = "tcp://*:5620"
 
 local client	  = assert( rconnect(REDIS, '6379') )
 
-local SRVK	  = "/*FTjQVb^Hgww&{X*)@m-&D}7Lxk?f5o7mIe=![2"
+local SRVKI	  = "/*FTjQVb^Hgww&{X*)@m-&D}7Lxk?f5o7mIe=![2"
+local SRVKO	  = "/*FTjQVb^Hgww&{X*)@m-&D}7Lxk?f5o7mIe=![2"
 
 --------------------------------
 -- Local function definitions --
 --------------------------------
 --
-
-local function switch(msg)
-    local cmd = msg[1]
-    if cmd == 'ticketx' then
-	local uid = msg[2]
-	local k = 'queue:tickets:'..uid
-	fd.reduce(client:lrange(k, 0, -1), fd.into, msg)
-	return true
-
-    elseif cmd == 'updatex' then
-	return true
-
-    else
-	return false
-
-    end
-end
 
 ---------------------------------
 -- Program execution statement --
@@ -75,15 +53,15 @@ posix.signal(posix.SIGINT, shutdown)
 --
 local CTX = context()
 
-local stream = assert(CTX:socket'XSUB')
+local msgs = assert(CTX:socket'XSUB')
 
-assert( stream:linger(0) )
+assert( msgs:linger(0) )
 
---assert( stream:set_id('peer') )
+--assert( keypair():client(msgr, SRVKO) )
 
-assert( stream:bind( PEER ) )
+assert( msgs:bind( TOK ) )
 
-print('\nSuccessfully bound to:', PEER, '\n')
+print('\nSuccessfully bound to:', TOK, '\n')
 
 --
 -- -- -- -- -- --
@@ -92,50 +70,15 @@ local msgr = assert(CTX:socket'XPUB')
 
 assert( msgr:linger(0) )
 
---assert( msgr:set_id(TIENDA) )
+--assert( keypair():client(msgr, SRVKI) )
 
---assert( keypair():client(msgr, SRVK) )
+assert( msgr:bind( TIK ) )
 
-assert( msgr:bind( VULTR ) )
-
-print('\nSuccessfully bound to', VULTR, '\n')
+print('\nSuccessfully bound to', TIK, '\n')
 
 --
 -- -- -- -- -- --
 --
 
-local logA = assert(CTX:socket'PAIR')
+proxy(msgs, msgr)
 
-assert( logA:linger(0) )
-
-assert( logA:bind'inproc://log' )
-
---
--- -- -- -- -- --
---
-
-local logB = assert(CTX:socket'PAIR')
-
-assert( logB:linger(0) )
-
-assert( logB:connect'inproc://log' )
-
---
--- -- -- -- -- --
---
-
-proxy(stream, msgr, logA)
-
-while true do
-print'+\n'
-
-    pollin{logB}
-
-    if logB:events() == 'POLLIN' then
-
-	local msg = logB:recv_msgs()
-
-	print('LOG:', concat(msg, ' '), '\n')
-
-    end
-end
