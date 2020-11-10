@@ -24,7 +24,6 @@ local type	  = type
 
 local STREAM	  = os.getenv'STREAM_IPC'
 local REDIS	  = os.getenv'REDISC'
-local PEER	  = os.getenv'PEER_IPC'
 
 -- No more external access after this point
 _ENV = nil -- or M
@@ -40,7 +39,7 @@ local INMEM	  = { query=true, rfc=true, bixolon=true,
 
 local FERRE 	  = { update=true, faltante=true, eliminar=true }
 
-local ROUTE	  = { inmem=true, SSE=true, peer=true }
+local ROUTE	  = { inmem=true, SSE=true, peer=true, DB=true }
 
 local client	  = assert( rconnect(REDIS, '6379') )
 
@@ -108,10 +107,6 @@ assert( stream:bind( STREAM ) )
 
 print('\nSuccessfully bound to:', STREAM, '\n')
 
-assert( stream:connect( PEER ) )
-
-print('\nSuccessfully connected to:', PEER, '\n')
-
 --
 -- -- -- -- -- --
 --
@@ -132,12 +127,6 @@ print'+\n'
 
 	elseif ROUTE[cmd] then
 	    stream:send_msgs( msg )
-
---[[
-	elseif cmd == 'vultr' then
-	    msgr:send_msgs( switch( msg ) )
-	    print'\nVULTR: Message sent for cloud storage\n'
---]]
 
 	----------------------
 	-- divide & conquer --

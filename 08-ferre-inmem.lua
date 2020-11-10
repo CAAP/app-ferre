@@ -154,6 +154,7 @@ local function addDB(week, ups)
     assert( conn.exec'CREATE TABLE tickets AS SELECT * FROM week.tickets' )
     if ups then
 	assert( conn.exec'CREATE TABLE updates AS SELECT * FROM week.updates' )
+	assert( conn.exec'CREATE TABLE queries AS SELECT * FROM week.queries' )
     end
     assert( conn.exec'DETACH DATABASE week' )
 
@@ -245,7 +246,7 @@ tasks:send_msg'OK'
 
 --
 -- -- -- -- -- --
---
+--[[
 local printer = assert(CTX:socket'PUSH')
 
 assert( printer:immediate( true ) )
@@ -256,7 +257,7 @@ assert( printer:connect( BIXOLON ) )
 
 print('\nSuccessfully connected to:', BIXOLON)
 
---
+--]]
 -- -- -- -- -- --
 --
 do

@@ -20,7 +20,6 @@ local rconnect	  = require'redis'.connect
 local asJSON	  = require'json'.encode
 local serialize	  = require'binser'.serialize
 local b64	  = require'lints'.asB64
-local gb64	  = require'lints'.fromB64
 local posix	  = require'posix.signal'
 
 local concat	  = table.concat
@@ -47,7 +46,7 @@ local TIENDA	  = env'TIENDA'
 
 local QRY	  = 'SELECT * FROM precios WHERE clave LIKE %q LIMIT 1'
 local QUP	  = 'UPDATE %q SET %s %s'
-local QTKT	  = 'SELECT uid, tag, clave, qty, rea, totalCents, prc "precio" FROM tickets WHERE uid LIKE %q'
+local QQRY	  = "INSERT INTO queries VALUES (%d, %s, '%s', '%s')"
 
 local COSTOL 	  = 'costol = costo*(100+impuesto)*(100-descuento)*(1-rebaja/100.0)'
 
@@ -55,6 +54,8 @@ local client	  = assert( rconnect('127.0.0.1', '6379') )
 
 local IDS	  = 'app:uuids:'
 local QIDS	  = 'queue:uuids:'
+local QTKT	  = 'queue:tickets:'
+local UVER	  = 'app:updates:version'
 
 local FERRE, WEEK, INDEX
 
@@ -71,19 +72,9 @@ local ISSTR	  = fd.reduce(client:smembers'const:isstr', fd.rejig(function(k) ret
 --------------------------------
 --
 
-local function deserialize(s)
-    local a,i = dN(gb64(s), 1)
-    return a
-end
-
---
--- -- -- -- -- --
---
-
 local function indexar(a) return fd.reduce(INDEX, fd.map(function(k) return a[k] or '' end), fd.into, {}) end
 
 local function oneItem(o)
-print('\nData:', o.data, '\n')
     for k,v in urldecode(o.data):gmatch'([%a%d]+)|([^|]+)' do o[k] = asnum(v) end
     local lbl = 'u' .. o.precio:match'%d$'
     local rea = (100-o.rea)/100.0
@@ -103,8 +94,8 @@ local function addTicket(uuid)
 	local uid, tag, pid = client:hget(ID, 'uid'), client:hget(ID, 'cmd'), tointeger(client:hget(ID, 'pid'))
 	local nombre = NOMBRES[pid] or 'NaP'
 	local data = split(client:hget(ID, 'data'):sub(7), '&query=') -- may FAIl due to lack of data
-	data = fd.reduce(data, fd.map(function(s) return {data=s, uid=uid, tag=tag, nombre=nombre, tienda=TIENDA} end), fd.map(oneItem), fd.map(indexar), fd.into, {})
-	ID = 'queue:tickets:'..uid
+	data = fd.reduce(data, fd.map(function(s) return {data=s, uid=uid, tag=tag, nombre=nombre} end), fd.map(oneItem), fd.map(indexar), fd.into, {})
+	ID = QTKT..uid
 	fd.reduce(data, function(w) client:rpush(ID, serialize(w)) end)
 	client:expire(ID, 120)
 	if #data > 6 then
@@ -158,8 +149,6 @@ local function updateOne(w)
 
     if w.fecha or toll then w.fecha = HOY end
 
-    w.tienda = TIENDA
-
     local u = fd.reduce(fd.keys(w), fd.filter(sanitize(DIRTY)), fd.map(reformat), fd.into, {})
     if #u == 0 then return false end -- safeguard
     local qry = format('UPDATE datos SET %s %s', concat(u, ', '), clause)
@@ -197,14 +186,14 @@ local function updateOne(w)
     qryExec(k, qry)
 
     local v = asJSON{vers=u, week=WKDB}
-    client:set('app:updates:version', v)
+    client:set(UVER, v)
 
-    qry = format("INSERT INTO queries VALUES (%d, %s, '%s', '*QUERY*')", u, clave, v)
-    client:rpush(k, qry)
+    qry = format(QQRY, u, clave, v, b64(serialize(client:lrange(k, 0, -1))))
+    qryExec(k, qry)
 
     client:expire(k, 120)
 
-    return v, k
+    return v, qry
 end
 
 local function setBlank(clave)
@@ -281,16 +270,9 @@ tasks:send_msg'OK'
 -- -- -- -- -- --
 --
 
-local function notify(k, clave, vers)
-    local q = client:rpop(k)
-    local qs = client:lrange(k, 0, -1)
-    q = q:gsub('*QUERY*', b64(serialize(qs)))
-    client:rpush(k, q)
-
+local function notify(clave, vers)
     tasks:send_msgs{'SSE', 'version', vers}
     tasks:send_msgs{'inmem', 'update', clave}
-
-    return q
 end
 
 --
@@ -328,47 +310,45 @@ while true do
 	    local w = {}
 	    for k,v in urldecode(msg):gmatch'([%a%d]+)=([^&]+)' do w[k] = asnum(v) end
 	    for k,v in urldecode(msg):gmatch'([%a%d]+)=&' do w[k] = '' end
-	    local vers, k = updateOne( w )
-	    local q = notify(k, w.clave, vers)
+
+	    local overs = client:get(UVER)
+	    local vers, q = updateOne( w )
+	    notify(w.clave, vers)
 	    print('\nversion:', vers, '\n')
 	    -- notify cloud service | external peer
-	    tasks:send_msgs{'peer', 'updatex', w.clave, vers, q}
+	    tasks:send_msgs{'peer', 'updatex', w.clave, vers, overs, q}
 
 	elseif cmd == 'eliminar' then
 	    local clave = asnum(msg[2]:match'clave=([%a%d]+)')
-	    local vers, k = updateOne( setBlank(clave) )
-	    local q = notify(k, clave, vers)
+
+	    local overs = client:get(UVER)
+	    local vers, q = updateOne( setBlank(clave) )
+	    notify(clave, vers)
 	    print('\nversion:', vers, '\n')
 	    -- notify cloud service | external peer
-	    tasks:send_msgs{'peer', 'updatex', clave, vers, q}
+	    tasks:send_msgs{'peer', 'updatex', clave, vers, overs, q}
 
 	elseif cmd == 'updatex' then -- cmd, clave, vers, query in b64&serialized
-	    local vers = XXX -- XXX
-	    if msg[3] == vers then
-		local clave = msg[2]
-		local k = QIDS..clave
-		fd.reduce(deserialize(msg[4]), function(q) qryExec(k, q) end)
-		notify(k, clave, vers)
-	    end
+	    local clave = msg[2]
+	    local vers = msg[3]
+	    local k = QIDS..clave
+	    local qs = client:lrange(k, 0, -1)
+	    fd.reduce(qs, qryExec)
+	    notify(clave, vers)
+	    print('\nversion:', vers, '\n')
+	    -- DO NOT notify cloud service | external peer
 
 	elseif cmd == 'ticketx' then
-
-
-	ID = 'queue:tickets:'..uid
-	fd.reduce(data, function(w) client:rpush(ID, serialize(w)) end)
-	client:expire(ID, 120)
-	if #data > 6 then
-	    fd.slice(5, data, into'tickets', WEEK)
-	else
-	    fd.reduce(data, into'tickets', WEEK)
-	end
-
-		tasks:send_msgs{'inmem', 'ticket', uid}
-		print('\nUID:', uid, '\n')		
-
-
-
-	elseif cmd == 'uptodate' then
+	    local uid = msg[2]
+	    local data = client:lrange(QTKT..uid, 0, -1)
+	    if #data > 6 then
+		fd.slice(5, data, fd.into'tickets', WEEK)
+	    else
+		fd.reduce(data, fd.into'tickets', WEEK)
+	    end
+	    tasks:send_msgs{'inmem', 'ticket', uid}
+	    print('\nUID:', uid, '\n')		
+	    -- DO NOT notify cloud service | external peer
 
 	end
 
