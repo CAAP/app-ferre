@@ -172,6 +172,37 @@ local function getConn(uid)
     else return addDB(week, false) end
 end
 
+local function weeks(conn, week, vers)
+    if week == WKDB then return {format('SELECT msg FROM updates WHERE vers > %d', vers)} end
+
+    local wks = {WKDB}
+    local t = now() - 3600*24*7
+    local w = asweek(t)
+    while w > week do
+	wks[#wks+1] = w
+	t = t - 3600*24*7
+	w = asweek(t)
+    end
+    wks[#wks+1] = week
+    wks[#wks+1] = format('INSERT INTO messages SELECT msg FROM week.updates WHERE vers > %d', vers)
+
+    return wks
+end
+
+local function addUPS(conn, wks)
+    local WW = #wks
+    assert( conn.exec(format('ATTACH DATABASE %q AS week', aspath(wks[WW-1]))) )
+    assert( conn.exec(wks[WW]) )
+    assert( conn.exec'DETACH DATABASE week' )
+
+    for i=#wks-2, 1, -1 do
+	local wk = wks[i]
+	assert( conn.exec(format('ATTACH DATABASE %q AS week', aspath(wk))) )
+	assert( conn.exec('INSERT INTO messages SELECT msg FROM week.updates') )
+	assert( conn.exec'DETACH DATABASE week' )
+    end
+end
+
 local function switch( cmd, msg )
     local fruit = msg:match'fruit=(%a+)' or msg
     local uid   = msg:match'uid=([^!&]+)'
@@ -194,21 +225,18 @@ local function switch( cmd, msg )
 	local vers = tointeger(msg:match'vers=(%d+)')
 	local fruit = msg:match'fruit=(%a+)'
 	local week = msg:match'week=([^!&]+)'
-	-- week is NOT this WEEK
-	if week < WKDB then
+
+	local wks = weeks(week)
+
+	if #wks == 1 then
+	    return fruit, WEEK, wks[1]
+	else
 	    local conn = connect':inmemory:'
 	    assert( conn.exec'CREATE TABLE messages (msg)' )
-	    local wks = weeks(week) -- XXX not defined yet
-	    while week < WKDB do
-		tryDB( conn, week, vers )
-		week = remove(wks)
-		vers = 0
-	    end
-	    return fruit, conn, 'SELECT * FROM messages'
-	else
-	    return fruit, WEEK, format('SELECT msg FROM updates where vers > %d', vers)
+	    addUPS(conn, wks)
+	    return fruit conn, 'SELECT * FROM messages'
 	end
-	
+
     end
 end
 

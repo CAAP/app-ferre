@@ -9,6 +9,7 @@ local receive	  = require'carlos.ferre'.receive
 local context	  = require'lzmq'.context
 local pollin	  = require'lzmq'.pollin
 local keypair	  = require'lzmq'.keypair
+local sleep	  = require'lbsd'.sleep
 local b64	  = require'lints'.fromB64
 local dN	  = require'binser'.dN
 
@@ -81,7 +82,7 @@ local function process(msg)
 	return {'DB', cmd, uid}
 
     elseif cmd == 'updatex' then
--- DELAY XXX
+	sleep(1500) -- wait for pending updates
 	local vers = msg[3]
 	local overs = msg[4]
 	local v = client:get'app:updates:version'
@@ -101,11 +102,11 @@ local function process(msg)
 
     elseif cmd:match'FA-BJ' then
 	local vers = msg[2]
-	local v
+	local v = client:get'app:updates:version'
 
 	if vers == v then return 'OK'
 
-	else return {'', , msg[2]} end
+	else return {'inmem', 'queries', msg[2]} end -- DB or inmem
 
     else return 'OK' end
 
