@@ -155,11 +155,13 @@ local msgr = assert(CTX:socket'PUB')
 
 assert( msgr:linger(0) )
 
-assert( keypair():client(www, TOKK) )
+assert( keypair():client(msgr, TOKK) )
 
 assert( msgr:connect( TOK ) )
 
 print('\nSuccessfully connected to', TOK, '\n')
+
+msgr:send_msg'Hi'
 
 --
 -- -- -- -- -- --
@@ -169,11 +171,13 @@ local msgs = assert(CTX:socket'SUB')
 
 assert( msgs:linger(0) )
 
-assert( msgs:subscribe'updatex' )
+assert( msgs:subscribe'' )
 
-assert( msgs:subscribe( 'FA-BJ' ) ) -- TIENDA
+--assert( msgs:subscribe'updatex' )
 
-assert( keypair():client(www, TIKK) )
+--assert( msgs:subscribe( 'FA-BJ' ) ) -- TIENDA
+
+assert( keypair():client(msgs, TIKK) )
 
 assert( msgs:connect( TIK ) )
 
