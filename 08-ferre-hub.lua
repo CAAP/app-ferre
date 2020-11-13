@@ -13,10 +13,6 @@ local assert	  = assert
 local exit	  = os.exit
 local print	  = print
 
-local STREAM	  = os.getenv'STREAM_IPC'
-local TIENDA	  = os.getenv'TIENDA'
-local REDIS	  = os.getenv'REDISC'
-
 -- No more external access after this point
 _ENV = nil -- or M
 
@@ -24,8 +20,6 @@ _ENV = nil -- or M
 --
 local TOK	  = "tcp://*:5630"
 local TIK	  = "tcp://*:5633"
-
-local client	  = assert( rconnect(REDIS, '6379') )
 
 local TIKK	  = "h#^6GEumy(oAlfY2:N9mf6%PxZ4.?OKNbq??EekL"
 local TOKK	  = "Pp(1a]-goaKbWJJ@P][zqfifI5NA#/R*MMlK9!3!"
@@ -57,7 +51,7 @@ local msgs = assert(CTX:socket'XSUB')
 
 assert( msgs:linger(0) )
 
-assert( msgr:curve( TOKK ) )
+assert( msgs:curve( TOKK ) )
 
 assert( msgs:bind( TOK ) )
 
