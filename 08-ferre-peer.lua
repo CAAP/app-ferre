@@ -28,8 +28,8 @@ local print	  = print
 local STREAM	  = os.getenv'STREAM_IPC'
 local REDIS	  = os.getenv'REDISC'
 local TIENDA	  = os.getenv'TIENDA'
-local TIK	  = os.getenv'TIK_TCP'
 local TOK	  = os.getenv'TOK_TCP'
+local TIK	  = os.getenv'TIK_TCP'
 
 -- No more external access after this point
 _ENV = nil -- or M
@@ -38,7 +38,8 @@ _ENV = nil -- or M
 --
 local client	  = assert( rconnect(REDIS, '6379') )
 
-local SRVK	  = "/*FTjQVb^Hgww&{X*)@m-&D}7Lxk?f5o7mIe=![2"
+local TOKK	  = "/*FTjQVb^Hgww&{X*)@m-&D}7Lxk?f5o7mIe=![2"
+local TIKK	  = "]r/jl>ZfYgRuvJlrwJxIG3oh}2hx-gJHudd3nS.#"
 
 local QTKT	  = 'queue:tickets:'
 
@@ -154,6 +155,8 @@ local msgr = assert(CTX:socket'PUB')
 
 assert( msgr:linger(0) )
 
+assert( keypair():client(www, TOKK) )
+
 assert( msgr:connect( TOK ) )
 
 print('\nSuccessfully connected to', TOK, '\n')
@@ -169,6 +172,8 @@ assert( msgs:linger(0) )
 assert( msgs:subscribe'updatex' )
 
 assert( msgs:subscribe( 'FA-BJ' ) ) -- TIENDA
+
+assert( keypair():client(www, TIKK) )
 
 assert( msgs:connect( TIK ) )
 

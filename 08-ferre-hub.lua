@@ -22,13 +22,13 @@ _ENV = nil -- or M
 
 -- Local Variables for module-only access
 --
-local TIK	  = "tcp://*:5610"
-local TOK	  = "tcp://*:5620"
+local TOK	  = "tcp://*:5630"
+local TIK	  = "tcp://*:5633"
 
 local client	  = assert( rconnect(REDIS, '6379') )
 
-local SRVKI	  = "/*FTjQVb^Hgww&{X*)@m-&D}7Lxk?f5o7mIe=![2"
-local SRVKO	  = "/*FTjQVb^Hgww&{X*)@m-&D}7Lxk?f5o7mIe=![2"
+local TIKK	  = "h#^6GEumy(oAlfY2:N9mf6%PxZ4.?OKNbq??EekL"
+local TOKK	  = "Pp(1a]-goaKbWJJ@P][zqfifI5NA#/R*MMlK9!3!"
 
 --------------------------------
 -- Local function definitions --
@@ -57,7 +57,7 @@ local msgs = assert(CTX:socket'XSUB')
 
 assert( msgs:linger(0) )
 
---assert( keypair():client(msgr, SRVKO) )
+assert( msgr:curve( TOKK ) )
 
 assert( msgs:bind( TOK ) )
 
@@ -70,7 +70,7 @@ local msgr = assert(CTX:socket'XPUB')
 
 assert( msgr:linger(0) )
 
---assert( keypair():client(msgr, SRVKI) )
+assert( msgr:curve( TIKK ) )
 
 assert( msgr:bind( TIK ) )
 
