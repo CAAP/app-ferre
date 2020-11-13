@@ -230,11 +230,12 @@ local function switch( cmd, msg )
 
 	if #wks == 1 then
 	    return fruit, WEEK, wks[1]
+
 	else
 	    local conn = connect':inmemory:'
 	    assert( conn.exec'CREATE TABLE messages (msg)' )
 	    addUPS(conn, wks)
-	    return fruit conn, 'SELECT * FROM messages'
+	    return fruit, conn, 'SELECT * FROM messages'
 	end
 
     end

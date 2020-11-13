@@ -83,9 +83,11 @@ local function process(msg)
 
     elseif cmd == 'updatex' then
 	sleep(1500) -- wait for pending updates
+
 	local vers = msg[3]
 	local overs = msg[4]
 	local v = client:get'app:updates:version'
+
 	if overs == v then
 	    local clave = msg[2]
 	    local Q = msg[#msg]
@@ -94,21 +96,22 @@ local function process(msg)
 	    client:rpush(k, unpack(qs))
 	    return {'DB', cmd, clave, vers}
 
-	elseif vers == v then return 'OK'
+	elseif vers == v then goto OK
 
-	else return {'peer', TIENDA, v}
-
-	end
+	else return {'peer', TIENDA, v} end
 
     elseif cmd:match'FA-BJ' then
 	local vers = msg[2]
 	local v = client:get'app:updates:version'
 
-	if vers == v then return 'OK'
+	if vers == v then goto OK
 
 	else return {'inmem', 'queries', msg[2]} end -- DB or inmem
 
-    else return 'OK' end
+    end
+
+    ::OK::
+    return {'OK'}
 
 end
 
@@ -165,7 +168,7 @@ assert( msgs:linger(0) )
 
 assert( msgs:subscribe'updatex' )
 
-assert( msgs:subscribe( TIENDA ) )
+assert( msgs:subscribe( 'FA-BJ' ) ) -- TIENDA
 
 assert( msgs:connect( TIK ) )
 
