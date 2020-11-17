@@ -21,8 +21,8 @@ _ENV = nil -- or M
 local TOK	  = "tcp://*:5630"
 local TIK	  = "tcp://*:5633"
 
-local TIKK	  = "h#^6GEumy(oAlfY2:N9mf6%PxZ4.?OKNbq??EekL"
-local TOKK	  = "Pp(1a]-goaKbWJJ@P][zqfifI5NA#/R*MMlK9!3!"
+local TOKK	  = "Gl-wH9L/rnwK8?V2-+pu@(V!aBYXMY.Y]M!/y2M-"
+local TIKK	  = "!bgA6xLy8v/sjSHhTo1uO{6jO/bUE&ELh:pRr:K!"
 
 --------------------------------
 -- Local function definitions --
