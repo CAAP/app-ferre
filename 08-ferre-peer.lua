@@ -38,8 +38,8 @@ _ENV = nil -- or M
 --
 local client	  = assert( rconnect(REDIS, '6379') )
 
-local TOKK	  = "/*FTjQVb^Hgww&{X*)@m-&D}7Lxk?f5o7mIe=![2"
-local TIKK	  = "]r/jl>ZfYgRuvJlrwJxIG3oh}2hx-gJHudd3nS.#"
+local TIKK	  = "/*FTjQVb^Hgww&{X*)@m-&D}7Lxk?f5o7mIe=![2"
+local TOKK	  = "]r/jl>ZfYgRuvJlrwJxIG3oh}2hx-gJHudd3nS.#"
 
 local QTKT	  = 'queue:tickets:'
 
@@ -101,7 +101,7 @@ local function process(msg)
 
 	else return {'peer', TIENDA, v} end
 
-    elseif cmd:match'FA-BJ' then
+    elseif cmd:match'FA-MX' then -- BJ
 	local vers = msg[2]
 	local v = client:get'app:updates:version'
 
