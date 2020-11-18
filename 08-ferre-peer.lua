@@ -38,8 +38,9 @@ _ENV = nil -- or M
 --
 local client	  = assert( rconnect(REDIS, '6379') )
 
-local TIKK	  = "/*FTjQVb^Hgww&{X*)@m-&D}7Lxk?f5o7mIe=![2"
-local TOKK	  = "]r/jl>ZfYgRuvJlrwJxIG3oh}2hx-gJHudd3nS.#"
+local TOKK	  = "{GLG5P!n{nler*9rX?e/E8}nxHRV5zu-huLa%A[3"
+local TIKK	  = "xl[{Y243Pwa3?9IGx!SL6p>tg.-{*22-?g8v4/$z"
+
 
 local QTKT	  = 'queue:tickets:'
 
@@ -160,8 +161,6 @@ assert( keypair():client(msgr, TOKK) )
 assert( msgr:connect( TOK ) )
 
 print('\nSuccessfully connected to', TOK, '\n')
-
-msgr:send_msg'Hi'
 
 --
 -- -- -- -- -- --
