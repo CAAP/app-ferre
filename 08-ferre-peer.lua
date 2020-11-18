@@ -204,7 +204,7 @@ print'+\n'
 
     elseif msgs:events() == 'POLLIN' then
 
-	local msg = msgr:recv_msgs()
+	local msg = msgs:recv_msgs()
 
 	print('\nTIK:', concat(msg, ' '), '\n')
 
