@@ -328,7 +328,7 @@ while true do
 	    -- notify cloud service | external peer
 	    tasks:send_msgs{'peer', 'updatex', clave, vers, overs, q}
 
-	elseif cmd == 'updatex' then -- cmd, clave, vers, query in b64&serialized
+	elseif cmd == 'updatex' then -- cmd, clave, vers
 	    local clave = msg[2]
 	    local vers = msg[3]
 	    local k = QIDS..clave
