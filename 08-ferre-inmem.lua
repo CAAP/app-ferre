@@ -171,7 +171,7 @@ local function getConn(uid)
     else return addDB(week, false) end
 end
 
-local function weeks(conn, week, vers)
+local function weeks(week, vers)
     if week == WKDB then return {format('SELECT msg FROM updates WHERE vers > %d', vers)} end
 
     local wks = {WKDB}
@@ -223,9 +223,9 @@ local function switch( cmd, msg )
     elseif cmd == 'adjust' then
 	local vers = tointeger(msg:match'vers=(%d+)')
 	local fruit = msg:match'fruit=(%a+)'
-	local week = msg:match'week=([^!&]+)'
+	local week = msg:match'week=([%u%d]+)'
 
-	local wks = weeks(week)
+	local wks = weeks(week, vers)
 
 	if #wks == 1 then
 	    return fruit, WEEK, wks[1]
