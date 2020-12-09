@@ -251,7 +251,7 @@ print'+\n'
 
 	print('\nTIK:', concat(msg, ' '), '\n')
 
-	stream:send_msgs( process(msg) )
+--	stream:send_msgs( process(msg) )
 
     end
 

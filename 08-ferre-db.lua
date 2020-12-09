@@ -56,6 +56,7 @@ local IDS	  = 'app:uuids:'
 local QIDS	  = 'queue:uuids:'
 local QTKT	  = 'queue:tickets:'
 local UVER	  = 'app:updates:version'
+local TTKT 	  = 'app:tickets:'..TIENDA
 
 local FERRE, WEEK, INDEX
 
@@ -103,6 +104,7 @@ local function addTicket(uuid)
 	else
 	    fd.reduce(data, into'tickets', WEEK)
 	end
+	client:set(TTKT, uid)
 	return uid
     end
 end
