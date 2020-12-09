@@ -28,7 +28,6 @@ local assert	  = assert
 local print	  = print
 
 local STREAM	  = os.getenv'STREAM_IPC'
-local BIXOLON	  = os.getenv'LPR_IPC'
 
 local TODAY	  = os.date('%F', os.time()) -- now
 
@@ -275,20 +274,8 @@ tasks:send_msg'OK'
 
 --
 -- -- -- -- -- --
---[[
-local printer = assert(CTX:socket'PUSH')
-
-assert( printer:immediate( true ) )
-
-assert( tasks:linger(0) )
-
-assert( printer:connect( BIXOLON ) )
-
-print('\nSuccessfully connected to:', BIXOLON)
-
---]]
--- -- -- -- -- --
 --
+
 do
     local path = aspath'ferre'
     assert( FERRE.exec(format('ATTACH DATABASE %q AS ferre', path)) )
@@ -336,6 +323,7 @@ while true do
 	elseif cmd == 'bixolon' then
 	    local uid = msg[2]:match'uid=([^!]+)'
 	    lpr( uid )
+	    tasks:send_msgs{'lpr', uid}
 --	    printer:send_msg( uid ) XXX
 
 	elseif FEED[cmd] then
@@ -352,6 +340,7 @@ while true do
 	    local uid = addTicket(msg[2])
 	    local hdr = lpr( uid )
 	    tasks:send_msgs{'SSE', 'feed', asJSON(hdr)}
+	    tasks:send_msgs{'lpr', uid}
 --		printer:send_msg( uid ) XXX
 
 	end

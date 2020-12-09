@@ -82,10 +82,14 @@ local function process(msg)
 
 	if msg[2]:match'%d+%-%d+%-%dT' then
 	    if #msg == 2 then goto OK
-	    else cmd == 'ticketx' end
+	    else
+		    -- XXX cmd == 'ticketx'
+	    end
 	else -- vers
 	    if #msg == 2 then goto OK
-	    else cmd == 'updatex' end
+	    else
+		    -- XXX cmd == 'updatex'
+	    end
 
 	end
 

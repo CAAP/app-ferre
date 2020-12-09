@@ -39,7 +39,7 @@ local INMEM	  = { query=true, rfc=true, bixolon=true,
 
 local FERRE 	  = { update=true, faltante=true, eliminar=true }
 
-local ROUTE	  = { inmem=true, SSE=true, peer=true, DB=true }
+local ROUTE	  = { inmem=true, SSE=true, peer=true, DB=true, lpr=true }
 
 local client	  = assert( rconnect(REDIS, '6379') )
 
