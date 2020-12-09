@@ -24,6 +24,7 @@ local posix	  = require'posix.signal'
 
 local concat	  = table.concat
 local tointeger	  = math.tointeger
+local floor	  = math.floor
 local format	  = string.format
 local env	  = os.getenv
 local exit	  = os.exit
@@ -74,6 +75,8 @@ local ISSTR	  = fd.reduce(client:smembers'const:isstr', fd.rejig(function(k) ret
 --
 
 local function indexar(a) return fd.reduce(INDEX, fd.map(function(k) return a[k] or '' end), fd.into, {}) end
+
+local function round(n, d) return floor(n*10^d+0.5)/10^d end
 
 local function oneItem(o)
     for k,v in urldecode(o.data):gmatch'([%a%d]+)|([^|]+)' do o[k] = asnum(v) end
