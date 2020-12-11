@@ -57,7 +57,7 @@ local IDS	  = 'app:uuids:'
 local QIDS	  = 'queue:uuids:'
 local QTKT	  = 'queue:tickets:'
 local UVER	  = 'app:updates:version'
-local TTKT 	  = 'app:tickets:'..TIENDA
+local TTKT 	  = 'app:tickets:FA-BJ-'
 
 local FERRE, WEEK, INDEX
 
@@ -100,15 +100,18 @@ local function addTicket(uuid)
 	local data = split(client:hget(ID, 'data'):sub(7), '&query=') -- may FAIl due to lack of data
 	data = fd.reduce(data, fd.map(function(s) return {data=s, uid=uid, tag=tag, nombre=nombre} end), fd.map(oneItem), fd.map(indexar), fd.into, {})
 	ID = QTKT..uid
-	fd.reduce(data, function(w) client:rpush(ID, serialize(w)) end)
+	fd.reduce(data, function(w) client:rpush(ID, b64(serialize(w))) end)
+--	client:set(ID, b64(serialize(data)))
 	client:expire(ID, 120)
 	if #data > 6 then
 	    fd.slice(5, data, into'tickets', WEEK)
 	else
 	    fd.reduce(data, into'tickets', WEEK)
 	end
-	client:set(TTKT, uid)
-	return uid
+	local k = TTKT..uid:match':(%d+)$'
+	local u = client:get(k) or 'NaN'
+	client:set(k, uid)
+	return uid, u
     end
 end
 

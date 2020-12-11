@@ -16,6 +16,7 @@ local into	  = require'carlos.sqlite'.into
 
 local asJSON	  = require'json'.encode
 local dN 	  = require'binser'.deserializeN
+local b64	  = require'lints'.fromB64
 local posix	  = require'posix.signal'
 
 local concat	  = table.concat
@@ -119,17 +120,18 @@ local function update( uid )
 end
 
 local function deserialize(w)
-    local a,i = dN(w, 1)
+    local a,i = dN(b64(w), 1)
     return a
 end
 
 local function addTicket( uid )
     local k = 'queue:tickets:'..uid
-    local qs = client:lrange(k, 0, -1)
-    if #qs > 6 then
-	fd.slice(5, qs, fd.map(deserialize), into'tickets', WEEK)
+    local data = client:lrange(k, 0, -1)
+--    local data = deserialize(client:get(k))
+    if #data > 6 then
+	fd.slice(5, data, fd.map(deserialize), into'tickets', WEEK)
     else
-	fd.reduce(qs, fd.map(deserialize), into'tickets', WEEK)
+	fd.reduce(data, fd.map(deserialize), into'tickets', WEEK)
     end
     return uid
 end
