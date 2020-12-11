@@ -341,7 +341,7 @@ while true do
 	    local hdr = lpr( uid )
 	    tasks:send_msgs{'SSE', 'feed', asJSON(hdr)}
 	    tasks:send_msgs{'lpr', uid}
-	    if hrd.tag == 'facturar' then tasks:send_msgs{'lpr', uid} end
+	    if hdr.tag == 'facturar' then tasks:send_msgs{'lpr', uid} end
 
 	end
     end
