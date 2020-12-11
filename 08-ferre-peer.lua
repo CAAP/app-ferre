@@ -56,10 +56,12 @@ end
 
 local function switch(msg)
     local cmd = msg[1]
+
+    msg[1] = TIENDA
+
     if cmd == 'ticketx' then
 	local uid = msg[2]
 	local k = QTKT..uid
---	msg[3] = TIENDA XXX not necessary since UID has TIENDA in it
 	reduce(client:lrange(k, 0, -1), into, msg)
 	return true
 
@@ -80,14 +82,17 @@ local function process(msg)
 
     if cmd == TIENDA then
 
-	if msg[2]:match'%d+%-%d+%-%dT' then
+	if msg[2]:match'%d+%-%d+%-%dT' then 	-- ticket
 	    if #msg == 2 then goto OK
 	    else
-		    -- XXX cmd == 'ticketx'
+		    -- cmd == 'ticketx'
+
+
 	    end
-	else -- vers
+	else 					-- vers
 	    if #msg == 2 then goto OK
 	    else
+		goto OK
 		    -- XXX cmd == 'updatex'
 	    end
 
@@ -95,16 +100,31 @@ local function process(msg)
 
     end
 
-    if cmd:match'FA-' and #msg == 2 then -- BJ | MX
+    if cmd:match'FA-' then -- BJ | MX
 
-	if msg[2]:match'%d+%-%d+%-%dT' then
+	if msg[2]:match'%d+%-%d+%-%dT' then 	-- ticket
 	    local uid = msg[2]
-	    local u = client:get('app:tickets:'..TIENDA) or 0
+	    local SC = uid:match':(%d+)$'
+-- XXX		sleep(1500) -- wait
+	    local u = client:get('app:tickets:FA-BJ-'..SC) or '0'
 
-	    if uid == u then goto OK
-	    else return {'inmem', '', uid} end -- XXX
-	    
-	else
+	    if #msg == 2 then -- query
+		if uid <= u then
+		    return {'inmem', 'xxx', uid}
+		else goto OK end
+
+	    else -- new ticket
+		if msg[3] == u then -- consecutive
+		    local k = QTKT..uid
+		    client:set(k, msg[4])
+		    client:expire(k, 120)
+		    return {'DB', cmd, uid}
+	        elseif uid == u then goto OK -- already registered
+		elseif uid > u then return {'peer', 'FA-BJ-'..SC, u} end -- help
+		-- XXX what about uid < u ???
+	    end
+
+	else 					-- vers
 	    local vers = msg[2]
 	    local v = client:get'app:updates:version' or 0 -- if nothing updated
 
@@ -113,9 +133,13 @@ local function process(msg)
 
 	end
 
+    else -- gather ALL information
+
     end
 
 
+
+--[[
     if cmd == 'ticketx' then
 	sleep(1500) -- wait for pending updates
 	local uid = msg[2]
@@ -154,6 +178,7 @@ local function process(msg)
 	else return {'peer', TIENDA, v} end
 
     end
+--]]
 
     ::OK::
     return {'OK'}
@@ -215,10 +240,6 @@ assert( msgs:linger(0) )
 
 assert( msgs:subscribe'' )
 
---assert( msgs:subscribe'updatex' )
-
---assert( msgs:subscribe( 'FA-BJ' ) ) -- TIENDA
-
 assert( keypair():client(msgs, TIKK) )
 
 assert( msgs:connect( TIK ) )
@@ -240,9 +261,9 @@ print'+\n'
 
 	print('stream:', concat(msg, ' '), '\n')
 
-	if switch(msg) then
-	    msgr:send_msgs( msg )
-	end
+--	if switch(msg) then
+--	    msgr:send_msgs( msg )
+--	end
 
 
     elseif msgs:events() == 'POLLIN' then
