@@ -214,7 +214,7 @@ local function switch( cmd, msg )
 	return fruit, conn, qry
 
     elseif cmd == 'feed' then
-	local qry = format('SELECT * FROM uids WHERE uid > "%s%%"', TODAY)
+	local qry = format('SELECT * FROM uids WHERE uid > "%s"', TODAY)
 	return fruit, WEEK, qry
 
     elseif cmd == 'ledger' then
