@@ -151,8 +151,6 @@
 
 		if (pid == 0) { TICKET.empty(); return Promise.resolve(true); }
 
-		if (a == 'destinos') { a = destinos.value; } // choices; only for CAJA XXX
-
 		if (a == 'surtir') { return Promise.resolve(true); } // temporary XXX
 
 		TICKET.myticket.style.visibility = 'hidden';
@@ -171,7 +169,8 @@
 		    }
 		    return Promise.all( ret.map(o => ferre.xget(a, o)) )
 			.then( () => ferre.emptyBag(a) )
-			.catch( () => { TICKET.myticket.style.visibility = 'visible'} )
+			.catch( () => { TICKET.myticket.style.visibility = 'visible'; } )
+			.then( () => { destino.selectedIndex = 0; } )
 			.then( ferre.nadie );
 		}
 
@@ -183,14 +182,15 @@
 			.then( ferre.nadie );
 	    };
 
-	    ['ticket', 'facturar', 'presupuesto', 'surtir', 'faltante'].forEach( lbl => {
+		// , 'surtir', 'faltante'
+	    ['ticket', 'facturar', 'presupuesto'].forEach( lbl => {
 		    let opt = document.createElement('option');
 		    opt.value = lbl;
 		    opt.appendChild(document.createTextNode(lbl));
 		    destino.appendChild(opt);
 	    });
 
-	    destino.lastChild.disabled = true;
+//	    destino.lastChild.disabled = true;
 
 	})();
 
