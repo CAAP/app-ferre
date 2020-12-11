@@ -261,7 +261,7 @@
 	    };
 
 	    ferre.message = m => {
-		const a = m.match(/pid=(\d+)&uid=([^&]+)/);
+		const a = m.match(/pid=(\d+)&uid=([\d\w\-:]+)/);
 		if (a[1] == persona.value)
 		    mensaje.innerHTML = a[2];
 	    };
