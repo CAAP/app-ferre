@@ -305,12 +305,12 @@ while true do
 	local cmd = msg[1]:match'%a+'
 
 	if cmd == 'ticket' or cmd == 'presupuesto' or cmd == 'pagado' then
-	    local uid = addTicket(msg[2])
+	    local uid, u = addTicket(msg[2])
 	    if uid then
 		tasks:send_msgs{'inmem', 'ticket', uid}
 		print('\nUID:', uid, '\n')		
 		-- notify cloud service | external peer
-		tasks:send_msgs{'peer', 'ticketx', uid}
+		tasks:send_msgs{'peer', 'ticketx', uid, u}
 	    end
 
 	elseif cmd == 'update' then
