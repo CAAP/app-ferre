@@ -183,7 +183,7 @@
 			.then( ferre.nadie );
 	    };
 
-	    ['ticket', 'presupuesto', 'surtir', 'faltante'].forEach( lbl => {
+	    ['ticket', 'facturar', 'presupuesto', 'surtir', 'faltante'].forEach( lbl => {
 		    let opt = document.createElement('option');
 		    opt.value = lbl;
 		    opt.appendChild(document.createTextNode(lbl));

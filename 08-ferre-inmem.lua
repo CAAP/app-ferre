@@ -127,7 +127,6 @@ end
 local function addTicket( uid )
     local k = 'queue:tickets:'..uid
     local data = client:lrange(k, 0, -1)
---    local data = deserialize(client:get(k))
     if #data > 6 then
 	fd.slice(5, data, fd.map(deserialize), into'tickets', WEEK)
     else
@@ -326,7 +325,6 @@ while true do
 	    local uid = msg[2]:match'uid=([^!]+)'
 	    lpr( uid )
 	    tasks:send_msgs{'lpr', uid}
---	    printer:send_msg( uid ) XXX
 
 	elseif FEED[cmd] then
 	    local fruit, conn, qry = switch(cmd, msg[2])
@@ -343,7 +341,7 @@ while true do
 	    local hdr = lpr( uid )
 	    tasks:send_msgs{'SSE', 'feed', asJSON(hdr)}
 	    tasks:send_msgs{'lpr', uid}
---		printer:send_msg( uid ) XXX
+	    if hrd.tag == 'facturar' then tasks:send_msgs{'lpr', uid} end
 
 	end
     end

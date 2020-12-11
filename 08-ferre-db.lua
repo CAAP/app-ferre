@@ -304,7 +304,7 @@ while true do
 	local msg, more = tasks:recv_msgs()
 	local cmd = msg[1]:match'%a+'
 
-	if cmd == 'ticket' or cmd == 'presupuesto' or cmd == 'pagado' then
+	if cmd == 'ticket' or cmd == 'presupuesto' or cmd == 'facturar' then -- pagado
 	    local uid, u = addTicket(msg[2])
 	    if uid then
 		tasks:send_msgs{'inmem', 'ticket', uid}
