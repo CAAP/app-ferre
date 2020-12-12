@@ -151,23 +151,6 @@ print'+\n'
 
 	end
 
---[[
-    elseif msgr:events() == 'POLLIN' then
-
-	local id, msg = receive( stream )
-	local cmd = msg[1]:match'%a+'
-
-	print('\nVULTR:', concat(msg, ' '), '\n')
-
-	if cmd == 'OK' then
-
-	elseif cmd == 'updatex' then
-	    insert(msg, 1, 'DB')
-	    stream:send_msgs( msg )
-
-	end
---]]
-
     end
 
 end

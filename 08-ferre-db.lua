@@ -111,9 +111,21 @@ local function addTicket(uuid)
 	local k = TTKT..uid:match':(%d+)$'
 	local u = client:get(k) or 'NaN'
 	client:set(k, uid)
-	return uid, u
+	return uid, u, pid
     end
 end
+
+local function addTicketx( uid )
+    local k = 'queue:tickets:'..uid
+    local data = client:lrange(k, 0, -1)
+    if #data > 6 then
+	fd.slice(5, data, fd.map(deserialize), into'tickets', WEEK)
+    else
+	fd.reduce(data, fd.map(deserialize), into'tickets', WEEK)
+    end
+    return uid
+end
+
 
 --
 -- -- -- -- -- --
@@ -305,10 +317,12 @@ while true do
 	local cmd = msg[1]:match'%a+'
 
 	if cmd == 'ticket' or cmd == 'presupuesto' or cmd == 'facturar' then -- pagado
-	    local uid, u = addTicket(msg[2])
+	    local uid, u, pid = addTicket(msg[2])
 	    if uid then
 		tasks:send_msgs{'inmem', 'ticket', uid}
 		print('\nUID:', uid, '\n')		
+	    -- XXX into msgs for person
+	    -- tasks:send_msgs{'msgs', format('pid=%d&uid=%s', pid, uid)}
 		-- notify cloud service | external peer
 		tasks:send_msgs{'peer', 'ticketx', uid, u}
 	    end
@@ -347,13 +361,7 @@ while true do
 	    -- DO NOT notify cloud service | external peer
 
 	elseif cmd == 'ticketx' then
-	    local uid = msg[2]
-	    local data = client:lrange(QTKT..uid, 0, -1)
-	    if #data > 6 then
-		fd.slice(5, data, fd.into'tickets', WEEK)
-	    else
-		fd.reduce(data, fd.into'tickets', WEEK)
-	    end
+	    local uid = addTicketx(msg[2])
 	    tasks:send_msgs{'inmem', 'ticket', uid}
 	    print('\nUID:', uid, '\n')		
 	    -- DO NOT notify cloud service | external peer
