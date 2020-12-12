@@ -321,8 +321,8 @@ while true do
 	    if uid then
 		tasks:send_msgs{'inmem', 'ticket', uid}
 		print('\nUID:', uid, '\n')		
-	    -- XXX into msgs for person
-	    -- tasks:send_msgs{'msgs', format('pid=%d&uid=%s', pid, uid)}
+		-- saved per person into msgs
+		tasks:send_msgs{'msgs', format('pid=%d&uid=%s', pid, uid)}
 		-- notify cloud service | external peer
 		tasks:send_msgs{'peer', 'ticketx', uid, u}
 	    end
