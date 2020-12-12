@@ -98,6 +98,14 @@
 	    const alink = document.createElement('a');
 	    alink.href = '/faltantes';
 
+	    let opt = document.createElement('option');
+	    opt.value = 'ticket';
+	    opt.label = 'ticket';
+	    opt.selected = true;
+	    destino.appendChild(opt);
+
+	    function astkt() { opt.selected = true; }
+
 	    function uptoCents(q) { return Math.round( 100 * q[q.precio] * q.qty * (1-q.rea/100) ); };
 
 	    function getPrice( o ) {
@@ -153,6 +161,8 @@
 
 		if (a == 'surtir') { return Promise.resolve(true); } // temporary XXX
 
+		if (a == 'destinos') { a = destino.value; }
+
 		TICKET.myticket.style.visibility = 'hidden';
 
 		let M = TICKET.items.size;
@@ -170,7 +180,6 @@
 		    return Promise.all( ret.map(o => ferre.xget(a, o)) )
 			.then( () => ferre.emptyBag(a) )
 			.catch( () => { TICKET.myticket.style.visibility = 'visible'; } )
-			.then( () => { destino.selectedIndex = 0; } )
 			.then( ferre.nadie );
 		}
 
@@ -179,14 +188,16 @@
 		return ferre.xget(a, objs)
 			.then( () => ferre.emptyBag(a) )
 			.catch( () => { TICKET.myticket.style.visibility = 'visible'} )
+		        .then( astkt )
 			.then( ferre.nadie );
 	    };
 
 		// , 'surtir', 'faltante'
-	    ['ticket', 'facturar', 'presupuesto'].forEach( lbl => {
+	    ['facturar', 'presupuesto'].forEach( lbl => {
 		    let opt = document.createElement('option');
 		    opt.value = lbl;
-		    opt.appendChild(document.createTextNode(lbl));
+		    opt.label = lbl;
+//		    opt.appendChild(document.createTextNode(lbl));
 		    destino.appendChild(opt);
 	    });
 
