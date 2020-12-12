@@ -116,47 +116,35 @@ local function process(msg)
 	    else -- new ticket
 		if msg[3] == u then -- consecutive
 		    local k = QTKT..uid
-		    client:set(k, msg[4])
+		    fd.drop(3, msg, function(s) client:rpush(k, s) end)
 		    client:expire(k, 120)
 		    return {'DB', cmd, uid}
 	        elseif uid == u then goto OK -- already registered
-		elseif uid > u then return {'peer', 'FA-BJ-'..SC, u} end -- help
+		elseif uid > u then return {'peer', TIENDA, u} end -- help
 		-- XXX what about uid < u ???
 	    end
 
 	else 					-- vers
 	    local vers = msg[2]
-	    local v = client:get'app:updates:version' or 0 -- if nothing updated
+	    local v = client:get'app:updates:version' or 0
 
-	    if vers == v then goto OK
-	    else return {'inmem', 'queries', vers} end
+	    if #msg == 2 then -- query
+		if vers < v then
+		    return {'inmem', 'queries', vers}
+		else goto OK end
+
+	    else -- new update
+	    end
 
 	end
 
-    else -- gather ALL information
+    else -- ???
 
     end
 
 
 
 --[[
-    if cmd == 'ticketx' then
-	sleep(1500) -- wait for pending updates
-	local uid = msg[2]
-	local oldu = msg[3]
-	local u = client:get('app:tickets:'..TIENDA) or 0
-
-	if oldu == u then
-	    local k = QTKT..uid
-	    local data = drop(2, msg, into, {})
-	    client:rpush(k, unpack(data))
-	    client:expire(k, 120)
-	    return {'DB', cmd, uid}
-
-	elseif uid == u then goto OK
-
-	else return {'peer', TIENDA, u} end
-
     elseif cmd == 'updatex' then
 	sleep(1500) -- wait for pending updates
 
