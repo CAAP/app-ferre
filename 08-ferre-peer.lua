@@ -58,12 +58,13 @@ local function switch(msg)
     local cmd = msg[1]
 
     if cmd == 'ticketx' then
+--[[	    
 	msg[1] = TIENDA
 	local uid = msg[2]
 	local k = QTKT..uid
 	reduce(client:lrange(k, 0, -1), into, msg)
 	return true
-
+--]]
     elseif cmd == 'updatex' then
 	msg[1] = TIENDA
 	return true
@@ -86,6 +87,7 @@ local function process(msg)
     if msg[1]:match'FA%-BJ' then -- BJ | MX
 
 	if msg[2]:match'%d+%-%d+%-%d+T' then 	-- ticket
+--[[		
 	    local uid = msg[2]
 	    local SC = uid:match':(%d+)$'
 	    local u = client:get('app:tickets:FA-BJ-'..SC) or '0x0x'..SC
@@ -107,7 +109,7 @@ local function process(msg)
 		elseif uid > u then return {'peer', TIENDA, u} end -- help
 		-- XXX what about uid < u ???
 	    end
-
+--]]
 	else 					-- vers
 	    local vers = msg[2]
 	    local v = client:get'app:updates:version' or 0
