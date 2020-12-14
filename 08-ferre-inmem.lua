@@ -14,6 +14,7 @@ local ticket	  = require'carlos.ticket'.ticket
 local connect	  = require'carlos.sqlite'.connect
 local into	  = require'carlos.sqlite'.into
 local newTable    = require'carlos.sqlite'.newTable
+local split	  = require'carlos.string'.split
 
 local asJSON	  = require'json'.encode
 local fromJSON	  = require'json'.decode
@@ -55,9 +56,14 @@ local WKDB 	  = asweek(now())
 
 local FERRE	  = connect':inmemory:'
 local WEEK
-local QUERIES	  = {tickets={'SELECT * FROM tickets WHERE uid > %q', 'INSERT INTO tickets SELECT * FROM week.tickets WHERE uid > %q', format(newTable, 'tickets', client:hget('sql:week', 'tickets')), 'INSERT INTO tickets SELECT * FROM week.tickets', 'SELECT * FROM tickets'},
+
+local SCHEME	  = client:hget('sql:week', 'tickets')
+
+local QUERIES	  = {tickets={'SELECT * FROM tickets WHERE uid > %q', 'INSERT INTO tickets SELECT * FROM week.tickets WHERE uid > %q', format(newTable, 'tickets', SCHEME), 'INSERT INTO tickets SELECT * FROM week.tickets', 'SELECT * FROM tickets'},
 		     messages={'SELECT msg FROM updates WHERE vers > %d', 'INSERT INTO messages SELECT msg FROM week.updates WHERE vers > %d', 'CREATE TABLE messages (msg)', 'INSERT INTO messages SELECT msg FROM week.updates', 'SELECT * FROM messages'},
 		     queries={'SELECT * FROM queries WHERE vers > %d', 'INSERT INTO queries SELECT * FROM week.queries WHERE vers > %d', format(newTable, 'queries', client:hget('sql:week', 'queries')), 'INSERT INTO queries SELECT * FROM week.queries', 'SELECT * FROM queries'}}
+
+local INDEX 	  = fd.reduce(split(SCHEME, ',', true), fd.map(function(s) return s:match'%w+' end), fd.into, {})
 
 
 --------------------------------
@@ -245,9 +251,12 @@ local function gather(fruit, wks)
     end
 end
 
+local function indexar(a) return fd.reduce(INDEX, fd.map(function(k) return a[k] or '' end), fd.into, {}) end
+
 local function groupon(uid)
     local u = uid
     local tks = {}
+    return function(step)
     return function(a,i)
 	if not(tks.uid) then tks.uid = a.uid end
 	local tuid = tks.uid
@@ -258,19 +267,22 @@ local function groupon(uid)
 	    fd.reduce(tks, function(w) client:rpush(ID, b64(serialize(w))) end)
 	    client:expire(ID, 10)
 	    tks = {uid=u, a}
-	    return {u, ou},i
+	    step({u, ou}, i)
 	else
 	    tks[#tks+1] = fd.reduce(a, fd.map(indexar), fd.into, {})
 	end
+    end
     end
 end
 
 local function chain(vers)
     local v = vers
+    return function(step)
     return function(a, i)
 	local ov = v
 	v = a.vers
-	return {v, ov, a.clave, a.query},i
+	step({v, ov, a.clave, a.query}, i)
+    end
     end
 end
 
