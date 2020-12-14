@@ -13,16 +13,21 @@ local uid2week	  = require'carlos.ferre'.uid2week
 local ticket	  = require'carlos.ticket'.ticket
 local connect	  = require'carlos.sqlite'.connect
 local into	  = require'carlos.sqlite'.into
+local newTable    = require'carlos.sqlite'.newTable
 
 local asJSON	  = require'json'.encode
+local fromJSON	  = require'json'.decode
 local dN 	  = require'binser'.deserializeN
-local b64	  = require'lints'.fromB64
+local serialize	  = require'binser'.serialize
+local fb64	  = require'lints'.fromB64
+local b64	  = require'lints'.asB64
 local posix	  = require'posix.signal'
 
 local concat	  = table.concat
 local unpack	  = table.unpack
 local format	  = string.format
 local tointeger   = math.tointeger
+local type	  = type
 local exit	  = os.exit
 local pcall	  = pcall
 local assert	  = assert
@@ -45,22 +50,32 @@ local QLPR	  = 'SELECT * FROM lpr WHERE uid LIKE %q'
 local QUID	  = 'SELECT * FROM uids WHERE uid LIKE %q LIMIT 1'
 local QTKT	  = 'SELECT uid, tag, clave, qty, rea, totalCents, prc "precio" FROM tickets WHERE uid LIKE %q'
 
-local FEED	 = { uid=true, feed=true, ledger=true, adjust=true }
-local WKDB 	 = asweek(now())
+local FEED	  = { uid=true, feed=true, ledger=true, adjust=true }
+local WKDB 	  = asweek(now())
 
 local FERRE	  = connect':inmemory:'
 local WEEK
+local QUERIES	  = {tickets={'SELECT * FROM tickets WHERE uid > %q', 'INSERT INTO tickets SELECT * FROM week.tickets WHERE uid > %q', format(newTable, 'tickets', client:hget('sql:week', 'tickets')), 'INSERT INTO tickets SELECT * FROM week.tickets', 'SELECT * FROM tickets'},
+		     messages={'SELECT msg FROM updates WHERE vers > %d', 'INSERT INTO messages SELECT msg FROM week.updates WHERE vers > %d', 'CREATE TABLE messages (msg)', 'INSERT INTO messages SELECT msg FROM week.updates', 'SELECT * FROM messages'},
+		     queries={'SELECT * FROM queries WHERE vers > %d', 'INSERT INTO queries SELECT * FROM week.queries WHERE vers > %d', format(newTable, 'queries', client:hget('sql:week', 'queries')), 'INSERT INTO queries SELECT * FROM week.queries', 'SELECT * FROM queries'}}
+
 
 --------------------------------
 -- Local function definitions --
 --------------------------------
-local function deliver( skt ) return function(m, i) skt:send_msgs{'SSE', m} end end
+local function deliver( skt )
+    return function(m, i)
+	if type(m)  == 'table' then skt:send_msgs(m)
+	else skt:send_msgs{'SSE', m} end
+    end
+end
 
 local function prepare( a ) if a.msg then return a.msg else return asJSON(a) end end
 
 local function mail(fruit, cmd)
     return function(a)
-	return format('%s %s %s', fruit, cmd, a)
+	if type(a) == 'table' then return {fruit, cmd, unpack(a)}
+	else return format('%s %s %s', fruit, cmd, a) end
     end
 end
 
@@ -120,7 +135,7 @@ local function update( uid )
 end
 
 local function deserialize(w)
-    local a,i = dN(b64(w), 1)
+    local a,i = dN(fb64(w), 1)
     return a
 end
 
@@ -173,7 +188,20 @@ local function getConn(uid)
 end
 
 local function weeks(week, vers)
-    if week == WKDB then return {format('SELECT msg FROM updates WHERE vers > %d', vers)} end
+    local QS = QUERIES.messages
+
+    if vers == 'tickets' then
+	QS = QUERIES.tickets
+	vers = week
+	week = uid2week(week)
+    elseif vers == 'queries' then
+	QS = QUERIES.queries
+	local w = fromJSON(week)
+	week = w.week
+	vers = w.vers
+    end
+
+    if week == WKDB then return {format(QS[1], vers)} end
 
     local wks = {WKDB}
     local t = now() - 3600*24*7
@@ -184,12 +212,12 @@ local function weeks(week, vers)
 	w = asweek(t)
     end
     wks[#wks+1] = week
-    wks[#wks+1] = format('INSERT INTO messages SELECT msg FROM week.updates WHERE vers > %d', vers)
+    wks[#wks+1] = format(QS[2], vers)
 
     return wks
 end
 
-local function addUPS(conn, wks)
+local function addDATA(conn, wks, qry)
     local WW = #wks
     assert( conn.exec(format('ATTACH DATABASE %q AS week', aspath(wks[WW-1]))) )
     assert( conn.exec(wks[WW]) )
@@ -198,8 +226,51 @@ local function addUPS(conn, wks)
     for i=#wks-2, 1, -1 do
 	local wk = wks[i]
 	assert( conn.exec(format('ATTACH DATABASE %q AS week', aspath(wk))) )
-	assert( conn.exec('INSERT INTO messages SELECT msg FROM week.updates') )
+	assert( conn.exec(qry) )
 	assert( conn.exec'DETACH DATABASE week' )
+    end
+end
+
+local function gather(fruit, wks)
+    local QS = QUERIES[fruit] or QUERIES.messages
+
+    if #wks == 1 then
+	return fruit, WEEK, wks[1]
+
+    else
+	local conn = connect':inmemory:'
+	assert( conn.exec(QS[3]) )
+	addDATA(conn, wks, QS[4])
+	return fruit, conn, QS[5]
+    end
+end
+
+local function groupon(uid)
+    local u = uid
+    local tks = {}
+    return function(a,i)
+	if not(tks.uid) then tks.uid = a.uid end
+	local tuid = tks.uid
+	if a.uid ~= tuid then
+	    local ou = u
+	    u = a.uid
+	    local ID = 'queue:tickets:'..u
+	    fd.reduce(tks, function(w) client:rpush(ID, b64(serialize(w))) end)
+	    client:expire(ID, 10)
+	    tks = {uid=u, a}
+	    return {u, ou},i
+	else
+	    tks[#tks+1] = fd.reduce(a, fd.map(indexar), fd.into, {})
+	end
+    end
+end
+
+local function chain(vers)
+    local v = vers
+    return function(a, i)
+	local ov = v
+	v = a.vers
+	return {v, ov, a.clave, a.query},i
     end
 end
 
@@ -225,18 +296,8 @@ local function switch( cmd, msg )
 	local vers = tointeger(msg:match'vers=(%d+)')
 	local fruit = msg:match'fruit=(%a+)'
 	local week = msg:match'week=([%u%d]+)'
-
 	local wks = weeks(week, vers)
-
-	if #wks == 1 then
-	    return fruit, WEEK, wks[1]
-
-	else
-	    local conn = connect':inmemory:'
-	    assert( conn.exec'CREATE TABLE messages (msg)' )
-	    addUPS(conn, wks)
-	    return fruit, conn, 'SELECT * FROM messages'
-	end
+	return gather(fruit, wks)
 
     end
 end
@@ -294,6 +355,9 @@ do
 	client:set('app:updates:version', vers)
     else vers = client:get('app:updates:version') end
     print('\nVersion:', vers, '\n')
+
+    -- TICKETS
+    fd.reduce(WEEK.query'SELECT SUBSTR(uid,-2) zip, MAX(uid) uid FROM tickets GROUP BY zip', function(w) client:set(format('app:tickets:FA-BJ-%.2d', w.zip), w.uid) end)
 end
 
 --
@@ -331,7 +395,7 @@ while true do
 	    fd.reduce(conn.query(qry), fd.map(prepare), fd.map(mail(fruit, cmd)), deliver, tasks)
 	    print'OK feed!\n'
 
-	    -- preprocessed FROM db --
+	-- preprocessed FROM db --
 
 	elseif cmd == 'update' then
 	    update(msg[2])
@@ -343,6 +407,20 @@ while true do
 	    tasks:send_msgs{'lpr', uid}
 	    if hdr.tag == 'facturar' then tasks:send_msgs{'lpr', uid} end
 
+	-- peer --
+	elseif cmd == 'queryx' then
+	    local DST, uid = msg[2], msg[3]
+	    if uid:match'%d+%-%d+%-%d+T' then 	-- ticket
+		local wks = weeks(uid, 'tickets')
+		local _, conn, qry = gather('tickets', wks)
+		fd.reduce(conn.query(qry), groupon(uid), fd.map(mail('peer', DST)), deliver, tasks)
+
+	    else  -- vers
+		local wks = weeks(uid, 'queries')
+		local _, conn, qry = gather('queries', wks)
+		fd.reduce(conn.query(qry), chain(uid), fd.map(mail('peer', DST)), deliver, tasks)
+
+	    end
 	end
     end
 end

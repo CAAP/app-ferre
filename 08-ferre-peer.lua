@@ -57,18 +57,23 @@ end
 local function switch(msg)
     local cmd = msg[1]
 
-    msg[1] = TIENDA
-
     if cmd == 'ticketx' then
+	msg[1] = TIENDA
 	local uid = msg[2]
 	local k = QTKT..uid
 	reduce(client:lrange(k, 0, -1), into, msg)
 	return true
 
     elseif cmd == 'updatex' then
+	msg[1] = TIENDA
 	return true
 
     elseif cmd:match'FA-' then
+	if msg[2]:match'%d+%-%d+%-%d+T' then 	-- ticket
+	    local uid = msg[2]
+	    local k = QTKT..uid
+	    reduce(client:lrange(k, 0, -1), into, msg)
+	end
 	return true
 
     else
@@ -78,47 +83,26 @@ local function switch(msg)
 end
 
 local function process(msg)
-    local cmd = msg[1]
+    if msg[1]:match'FA%-BJ' then -- BJ | MX
 
-    if cmd == TIENDA then
-
-	if msg[2]:match'%d+%-%d+%-%dT' then 	-- ticket
-	    if #msg == 2 then goto OK
-	    else
-		    -- cmd == 'ticketx'
-
-
-	    end
-	else 					-- vers
-	    if #msg == 2 then goto OK
-	    else
-		goto OK
-		    -- XXX cmd == 'updatex'
-	    end
-
-	end
-
-    end
-
-    if cmd:match'FA-' then -- BJ | MX
-
-	if msg[2]:match'%d+%-%d+%-%dT' then 	-- ticket
+	if msg[2]:match'%d+%-%d+%-%d+T' then 	-- ticket
 	    local uid = msg[2]
 	    local SC = uid:match':(%d+)$'
--- XXX		sleep(1500) -- wait
-	    local u = client:get('app:tickets:FA-BJ-'..SC) or '0'
+	    local u = client:get('app:tickets:FA-BJ-'..SC) or '0x0x'..SC
 
 	    if #msg == 2 then -- query
-		if uid <= u then
-		    return {'inmem', 'xxx', uid}
+		if uid < u then
+		    return {'inmem', 'queryx', unpack(msg)}
 		else goto OK end
 
 	    else -- new ticket
+
 		if msg[3] == u then -- consecutive
 		    local k = QTKT..uid
-		    fd.drop(3, msg, function(s) client:rpush(k, s) end)
+		    drop(3, msg, function(s) client:rpush(k, s) end)
 		    client:expire(k, 120)
-		    return {'DB', cmd, uid}
+		    return {'DB', 'ticketx', uid}
+
 	        elseif uid == u then goto OK -- already registered
 		elseif uid > u then return {'peer', TIENDA, u} end -- help
 		-- XXX what about uid < u ???
@@ -130,43 +114,31 @@ local function process(msg)
 
 	    if #msg == 2 then -- query
 		if vers < v then
-		    return {'inmem', 'queries', vers}
+		    return {'inmem', 'queryx', unpack(msg)}
 		else goto OK end
 
 	    else -- new update
+		local clave = msg[4]
+		local Q = msg[#msg]
+		local v = client:get'app:updates:version' or 0 -- send a ZERO if nothing updated XXX
+
+		if msg[3] == v then -- consecutive
+		    local qs = deserialize( Q:match"'%([^']+)'%)$" )
+		    local k = 'queue:uuids:'..clave
+		    client:rpush(k, unpack(qs))
+		    client:expire(k, 120)
+		    return {'DB', 'updatex', clave, vers}
+
+		elseif vers == v then goto OK -- already registered
+		elseif vers > v then return {'peer', TIENDA, v} end -- help
+
 	    end
 
 	end
 
     else -- ???
-
+print('Error:', msg[1], '\n')
     end
-
-
-
---[[
-    elseif cmd == 'updatex' then
-	sleep(1500) -- wait for pending updates
-
-	local vers = msg[3]
-	local overs = msg[4]
-	local v = client:get'app:updates:version' or 0 -- send a ZERO if nothing updated XXX
-
-	if overs == v then
-	    local clave = msg[2]
-	    local Q = msg[#msg]
-	    local qs = deserialize( Q:match"'%([^']+)'%)$" )
-	    local k = 'queue:uuids:'..clave
-	    client:rpush(k, unpack(qs))
-	    client:expire(k, 120)
-	    return {'DB', cmd, clave, vers}
-
-	elseif vers == v then goto OK
-
-	else return {'peer', TIENDA, v} end
-
-    end
---]]
 
     ::OK::
     return {'OK'}
@@ -212,6 +184,8 @@ local msgr = assert(CTX:socket'PUB')
 
 assert( msgr:linger(0) )
 
+assert( msgr:timeout(1000) )
+
 assert( keypair():client(msgr, TOKK) )
 
 assert( msgr:connect( TOK ) )
@@ -225,6 +199,8 @@ print('\nSuccessfully connected to', TOK, '\n')
 local msgs = assert(CTX:socket'SUB')
 
 assert( msgs:linger(0) )
+
+assert( msgr:timeout(1000) )
 
 assert( msgs:subscribe'' )
 
@@ -249,9 +225,9 @@ print'+\n'
 
 	print('stream:', concat(msg, ' '), '\n')
 
---	if switch(msg) then
---	    msgr:send_msgs( msg )
---	end
+	if switch(msg) then
+	    msgr:send_msgs( msg )
+	end
 
 
     elseif msgs:events() == 'POLLIN' then
@@ -260,7 +236,7 @@ print'+\n'
 
 	print('\nTIK:', concat(msg, ' '), '\n')
 
---	stream:send_msgs( process(msg) )
+	stream:send_msgs( process(msg) )
 
     end
 

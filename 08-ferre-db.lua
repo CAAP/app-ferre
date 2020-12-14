@@ -20,6 +20,8 @@ local rconnect	  = require'redis'.connect
 local asJSON	  = require'json'.encode
 local serialize	  = require'binser'.serialize
 local b64	  = require'lints'.asB64
+local dN 	  = require'binser'.deserializeN
+local fb64	  = require'lints'.fromB64
 local posix	  = require'posix.signal'
 
 local concat	  = table.concat
@@ -78,6 +80,11 @@ local function indexar(a) return fd.reduce(INDEX, fd.map(function(k) return a[k]
 
 local function round(n, d) return floor(n*10^d+0.5)/10^d end
 
+local function deserialize(w)
+    local a,i = dN(fb64(w), 1)
+    return a
+end
+
 local function oneItem(o)
     for k,v in urldecode(o.data):gmatch'([%a%d]+)|([^|]+)' do o[k] = asnum(v) end
     local lbl = 'u' .. o.precio:match'%d$'
@@ -123,6 +130,8 @@ local function addTicketx( uid )
     else
 	fd.reduce(data, fd.map(deserialize), into'tickets', WEEK)
     end
+    local k = TTKT..uid:match':(%d+)$'
+    client:set(k, uid)
     return uid
 end
 
@@ -158,7 +167,6 @@ local function qryExec(k, q)
 	s = execUP(function() return WEEK.exec(q) end)
     end
     print(q, s, '\n')
-    client:rpush(k, q)
 end
 
 local function updateOne(w)
@@ -173,11 +181,13 @@ local function updateOne(w)
     if #u == 0 then return false end -- safeguard
     local qry = format('UPDATE datos SET %s %s', concat(u, ', '), clause)
     qryExec(k, qry)
+    client:rpush(k, qry)
 
 
     if toll then
 	qry = format('UPDATE datos SET %s %s', COSTOL, clause)
 	qryExec(k, qry)
+	client:rpush(k, qry)
     end
 
     -- ### -- ### -- ### -- ### -- ### --
@@ -204,12 +214,13 @@ local function updateOne(w)
     local msg = asJSON{a, {vers=u, week=WKDB, store='VERS'}}
     qry = format("INSERT INTO updates VALUES (%d, %s, '%s')", u, clave, msg)
     qryExec(k, qry)
+    client:rpush(k, qry)
 
     local v = asJSON{vers=u, week=WKDB}
-    client:set(UVER, v)
 
     qry = format(QQRY, u, clave, v, b64(serialize(client:lrange(k, 0, -1))))
     qryExec(k, qry)
+    client:rpush(k, qry)
 
     client:expire(k, 120)
 
@@ -291,6 +302,7 @@ tasks:send_msg'OK'
 --
 
 local function notify(clave, vers)
+    client:set(UVER, vers)
     tasks:send_msgs{'SSE', 'version', vers}
     tasks:send_msgs{'inmem', 'update', clave}
 end
@@ -338,7 +350,7 @@ while true do
 	    notify(w.clave, vers)
 	    print('\nversion:', vers, '\n')
 	    -- notify cloud service | external peer
-	    tasks:send_msgs{'peer', 'updatex', w.clave, vers, overs, q}
+	    tasks:send_msgs{'peer', 'updatex', vers, overs, w.clave, q}
 
 	elseif cmd == 'eliminar' then
 	    local clave = asnum(msg[2]:match'clave=([%a%d]+)')
@@ -348,7 +360,7 @@ while true do
 	    notify(clave, vers)
 	    print('\nversion:', vers, '\n')
 	    -- notify cloud service | external peer
-	    tasks:send_msgs{'peer', 'updatex', clave, vers, overs, q}
+	    tasks:send_msgs{'peer', 'updatex', vers, overs, clave, q}
 
 	elseif cmd == 'updatex' then -- cmd, clave, vers
 	    local clave = msg[2]
