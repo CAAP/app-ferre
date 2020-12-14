@@ -121,11 +121,10 @@ local function process(msg)
 
 	    else -- new update
 		local clave = msg[4]
-		local Q = msg[#msg]
 		local v = client:get'app:updates:version' or 0 -- send a ZERO if nothing updated XXX
 
 		if msg[3] == v then -- consecutive
-		    local qs = deserialize( Q:match"'%([^']+)'%)$" )
+		    local qs = deserialize( msg[#msg] )
 		    local k = 'queue:uuids:'..clave
 		    client:rpush(k, unpack(qs))
 		    client:expire(k, 120)
@@ -176,6 +175,8 @@ assert( stream:set_id('peer') )
 assert( stream:connect( STREAM ) )
 
 print('\nSuccessfully connected to:', STREAM, '\n')
+
+sleep(2200)
 
 stream:send_msg'OK'
 
@@ -229,6 +230,7 @@ print'+\n'
 
 	if switch(msg) then
 	    msgr:send_msgs( msg )
+	    sleep(500)
 	end
 
 

@@ -280,7 +280,7 @@ local function chain(vers)
     return function(step)
     return function(a, i)
 	local ov = v
-	v = a.vers
+	v = a.version
 	step({v, ov, a.clave, a.query}, i)
     end
     end
