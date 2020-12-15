@@ -159,7 +159,7 @@ local function execUP( f )
     return (not(e) and s or '')
 end
 
-local function qryExec(k, q)
+local function qryExec(q)
     local s
     if q:match'datos' then
 	s = execUP(function() return FERRE.exec(q) end)
@@ -180,13 +180,13 @@ local function updateOne(w)
     local u = fd.reduce(fd.keys(w), fd.filter(sanitize(DIRTY)), fd.map(reformat), fd.into, {})
     if #u == 0 then return false end -- safeguard
     local qry = format('UPDATE datos SET %s %s', concat(u, ', '), clause)
-    qryExec(k, qry)
+    qryExec(qry)
     client:rpush(k, qry)
 
 
     if toll then
 	qry = format('UPDATE datos SET %s %s', COSTOL, clause)
-	qryExec(k, qry)
+	qryExec(qry)
 	client:rpush(k, qry)
     end
 
@@ -213,13 +213,13 @@ local function updateOne(w)
     a.store = 'PRICE'
     local msg = asJSON{a, {vers=u, week=WKDB, store='VERS'}}
     qry = format("INSERT INTO updates VALUES (%d, %s, '%s')", u, clave, msg)
-    qryExec(k, qry)
+    qryExec(qry)
     client:rpush(k, qry)
 
     local v = asJSON{vers=u, week=WKDB}
 
     qry = format(QQRY, u, clave, v, b64(serialize(client:lrange(k, 0, -1))))
-    qryExec(k, qry)
+    qryExec(qry)
     client:rpush(k, qry)
 
     client:expire(k, 120)

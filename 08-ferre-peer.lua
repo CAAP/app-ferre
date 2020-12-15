@@ -11,7 +11,7 @@ local pollin	  = require'lzmq'.pollin
 local keypair	  = require'lzmq'.keypair
 local sleep	  = require'lbsd'.sleep
 local b64	  = require'lints'.fromB64
-local dN	  = require'binser'.dN
+local dN	  = require'binser'.deserializeN
 
 local rconnect	  = require'redis'.connect
 local posix	  = require'posix.signal'
@@ -135,7 +135,7 @@ local function process(msg)
 		    local qs = deserialize( msg[#msg] )
 		    local k = 'queue:uuids:'..clave
 		    client:rpush(k, unpack(qs))
-		    client:expire(k, 120)
+		    client:expire(k, 1200)
 		    return {'DB', 'updatex', clave, vers}
 
 		elseif vers == v then goto OK -- already registered
