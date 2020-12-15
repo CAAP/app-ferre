@@ -49,6 +49,14 @@ local QTKT	  = 'queue:tickets:'
 --------------------------------
 --
 
+local function raw(s) return s:match'Y%d+Wd+', s:match':(%d+)'
+
+local function comp(a,b)
+    local aw, av = raw(a)
+    local bw, bv = raw(b)
+    return aw == bw and (av > bv and 1 or (av == bv and 0 or -1)) or (aw > bw and 1 or -1)
+end
+
 local function deserialize(s)
     local a,i = dN(b64(s), 1)
     return a
@@ -115,7 +123,7 @@ local function process(msg)
 	    local v = client:get'app:updates:version' or 0
 
 	    if #msg == 2 then -- query
-		if vers < v then
+		if comp(vers, v) == -1 then
 		    return {'inmem', 'queryx', unpack(msg)}
 		else goto OK end
 
@@ -131,7 +139,7 @@ local function process(msg)
 		    return {'DB', 'updatex', clave, vers}
 
 		elseif vers == v then goto OK -- already registered
-		elseif vers > v then return {'peer', TIENDA, v} end -- help
+		elseif comp(vers, v) == 1 then return {'peer', TIENDA, v} end -- help
 
 	    end
 
