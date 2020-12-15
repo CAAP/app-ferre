@@ -135,7 +135,7 @@ local function process(msg)
 		    local qs = deserialize( msg[#msg] )
 		    local k = 'queue:uuids:'..clave
 		    client:rpush(k, unpack(qs))
-		    client:expire(k, 1200)
+		    client:expire(k, 12)
 		    return {'DB', 'updatex', clave, vers}
 
 		elseif vers == v then goto OK -- already registered
