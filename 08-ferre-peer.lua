@@ -49,7 +49,7 @@ local QTKT	  = 'queue:tickets:'
 --------------------------------
 --
 
-local function raw(s) return s:match'Y%d+Wd+', s:match':(%d+)'
+local function raw(s) return s:match'Y%d+Wd+', s:match':(%d+)' end
 
 local function comp(a,b)
     local aw, av = raw(a)
