@@ -219,10 +219,13 @@ local function updateOne(w)
     local v = asJSON{vers=u, week=WKDB}
 
     qry = format(QQRY, u, clave, v, b64(serialize(client:lrange(k, 0, -1))))
-    qryExec(qry)
     client:rpush(k, qry)
+    qry = format(QQRY, u, clave, v, b64(serialize(client:lrange(k, 0, -1))))
+    client:lset(k, -1, qry)
+    qryExec(qry)
 
     client:expire(k, 120)
+
 
     return v, qry
 end
