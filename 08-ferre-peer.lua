@@ -92,7 +92,7 @@ local function switch(msg)
 end
 
 local function process(msg)
-    if msg[1]:match'FA%-BJ' then -- BJ | MX
+    if msg[1]:match'FA' then -- BJ | MX
 
 	if msg[2]:match'%d+%-%d+%-%d+T' then 	-- ticket
 --[[		
@@ -106,6 +106,8 @@ local function process(msg)
 		else goto OK end
 
 	    else -- new ticket
+
+		'FA%-BJ' XXX
 
 		if msg[3] == u then -- consecutive
 		    local k = QTKT..uid
