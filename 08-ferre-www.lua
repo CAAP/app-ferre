@@ -29,6 +29,7 @@ _ENV = nil -- or M
 --
 local client	 = assert( rconnect(REDIS, '6379') )
 local events	 = mgr.events
+local ops	 = mgr.ops
 
 local MG	 = 'mgconn:active'
 local AP	 = 'app:active'
@@ -46,19 +47,18 @@ end
 
 local function broadcast(msg, fruit)
     if fruit then
-	local skt = client:hget(MG, fruit)
-	for c in mgr.iter() do if c:sock() == skt then c:send(msg); break; end end
+	for c in mgr.iter() do if c:id() == fruit then c:send(msg); break; end end
 	return format('Broadcast %s to %s', msg, fruit)
     else
 	local j = 0
-	for c in mgr.iter() do if client:hexists(MG, c:sock()) then c:send(msg); j = j + 1 end end
+	for c in mgr.iter() do if c:id() then c:send(msg); j = j + 1 end end
 	return format('Message %s broadcasted to %d peers', msg, j)
     end
 end
 
 local function switch( m )
     local fruit = m:match'^%a+'
-    if fruit and client:hexists(MG, fruit) then
+    if fruit and client:sismember(MG, fruit) then
 	m = m:match'%a+%s([^!]+)' or 'SSE :empty'
 	return broadcast(ssevent(distill( m )), fruit)
     else
@@ -106,25 +106,39 @@ msgr:send_msg'OK'
 --
 
 local function httpfn(c, ev, ...)
-    if ev == events.REQUEST then
+    if ev == events.HTTP then
 	local _,uri,query,_ = ...
 	print('\nAPP\t', ...)
 	if uri:match'version.json' then
-	    c:reply(200, client:get'app:updates:version', EGET, true)
+	    c:send(EGET)
+	    c:send(client:get'app:updates:version')
+	    c:send'\n\n'
 	else
-	    c:reply(200, 'OK', EGET, true)
-	    msgr:send_msgs{uri:match'%a+', query} -- 'app', uri:match'%a+', query
+	    c:send(EGET)
+	    c:send'\n\n'
+	    msgr:send_msgs{uri:match'%a+', query}
 	end
+	c:drain()
     end
 end
 
-local http = assert( mgr.bind(HTTP, httpfn, 'http') )
+local function wsfn(c, ev, ...)
+    if ev == events.WS then
+	print('\nWS\t', ...)
+    elseif ev == events.OPEN then
+	c:wsend('Hi', ops.text)
+    end
+end
+
+local http = assert( mgr.bind('http://localhost:'..HTTP, httpfn, 'http') )
 
 print('\nSuccessfully bound to port', HTTP, '\n')
 
-local sse, SSE = assert( ssefn( mgr ) ) -- assert( mgr.bind(SSE, backend, 'http') )
+local sse, SSE = assert( ssefn( mgr ) )
 
 print('\nSuccessfully bound to port', SSE, '\n')
+
+--local ws = assert( mgr.wconnect('ws://localhost:8000/websocket', wsfn) )
 
 -- -- -- -- -- --
 --

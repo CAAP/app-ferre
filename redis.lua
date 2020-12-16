@@ -9,13 +9,14 @@ assert( client:ping() )
 
 local FRTS	 = {'apple', 'apricot', 'avocado', 'banana', 'berry', 'cherry', 'coconut', 'cucumber', 'fig', 'grape', 'raisin', 'guava', 'pepper', 'corn', 'plum', 'kiwi', 'lemon', 'lime', 'lychee', 'mango', 'melon', 'olive', 'orange', 'durian', 'longan', 'pea', 'peach', 'pear', 'prune', 'pine', 'pomelo', 'pome', 'quince', 'rhubarb', 'mamey', 'soursop', 'granate', 'sapote'}
 
-local ESTREAM	 = concat({"Content-Type: text/event-stream",
-"Connection: keep-alive", "Cache-Control: no-cache",
-"Access-Control-Allow-Origin: *", "Access-Control-Allow-Methods: GET"}, "\r\n")
-
-local EGET	 = concat({"Content-Type: text/plain",
+local ESTREAM	 = concat({"HTTP/1.0 200 OK",
+"Content-Type: text/event-stream", "Connection: keep-alive",
 "Cache-Control: no-cache", "Access-Control-Allow-Origin: *",
-"Access-Control-Allow-Methods: GET"}, "\r\n")
+"Access-Control-Allow-Methods: GET", "\r\n"}, "\r\n")
+
+local EGET	 = concat({"HTTP/1.0 200 OK", "Content-Type: text/plain",
+"Cache-Control: no-cache", "Access-Control-Allow-Origin: *",
+"Access-Control-Allow-Methods: GET", "\r\n"}, "\r\n")
 
 --- *LIST* ---
 assert( client:lpush('const:fruits', table.unpack(FRTS)) )
