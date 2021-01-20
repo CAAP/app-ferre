@@ -12,7 +12,7 @@ local assert	  = assert
 local exit	  = os.exit
 local print	  = print
 
-local WSS	  = os.getenv'WEBSOCKET_IP'
+local WSS	  = os.getenv'HUB_IP'
 
 -- No more external access after this point
 _ENV = nil -- or M
