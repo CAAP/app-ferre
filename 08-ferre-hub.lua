@@ -80,7 +80,7 @@ local function wsfn(c, ev, ...)
     end
 end
 
-local ws = assert( MGR.wconnect(WSS, wsfn, evs.WS) )
+local ws = assert( MGR.connect(WSS, wsfn, evs.WS) )
 
 --
 -- -- -- -- -- --
