@@ -5,6 +5,8 @@
 local MGR	  = require'lmg'
 local posix	  = require'posix.signal'
 
+local fd	  = require'carlos.fold'
+
 local concat	  = table.concat
 local assert	  = assert
 local exit	  = os.exit
