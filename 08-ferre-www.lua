@@ -21,6 +21,7 @@ local print	= print
 local STREAM	= os.getenv'STREAM_IPC'
 local HTTP	= os.getenv'HTTP_PORT'
 local REDIS	= os.getenv'REDISC'
+local WSS
 
 -- No more external access after this point
 _ENV = nil -- or M
@@ -28,7 +29,7 @@ _ENV = nil -- or M
 -- Local Variables for module-only access
 --
 local client	 = assert( rconnect(REDIS, '6379') )
-local events	 = mgr.events
+local evs	 = mgr.events
 local ops	 = mgr.ops
 
 local MG	 = 'mgconn:active'
@@ -47,11 +48,11 @@ end
 
 local function broadcast(msg, fruit)
     if fruit then
-	for c in mgr.iter() do if c:id() == fruit then c:send(msg); break; end end
+	for peer in mgr.peers() do if peer:id() == fruit then peer:send(msg); break; end end
 	return format('Broadcast %s to %s', msg, fruit)
     else
 	local j = 0
-	for c in mgr.iter() do if c:id() then c:send(msg); j = j + 1 end end
+	for peer in mgr.peers() do if peer:id() then peer:send(msg); j = j + 1 end end
 	return format('Message %s broadcasted to %d peers', msg, j)
     end
 end
@@ -106,7 +107,7 @@ msgr:send_msg'OK'
 --
 
 local function httpfn(c, ev, ...)
-    if ev == events.HTTP then
+    if ev == evs.HTTP then
 	local _,uri,query,_ = ...
 	print('\nAPP\t', ...)
 	if uri:match'version.json' then
@@ -123,14 +124,21 @@ local function httpfn(c, ev, ...)
 end
 
 local function wsfn(c, ev, ...)
-    if ev == events.WS then
-	print('\nWS\t', ...)
-    elseif ev == events.OPEN then
-	c:wsend('Hi', ops.text)
+    if ev == evs.OPEN then
+	print('Connected to remote peer:', c:ip())
+	c:send('Hi', ops.TEXT)
+
+    elseif ev == evs.WS then
+
+
+    elseif ev == evs.ERROR then
+	print('ERROR:', ...)
+	c:close()
+
     end
 end
 
-local http = assert( mgr.bind('http://localhost:'..HTTP, httpfn, 'http') )
+local http = assert( mgr.bind('http://localhost:'..HTTP, httpfn, evs.HTTP) )
 
 print('\nSuccessfully bound to port', HTTP, '\n')
 
@@ -138,7 +146,7 @@ local sse, SSE = assert( ssefn( mgr ) )
 
 print('\nSuccessfully bound to port', SSE, '\n')
 
---local ws = assert( mgr.wconnect('ws://localhost:8000/websocket', wsfn) )
+--local ws = assert( mgr.wconnect(WSS, wsfn, evs.WS) )
 
 -- -- -- -- -- --
 --
