@@ -2,32 +2,49 @@
 
 -- Import Section
 --
-local context	  = require'lzmq'.context
-local proxy	  = require'lzmq'.proxy
-local keypair	  = require'lzmq'.keypair
-
-local rconnect	  = require'redis'.connect
+local MGR	  = require'lmg'
 local posix	  = require'posix.signal'
 
+local concat	  = table.concat
 local assert	  = assert
 local exit	  = os.exit
 local print	  = print
+
+local WSS	  = os.getenv'WEBSOCKET_IP'
 
 -- No more external access after this point
 _ENV = nil -- or M
 
 -- Local Variables for module-only access
 --
-local TOK	  = os.getenv'TOK_TCP'
-local TIK	  = os.getenv'TIK_TCP'
 
-local TOKK	  = "Gl-wH9L/rnwK8?V2-+pu@(V!aBYXMY.Y]M!/y2M-"
-local TIKK	  = "!bgA6xLy8v/sjSHhTo1uO{6jO/bUE&ELh:pRr:K!"
+local evs = MGR.events
+local ops = MGR.ops
 
 --------------------------------
 -- Local function definitions --
 --------------------------------
 --
+
+local function switch( c, msg, code )
+    local k = 0
+
+    if msg == 'peers' then
+	local a = fd.reduce(fd.wrap(MGR.peers), fd.map(function(peer) return peer:ip() end), fd.into, {})
+	c:send(concat(a, '\t'), ops.TEXT)
+	k = 1
+
+    else
+	for peer in MGR.peers() do
+	    peer:send(msg, code)
+	    k = k + 1
+	end
+
+    end
+
+    print('Message broadcasted to', k, 'peer(s)\n')
+
+end
 
 ---------------------------------
 -- Program execution statement --
@@ -45,34 +62,31 @@ posix.signal(posix.SIGINT, shutdown)
 --
 -- Initilize server(s)
 --
-local CTX = context()
 
-local msgs = assert(CTX:socket'XSUB')
+local function wsfn(c, ev, ...)
+    if ev == evs.ACCEPT then
+	print('Peer has connected:', c:ip(), '\n')
 
-assert( msgs:linger(0) )
+    elseif ev == evs.WS then
+	switch( c, ... )
 
-assert( msgs:curve( TOKK ) )
+    elseif ev == evs.ERROR then
+	print('ERROR:', ...)
+	c:close()
 
-assert( msgs:bind( TOK ) )
+    elseif ev == evs.CLOSE then
+	print('Connection to', c:ip(), 'closed\n')
 
-print('\nSuccessfully bound to:', TOK, '\n')
+    end
+end
 
---
--- -- -- -- -- --
---
-local msgr = assert(CTX:socket'XPUB')
-
-assert( msgr:linger(0) )
-
-assert( msgr:curve( TIKK ) )
-
-assert( msgr:bind( TIK ) )
-
-print('\nSuccessfully bound to', TIK, '\n')
+local ws = assert( MGR.wconnect(WSS, wsfn, evs.WS) )
 
 --
 -- -- -- -- -- --
 --
 
-proxy(msgs, msgr)
+print('\n\n+\n\n')
+
+while true do MGR.poll(1000) end
 
