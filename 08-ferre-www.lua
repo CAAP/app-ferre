@@ -123,22 +123,7 @@ local function httpfn(c, ev, ...)
     end
 end
 
-local function wsfn(c, ev, ...)
-    if ev == evs.OPEN then
-	print('Connected to remote peer:', c:ip())
-	c:send('Hi', ops.TEXT)
-
-    elseif ev == evs.WS then
-
-
-    elseif ev == evs.ERROR then
-	print('ERROR:', ...)
-	c:close()
-
-    end
-end
-
-local http = assert( mgr.bind('http://localhost:'..HTTP, httpfn, evs.HTTP) )
+local http = assert( mgr.bind('http://0.0.0.0:'..HTTP, httpfn, evs.HTTP) )
 
 print('\nSuccessfully bound to port', HTTP, '\n')
 
@@ -146,7 +131,6 @@ local sse, SSE = assert( ssefn( mgr ) )
 
 print('\nSuccessfully bound to port', SSE, '\n')
 
---local ws = assert( mgr.wconnect(WSS, wsfn, evs.WS) )
 
 -- -- -- -- -- --
 --
