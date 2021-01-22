@@ -63,13 +63,15 @@ local function wsfn(c, ev, ...)
 --[[
 -- XXX TAKE CARE, SO ONE CAN RETRY CONNECTION AUTOMAGICALLY XXX
 -- 	MAKING USE OF TIMERS
+--]]
     elseif ev == evs.CLOSE then
 	print('Connection closed\n')
---]]
+	MGR.timer(3000, function() MGR.connect(WSS, wsfn, evs.WS) end)
+
     end
 end
 
-local ws = assert( MGR.connect(WSS, wsfn, evs.WS) )
+assert( MGR.connect(WSS, wsfn, evs.WS) )
 
 --
 -- -- -- -- -- --
