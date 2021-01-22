@@ -85,7 +85,13 @@ local function wsfn(c, ev, ...)
     end
 end
 
-local ws = assert( MGR.bind(WSS, wsfn, evs.WS) )
+assert( MGR.bind(WSS, wsfn, evs.WS) )
+
+local function keepalive()
+    for peer in MGR.peers() do peer:send'Hi' end
+end
+
+local t1 = assert( MGR.timer(120000, keepalive, true) )
 
 --
 -- -- -- -- -- --
