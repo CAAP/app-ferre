@@ -26,12 +26,25 @@
 	    },
 
 	    populateDB: function(k) {
-		function store(datos) {
-		    let os = IDB.write2DB(k);
-		    return Promise.all( datos.map( obj => os.add(k.MAP ? k.MAP(obj) : obj) ) );
+
+		function getVers(datos) {
+		    let v = false;
+		    if (datos[datos.length-1]["week"]) {
+			v = datos.pop();
+		    }
+		    return v;
 		}
 
-		return XHR.getJSON( k.FILE ).then( store ).then( () => console.log("Datos loaded to store " + k.STORE) );
+		function store(datos) {
+		    let os = IDB.write2DB(k);
+		    let v = getVers(datos);
+		    return Promise.all( datos.map( obj => os.add(k.MAP ? k.MAP(obj) : obj) ) )
+				.then( () => Promise.resolve(true) ).then( () => Promise.resolve(v) );
+		}
+
+		return XHR.getJSON( k.FILE )
+			    .then( store )
+			    .then( v => { console.log("Datos loaded to store "+k.STORE); return Promise.resolve(v); } );
 	    },
 
 	    clearDB: k => IDB.write2DB(k).clear(),

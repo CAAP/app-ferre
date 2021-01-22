@@ -31,7 +31,7 @@
 	    const STORES = DATA.STORES;
 	    let lvers = document.getElementById('db-vers');
 	    STORES.VERS.inplace = o => { lvers.textContent = o.week + 'V' + o.vers; return true; };
-
+/*
 	    function isPriceless(store) {
 		if (store.STORE == 'precios')
 		    return XHR.getJSON(ferre.origin+'json/version.json')
@@ -39,10 +39,15 @@
 		else
 		    return Promise.resolve(true);
 	    }
+*/
+	    function setVersion(vers) {
+		if (vers)
+		    STORES.VERS.update(vers);
+	    }
 
 	    function ifLoad(k) { return IDB.readDB(k).count().then(
 		q => { if (q == 0 && k.FILE)
-			    return IDB.populateDB(k).then(() => isPriceless(k) );
+			    return IDB.populateDB(k).then( setVersion );
 			else
 			    return Promise.resolve(true);
 		     }

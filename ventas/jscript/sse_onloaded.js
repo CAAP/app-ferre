@@ -9,6 +9,11 @@
 	    const spin = document.getElementById('pacman');
 	    const persona = document.getElementById('personas');
 
+		function retry(msg) {
+		    console.log("Socket is closed. Reconnect will be attempted in 5 secs", msg);
+		    setTimeout(() => ssevent, 5000);
+		}
+
 		function ready() { spin.style.visibility = 'hidden'; }
 
 		function a2obj( a ) { const M = a.length/2; let o = {}; for (let i=0; i<M; i++) { o[a[i*2]] = a[i*2+1]; } return o; }
@@ -25,6 +30,8 @@
 		}
 
 		esource.onerror = () => { spin.style.visibility = 'visible' };
+
+		esource.onclose = e => { retry(e.message); };
 
 		// First message received after successful handshake
 		esource.addEventListener("fruit", function(e) {
@@ -53,7 +60,6 @@
 		esource.addEventListener("version", function(e) {
 		    elbl.innerHTML = "version event";
 		    console.log('version event ongoing');
-	console.log(e.data);
 		    if (!DATA.STORES.VERS.check( JSON.parse(e.data) ))
 			ferre.xget('adjust', Object.assign({}, localStorage, sessionStorage)); // adjust version; sends fruit, week, vers
 		}, false);
