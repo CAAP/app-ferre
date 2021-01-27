@@ -36,7 +36,7 @@ local function switch( c, msg, code )
     print('Message received:', msg, '\n')
 
     if msg == 'peers' then
-	local a = fd.reduce(MGR.peers, fd.filter(isvalid), fd.map(function(p) return p:ip() end) fd.into, {})
+	local a = fd.reduce(MGR.peers, fd.filter(isvalid), fd.map(function(p) return p:ip() end), fd.into, {})
 	c:send(concat(a, '\t'), ops.TEXT)
 	k = 1
 
