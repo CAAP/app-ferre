@@ -29,7 +29,6 @@ _ENV = nil -- or M
 -- Local Variables for module-only access
 --
 local client	 = assert( rconnect(REDIS, '6379') )
-local evs	 = mgr.events
 local ops	 = mgr.ops
 
 local MG	 = 'mgconn:active'
@@ -107,7 +106,7 @@ msgr:send_msg'OK'
 --
 
 local function httpfn(c, ev, ...)
-    if ev == evs.HTTP then
+    if ev == ops.HTTP then
 	local _,uri,query,_ = ...
 	print('\nAPP\t', ...)
 	if uri:match'version.json' then
@@ -119,11 +118,11 @@ local function httpfn(c, ev, ...)
 	    c:send'\n\n'
 	    msgr:send_msgs{uri:match'%a+', query}
 	end
-	c:drain()
+	c:opt('drain', 1)
     end
 end
 
-local http = assert( mgr.bind('http://0.0.0.0:'..HTTP, httpfn, evs.HTTP) )
+local http = assert( mgr.bind('http://0.0.0.0:'..HTTP, httpfn, ops.http) )
 
 print('\nSuccessfully bound to port', HTTP, '\n')
 

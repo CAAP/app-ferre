@@ -18,7 +18,6 @@ _ENV = nil -- or M
 -- Local Variables for module-only access
 --
 
-local evs = MGR.events
 local ops = MGR.ops
 
 --------------------------------
@@ -50,28 +49,28 @@ posix.signal(posix.SIGINT, shutdown)
 --
 
 local function wsfn(c, ev, ...)
-    if ev == evs.OPEN then
+    if ev == ops.OPEN then
 	print('Connection established to peer:', c:ip(), '\n')
 	c:send()
 
-    elseif ev == evs.WS then
+    elseif ev == ops.WS then
 	switch( c, ... )
 
-    elseif ev == evs.ERROR then
+    elseif ev == ops.ERROR then
 	print('ERROR:', ...)
 	c:close()
 --[[
 -- XXX TAKE CARE, SO ONE CAN RETRY CONNECTION AUTOMAGICALLY XXX
 -- 	MAKING USE OF TIMERS
 --]]
-    elseif ev == evs.CLOSE then
+    elseif ev == ops.CLOSE then
 	print('Connection closed\n')
-	MGR.timer(3000, function() MGR.connect(WSS, wsfn, evs.WS) end)
+	MGR.timer(3000, function() MGR.connect(WSS, wsfn, ops.websocket|ops.ssl|ops.ca) end)
 
     end
 end
 
-assert( MGR.connect(WSS, wsfn, evs.WS) )
+assert( MGR.connect(WSS, wsfn, ops.websocket|ops.ssl|ops.ca) )
 
 --
 -- -- -- -- -- --

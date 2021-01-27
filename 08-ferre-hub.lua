@@ -20,13 +20,15 @@ _ENV = nil -- or M
 -- Local Variables for module-only access
 --
 
-local evs = MGR.events
 local ops = MGR.ops
 
 --------------------------------
 -- Local function definitions --
 --------------------------------
 --
+local function isvalid(peer)
+    return peer:opt'accepted' and peer:opt'websocket'
+end
 
 local function switch( c, msg, code )
     local k = 0
@@ -34,16 +36,12 @@ local function switch( c, msg, code )
     print('Message received:', msg, '\n')
 
     if msg == 'peers' then
-	local a = {}
-	for peer in MGR.peers() do a[#a+1] = peer:ip() end
+	local a = fd.reduce(MGR.peers, fd.filter(isvalid), fd.map(function(p) return p:ip() end) fd.into, {})
 	c:send(concat(a, '\t'), ops.TEXT)
 	k = 1
 
     else
-	for peer in MGR.peers() do
-	    peer:send(msg, code)
-	    k = k + 1
-	end
+	fd.reduce(MGR.peers, function(p) if isvalid(p) then p:send(msg, code); k = k + 1 end end)
 
     end
 
@@ -69,26 +67,26 @@ posix.signal(posix.SIGINT, shutdown)
 --
 
 local function wsfn(c, ev, ...)
-    if ev == evs.ACCEPT then
+    if ev == ops.ACCEPT then
 	print('Peer has connected:', c:ip(), '\n')
 
-    elseif ev == evs.WS then
+    elseif ev == ops.WS then
 	switch( c, ... )
 
-    elseif ev == evs.ERROR then
+    elseif ev == ops.ERROR then
 	print('ERROR:', ...)
-	c:close()
+	c:opt('closing', true)
 
-    elseif ev == evs.CLOSE then
+    elseif ev == ops.CLOSE then
 	print('Connection to', c:ip(), 'closed\n')
 
     end
 end
 
-assert( MGR.bind(WSS, wsfn, evs.WS) )
+assert( MGR.bind(WSS, wsfn, ops.websocket|ops.ssl|ops.cert|ops.key) )
 
 local function keepalive()
-    for peer in MGR.peers() do peer:send'Hi' end
+    fd.reduce(MGR.peers, function(p) if isvalid(p) then p:send'Hi' end end)
 end
 
 local t1 = assert( MGR.timer(120000, keepalive, true) )
