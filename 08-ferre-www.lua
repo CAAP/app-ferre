@@ -47,22 +47,29 @@ end
 
 local function broadcast(msg, fruit)
     if fruit then
-	for peer in mgr.peers() do if peer:id() == fruit then peer:send(msg); break; end end
+	for _,peer in mgr.peers() do if peer:id() == fruit then peer:send(msg); break; end end
 	return format('Broadcast %s to %s', msg, fruit)
     else
 	local j = 0
-	for peer in mgr.peers() do if peer:id() then peer:send(msg); j = j + 1 end end
+	for _,peer in mgr.peers() do if peer:id() then peer:send(msg); j = j + 1 end end
 	return format('Message %s broadcasted to %d peers', msg, j)
     end
 end
 
 local function switch( m )
+    if 'updatex' == m[1]:match'%a+' then
+	wss:send( concat(m, ':') ) -- updatex vers overs clave|id b64query
+
+    end
+
     local fruit = m:match'^%a+'
     if fruit and client:sismember(MG, fruit) then
 	m = m:match'%a+%s([^!]+)' or 'SSE :empty'
 	return broadcast(ssevent(distill( m )), fruit)
+
     else
 	return broadcast(ssevent(distill( m )))
+
     end
 end
 
@@ -130,6 +137,9 @@ local sse, SSE = assert( ssefn( mgr ) )
 
 print('\nSuccessfully bound to port', SSE, '\n')
 
+--local wss, WS = assert( wssfn( mgr, client, msgr ) )
+--
+--print('\nSuccessfully connect to server', WS, '\n')
 
 -- -- -- -- -- --
 --

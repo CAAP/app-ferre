@@ -22,12 +22,14 @@ _ENV = nil -- or M
 
 local ops = MGR.ops
 
+local PEERS = {} -- label, ip
+
 --------------------------------
 -- Local function definitions --
 --------------------------------
 --
 local function isvalid(peer)
-    return peer:opt'accepted' and peer:opt'websocket'
+    return peer:opt'accepted' and peer:opt'websocket' and peer:opt'label'
 end
 
 local function switch( c, msg, code )
@@ -36,12 +38,19 @@ local function switch( c, msg, code )
     print('Message received:', msg, '\n')
 
     if msg == 'peers' then
-	local a = fd.reduce(MGR.peers, fd.filter(isvalid), fd.map(function(p) return p:ip() end), fd.into, {})
+	local a = fd.reduce(PEERS, fd.into, {})
 	c:send(concat(a, '\t'), ops.TEXT)
 	k = 1
 
+    elseif msg:match'vers' then
+	if PEERS.VL then
+	    PEERS.VL:send(msg, code)
+	end
+
+--    elseif msg:match'%' then
+
     else
-	fd.reduce(MGR.peers, function(p) if isvalid(p) then p:send(msg, code); k = k + 1 end end)
+	fd.reduce(PEERS, function(peer) peer:send(msg, code); k = k + 1 end)
 
     end
 
@@ -68,7 +77,13 @@ posix.signal(posix.SIGINT, shutdown)
 
 local function wsfn(c, ev, ...)
     if ev == ops.ACCEPT then
-	print('Peer has connected:', c:ip(), '\n')
+	if isvalid(c) then
+	    local ip = c:ip()
+	    print('Peer has connected:', ip, '\n')
+	    PEERS[c:opt'label'] = c
+	else
+	    c:opt('closing', true)
+	end
 
     elseif ev == ops.WS then
 	switch( c, ... )
@@ -77,8 +92,10 @@ local function wsfn(c, ev, ...)
 	print('ERROR:', ...)
 	c:opt('closing', true)
 
-    elseif ev == ops.CLOSE then
-	print('Connection to', c:ip(), 'closed\n')
+    elseif ev == ops.CLOSE and isvalid(c) then
+	local ip = c:ip()
+	print('Connection to', ip(), 'is closed\n')
+	PEERS[c:opt'label'] = nil
 
     end
 end

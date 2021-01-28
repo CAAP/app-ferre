@@ -30,16 +30,17 @@ _ENV = nil -- or M
 
 -- Local Variables for module-only access
 --
-local TABS	  = { tabs=true, delete=true,
-		      msgs=true, login=true }
+local TABS	  = { tabs=true,    delete=true,
+		      msgs=true,    login=true }
 
-local INMEM	  = { query=true, rfc=true, bixolon=true,
-		      uid=true,     feed=true,
-		      ledger=true,  adjust=true }
+local INMEM	  = { query=true,   rfc=true,      bixolon=true,
+		      uid=true,     feed=true,     ledger=true,
+		      adjust=true }
 
-local FERRE 	  = { update=true, faltante=true, eliminar=true }
+local FERRE 	  = { update=true,  faltante=true, eliminar=true }
 
-local ROUTE	  = { inmem=true, SSE=true, peer=true, DB=true, lpr=true }
+local ROUTE	  = { inmem=true,   SSE=true, --     peer=true,
+		      DB=true,      lpr=true }
 
 local client	  = assert( rconnect(REDIS, '6379') )
 

@@ -137,11 +137,14 @@ end
 local function update( uid )
     local k = QIDS..uid
     local qs = client:lrange(k, 0, -1)
+    -- QUERY -- XXX
+    qs[#qs] = qs[#qs]:gsub('$QUERY', b64(serialize(qs)))
+    --
     fd.reduce(qs, qryExec)
 end
 
-local function deserialize(w)
-    local a,i = dN(fb64(w), 1)
+local function deserialize(s)
+    local a,i = dN(fb64(s), 1)
     return a
 end
 

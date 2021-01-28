@@ -218,14 +218,13 @@ local function updateOne(w)
 
     local v = asJSON{vers=u, week=WKDB}
 
-    qry = format(QQRY, u, clave, v, b64(serialize(client:lrange(k, 0, -1))))
+    qry = format(QQRY, u, clave, v, '$QUERY')
     client:rpush(k, qry)
-    qry = format(QQRY, u, clave, v, b64(serialize(client:lrange(k, 0, -1))))
-    client:lset(k, -1, qry)
+    -- QUERY --
+    qry = qry:gsub('$QUERY', b64(serialize(client:lrange(k, 0, -1))))
     qryExec(qry)
 
     client:expire(k, 120)
-
 
     return v, qry
 end
@@ -314,7 +313,7 @@ end
 -- -- -- -- -- --
 --
 
-local uptodate = false
+--local uptodate = false XXX
 
 --
 -- -- -- -- -- --
@@ -370,6 +369,9 @@ while true do
 	    local vers = msg[3]
 	    local k = QIDS..clave
 	    local qs = client:lrange(k, 0, -1)
+	    -- QUERY --
+	    qs[#qs] = qs[#qs]:gsub('$QUERY', b64(serialize(qs)))
+	    --
 	    fd.reduce(qs, qryExec)
 	    notify(clave, vers)
 	    print('\nversion:', vers, '\n')

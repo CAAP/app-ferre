@@ -4,12 +4,16 @@
 --
 local MGR	  = require'lmg'
 local posix	  = require'posix.signal'
+local dN	  = require'binser'.deserializeN
+local fb64	  = require'lints'.fromB64
 
 local concat	  = table.concat
+local unpack	  = table.unpack
 local assert	  = assert
 local exit	  = os.exit
 local print	  = print
 
+local TIENDA	  = os.getenv'TIENDA'
 local WSS	  = os.getenv'WEBSOCKET_IP'
 
 -- No more external access after this point
@@ -25,9 +29,45 @@ local ops = MGR.ops
 --------------------------------
 --
 
+local function ping(c)
+    return function()
+	local m = format('vers:%s:%s', TIENDA, client:get'app:updates:version') -- client XXX
+	c:send(m)
+    end
+end
+
+local function raw(s) return s:match'Y%d+Wd+', s:match':(%d+)' end
+
+local function comp(a,b)
+    local aw, av = raw(a)
+    local bw, bv = raw(b)
+    return aw == bw and (av > bv and 1 or (av == bv and 0 or -1)) or (aw > bw and 1 or -1)
+end
+
+local function deserialize(s)
+    local a,i = dN(fb64(s), 1)
+    return a
+end
+
 local function switch( c, msg, code )
 
     print('Message received:', msg, '\n')
+
+    if msg:match'updatex'  then
+	local v = client:get'app:updates:version' -- client XXX
+	local vers, overs, clave, query = msg:match'updatex:(%w+):(%w+):(%w+):(%w+)'
+	if v == overs then
+	    local k = 'queue:uuids:'..clave
+	    client:rpush(k, unpack(deserialize(query))) -- client XXX
+	    client:expire(k, 20)
+	    msgr:send{'DB', 'updatex', clave, vers} -- msgr XXX
+
+	elseif comp(overs, v) == 1 then
+	    local m = format('vers:%s:%s', TIENDA, v)
+	    c:send(m)
+
+	end
+    end
 
 end
 
@@ -61,16 +101,19 @@ local function wsfn(c, ev, ...)
 	c:close()
 --[[
 -- XXX TAKE CARE, SO ONE CAN RETRY CONNECTION AUTOMAGICALLY XXX
--- 	MAKING USE OF TIMERS
 --]]
     elseif ev == ops.CLOSE then
-	print('Connection closed\n')
-	MGR.timer(3000, function() MGR.connect(WSS, wsfn, ops.websocket|ops.ssl|ops.ca) end)
+	print('Connection to peer:', c:ip(), 'closed\nRetrying ...\n')
+--	MGR.timer(3000, function() MGR.connect(WSS, wsfn, ops.websocket|ops.ssl|ops.ca) end)
 
     end
 end
 
-assert( MGR.connect(WSS, wsfn, ops.websocket|ops.ssl|ops.ca) )
+local wss = assert( MGR.connect(WSS, wsfn, ops.websocket|ops.ssl|ops.ca) )
+
+wss:opt('label', TIENDA)
+
+MGR.timer( ping(wss) )
 
 --
 -- -- -- -- -- --
