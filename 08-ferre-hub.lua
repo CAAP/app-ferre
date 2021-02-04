@@ -22,7 +22,7 @@ _ENV = nil -- or M
 
 local ops = MGR.ops
 
-local PEERS = {} -- label, ip
+local PEERS = {} -- label, conn
 
 --------------------------------
 -- Local function definitions --
@@ -38,14 +38,11 @@ local function switch( c, msg, code )
     print('Message received:', msg, '\n')
 
     if msg == 'peers' then
-	local a = fd.reduce(PEERS, fd.into, {})
+	local a = fd.reduce(fd.keys(PEERS), fd.map(function(_,label) return label end), fd.into, {})
 	c:send(concat(a, '\t'), ops.TEXT)
 	k = 1
 
-    elseif msg:match'vers' then
-	if PEERS.VL then
-	    PEERS.VL:send(msg, code)
-	end
+--    elseif msg:match'vers' then
 
 --    elseif msg:match'%' then
 
