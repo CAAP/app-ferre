@@ -74,7 +74,6 @@ posix.signal(posix.SIGINT, shutdown)
 
 local function wsfn(c, ev, ...)
     if ev == ops.ACCEPT then
-print('Attempt by:', c:ip(), c:opt'label')
 	if isvalid(c) then
 	    local ip = c:ip()
 	    print('Peer has connected:', ip, '\n')

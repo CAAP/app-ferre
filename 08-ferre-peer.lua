@@ -88,6 +88,8 @@ posix.signal(posix.SIGINT, shutdown)
 -- Initilize server(s)
 --
 
+local startup
+
 local function wsfn(c, ev, ...)
     if ev == ops.OPEN then
 	print('Connection established to peer:', c:ip(), '\n')
@@ -104,16 +106,17 @@ local function wsfn(c, ev, ...)
 --]]
     elseif ev == ops.CLOSE then
 	print('Connection to peer:', c:ip(), 'closed\nRetrying ...\n')
---	MGR.timer(3000, function() MGR.connect(WSS, wsfn, ops.websocket|ops.ssl|ops.ca) end)
+	MGR.timer(3000, startup)
 
     end
 end
 
-local wss = assert( MGR.connect(WSS, wsfn, ops.websocket|ops.ssl|ops.ca) )
+startup = function()
+    local wss = assert( MGR.connect(WSS, wsfn, ops.websocket|ops.ssl|ops.ca) )
+    wss:opt('label', TIENDA)
+end
 
-wss:opt('label', TIENDA)
-
-MGR.timer( 120000, ping(wss) )
+--MGR.timer( 120000, ping(wss) )
 
 --
 -- -- -- -- -- --
