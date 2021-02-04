@@ -13,7 +13,7 @@ local aspath	  = require'carlos.ferre'.aspath
 local dbconn	  = require'carlos.ferre'.dbconn
 local now	  = require'carlos.ferre'.now
 local urldecode	  = require'carlos.ferre'.urldecode
-local context	  = require'lzmq'.context
+local socket	  = require'lzmq'.socket
 local pollin	  = require'lzmq'.pollin
 
 local rconnect	  = require'redis'.connect
@@ -283,15 +283,13 @@ end
 --
 -- Initilize server(s)
 
-local CTX = context()
+local tasks = assert(socket'DEALER')
 
-local tasks = assert(CTX:socket'DEALER')
+assert( tasks:opt('immediate', true) )
 
-assert( tasks:immediate(true) )
+assert( tasks:opt('linger', 0) )
 
-assert( tasks:linger(0) )
-
-assert( tasks:set_id'DB' )
+assert( tasks:opt('id', 'DB') )
 
 assert( tasks:connect( STREAM ) )
 
@@ -325,7 +323,9 @@ while true do
 
     pollin{tasks}
 
-    if tasks:events() == 'POLLIN' then
+    local events = stream:opt'events'
+
+    if events.pollin then
 
 	local msg, more = tasks:recv_msgs()
 	local cmd = msg[1]:match'%a+'

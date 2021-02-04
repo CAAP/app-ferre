@@ -113,7 +113,7 @@ local wss = assert( MGR.connect(WSS, wsfn, ops.websocket|ops.ssl|ops.ca) )
 
 wss:opt('label', TIENDA)
 
-MGR.timer( ping(wss) )
+MGR.timer( 120000, ping(wss) )
 
 --
 -- -- -- -- -- --

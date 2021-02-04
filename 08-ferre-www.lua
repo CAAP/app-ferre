@@ -4,7 +4,7 @@
 --
 
 local mgr	= require'lmg'
-local context	= require'lzmq'.context
+local socket	= require'lzmq'.socket
 local pollin	= require'lzmq'.pollin
 local rconnect	= require'redis'.connect
 
@@ -93,15 +93,13 @@ posix.signal(posix.SIGINT, shutdown)
 --
 -- Initilize server(s)
 
-local CTX = assert( context() )
+local msgr = assert( socket'DEALER' )
 
-local msgr = assert( CTX:socket'DEALER' )
+assert( msgr:opt('immediate', true) )
 
-assert( msgr:immediate(true) )
+assert( msgr:opt('linger', 0) )
 
-assert( msgr:linger(0) )
-
-assert( msgr:set_id'SSE' )
+assert( msgr:opt('id', 'SSE') )
 
 assert( msgr:connect( STREAM ) )
 
@@ -152,9 +150,14 @@ while true do
 
     pollin({msgr}, 3)
 
-    if msgr:events() == 'POLLIN' then
+    local events = msgr:opt'events'
+
+    if events.polllin then
+
 	local msg = concat(msgr:recv_msgs(true), ' ')
+
 	print('\n+\n\nSTREAM\t', msg, '\n\n+\n')
+
 	switch(msg)
 
     end

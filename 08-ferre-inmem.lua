@@ -4,7 +4,7 @@
 --
 local fd	  = require'carlos.fold'
 local rconnect	  = require'redis'.connect
-local context	  = require'lzmq'.context
+local socket	  = require'lzmq'.socket
 local pollin	  = require'lzmq'.pollin
 local aspath	  = require'carlos.ferre'.aspath
 local asweek	  = require'carlos.ferre'.asweek
@@ -333,15 +333,13 @@ posix.signal(posix.SIGINT, shutdown)
 --
 -- Initilize server(s)
 --
-local CTX = context()
+local tasks = assert(socket'DEALER')
 
-local tasks = assert(CTX:socket'DEALER')
+assert( tasks:opt('immediate', true) )
 
-assert( tasks:immediate(true) )
+assert( tasks:opt('linger', 0) )
 
-assert( tasks:linger(0) )
-
-assert( tasks:set_id'inmem' )
+assert( tasks:opt('id', 'inmem') )
 
 assert( tasks:connect( STREAM ) )
 
@@ -384,7 +382,9 @@ while true do
 
     pollin{tasks}
 
-    if tasks:events() == 'POLLIN' then
+    local events = stream:opt'events'
+
+    if events.pollin then
 	local msg = tasks:recv_msgs(true)
 	local cmd = msg[1]
 

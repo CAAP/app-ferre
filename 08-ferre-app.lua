@@ -6,9 +6,9 @@ local tabs	  = require'carlos.ferre.tabs'
 local asUUID	  = require'carlos.ferre.uuids'
 local reduce	  = require'carlos.fold'.reduce
 local receive	  = require'carlos.ferre'.receive
-local context	  = require'lzmq'.context
+local socket	  = require'lzmq'.socket
 local pollin	  = require'lzmq'.pollin
---local keypair	  = require'lzmq'.keypair
+local zmq_opt	  = require'lzmq'.opt
 
 local rconnect	  = require'redis'.connect
 local posix	  = require'posix.signal'
@@ -27,6 +27,8 @@ local REDIS	  = os.getenv'REDISC'
 
 -- No more external access after this point
 _ENV = nil -- or M
+
+assert(zmq_opt('sockets', 30))
 
 -- Local Variables for module-only access
 --
@@ -98,11 +100,9 @@ posix.signal(posix.SIGINT, shutdown)
 -- Initilize server(s)
 --
 
-local CTX = context()
+local stream = assert(socket'ROUTER')
 
-local stream = assert(CTX:socket'ROUTER')
-
-assert( stream:mandatory(true) ) -- causes error in case of unroutable peer
+assert( stream:opt('mandatory', true) ) -- causes error in case of unroutable peer
 
 assert( stream:bind( STREAM ) )
 
@@ -117,7 +117,9 @@ print'+\n'
 
     pollin{stream}
 
-    if stream:events() == 'POLLIN' then
+    local events = stream:opt'events'
+
+    if events.pollin then
 
 	local id, msg = receive( stream )
 	local cmd = msg[1]:match'%a+'
