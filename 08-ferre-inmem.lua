@@ -20,8 +20,8 @@ local asJSON	  = require'json'.encode
 local fromJSON	  = require'json'.decode
 local dN 	  = require'binser'.deserializeN
 local serialize	  = require'binser'.serialize
-local fb64	  = require'lints'.fromB64
-local b64	  = require'lints'.asB64
+local fb64	  = require'lbsd'.fromB64
+local b64	  = require'lbsd'.asB64
 local posix	  = require'posix.signal'
 
 local concat	  = table.concat
@@ -382,7 +382,7 @@ while true do
 
     pollin{tasks}
 
-    local events = stream:opt'events'
+    local events = tasks:opt'events'
 
     if events.pollin then
 	local msg = tasks:recv_msgs(true)

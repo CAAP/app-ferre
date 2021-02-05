@@ -19,9 +19,9 @@ local pollin	  = require'lzmq'.pollin
 local rconnect	  = require'redis'.connect
 local asJSON	  = require'json'.encode
 local serialize	  = require'binser'.serialize
-local b64	  = require'lints'.asB64
 local dN 	  = require'binser'.deserializeN
-local fb64	  = require'lints'.fromB64
+local b64	  = require'lbsd'.asB64
+local fb64	  = require'lbsd'.fromB64
 local posix	  = require'posix.signal'
 
 local concat	  = table.concat
