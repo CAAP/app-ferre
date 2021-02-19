@@ -29,7 +29,7 @@
 
 		function getVers(datos) {
 		    let v = false;
-		    if (datos[datos.length-1]["week"]) {
+		    if (typeof datos[datos.length-1]["version"] != "undefined" ) {
 			v = datos.pop();
 		    }
 		    return v;

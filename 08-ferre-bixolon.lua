@@ -5,10 +5,11 @@
 local reduce	  = require'carlos.fold'.reduce
 local slice	  = require'carlos.fold'.slice
 local into	  = require'carlos.fold'.into
+local deserialize = require'carlos.ferre'.deserialize
 
 local rconnect	  = require'redis'.connect
 
-local context	  = require'lzmq'.context
+local socket	  = require'lzmq'.socket
 local pollin	  = require'lzmq'.pollin
 
 local posix	  = require'posix.signal'
@@ -31,7 +32,7 @@ _ENV = nil -- or M
 local PRINTER	 = 'nc -N 192.168.3.21 9100'
 
 local client	  = assert( rconnect('127.0.0.1', '6379') )
-local QIDS	  = 'queue:uuids:'
+local QIDS	  = 'queue:uuids'
 
 --------------------------------
 -- Local function definitions --
@@ -39,10 +40,10 @@ local QIDS	  = 'queue:uuids:'
 --
 
 local function bixolon( uid )
-    local k = QIDS..uid
-    local data = client:lrange(k, 0, -1)
-
-    local skt = popen(PRINTER, 'w') -- stdout -- 
+    assert(uid, "error: uid cannot be nil")
+    local data = deserialize(client:hget(QIDS, uid))
+    client:hdel(QIDS, uid)
+    local skt = stdout -- popen(PRINTER, 'w') -- 
     if #data > 8 then
 	data = slice(4, data, into, {})
 	reduce(data, function(v) skt:write(concat(v,'\n'), '\n') end)
@@ -70,15 +71,13 @@ posix.signal(posix.SIGINT, shutdown)
 -- Initilize server(s)
 --
 
-local CTX = context()
+local tasks = assert(socket'DEALER')
 
-local tasks = assert(CTX:socket'DEALER')
+assert( tasks:opt('immediate', true) )
 
-assert( tasks:immediate(true) )
+assert( tasks:opt('linger', 0) )
 
-assert( tasks:linger(0) )
-
-assert( tasks:set_id'lpr' )
+assert( tasks:opt('id', 'lpr') )
 
 assert( tasks:connect( STREAM ) )
 
@@ -95,10 +94,19 @@ print'+\n'
 
     pollin{tasks}
 
-	local msg = tasks:recv_msg() -- receive(server)
+    local events = tasks:opt'events'
 
-	print(msg, '\n')
+    if events.pollin then
 
-	bixolon( msg )
+	-- two messages received: cmd & [binser] Lua Object --
+	local s = tasks:recv_msg()
+
+	print(s, '\n')
+
+	local w = deserialize(s)
+
+	bixolon( w.uid )
+
+    end
 
 end

@@ -18,6 +18,7 @@
 	    }
 	};
 
+	var WSE = {timerID: -1};
 
 	(function() {
 	    function asprice(q) {
@@ -56,17 +57,16 @@
 
 	    const VERS = DATA.STORES.VERS;
 	    VERS.check = o => {
-		if (!localStorage.week) // XXX WTF! should never happen!
-		    return true;
-		if (localStorage.week == o.week && localStorage.vers == o.vers)
-		    return VERS.inplace(o);
-		if (localStorage.week == o.week && localStorage.vers < o.vers)
-		    return false;
+		if (localStorage.version == o.version)
+		    return false; // UPTODATE !!!
+		else
+		    return true; // OUTDATED !!!
 	    };
 	    VERS.update = o => {
-		localStorage.vers = o.vers;
-		localStorage.week = o.week;
-		return VERS.inplace(o);
+		if (typeof o.version != "undefined") {
+		    localStorage.version = o.version;
+		    return VERS.inplace(o);
+		}
 	    };
 
 	})();

@@ -6,8 +6,6 @@ local tabs	  = require'carlos.ferre.tabs'
 local asUUID	  = require'carlos.ferre.uuids'
 local reduce	  = require'carlos.fold'.reduce
 local receive	  = require'carlos.ferre'.receive
-local deserialize = require'carlos.ferre'.deserialize
-local serialize   = require'carlos.ferre'.serialize
 local socket	  = require'lzmq'.socket
 local pollin	  = require'lzmq'.pollin
 local zmq_opt	  = require'lzmq'.opt
@@ -34,6 +32,17 @@ assert(zmq_opt('sockets', 30)) -- set the maximum number of active socket connec
 
 -- Local Variables for module-only access
 --
+local TABS	  = { tabs=true,    delete=true,
+		      msgs=true,    login=true }
+
+local INMEM	  = { query=true,   rfc=true,      bixolon=true,
+		      uid=true,     feed=true,     ledger=true,
+		      adjust=true }
+
+local FERRE 	  = { update=true,  faltante=true, eliminar=true }
+
+local ROUTE	  = { inmem=true,   SSE=true, --     peer=true,
+		      DB=true,      lpr=true }
 
 local client	  = assert( rconnect(REDIS, '6379') )
 
@@ -42,39 +51,36 @@ local client	  = assert( rconnect(REDIS, '6379') )
 --------------------------------
 --
 
-local function takeTwo(msg) return msg[1], msg[2] end
+local function sendAll(skt, tag, msg)
+    insert(msg, 1, tag)
+    print( 'Sent to', tag, skt:send_msgs(msg), '\n' )
+end
 
-local function broadcast(skt, tb)
-    if tb then
-	reduce(tb, function(s) skt:send_msgs{'SSE', s} end)
-	print( 'Broadcasting', #tb, 'message(s)\n\n' )
+local function broadcast(skt, msg)
+    local msg = msg or ': OK\n\n'
+    local N = 1
+    if type(msg) == 'table' then
+	reduce(msg, function(m) skt:send_msgs{'SSE', m} end)
+	N = #msg
+    else
+	skt:send_msgs{'SSE', msg}
     end
+    print( 'Broadcasting', N, 'message(s)\n\n+\n' )
 end
 
-local function toinmem(skt, msg)
-    local cmd, s = takeTwo(msg)
-    skt:send_msgs{'inmem', cmd, s}
-end
+local function switch(msg)
+    local cmd = msg[2]
+    if cmd == 'ticket' then
+	local k = 'queue:tickets:'..msg[3]
+	local ret = client:lrange(k, 0, -1)
+	insert(ret, 1, 'ticketx') -- ADD uid |¬ msg[3]  XXX
+	return ret
 
-local function todb(skt, msg)
-    local cmd, s = takeTwo(msg)
-    skt:send_msgs{'DB', cmd, s}
-end
+    elseif cmd == 'updatex' then
+	remove(msg, 1)
+	return msg
 
-local function tabs2all(skt, msg)
-    local cmd, s = takeTwo(msg)
-    broadcast(skt, tabs(cmd, s))
-end
-
-local function uuid2db(skt, msg)
-    local cmd, s = takeTwo(msg)
-    local uuid, uid, pid = asUUID(client, s)
-    if uuid then skt:send_msgs{'DB', cmd, serialize{uuid=uuid, uid=uid, pid=pid}} end
-end
-
-local function handover(skt, msg)
-    remove(msg, 1) -- cmd i.e. 'reroute'
-    skt:send_msgs( msg )
+    end
 end
 
 ---------------------------------
@@ -106,17 +112,6 @@ print('\nSuccessfully bound to:', STREAM, '\n')
 -- -- -- -- -- --
 --
 
-local router = { query=toinmem,  rfc=toinmem,      bixolon=toinmem, 	uid=toinmem,
-		 feed=toinmem,   ledger=toinmem,   adjust=toinmem,
-		 update=todb,	 faltate=todb,	   eliminar=todb,
-	 	 ticket=uuid2db, facturar=uuid2db, presupuesto=uuid2db,
-	 	 msgs=tabs2all,  login=tabs2all,   delete=tabs2all,	tabs=tabs2all,
-	 	 reroute=handover }
-
---
--- -- -- -- -- --
---
-
 while true do
 print'+\n'
 
@@ -125,14 +120,39 @@ print'+\n'
     local events = stream:opt'events'
 
     if events.pollin then
-	-- two messages received: cmd & [binser] Lua Object --
+
 	local id, msg = receive( stream )
-	local cmd = msg[1]
+	local cmd = msg[1]:match'%a+'
 
 	print(id, concat(msg, ' '), '\n')
 
 	if cmd == 'OK' then
-	else router[cmd](stream, msg) end
+
+	elseif ROUTE[cmd] then
+	    stream:send_msgs( msg )
+
+	----------------------
+	-- divide & conquer --
+	----------------------
+	elseif TABS[cmd]  then
+	    broadcast( stream, tabs(cmd, msg) )
+
+	elseif INMEM[cmd] then
+	    insert(msg, 1, 'inmem')
+	    stream:send_msgs(msg)
+
+	elseif FERRE[cmd] then
+	    insert(msg, 1, 'DB')
+	    stream:send_msgs(msg)
+
+	----------------------------------
+	-- convert into MULTI-part msgs --
+	----------------------------------
+	elseif msg[2]:match'query=' then -- XXX ISTKT???
+	    local uuid = asUUID(client, cmd, msg[2])
+	    if uuid then stream:send_msgs{'DB', cmd, uuid} end
+
+	end
 
     end
 

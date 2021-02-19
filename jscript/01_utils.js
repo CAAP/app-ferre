@@ -7,6 +7,15 @@
 
 	    forObj: (o, f) => Object.keys(o).forEach( f ),
 
+	    getStrPpties: (a, o, m) => {
+		let ret = {}
+		Object.keys(o).forEach(k => {
+		    if (m.has(k))
+			ret[k] = o[k]
+		});
+		return Object.assign(ret, a);
+	    },
+
 	    ppties: o => UTILS.mapObj(o, k => { return (k + "=" + o[k]) }).join('&'),
 
 	    encPpties: o => UTILS.mapObj(o, k => { return (k + '=' + encodeURIComponent(o[k])); } ).join('&'),
@@ -17,4 +26,6 @@
 
 	    clearTable: tb => { while (tb.firstChild) { tb.removeChild( tb.firstChild ); } }
 	};
+
+
 

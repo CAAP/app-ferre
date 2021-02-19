@@ -110,7 +110,7 @@ local CTX = context()
 
 local www = assert(CTX:socket'DEALER')
 
-assert( www:set_id'FA-BJ-01' )
+assert( www:set_id'FA-CA-PP' )
 
 assert( keypair():client(www, SRVK) )
 
@@ -166,13 +166,13 @@ print'+\n'
 	if cmd == 'update' then
 	    print('Recieving updates...', '\n')
 	    msgr:send_msgs{'app', 'updatex', msg[2]} -- msg[1]
---]]
+--[[
 	elseif cmd == 'adjust' then
 	    print('Sending adjust...', '\n')
 	    local q = switch(msg)
 	    www:send_msgs(q)
+--]]
 	end
-
     end
 
 

@@ -9,7 +9,7 @@
 
 	// FERRE
 	(function() {
-	    ferre.wsend = WSE.wsend;
+	    ferre.origin = document.location.origin+':5040/';
 
 	    DATA.inplace = q => {
 		let r = document.body.querySelector('tr[data-clave="'+q.clave+'"]');
@@ -23,14 +23,14 @@
 		return q;
 	    };
 
-	    ferre.getUID = e => ferre.wsend({cmd: 'uid', uid: e.target.innerHTML, fruit: sessionStorage.fruit});
+	    ferre.getUID = e => ferre.xget('uid', {uid: e.target.innerHTML, fruit: sessionStorage.fruit});
 	})();
 
 	// Init & Load DBs
 	(function() {
 	    const STORES = DATA.STORES;
 	    let lvers = document.getElementById('db-vers');
-	    STORES.VERS.inplace = o => { lvers.textContent = o.version; return true; };
+	    STORES.VERS.inplace = o => { lvers.textContent = o.week + 'V' + o.vers; return true; };
 /*
 	    function isPriceless(store) {
 		if (store.STORE == 'precios')
@@ -40,9 +40,14 @@
 		    return Promise.resolve(true);
 	    }
 */
+	    function setVersion(vers) {
+		if (vers)
+		    STORES.VERS.update(vers);
+	    }
+
 	    function ifLoad(k) { return IDB.readDB(k).count().then(
 		q => { if (q == 0 && k.FILE)
-			    return IDB.populateDB(k).then( STORE.VERS.update );
+			    return IDB.populateDB(k).then( setVersion );
 			else
 			    return Promise.resolve(true);
 		     }
@@ -74,7 +79,7 @@
 	    BROWSE.DBget = s => IDB.readDB( PRICE ).get( s );
 	    BROWSE.DBindex = (a, b, f) => IDB.readDB( PRICE ).index( a, b, f );
 
-	    BROWSE.query = o => ferre.wsend(Object.assign({cmd: 'query'}, o));
+	    BROWSE.query = o => ferre.xget('query', o);
 
 	    BROWSE.tips = ferre.tips;
 
@@ -89,8 +94,6 @@
 	    const PRICE = DATA.STORES.PRICE;
 	    TICKET.bag = document.getElementById( TICKET.bagID );
 	    TICKET.myticket = document.getElementById( TICKET.myticketID );
-
-	    const ZVARS = new Set(['clave', 'qty', 'rea', 'precio', 'totalCents']);
 
 	    const tcount = document.getElementById(TICKET.tcountID);
 	    const ttotal = document.getElementById( TICKET.ttotalID );
@@ -143,7 +146,7 @@
 		if (a=='tabs') // ferre.MISS || ; exceptions
 		    return true;
 		else
-		    return ferre.wsend({cmd: 'delete', pid: Number(persona.value)});
+		    return ferre.xget('delete', {pid: Number(persona.value)});
 	    };
 
 	    ferre.addItem = e => {
@@ -167,19 +170,31 @@
 
 		TICKET.myticket.style.visibility = 'hidden';
 
-		let uuid = Math.random().toString(36).substr(2);
+		let M = TICKET.items.size;
 
-		let myobj = {cmd: a, pid: pid, uuid: uuid, count: TICKET.items.size}
+		if (M > 8) {
+		    let ret = [];
+		    let uuid = Math.random().toString(36).substr(2);
+		    let items = Array.from(TICKET.items.values());
+		    for(let i=0; i<M;) {
+			let objs = ['pid='+pid, 'uuid='+uuid, 'length='+(M+1), 'size=8'];
+			items.slice(i,i+8).forEach( item => objs.push( 'query=' + TICKET.plain(item) ) );
+			ret.push( objs );
+			i += 8;
+		    }
+		    return Promise.all( ret.map(o => ferre.xget(a, o)) )
+			.then( () => ferre.emptyBag(a) )
+			.catch( () => { TICKET.myticket.style.visibility = 'visible'; } )
+			.then( ferre.nadie );
+		}
 
-		let msgs = [];
-
-		TICKET.items.forEach(item => msgs.push( UTILS.getStrPpties(myobj, item, ZVARS) ));
-
-		Promise.all( msgs.map(o => ferre.wsend(o)) )
-		    .then( () => ferre.emptyBag(a) )
-		    .catch( () => { TICKET.myticket.style.visibility = 'visible'} )
-		    .then( astkt )
-		    .then( ferre.nadie );
+		let objs = ['pid='+pid];
+		TICKET.items.forEach( item => objs.push( 'query=' + TICKET.plain(item) ) );
+		return ferre.xget(a, objs)
+			.then( () => ferre.emptyBag(a) )
+			.catch( () => { TICKET.myticket.style.visibility = 'visible'} )
+		        .then( astkt )
+			.then( ferre.nadie );
 	    };
 
 		// , 'surtir', 'faltante'
@@ -247,23 +262,24 @@
 		let pin = PINS.get(pid);
 		if (pin == 0) {
 		    pin = Number(pcode.value);
-		    ferre.wsend({cmd: 'pins', pid: pid, pincode: pin});
+		    ferre.xget('pins', {pid: pid, pincode: pin});
 		}
 		if (Number(pcode.value) == pin) {
 		    pcode.value = '';
 		    pcode.disabled = true;
 		    persona.disabled = true;
 		    sesion.innerHTML = NAMES.get(pid);
-		    ferre.wsend({cmd: 'login', pid: pid, fruit: sessionStorage.fruit}); // send fruit+pid
+		    ferre.xget('login', {pid: pid, fruit: sessionStorage.fruit}); // send fruit+pid
 		} else {
 		    pcode.value = '';
 		    return alert("PIN incorrecto!");
 		}
 	    };
 
-	    ferre.message = o => {
-		if (o.pid == persona.value)
-		    mensaje.innerHTML = o.uid;
+	    ferre.message = m => {
+		const a = m.match(/pid=(\d+)&uid=([\d\w\-:]+)/);
+		if (a[1] == persona.value)
+		    mensaje.innerHTML = a[2];
 	    };
 
 	    ferre.logout = () => ferre.print('tabs');

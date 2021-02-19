@@ -12,16 +12,14 @@ local asweek	  = require'carlos.ferre'.asweek
 local aspath	  = require'carlos.ferre'.aspath
 local dbconn	  = require'carlos.ferre'.dbconn
 local now	  = require'carlos.ferre'.now
-local urldecode	  = require'carlos.ferre'.urldecode
+local newuid	  = require'carlos.ferre'.newUID
 local socket	  = require'lzmq'.socket
 local pollin	  = require'lzmq'.pollin
 
 local rconnect	  = require'redis'.connect
 local asJSON	  = require'json'.encode
-local serialize	  = require'binser'.serialize
-local dN 	  = require'binser'.deserializeN
-local b64	  = require'lbsd'.asB64
-local fb64	  = require'lbsd'.fromB64
+local deserialize = require'carlos.ferre'.deserialize
+local serialize   = require'carlos.ferre'.serialize
 local posix	  = require'posix.signal'
 
 local concat	  = table.concat
@@ -49,15 +47,15 @@ local TIENDA	  = env'TIENDA'
 
 local QRY	  = 'SELECT * FROM precios WHERE clave LIKE %q LIMIT 1'
 local QUP	  = 'UPDATE %q SET %s %s'
-local QQRY	  = "INSERT INTO queries VALUES (%d, %s, '%s', '%s')"
+local QQRY	  = "INSERT INTO queries VALUES (%q, %s, %q)"
 
 local COSTOL 	  = 'costol = costo*(100+impuesto)*(100-descuento)*(1-rebaja/100.0)'
 
 local client	  = assert( rconnect('127.0.0.1', '6379') )
 
-local IDS	  = 'app:uuids:'
-local QIDS	  = 'queue:uuids:'
-local QTKT	  = 'queue:tickets:'
+local IDS	  = 'app:uuids'
+local QTKT	  = 'queue:tickets'
+local QUPS	  = 'queue:ups:'
 local UVER	  = 'app:updates:version'
 local TTKT 	  = 'app:tickets:FA-BJ-'
 
@@ -80,16 +78,11 @@ local function indexar(a) return fd.reduce(INDEX, fd.map(function(k) return a[k]
 
 local function round(n, d) return floor(n*10^d+0.5)/10^d end
 
-local function deserialize(w)
-    local a,i = dN(fb64(w), 1)
-    return a
-end
-
 local function oneItem(o)
-    for k,v in urldecode(o.data):gmatch'([%a%d]+)|([^|]+)' do o[k] = asnum(v) end
     local lbl = 'u' .. o.precio:match'%d$'
     local rea = (100-o.rea)/100.0
-    o.data = nil
+    o.nombre = NOMBRES[tointeger(o.pid)] or 'NaP'
+    o.tag = o.cmd
 
     local b = fd.first(FERRE.query(format(QRY, o.clave)), function(x) return x end)
     fd.reduce(fd.keys(o), fd.merge, b)
@@ -100,28 +93,28 @@ local function oneItem(o)
 end
 
 local function addTicket(uuid)
-    local ID = IDS..uuid
-    if client:exists(ID) then
-	local uid, tag, pid = client:hget(ID, 'uid'), client:hget(ID, 'cmd'), tointeger(client:hget(ID, 'pid'))
-	local nombre = NOMBRES[pid] or 'NaP'
-	local data = split(client:hget(ID, 'data'):sub(7), '&query=') -- may FAIl due to lack of data
-	data = fd.reduce(data, fd.map(function(s) return {data=s, uid=uid, tag=tag, nombre=nombre} end), fd.map(oneItem), fd.map(indexar), fd.into, {})
-	ID = QTKT..uid
-	fd.reduce(data, function(w) client:rpush(ID, b64(serialize(w))) end)
---	client:set(ID, b64(serialize(data)))
-	client:expire(ID, 120)
+    if client:hexists(IDS, uuid) then
+	local data = deserialize(client:hget(IDS, uuid)) -- serialized table of objects
+	client:hdel(IDS, uuid)
+
+	data = fd.reduce(data, fd.map(oneItem), fd.map(indexar), fd.into, {})
+
+	client:hset(QTKT, uuid, serialize(data))
+
 	if #data > 6 then
 	    fd.slice(5, data, into'tickets', WEEK)
 	else
 	    fd.reduce(data, into'tickets', WEEK)
 	end
-	local k = TTKT..uid:match':(%d+)$'
-	local u = client:get(k) or 'NaN'
-	client:set(k, uid)
-	return uid, u, pid
+
+--	local k = TTKT..uid:match':(%d+)$'
+--	local u = client:get(k) or 'NaN'
+--	client:set(k, uid)
+	return uuid
     end
 end
 
+--[[
 local function addTicketx( uid )
     local k = 'queue:tickets:'..uid
     local data = client:lrange(k, 0, -1)
@@ -134,7 +127,7 @@ local function addTicketx( uid )
     client:set(k, uid)
     return uid
 end
-
+--]]
 
 --
 -- -- -- -- -- --
@@ -171,7 +164,7 @@ end
 
 local function updateOne(w)
     local clave = w.clave
-    local k = QIDS..clave
+    local k = QUPS..clave
     local clause = format('WHERE clave LIKE %q', clave)
     local toll = found(TOLL, w)
 
@@ -209,32 +202,75 @@ local function updateOne(w)
     -- ### -- ### -- ### -- ### -- ### --
 ::FEED::
     clave = tointeger(clave) or format('%q', clave)
-    u = (fd.first(WEEK.query'SELECT MAX(vers) vers FROM updates', function(x) return x end).vers or 0) + 1
+    u = newuid():sub(1,-2) -- remove last 'P' character
     a.store = 'PRICE'
-    local msg = asJSON{a, {vers=u, week=WKDB, store='VERS'}}
-    qry = format("INSERT INTO updates VALUES (%d, %s, '%s')", u, clave, msg)
+    local msg = asJSON{a, {version=u, store='VERS'}}
+    qry = format("INSERT INTO updates VALUES ('%s', %s, '%s')", u, clave, msg)
     qryExec(qry)
     client:rpush(k, qry)
 
-    local v = asJSON{vers=u, week=WKDB}
+    qry = format(QQRY, u, clave, '$QUERY') -- qry = format(QQRY, u, clave, v, '$QUERY')
 
-    qry = format(QQRY, u, clave, v, '$QUERY')
     client:rpush(k, qry)
     -- QUERY --
-    qry = qry:gsub('$QUERY', b64(serialize(client:lrange(k, 0, -1))))
+    qry = qry:gsub('$QUERY', serialize(client:lrange(k, 0, -1)))
     qryExec(qry)
 
     client:expire(k, 120)
 
-    return v, qry
+    return u, qry
 end
 
-local function setBlank(clave)
+local function setBlank(o)
+    local clave = o.clave
     local w = fd.first(FERRE.query(QRY:format(clave):gsub('precios', 'datos')), function(x) return x end)
-    for k in pairs(w) do w[k] = ISSTR[k] and '' or 0 end
-    w.clave = clave
-    w.desc = 'VVVVV'
-    return w
+    for k in pairs(w) do o[k] = ISSTR[k] and '' or 0 end
+    o.clave = clave
+    o.desc = 'VVVVV'
+    return o
+end
+
+------------------------------------------------------------
+
+local function storetkt(skt, msg)
+    local s = msg[2] -- serialized object {uuid, uid, pid}
+    local w = deserialize(s)
+    local uuid = addTicket(w.uuid)
+    if uuid then
+	skt:send_msgs{'reroute', 'inmem', 'ticket', s}
+	print('\nUID:', w.uid, '\n')		
+	-- save uid per person into msgs
+	w.cmd = 'msgs'
+	skt:send_msgs{'msgs', serialize(w)}
+	-- notify cloud service | external peer
+--	skt:send_msgs{'reroute', 'peer', 'ticketx', uid, u}
+    end
+end
+
+------------------------------------------------------------
+
+local function notify(skt, o)
+    client:set(UVER, o.version)
+    skt:send_msgs{'reroute', 'inmem', 'update', serialize(o)}
+    o.cmd = 'version'
+    o.week = WKDB
+    skt:send_msgs{'reroute', 'SSE', serialize(o)}
+end
+
+------------------------------------------------------------
+
+local function updateitem(skt, msg)
+    local vers = client:get(UVER)
+    local cmd, s = msg[1], msg[2]
+    local w = deserialize(s)
+
+    if cmd == 'eliminar' then setBlank(w) end
+
+    local v, q = updateOne(w)
+    notify(skt, {version=v, clave=w.clave})
+    print('\nversion:', v, '\n')
+    -- notify external peer --
+--    skt:send_msgs{'', 'peer', 'updatex', v, vers, q}
 end
 
 ---------------------------------
@@ -301,70 +337,37 @@ tasks:send_msg'OK'
 -- -- -- -- -- --
 --
 
-local function notify(clave, vers)
-    client:set(UVER, vers)
-    tasks:send_msgs{'SSE', 'version', vers}
-    tasks:send_msgs{'inmem', 'update', clave}
-end
-
---
--- -- -- -- -- --
---
-
---local uptodate = false XXX
+local router = { ticket=storetkt,   presupuesto=storetkt,      facturar=storetkt,
+		 update=updateitem, eliminar=updateitem }
 
 --
 -- -- -- -- -- --
 --
 
 while true do
-
-    print'+\n'
+print'+\n'
 
     pollin{tasks}
 
-    local events = stream:opt'events'
+    local events = tasks:opt'events'
 
     if events.pollin then
 
-	local msg, more = tasks:recv_msgs()
-	local cmd = msg[1]:match'%a+'
+	-- two messages received: cmd & [binser] Lua Object --
+	local msg = tasks:recv_msgs()
+	local cmd = msg[1]
 
-	if cmd == 'ticket' or cmd == 'presupuesto' or cmd == 'facturar' then -- pagado
-	    local uid, u, pid = addTicket(msg[2])
-	    if uid then
-		tasks:send_msgs{'inmem', 'ticket', uid}
-		print('\nUID:', uid, '\n')		
-		-- saved per person into msgs
-		tasks:send_msgs{'msgs', format('pid=%d&uid=%s', pid, uid)}
-		-- notify cloud service | external peer
-		tasks:send_msgs{'peer', 'ticketx', uid, u}
-	    end
+	print(concat(msg, ' '), '\n')
 
-	elseif cmd == 'update' then
-	    msg = msg[2]
-	    local w = {}
-	    for k,v in urldecode(msg):gmatch'([%a%d]+)=([^&]+)' do w[k] = asnum(v) end
-	    for k,v in urldecode(msg):gmatch'([%a%d]+)=&' do w[k] = '' end
+	if cmd == 'OK' then
+	else router[cmd](tasks, msg) end
 
-	    local overs = client:get(UVER)
-	    local vers, q = updateOne( w )
-	    notify(w.clave, vers)
-	    print('\nversion:', vers, '\n')
-	    -- notify cloud service | external peer
-	    tasks:send_msgs{'peer', 'updatex', vers, overs, w.clave, q}
+    end
 
-	elseif cmd == 'eliminar' then
-	    local clave = asnum(msg[2]:match'clave=([%a%d]+)')
+end
 
-	    local overs = client:get(UVER)
-	    local vers, q = updateOne( setBlank(clave) )
-	    notify(clave, vers)
-	    print('\nversion:', vers, '\n')
-	    -- notify cloud service | external peer
-	    tasks:send_msgs{'peer', 'updatex', vers, overs, clave, q}
-
-	elseif cmd == 'updatex' then -- cmd, clave, vers
+--[[
+	if cmd == 'updatex' then -- cmd, clave, vers
 	    local clave = msg[2]
 	    local vers = msg[3]
 	    local k = QIDS..clave
@@ -384,7 +387,4 @@ while true do
 	    -- DO NOT notify cloud service | external peer
 
 	end
-
-    end
-
-end
+--]]

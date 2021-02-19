@@ -9,7 +9,7 @@
 
 	// ADMIN
 	(function() {
-	    admin.origin = document.location.origin+':5040/';
+	    admin.wsend = WSE.wsend;
 
 	    DATA.inplace = q => {
 		let r = document.body.querySelector('tr[data-clave="'+q.clave+'"]');
@@ -32,8 +32,9 @@
 	(function() {
 	    const STORES = DATA.STORES;
 	    let lvers = document.getElementById('db-vers');
-	    STORES.VERS.inplace = o => { lvers.textContent = o.week + 'V' + o.vers; return true; };
+	    STORES.VERS.inplace = o => { lvers.textContent = o.version; return true; };
 
+/*
 	    function isPriceless(store) {
 		if (store.STORE == 'precios')
 		    return XHR.getJSON(admin.origin+'json/version.json')
@@ -41,10 +42,11 @@
 		else
 		    return Promise.resolve(true);
 	    }
+*/
 
 	    function ifLoad(k) { return IDB.readDB(k).count().then(
 		q => { if (q == 0 && k.FILE)
-			    return IDB.populateDB(k).then(() => isPriceless(k) );
+			    return IDB.populateDB(k).then( STORE.VERS.update );
 			else
 			    return Promise.resolve(true);
 		     }
@@ -76,7 +78,7 @@
 	    BROWSE.DBget = s => IDB.readDB( PRICE ).get( s );
 	    BROWSE.DBindex = (a, b, f) => IDB.readDB( PRICE ).index( a, b, f );
 
-	    BROWSE.query = o => admin.xget('query', o);
+	    BROWSE.query = o => admin.wsend(Object.assign({cmd: 'query'}, o));
 
 	    BROWSE.rows = function(a, row) {
 		row.insertCell().appendChild( document.createTextNode( a.fecha ) );
@@ -232,7 +234,7 @@
 //		    CHANGES.inplace(k, m => tabla.querySelector('input[name='+m+']').classList.add('modificado'));
 		    return f( CHANGES.fetch(k, records.get(k)) );
 		} else
-		return admin.xget('query', {clave: k, fruit: sessionStorage.fruit});
+		return admin.wsend({cmd: 'query', clave: k, fruit: sessionStorage.fruit});
 	    }
 
 	    function costol(o) { o.costol = o.costo*(100+(Number(o.impuesto)||0))*(100-(Number(o.descuento)||0))*(1-(Number(o.rebaja)||0)/100) }
@@ -251,7 +253,7 @@
 		fetch(clave, setfields);
 	    };
 
-	    admin.nuevo = () => admin.xget('query', {desc: 'VV*', fruit: sessionStorage.fruit});
+	    admin.nuevo = () => admin.wsend({cmd: 'query', desc: 'VV*', fruit: sessionStorage.fruit});
 
 	    admin.setRecord = function(a) {
 		cleanMark();
@@ -282,13 +284,13 @@
 	    //
 	    function update(clave, o) {
 		if (o.desc) { o.desc = o.desc.replace(/\s+$/, '').replace(/^\s+/, ''); }
-		return XHR.get(admin.origin + 'update?' + UTILS.encPpties(Object.assign(o,{clave: clave}))); // , tbname: 'datos', fruit: sessionStorage.fruit
+		    return admin.wsend(Object.assign({cmd: 'update', clave: clave}, o));
 	    }
 
 	    admin.eliminar = () => {
 		const clave = tkt.dataset.clave;    
 		if (window.confirm('Estas seguro de eliminar la clave ' + clave + '?'))
-		    XHR.get(admin.origin + 'eliminar?clave=' + clave)
+		    Promise.resolve( admin.wsend({cmd: 'eliminar', clave: clave}) )
 		    .then( admin.cancelar );
 	    };
 
@@ -297,7 +299,7 @@
 		if (fecha)
 		    CHANGES.update(clave, 'fecha', true);
 		if (window.confirm('Estas seguro de realizar los cambios?'))
-		    CHANGES.get(clave, update)
+		    Promise.resolve( CHANGES.get(clave, update) )
 		    .then( admin.cancelar );
 	    };
 

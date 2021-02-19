@@ -4,8 +4,7 @@ local fd	= require'carlos.fold'
 local dbconn	= require'carlos.ferre'.dbconn
 local dump	= require'carlos.files'.dump
 
-local asJSON	= require'json'.encode
-local fromJSON	= require'json'.decode
+local json	= require'json'.encode
 local rconnect	= require'redis'.connect
 local insert	= table.insert
 local assert	= assert
@@ -26,11 +25,9 @@ end
 local conn = dbconn'ferre'
 local QRY  = 'SELECT * FROM precios WHERE desc NOT LIKE "VV%"'
 
-local vers = fromJSON( client:get'app:updates:version' )
+local vers = json{version=client:get'app:updates:version'}
 
 local ret = fd.reduce(conn.query(QRY), fd.map(nulls), fd.into, {})
 insert(ret, vers)
 dump(DEST, asJSON(ret))
-
-conn.close()
 

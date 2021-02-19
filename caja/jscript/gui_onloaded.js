@@ -9,7 +9,7 @@
 
 	// CAJA
 	(function() {
-	    caja.origin = document.location.origin+':5040/';
+	    caja.wsend = WSE.wsend;
 
 	    DATA.inplace = () => Promise.resolve(true);
 
@@ -22,8 +22,9 @@
 	(function() {
 	    const STORES = DATA.STORES;
 	    let lvers = document.getElementById('db-vers');
-	    STORES.VERS.inplace = o => { lvers.textContent = o.week + 'V' + o.vers; return true; };
+	    STORES.VERS.inplace = o => { lvers.textContent = o.version; return true; };
 
+/*
 	    function isPriceless(store) {
 		if (store.STORE == 'precios')
 		    return XHR.getJSON(caja.origin+'json/version.json')
@@ -31,10 +32,11 @@
 		else
 		    return Promise.resolve(true);
 	    }
+*/
 
 	    function ifLoad(k) { return IDB.readDB(k).count().then(
 		q => { if (q == 0 && k.FILE)
-			    return IDB.populateDB(k).then(() => isPriceless(k) );
+			    return IDB.populateDB(k).then( STORE.VERS.update );
 			else
 			    return Promise.resolve(true);
 		     }
@@ -46,7 +48,7 @@
 		IDB.loadDB( DATA )
 		   .then(db => Promise.all(UTILS.mapObj(STORES, k => {
 			const store = STORES[k];
-			if (store.INDEX == undefined) // case of STORES that have no actual DB on disk
+			if (typeof store.INDEX == "undefined") // case of STORES that have no actual DB on disk
 			    return Promise.resolve(true);
 			else {
 			    store.CONN = db.CONN;
@@ -95,6 +97,8 @@
 	    const persona = document.getElementById('personas');
 	    const butt = document.querySelector('button[name="facturar"]');
 
+	    const VARS = new Set(['id', 'clave', 'qty', 'rea', 'precio', 'totalCents']);
+
 	    TICKET.bag = document.getElementById( TICKET.bagID );
 	    TICKET.myticket = document.getElementById( TICKET.myticketID );
 
@@ -134,28 +138,22 @@
 		    a = 'bixolon';
 
 		if (!caja.UPDATED)
-		    return caja.UIDS.forEach(uid => caja.xget(a, {pid: persona.value, uid: uid})); // XXX XHR.get(caja.origin + a + '?' + uid)
+		    return caja.UIDS.forEach(uid => caja.wsend({cmd: a, uid: uid, pid: persona.value}));
 
 		else {
-		    let M = TICKET.items.size;
 			
-// XXX change in case RFC is added
-		    if (M > 8) {
-			let ret = [];
-			let uuid = Math.random().toString(36).substr(2);
-			let items = Array.from(TICKET.items.values());
-			for(let i=0; i<M;) {
-			    let objs = ['pid='+A, 'uuid='+uuid, 'length='+(M+1)];
-			    items.slice(i,i+8).forEach( item => objs.push( 'query=' + TICKET.plain(item) ) );
-			    ret.push( objs );
-			    i += 8;
-			}
-			return Promise.all( ret.map(o => ferre.xget(a, o)) ).then( caja.emptyBag );
-		    }
+		    let uuid = Math.random().toString(36).substr(2);
 
-		    let objs = ['pid=A'];
-		    TICKET.items.forEach( item => objs.push( 'query=' + TICKET.plain(item) ) );
-		    return caja.xget(a, objs).then( caja.emptyBag );
+		    let myobj = {cmd: a, pid: 'A', uuid: uuid, count: TICKET.items.size}
+
+		    let msgs = [];
+
+// XXX change in case RFC is added
+
+		    TICKET.items.forEach(item => msgs.push( UTILS.getStrPpties(myobj, item, VARS) ));
+
+		    Promise.all( msgs.map(o => caja.wsend(o)) )
+			.then( () => caja.emptyBag(a) );
 		}
 	    };
 
@@ -172,7 +170,7 @@
 		const fruit = sessionStorage.fruit;
 		UIDS.add( uid );
 		if (UIDS.size > 1) { caja.UPDATED = true; }
-		return caja.xget('uid', {uid: uid, fruit: fruit});
+		return caja.wsend({cmd: 'uid', uid: uid, fruit: fruit});
 	    }
 
 	    caja.add2bag = function(o) {
@@ -218,7 +216,7 @@
 		UIDS.add( uid );
 		if (UIDS.size > 1) { caja.UPDATED = true; }
 		if (!uid.includes(TODAY)) { caja.OLD = true; }
-		return caja.xget('uid', {uid: uid, fruit: fruit});
+		return caja.wsend({cmd: 'uid', uid: uid, fruit: fruit});
 	    }
 
 	    caja.add2fecha = function(w) {
@@ -238,7 +236,7 @@
 	    caja.ledger = function(e) {
 		let fecha = e.target.value
 		if (fecha.length > 0)
-		    return caja.xget('ledger', {fruit: sessionStorage.fruit, uid: fecha+'T'}).then( UTILS.clearTable( cajita ) );
+		    return caja.wsend({cmd: 'ledger', fruit: sessionStorage.fruit, uid: fecha+'T'}).then( UTILS.clearTable( cajita ) );
 	    };
 
 	    caja.toggleDates = () => ctls.classList.toggle('oculto');

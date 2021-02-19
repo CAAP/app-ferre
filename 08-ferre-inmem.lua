@@ -16,12 +16,10 @@ local into	  = require'carlos.sqlite'.into
 local newTable    = require'carlos.sqlite'.newTable
 local split	  = require'carlos.string'.split
 
-local asJSON	  = require'json'.encode
+local json	  = require'json'.encode
 local fromJSON	  = require'json'.decode
-local dN 	  = require'binser'.deserializeN
-local serialize	  = require'binser'.serialize
-local fb64	  = require'lbsd'.fromB64
-local b64	  = require'lbsd'.asB64
+local serialize	  = require'carlos.ferre'.serialize
+local deserialize = require'carlos.ferre'.deserialize
 local posix	  = require'posix.signal'
 
 local concat	  = table.concat
@@ -45,13 +43,13 @@ _ENV = nil -- or M
 --
 local client	  = assert( rconnect('127.0.0.1', '6379') )
 local WSQL 	  = 'sql:week'
-local QIDS	  = 'queue:uuids:'
+local QIDS	  = 'queue:uuids'
+local QUPS	  = 'queue:ups:'
 
 local QLPR	  = 'SELECT * FROM lpr WHERE uid LIKE %q'
 local QUID	  = 'SELECT * FROM uids WHERE uid LIKE %q LIMIT 1'
 local QTKT	  = 'SELECT uid, tag, clave, qty, rea, totalCents, prc "precio" FROM tickets WHERE uid LIKE %q'
 
-local FEED	  = { uid=true, feed=true, ledger=true, adjust=true }
 local WKDB 	  = asweek(now())
 
 local FERRE	  = connect':inmemory:'
@@ -60,8 +58,8 @@ local WEEK
 local SCHEME	  = client:hget('sql:week', 'tickets')
 
 local QUERIES	  = {tickets={'SELECT * FROM tickets WHERE uid > %q', 'INSERT INTO tickets SELECT * FROM week.tickets WHERE uid > %q', format(newTable, 'tickets', SCHEME), 'INSERT INTO tickets SELECT * FROM week.tickets', 'SELECT * FROM tickets'},
-		     messages={'SELECT msg FROM updates WHERE vers > %d', 'INSERT INTO messages SELECT msg FROM week.updates WHERE vers > %d', 'CREATE TABLE messages (msg)', 'INSERT INTO messages SELECT msg FROM week.updates', 'SELECT * FROM messages'},
-		     queries={'SELECT * FROM queries WHERE vers > %d', 'INSERT INTO queries SELECT * FROM week.queries WHERE vers > %d', format(newTable, 'queries', client:hget('sql:week', 'queries')), 'INSERT INTO queries SELECT * FROM week.queries', 'SELECT * FROM queries'}}
+		     messages={'SELECT msg FROM updates WHERE vers > %q', 'INSERT INTO messages SELECT msg FROM week.updates WHERE vers > %q', 'CREATE TABLE messages (msg)', 'INSERT INTO messages SELECT msg FROM week.updates', 'SELECT * FROM messages'},
+		     queries={'SELECT * FROM queries WHERE vers > %q', 'INSERT INTO queries SELECT * FROM week.queries WHERE vers > %q', format(newTable, 'queries', client:hget('sql:week', 'queries')), 'INSERT INTO queries SELECT * FROM week.queries', 'SELECT * FROM queries'}}
 
 local INDEX 	  = fd.reduce(split(SCHEME, ',', true), fd.map(function(s) return s:match'%w+' end), fd.into, {})
 
@@ -69,54 +67,31 @@ local INDEX 	  = fd.reduce(split(SCHEME, ',', true), fd.map(function(s) return s
 --------------------------------
 -- Local function definitions --
 --------------------------------
-local function deliver( skt )
-    return function(m, i)
-	if type(m)  == 'table' then skt:send_msgs(m)
-	else skt:send_msgs{'SSE', m} end
-    end
-end
-
-local function prepare( a ) if a.msg then return a.msg else return asJSON(a) end end
-
-local function mail(fruit, cmd)
-    return function(a)
-	if type(a) == 'table' then return {fruit, cmd, unpack(a)}
-	else return format('%s %s %s', fruit, cmd, a) end
-    end
-end
 
 local function byDesc(s)
-    local qry = format('SELECT clave FROM datos WHERE desc LIKE %q ORDER BY desc LIMIT 1', s:gsub('*', '%%')..'%')
+    local qry = format('SELECT clave, "query" cmd FROM datos WHERE desc LIKE %q ORDER BY desc LIMIT 1', s:gsub('*', '%%')..'%')
     local o = fd.first(FERRE.query(qry), function(x) return x end)
-    return (o and o.clave or '')
+    return o
 end
 
 local function byClave(s)
-    local qry = format('SELECT * FROM  datos WHERE clave LIKE %q LIMIT 1', s)
+    local qry = format('SELECT *, "query" cmd FROM  datos WHERE clave LIKE %q LIMIT 1', s)
     local o = fd.first(FERRE.query(qry), function(x) return x end)
-    return o and asJSON( o ) or ''
+    return o
 end
 
-local function queryDB(msg)
-    if msg:match'desc' then
-	local ret = msg:match'desc=([^!&]+)'
-	if ret:match'VV' then
-	    return byClave(byDesc(ret))
-	else
-	    return byDesc(ret)
-	end
+local function query(o)
+    if o.rfc then
+	local QRY = format('SELECT *, "rfc" cmd FROM clientes WHERE rfc LIKE "%s%%" LIMIT 4', o.rfc)
+	local ans = fd.reduce(FERRE.query(QRY), fd.into, {})
+	return ans
 
-    elseif msg:match'clave' then
-	local ret = msg:match'clave=([%a%d]+)'
-	return byClave(ret)
+    elseif o.desc then
+	local desc = o.desc
+	if desc:match'VV' then return byClave(byDesc(desc))
+	else return byDesc(desc) end
 
-    end
-end
-
-local function queryRFC(rfc)
-    local QRY = format('SELECT * FROM clientes WHERE rfc LIKE "%s%%" LIMIT 4', rfc)
-    local ans = fd.reduce(FERRE.query(QRY), fd.into, {})
-    return #ans > 0 and asJSON(ans) or '[]'
+    elseif o.clave then return byClave(o.clave) end
 end
 
 local function execUP( f )
@@ -134,41 +109,34 @@ local function qryExec(q)
     print(q, s, '\n')
 end
 
-local function update( uid )
-    local k = QIDS..uid
+local function update( clave )
+    local k = QUPS..clave
+    assert( client:exists(k), 'error: key cannot be nil' )
     local qs = client:lrange(k, 0, -1)
-    -- QUERY -- XXX
-    qs[#qs] = qs[#qs]:gsub('$QUERY', b64(serialize(qs)))
+    -- QUERY --
+    qs[#qs] = qs[#qs]:gsub('$QUERY', serialize(qs))
     --
     fd.reduce(qs, qryExec)
 end
 
-local function deserialize(s)
-    local a,i = dN(fb64(s), 1)
-    return a
-end
-
-local function addTicket( uid )
-    local k = 'queue:tickets:'..uid
-    local data = client:lrange(k, 0, -1)
+local function addTicket( uuid )
+    assert(client:hexists('queue:tickets', uuid), 'error: uuid must exists')
+    local data = deserialize( client:hget('queue:tickets', uuid) )
     if #data > 6 then
-	fd.slice(5, data, fd.map(deserialize), into'tickets', WEEK)
+	fd.slice(5, data, into'tickets', WEEK)
     else
-	fd.reduce(data, fd.map(deserialize), into'tickets', WEEK)
+	fd.reduce(data, into'tickets', WEEK)
     end
-    return uid
+    client:hdel('queue:tickets', uuid)
 end
 
 local function header(uid) return fd.first(WEEK.query(format(QUID, uid)), function(x) return x end) end
 
 local function lpr(uid)
-    assert(uid, 'ERROR: uid cannot be nil')
     local hdr = header(uid)
     local qry = format(QLPR, uid)
     local data = fd.reduce(WEEK.query(qry), fd.into, {})
-    local k = QIDS..uid
-    client:rpush(k, unpack(ticket(hdr, data)))
-    client:expire(k, 120)
+    client:hset(QIDS, uid, serialize(ticket(hdr, data)))
     return hdr
 end
 
@@ -289,9 +257,8 @@ local function chain(vers)
     end
 end
 
-local function switch( cmd, msg )
-    local fruit = msg:match'fruit=(%a+)' or msg
-    local uid   = msg:match'uid=([^!&]+)'
+local function switch( cmd, o )
+    local fruit, uid = o.fruit, o.uid
 
     if cmd == 'uid' then
 	local conn = getConn(uid)
@@ -306,15 +273,58 @@ local function switch( cmd, msg )
 	local conn = getConn(uid)
 	local qry = format('SELECT * FROM uids WHERE uid LIKE "%s%%"', uid)
 	return fruit, conn, qry
-
+--[[
     elseif cmd == 'adjust' then
-	local vers = tointeger(msg:match'vers=(%d+)')
+	local vers = tointeger(msg:match'vers=(%a+)')
 	local fruit = msg:match'fruit=(%a+)'
 	local week = msg:match'week=([%u%d]+)'
 	local wks = weeks(week, vers)
 	return gather(fruit, wks)
-
+--]]
     end
+end
+
+local function replyqry(skt, msg)
+    local cmd, s = msg[1], msg[2]
+    -- ambiguous, either object or array are valid, empty object is returned
+    skt:send_msgs{'reroute', 'SSE', serialize(query(deserialize(s)))}
+end
+
+local function dolpr(skt, msg)
+    local s = msg[2]
+    lpr( deserialize(s).uid )
+    skt:send_msgs{'reroute', 'lpr', s}
+end
+
+local function setFruit(fruit, cmd)
+    return function(o)
+	o.fruit = fruit
+	o.cmd = cmd
+	return serialize(o)
+    end
+end
+
+local function feed(skt, msg)
+    local cmd, s = msg[1], msg[2]
+    local fruit, conn, qry = switch(cmd, deserialize(s))
+    local fn = setFruit(fruit, cmd)
+    fd.reduce(conn.query(qry), function(o) skt:send_msgs{'reroute', 'SSE', fn(o)} end)
+end
+
+local function newup(skt, msg)
+    update( deserialize(msg[2]).clave )
+end
+
+local function newtkt(skt, msg)
+    local s = msg[2]
+    local w = deserialize( s )
+    local uid = assert( w.uid )
+    addTicket( w.uuid )
+    local hdr = lpr( uid )
+    hdr.cmd = 'feed'
+    skt:send_msgs{'reroute', 'SSE', serialize(hdr)}
+    skt:send_msgs{'reroute', 'lpr', s}
+    if hdr.tag == 'facturar' then skt:send_msgs{'reroute', 'lpr', s} end
 end
 
 ---------------------------------
@@ -351,6 +361,14 @@ tasks:send_msg'OK'
 -- -- -- -- -- --
 --
 
+local router = { query=replyqry, rfc=replyqry,
+		 bixolon=dolpr,  update=newup, ticket=newtkt,
+		 uid=feed, 	 feed=feed,    ledger=feed,   adjust=feed }
+
+--
+-- -- -- -- -- --
+--
+
 do
     local path = aspath'ferre'
     assert( FERRE.exec(format('ATTACH DATABASE %q AS ferre', path)) )
@@ -362,9 +380,9 @@ do
     print('items in tickets:', WEEK.count'tickets', '\n')
 
     -- VERS can be ZERO from now on
-    local vers = fd.first(WEEK.query'SELECT MAX(vers) vers FROM updates', function(x) return x end).vers or 0
-    if vers > 0 then
-	vers = asJSON{week=WKDB, vers=vers}
+    local vers = fd.first(WEEK.query'SELECT MAX(vers) vers FROM updates', function(x) return x end).vers or '0'
+    if vers > '0' then
+--	vers = json{week=WKDB, vers=vers} XXX useful?
 	client:set('app:updates:version', vers)
     else vers = client:get('app:updates:version') end
     print('\nVersion:', vers, '\n')
@@ -378,50 +396,27 @@ end
 --
 
 while true do
-    print'+\n'
+print'+\n'
 
     pollin{tasks}
 
     local events = tasks:opt'events'
 
     if events.pollin then
-	local msg = tasks:recv_msgs(true)
+	-- two messages received: cmd & [binser] Lua Object --
+	local msg = tasks:recv_msgs()
 	local cmd = msg[1]
 
 	print(concat(msg, ' '), '\n')
 
-	if cmd == 'query' then
-	    local fruit = msg[2]:match'fruit=(%a+)'
-	    tasks:send_msgs{'SSE', fruit, 'query', queryDB(msg[2])}
+	if cmd == 'OK' then
+	else router[cmd](tasks, msg) end
 
-	elseif cmd == 'rfc' then
-	    msg = msg[2]
-	    local fruit = msg:match'fruit=(%a+)'
-	    local rfc = msg:match'rfc=(%a+)'
-	    tasks:send_msgs{'SSE', fruit, 'rfc', queryRFC(rfc)}
+    end
 
-	elseif cmd == 'bixolon' then
-	    local uid = msg[2]:match'uid=([^!]+)'
-	    lpr( uid )
-	    tasks:send_msgs{'lpr', uid}
+end
 
-	elseif FEED[cmd] then
-	    local fruit, conn, qry = switch(cmd, msg[2])
-	    fd.reduce(conn.query(qry), fd.map(prepare), fd.map(mail(fruit, cmd)), deliver, tasks)
-	    print'OK feed!\n'
-
-	-- preprocessed FROM db --
-
-	elseif cmd == 'update' then
-	    update(msg[2])
-
-	elseif cmd == 'ticket' then
-	    local uid = addTicket(msg[2])
-	    local hdr = lpr( uid )
-	    tasks:send_msgs{'SSE', 'feed', asJSON(hdr)}
-	    tasks:send_msgs{'lpr', uid}
-	    if hdr.tag == 'facturar' then tasks:send_msgs{'lpr', uid} end
-
+--[[
 	-- peer --
 	elseif cmd == 'queryx' then
 	    local DST, uid = msg[2], msg[3]
@@ -437,6 +432,5 @@ while true do
 
 	    end
 	end
-    end
-end
+--]]
 

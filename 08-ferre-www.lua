@@ -3,25 +3,30 @@
 -- Import Section
 --
 
-local mgr	= require'lmg'
-local socket	= require'lzmq'.socket
-local pollin	= require'lzmq'.pollin
-local rconnect	= require'redis'.connect
+local MGR	  = require'lmg'
+local socket	  = require'lzmq'.socket
+local pollin	  = require'lzmq'.pollin
+local rconnect	  = require'redis'.connect
+local fromJSON    = require'json'.decode
+local json	  = require'json'.encode
+local serialize	  = require'carlos.ferre'.serialize
+local deserialize = require'carlos.ferre'.deserialize
+local reduce	  = require'carlos.fold'.reduce
 
-local ssevent	= require'carlos.ferre'.ssevent
-local ssefn	= require'carlos.ferre.sse'
+local wse	  = require'carlos.ferre.wse'
 
-local posix	= require'posix.signal'
-local concat	= table.concat
-local format	= string.format
-local exit	= os.exit
-local assert	= assert
-local print	= print
+local posix	  = require'posix.signal'
+local concat	  = table.concat
+local format	  = string.format
+local exit	  = os.exit
+local assert	  = assert
+local print	  = print
 
-local STREAM	= os.getenv'STREAM_IPC'
-local HTTP	= os.getenv'HTTP_PORT'
-local REDIS	= os.getenv'REDISC'
-local WSS
+local STREAM	  = os.getenv'STREAM_IPC'
+local HTTP	  = os.getenv'HTTP_PORT'
+local REDIS	  = os.getenv'REDISC'
+local WSE	  = os.getenv'WSE_PORT'
+
 
 -- No more external access after this point
 _ENV = nil -- or M
@@ -29,49 +34,56 @@ _ENV = nil -- or M
 -- Local Variables for module-only access
 --
 local client	 = assert( rconnect(REDIS, '6379') )
-local ops	 = mgr.ops
+local ops	 = MGR.ops
 
 local MG	 = 'mgconn:active'
 local AP	 = 'app:active'
+local IDS	 = 'app:uuids'
+local QUE	 = 'queue:uuids'
+local TKS	 = 'queue:tickets'	
 local EGET	 = client:get'tcp:get'
+
+local isvalid 	 = wse.isvalid
+
+-- wse message := json{cmd, obj}
 
 --------------------------------
 -- Local function definitions --
 --------------------------------
 --
-local function distill(msg)
-    local ev, d = msg:match'(%a+)%s([^!]+)'
-    if ev and d then return ev,d
-    else return 'SSE',':empty' end
-end
 
-local function broadcast(msg, fruit)
+local function broadcast(o)
+    local fruit = o.fruit
+    local msg = json(o)
     if fruit then
-	for _,peer in mgr.peers() do if peer:id() == fruit then peer:send(msg); break; end end
+	for _,peer in MGR.peers() do if peer:opt'label' == fruit then peer:send(msg); break; end end
 	return format('Broadcast %s to %s', msg, fruit)
     else
 	local j = 0
-	for _,peer in mgr.peers() do if peer:id() then peer:send(msg); j = j + 1 end end
+	for _,peer in MGR.peers() do if peer:opt'label' then peer:send(msg); j = j + 1 end end
 	return format('Message %s broadcasted to %d peers', msg, j)
     end
 end
 
-local function switch( m )
-    if 'updatex' == m[1]:match'%a+' then
-	wss:send( concat(m, ':') ) -- updatex vers overs clave|id b64query
+local function switch( s )
+    local w = deserialize(s)
 
+    if not(w) then return end
+
+    local cmd = w.cmd
+
+    if cmd == 'updatex' then
+--	wss:send( concat(m, ':') ) -- updatex vers overs clave|id b64query
     end
 
-    local fruit = m:match'^%a+'
-    if fruit and client:sismember(MG, fruit) then
-	m = m:match'%a+%s([^!]+)' or 'SSE :empty'
-	return broadcast(ssevent(distill( m )), fruit)
-
-    else
-	return broadcast(ssevent(distill( m )))
-
-    end
+    assert(cmd, 'error: a valid message must include a "cmd" property at least')
+    broadcast(w)
 end
+
+
+-------------------------------
+
+local function sendversion(c) c:send(json{cmd='version', {vers='app:updates:version'}}) end
 
 ---------------------------------
 -- Program execution statement --
@@ -81,7 +93,7 @@ end
 
 local function shutdown()
     print('\nSignal received...\n')
-    client:del(MG, AP)
+    client:del(MG, AP, QUE, TKS, IDS)
     print('\nBye bye ...\n')
     exit(true, true)
 end
@@ -110,34 +122,53 @@ msgr:send_msg'OK'
 -- -- -- -- -- --
 --
 
-local function httpfn(c, ev, ...)
-    if ev == ops.HTTP then
+local function wsefn(c, ev, ...)
+    if ev == ops.ACCEPT then
+	wse.accept(c) -- connection accepted successfully
+	print(c:ip())
+
+    elseif ev == ops.HTTP then
+	if isvalid(c) then wse.http(c) -- connection established succesfully
+	else c:opt('closing', true) end
+--[[
 	local _,uri,query,_ = ...
-	print('\nAPP\t', ...)
 	if uri:match'version.json' then
 	    c:send(EGET)
-	    c:send(client:get'app:updates:version')
+	    c:send()
 	    c:send'\n\n'
-	else
-	    c:send(EGET)
-	    c:send'\n\n'
-	    msgr:send_msgs{uri:match'%a+', query}
 	end
-	c:opt('drain', 1)
+--]]
+
+    elseif ev == ops.WS then
+	local s = ...
+	local w = fromJSON(s)
+	msgr:send_msgs{w.cmd, serialize(w)}
+	print(s, '\n+\n')
+
+    elseif ev == ops.ERROR then
+	wse.error(c, ...)
+
+    elseif ev == ops.CLOSE then
+	wse.close(c)
+
     end
 end
 
-local http = assert( mgr.bind('http://0.0.0.0:'..HTTP, httpfn, ops.http) )
+local flags = ops.websocket -- |ops.ssl|ops.cert|ops.key
 
-print('\nSuccessfully bound to port', HTTP, '\n')
+local wss = assert( MGR.bind('http://0.0.0.0:'..WSE, wsefn, flags) )
 
-local sse, SSE = assert( ssefn( mgr ) )
+print('\nSuccessfully bound to port', WSE, '\n')
 
-print('\nSuccessfully bound to port', SSE, '\n')
-
---local wss, WS = assert( wssfn( mgr, client, msgr ) )
+-- -- -- -- -- --
 --
---print('\nSuccessfully connect to server', WS, '\n')
+
+local function pingfn()
+    print'\n+\ntimer round initiated...\n+\n'
+    reduce(MGR.peers, function(peer) if isvalid(peer) then sendversion(peer) end end)
+end
+
+--local timer = assert( MGR.timer(6000, pingfn, true) )
 
 -- -- -- -- -- --
 --
@@ -146,15 +177,15 @@ print('\n\n+\n\n')
 
 while true do
 
-    mgr.poll(120)
+    MGR.poll(120)
 
     pollin({msgr}, 3)
 
     local events = msgr:opt'events'
 
-    if events.polllin then
+    if events.pollin then
 
-	local msg = concat(msgr:recv_msgs(true), ' ')
+	local msg = msgr:recv_msg()
 
 	print('\n+\n\nSTREAM\t', msg, '\n\n+\n')
 
