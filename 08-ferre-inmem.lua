@@ -273,14 +273,14 @@ local function switch( cmd, o )
 	local conn = getConn(uid)
 	local qry = format('SELECT * FROM uids WHERE uid LIKE "%s%%"', uid)
 	return fruit, conn, qry
---[[
+
     elseif cmd == 'adjust' then
-	local vers = tointeger(msg:match'vers=(%a+)')
-	local fruit = msg:match'fruit=(%a+)'
-	local week = msg:match'week=([%u%d]+)'
+	local vers = o.version
+	local week = uid2week(vers)
+--	if week > WEEK then return end XXX
 	local wks = weeks(week, vers)
 	return gather(fruit, wks)
---]]
+
     end
 end
 

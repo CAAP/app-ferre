@@ -57,7 +57,7 @@
 
 	    const VERS = DATA.STORES.VERS;
 	    VERS.check = o => {
-		if (localStorage.version == o.version)
+		if ((typeof localStorage != "undefined") && (localStorage.version == o.version))
 		    return false; // UPTODATE !!!
 		else
 		    return true; // OUTDATED !!!
@@ -65,6 +65,7 @@
 	    VERS.update = o => {
 		if (typeof o.version != "undefined") {
 		    localStorage.version = o.version;
+//		    localStorage.week = o.week;
 		    return VERS.inplace(o);
 		}
 	    };

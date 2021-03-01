@@ -11,6 +11,8 @@ local fromJSON    = require'json'.decode
 local json	  = require'json'.encode
 local serialize	  = require'carlos.ferre'.serialize
 local deserialize = require'carlos.ferre'.deserialize
+local asweek	  = require'carlos.ferre'.asweek
+local now	  = require'carlos.ferre'.now
 local reduce	  = require'carlos.fold'.reduce
 
 local wse	  = require'carlos.ferre.wse'
@@ -45,7 +47,9 @@ local EGET	 = client:get'tcp:get'
 
 local isvalid 	 = wse.isvalid
 
--- wse message := json{cmd, obj}
+local WEEK	 = asweek(now())
+
+-- wse message := json{cmd, ppty1, ppty2, ...}
 
 --------------------------------
 -- Local function definitions --
@@ -83,7 +87,7 @@ end
 
 -------------------------------
 
-local function sendversion(c) c:send(json{cmd='version', {vers='app:updates:version'}}) end
+local function sendversion(c) c:send(json{cmd='version', version=client:get'app:updates:version', week=WEEK}) end
 
 ---------------------------------
 -- Program execution statement --
@@ -168,7 +172,7 @@ local function pingfn()
     reduce(MGR.peers, function(peer) if isvalid(peer) then sendversion(peer) end end)
 end
 
---local timer = assert( MGR.timer(6000, pingfn, true) )
+local timer = assert( MGR.timer(6000, pingfn, true) )
 
 -- -- -- -- -- --
 --

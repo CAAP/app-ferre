@@ -9,7 +9,7 @@
 
 	// FERRE
 	(function() {
-	    ferre.wsend = WSE.wsend;
+	    ferre.wsend = WSE.send
 
 	    DATA.inplace = q => {
 		let r = document.body.querySelector('tr[data-clave="'+q.clave+'"]');
@@ -42,7 +42,7 @@
 */
 	    function ifLoad(k) { return IDB.readDB(k).count().then(
 		q => { if (q == 0 && k.FILE)
-			    return IDB.populateDB(k).then( STORE.VERS.update );
+			    return IDB.populateDB(k).then( STORES.VERS.update );
 			else
 			    return Promise.resolve(true);
 		     }

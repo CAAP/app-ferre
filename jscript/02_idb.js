@@ -29,7 +29,7 @@
 
 		function getVers(datos) {
 		    let v = false;
-		    if (typeof datos[datos.length-1]["version"] != "undefined" ) {
+		    if (typeof(datos[datos.length-1]["version"]) != "undefined" ) {
 			v = datos.pop();
 		    }
 		    return v;

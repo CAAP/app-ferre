@@ -9,7 +9,7 @@
 
 	// CAJA
 	(function() {
-	    caja.wsend = WSE.wsend;
+	    caja.wsend = WSE.send;
 
 	    DATA.inplace = () => Promise.resolve(true);
 
@@ -36,7 +36,7 @@
 
 	    function ifLoad(k) { return IDB.readDB(k).count().then(
 		q => { if (q == 0 && k.FILE)
-			    return IDB.populateDB(k).then( STORE.VERS.update );
+			    return IDB.populateDB(k).then( STORES.VERS.update );
 			else
 			    return Promise.resolve(true);
 		     }

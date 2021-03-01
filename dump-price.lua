@@ -2,6 +2,8 @@
 
 local fd	= require'carlos.fold'
 local dbconn	= require'carlos.ferre'.dbconn
+local asweek	= require'carlos.ferre'.asweek
+local now	= require'carlos.ferre'.now
 local dump	= require'carlos.files'.dump
 
 local json	= require'json'.encode
@@ -10,6 +12,8 @@ local insert	= table.insert
 local assert	= assert
 
 local HOME	= require'carlos.ferre'.HOME
+
+local WEEK	= asweek(now())
 
 _ENV =  nil
 
@@ -25,9 +29,9 @@ end
 local conn = dbconn'ferre'
 local QRY  = 'SELECT * FROM precios WHERE desc NOT LIKE "VV%"'
 
-local vers = json{version=client:get'app:updates:version'}
+local vers = {version=client:get'app:updates:version', week=WEEK}
 
 local ret = fd.reduce(conn.query(QRY), fd.map(nulls), fd.into, {})
 insert(ret, vers)
-dump(DEST, asJSON(ret))
+dump(DEST, json(ret))
 
