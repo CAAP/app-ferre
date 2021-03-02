@@ -9,8 +9,6 @@
 
 	// CAJA
 	(function() {
-	    caja.wsend = WSE.send;
-
 	    DATA.inplace = () => Promise.resolve(true);
 
 	    let mymenu = document.getElementById("menu");
@@ -138,7 +136,7 @@
 		    a = 'bixolon';
 
 		if (!caja.UPDATED)
-		    return caja.UIDS.forEach(uid => caja.wsend({cmd: a, uid: uid, pid: persona.value}));
+		    return caja.UIDS.forEach(uid => WSE.send({cmd: a, uid: uid, pid: persona.value}));
 
 		else {
 			
@@ -152,7 +150,7 @@
 
 		    TICKET.items.forEach(item => msgs.push( UTILS.getStrPpties(myobj, item, VARS) ));
 
-		    Promise.all( msgs.map(o => caja.wsend(o)) )
+		    Promise.all( msgs.map(o => WSE.send(o)) )
 			.then( () => caja.emptyBag(a) );
 		}
 	    };
@@ -170,7 +168,7 @@
 		const fruit = sessionStorage.fruit;
 		UIDS.add( uid );
 		if (UIDS.size > 1) { caja.UPDATED = true; }
-		return caja.wsend({cmd: 'uid', uid: uid, fruit: fruit});
+		return WSE.send({cmd: 'uid', uid: uid, fruit: fruit});
 	    }
 
 	    caja.add2bag = function(o) {
@@ -216,7 +214,7 @@
 		UIDS.add( uid );
 		if (UIDS.size > 1) { caja.UPDATED = true; }
 		if (!uid.includes(TODAY)) { caja.OLD = true; }
-		return caja.wsend({cmd: 'uid', uid: uid, fruit: fruit});
+		return WSE.send({cmd: 'uid', uid: uid, fruit: fruit});
 	    }
 
 	    caja.add2fecha = function(w) {
@@ -236,7 +234,7 @@
 	    caja.ledger = function(e) {
 		let fecha = e.target.value
 		if (fecha.length > 0)
-		    return caja.wsend({cmd: 'ledger', fruit: sessionStorage.fruit, uid: fecha+'T'}).then( UTILS.clearTable( cajita ) );
+		    return WSE.send({cmd: 'ledger', fruit: sessionStorage.fruit, uid: fecha+'T'}).then( UTILS.clearTable( cajita ) );
 	    };
 
 	    caja.toggleDates = () => ctls.classList.toggle('oculto');

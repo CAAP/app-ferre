@@ -9,8 +9,6 @@
 
 	// ADMIN
 	(function() {
-	    admin.wsend = WSE.send;
-
 	    DATA.inplace = q => {
 		let r = document.body.querySelector('tr[data-clave="'+q.clave+'"]');
 		if (r) {
@@ -78,7 +76,7 @@
 	    BROWSE.DBget = s => IDB.readDB( PRICE ).get( s );
 	    BROWSE.DBindex = (a, b, f) => IDB.readDB( PRICE ).index( a, b, f );
 
-	    BROWSE.query = o => admin.wsend(Object.assign({cmd: 'query'}, o));
+	    BROWSE.query = o => WSE.send(Object.assign({cmd: 'query'}, o));
 
 	    BROWSE.rows = function(a, row) {
 		row.insertCell().appendChild( document.createTextNode( a.fecha ) );
@@ -234,7 +232,7 @@
 //		    CHANGES.inplace(k, m => tabla.querySelector('input[name='+m+']').classList.add('modificado'));
 		    return f( CHANGES.fetch(k, records.get(k)) );
 		} else
-		return admin.wsend({cmd: 'query', clave: k, fruit: sessionStorage.fruit});
+		return WSE.send({cmd: 'query', clave: k, fruit: sessionStorage.fruit});
 	    }
 
 	    function costol(o) { o.costol = o.costo*(100+(Number(o.impuesto)||0))*(100-(Number(o.descuento)||0))*(1-(Number(o.rebaja)||0)/100) }
@@ -253,7 +251,7 @@
 		fetch(clave, setfields);
 	    };
 
-	    admin.nuevo = () => admin.wsend({cmd: 'query', desc: 'VV*', fruit: sessionStorage.fruit});
+	    admin.nuevo = () => WSE.send({cmd: 'query', desc: 'VV*', fruit: sessionStorage.fruit});
 
 	    admin.setRecord = function(a) {
 		cleanMark();
@@ -284,13 +282,13 @@
 	    //
 	    function update(clave, o) {
 		if (o.desc) { o.desc = o.desc.replace(/\s+$/, '').replace(/^\s+/, ''); }
-		    return admin.wsend(Object.assign({cmd: 'update', clave: clave}, o));
+		    return WSE.send(Object.assign({cmd: 'update', clave: clave}, o));
 	    }
 
 	    admin.eliminar = () => {
 		const clave = tkt.dataset.clave;    
 		if (window.confirm('Estas seguro de eliminar la clave ' + clave + '?'))
-		    Promise.resolve( admin.wsend({cmd: 'eliminar', clave: clave}) )
+		    Promise.resolve( WSE.send({cmd: 'eliminar', clave: clave}) )
 		    .then( admin.cancelar );
 	    };
 

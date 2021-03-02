@@ -9,8 +9,6 @@
 
 	// FERRE
 	(function() {
-	    ferre.wsend = WSE.send
-
 	    DATA.inplace = q => {
 		let r = document.body.querySelector('tr[data-clave="'+q.clave+'"]');
 		if (r) {
@@ -23,7 +21,7 @@
 		return q;
 	    };
 
-	    ferre.getUID = e => ferre.wsend({cmd: 'uid', uid: e.target.innerHTML, fruit: sessionStorage.fruit});
+	    ferre.getUID = e => WSE.send({cmd: 'uid', uid: e.target.innerHTML, fruit: sessionStorage.fruit});
 	})();
 
 	// Init & Load DBs
@@ -74,7 +72,7 @@
 	    BROWSE.DBget = s => IDB.readDB( PRICE ).get( s );
 	    BROWSE.DBindex = (a, b, f) => IDB.readDB( PRICE ).index( a, b, f );
 
-	    BROWSE.query = o => ferre.wsend(Object.assign({cmd: 'query'}, o));
+	    BROWSE.query = o => WSE.send(Object.assign({cmd: 'query'}, o));
 
 	    BROWSE.tips = ferre.tips;
 
@@ -143,7 +141,7 @@
 		if (a=='tabs') // ferre.MISS || ; exceptions
 		    return true;
 		else
-		    return ferre.wsend({cmd: 'delete', pid: Number(persona.value)});
+		    return WSE.send({cmd: 'delete', pid: Number(persona.value)});
 	    };
 
 	    ferre.addItem = e => {
@@ -175,7 +173,7 @@
 
 		TICKET.items.forEach(item => msgs.push( UTILS.getStrPpties(myobj, item, ZVARS) ));
 
-		Promise.all( msgs.map(o => ferre.wsend(o)) )
+		Promise.all( msgs.map(o => WSE.send(o)) )
 		    .then( () => ferre.emptyBag(a) )
 		    .catch( () => { TICKET.myticket.style.visibility = 'visible'} )
 		    .then( astkt )
@@ -247,14 +245,14 @@
 		let pin = PINS.get(pid);
 		if (pin == 0) {
 		    pin = Number(pcode.value);
-		    ferre.wsend({cmd: 'pins', pid: pid, pincode: pin});
+		    WSE.send({cmd: 'pins', pid: pid, pincode: pin});
 		}
 		if (Number(pcode.value) == pin) {
 		    pcode.value = '';
 		    pcode.disabled = true;
 		    persona.disabled = true;
 		    sesion.innerHTML = NAMES.get(pid);
-		    ferre.wsend({cmd: 'login', pid: pid, fruit: sessionStorage.fruit}); // send fruit+pid
+		    WSE.send({cmd: 'login', pid: pid, fruit: sessionStorage.fruit}); // send fruit+pid
 		} else {
 		    pcode.value = '';
 		    return alert("PIN incorrecto!");
