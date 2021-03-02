@@ -5,14 +5,12 @@
 local MGR	  = require'lmg'
 local posix	  = require'posix.signal'
 
-local fd	  = require'carlos.fold'
-
 local concat	  = table.concat
 local assert	  = assert
 local exit	  = os.exit
 local print	  = print
 
-local WSS	  = os.getenv'HUB_IP'
+local WSS	  = os.getenv'WEBSOCKET_IP'
 
 -- No more external access after this point
 _ENV = nil -- or M
@@ -29,25 +27,8 @@ local ops = MGR.ops
 --
 
 local function switch( c, msg, code )
-    local k = 0
 
     print('Message received:', msg, '\n')
-
-    if msg == 'peers' then
-	local a = {}
-	for peer in MGR.peers() do a[#a+1] = peer:ip() end
-	c:send(concat(a, '\t'), ops.TEXT)
-	k = 1
-
-    else
-	for peer in MGR.peers() do
-	    peer:send(msg, code)
-	    k = k + 1
-	end
-
-    end
-
-    print('Message broadcasted to', k, 'peer(s)\n')
 
 end
 
@@ -69,8 +50,9 @@ posix.signal(posix.SIGINT, shutdown)
 --
 
 local function wsfn(c, ev, ...)
-    if ev == evs.ACCEPT then
-	print('Peer has connected:', c:ip(), '\n')
+    if ev == evs.OPEN then
+	print('Connection established to peer:', c:ip(), '\n')
+	c:send()
 
     elseif ev == evs.WS then
 	switch( c, ... )
@@ -78,20 +60,18 @@ local function wsfn(c, ev, ...)
     elseif ev == evs.ERROR then
 	print('ERROR:', ...)
 	c:close()
-
+--[[
+-- XXX TAKE CARE, SO ONE CAN RETRY CONNECTION AUTOMAGICALLY XXX
+-- 	MAKING USE OF TIMERS
+--]]
     elseif ev == evs.CLOSE then
-	print('Connection to', c:ip(), 'closed\n')
+	print('Connection closed\n')
+	MGR.timer(3000, function() MGR.connect(WSS, wsfn, evs.WS) end)
 
     end
 end
 
-assert( MGR.bind(WSS, wsfn, evs.WS) )
-
-local function keepalive()
-    for peer in MGR.peers() do peer:send'Hi' end
-end
-
-local t1 = assert( MGR.timer(120000, keepalive, true) )
+assert( MGR.connect(WSS, wsfn, evs.WS) )
 
 --
 -- -- -- -- -- --

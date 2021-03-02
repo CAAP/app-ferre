@@ -43,6 +43,4 @@ dump( DEST, asJSON(fd.reduce(conn.query(QRY), fd.into, {})) )
 ---------------------------------------
 
 
-conn.close()
-
 

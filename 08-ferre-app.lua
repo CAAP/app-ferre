@@ -77,6 +77,9 @@ local function handover(skt, msg)
     skt:send_msgs( msg )
 end
 
+local function donothing()
+end
+
 ---------------------------------
 -- Program execution statement --
 ---------------------------------
@@ -111,7 +114,7 @@ local router = { query=toinmem,  rfc=toinmem,      bixolon=toinmem, 	uid=toinmem
 		 update=todb,	 faltate=todb,	   eliminar=todb,
 	 	 ticket=uuid2db, facturar=uuid2db, presupuesto=uuid2db,
 	 	 msgs=tabs2all,  login=tabs2all,   delete=tabs2all,	tabs=tabs2all,
-	 	 reroute=handover }
+	 	 reroute=handover, pins=donothing }
 
 --
 -- -- -- -- -- --

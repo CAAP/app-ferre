@@ -43,7 +43,7 @@ local function bixolon( uid )
     assert(uid, "error: uid cannot be nil")
     local data = deserialize(client:hget(QIDS, uid))
     client:hdel(QIDS, uid)
-    local skt = stdout -- popen(PRINTER, 'w') -- 
+    local skt = popen(PRINTER, 'w') -- 
     if #data > 8 then
 	data = slice(4, data, into, {})
 	reduce(data, function(v) skt:write(concat(v,'\n'), '\n') end)
