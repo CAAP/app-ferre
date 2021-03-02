@@ -49,6 +49,15 @@
 		flbl.innerHTML = fruit;
 		if (typeof caja != "undefined")
 		    wsend({cmd: 'feed', fruit: fruit});
+		if (typeof ferre != "undefined")
+		    WSE.send({cmd: 'people', fruit: sessionStorage.fruit});
+	    };
+
+	    WSE.people = o => {
+		elbl.innerHTML = "people event";
+		console.log('employees event ongoing');
+		if (typeof ferre != "undefined")
+		    ferre.employees(o.data);
 	    };
 
 	    WSE.version = o => {

@@ -62,6 +62,7 @@ local TTKT 	  = 'app:tickets:FA-BJ-'
 local FERRE, WEEK, INDEX
 
 local NOMBRES	  = { A = 'caja' }
+local EMPLEADOS	  = {}
 local WKDB 	  = asweek(now())
 
 local TOLL	  = assert( client:smembers'const:toll' )
@@ -273,6 +274,15 @@ local function updateitem(skt, msg)
 --    skt:send_msgs{'', 'peer', 'updatex', v, vers, q}
 end
 
+------------------------------------------------------------
+
+local function employees(skt, msg)
+    local cmd, s = msg[1], msg[2]
+    local w = deserialize(s)
+    w.data = EMPLEADOS
+    skt:send_msgs{'reroute', 'SSE', serialize(w)}
+end
+
 ---------------------------------
 -- Program execution statement --
 ---------------------------------
@@ -310,7 +320,9 @@ do
     print("items in precios:", FERRE.count'precios', "\n")
 -- -- -- -- -- --
     FERRE.exec(format('ATTACH DATABASE %q AS people', aspath'personas'))
-    fd.reduce(FERRE.query'SELECT * FROM empleados', fd.map(function(p) return p.nombre end), fd.into, NOMBRES)
+    fd.reduce(FERRE.query'SELECT * FROM empleados', fd.into, EMPLEADOS)
+    fd.reduce(EMPLEADOS, fd.map(function(p) return p.nombre end), fd.into, NOMBRES)
+--    fd.reduce(FERRE.query'SELECT * FROM empleados', fd.map(function(p) return p.nombre end), fd.into, NOMBRES)
     FERRE.exec'DETACH DATABASE people'
     print("personas DB was successfully read\n")
 end
@@ -337,8 +349,8 @@ tasks:send_msg'OK'
 -- -- -- -- -- --
 --
 
-local router = { ticket=storetkt,   presupuesto=storetkt,      facturar=storetkt,
-		 update=updateitem, eliminar=updateitem }
+local router = { ticket=storetkt,   presupuesto=storetkt, facturar=storetkt,
+		 update=updateitem, eliminar=updateitem,  people=employees }
 
 --
 -- -- -- -- -- --

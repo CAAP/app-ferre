@@ -381,7 +381,6 @@ do
     -- VERS can be ZERO from now on
     local vers = fd.first(WEEK.query'SELECT MAX(vers) vers FROM updates', function(x) return x end).vers or '0'
     if vers > '0' then
---	vers = json{week=WKDB, vers=vers} XXX useful?
 	client:set('app:updates:version', vers)
     else vers = client:get('app:updates:version') end
     print('\nVersion:', vers, '\n')
