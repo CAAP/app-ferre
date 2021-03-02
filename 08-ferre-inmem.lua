@@ -277,7 +277,6 @@ local function switch( cmd, o )
     elseif cmd == 'adjust' then
 	local vers = o.version
 	local week = uid2week(vers)
---	if week > WEEK then return end XXX
 	local wks = weeks(week, vers)
 	return gather(fruit, wks)
 

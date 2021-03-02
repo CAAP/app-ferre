@@ -54,9 +54,15 @@
 	    WSE.version = o => {
 		elbl.innerHTML = "version event";
 		console.log('version event ongoing');
-		if (DATA.STORES.VERS.check( o ))
-		    wsend(Object.assign({cmd: 'adjust'}, localStorage, sessionStorage))
-		else
+		if (DATA.STORES.VERS.check( o )) {
+		    let start = new Date(localStorage.version);
+		    let end = new Date(o.version);
+		    let elapsed = (end-start)/(3600*24*1000.0);
+		    if ((typeof localStorage.version != "undefined") && elapsed > 5)
+			return IDB.recreateDB( DATA.STORES.PRICE );
+		    else
+			wsend(Object.assign({cmd: 'adjust'}, localStorage, sessionStorage));
+		} else
 		    DATA.STORES.VERS.inplace( o );
 	    };
 
@@ -65,13 +71,6 @@
 		console.log('adjust event ongoing');
 		let data = JSON.parse(o.msg);
 		Promise.all(data.map(updateOne));
-	    };
-
-	    WSE.reload = o => {
-		elbl.innerHTML = "reload DB event";
-		console.log('recreateDB event ongoing');
-		const PRICE = DATA.STORES.PRICE;
-		IDB.recreateDB( PRICE );
 	    };
 
 	    WSE.pins = o => {
