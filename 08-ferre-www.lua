@@ -38,11 +38,6 @@ _ENV = nil -- or M
 local client	 = assert( rconnect(REDIS, '6379') )
 local ops	 = MGR.ops
 
-local MG	 = 'mgconn:active'
-local AP	 = 'app:active'
-local IDS	 = 'app:uuids'
-local QUE	 = 'queue:uuids'
-local TKS	 = 'queue:tickets'	
 local EGET	 = client:get'tcp:get'
 
 local isvalid 	 = wse.isvalid
@@ -97,7 +92,7 @@ local function sendversion(c) c:send(json{cmd='version', version=client:get'app:
 
 local function shutdown()
     print('\nSignal received...\n')
-    client:del(MG, AP, QUE, TKS, IDS)
+    client:del('mgconn:active', 'app:active', 'app:uuids', 'queue:uuids', 'queue:tickets')
     print('\nBye bye ...\n')
     exit(true, true)
 end

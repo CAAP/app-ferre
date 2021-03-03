@@ -266,17 +266,20 @@
 
 	    ferre.logout = () => ferre.print('tabs');
 
-	    ferre.employees = a => a.forEach( p => {
-		    const pid = Number(p.id);
-		    if (p.pin)
-			PINS.set(pid, Number(p.pin));
-		    else
-			PINS.set(pid, 0); // initialize to 0
-		    NAMES.set(pid, p.nombre.toUpperCase());
-		    let opt = document.createElement('option');
-		    opt.value = pid;
-		    opt.appendChild(document.createTextNode(p.nombre));
-		    persona.appendChild(opt); } );
+	    ferre.employees = a => {
+		UTILS.clearTable( persona );
+		a.forEach( p => {
+		const pid = Number(p.id);
+		if (p.pin)
+		    PINS.set(pid, Number(p.pin));
+		else
+		    PINS.set(pid, 0); // initialize to 0
+		NAMES.set(pid, p.nombre.toUpperCase());
+		let opt = document.createElement('option');
+		opt.value = pid;
+		opt.appendChild(document.createTextNode(p.nombre));
+		persona.appendChild(opt); } );
+	    };
 /*
 	    XHR.getJSON('/json/people.json').then(
 		a => a.forEach( p => {
