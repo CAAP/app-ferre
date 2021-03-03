@@ -141,7 +141,11 @@ local function wsefn(c, ev, ...)
     elseif ev == ops.WS then
 	local s = ...
 	local w = fromJSON(s)
-	msgr:send_msgs{w.cmd, serialize(w)}
+	if w.cmd == 'logmeout' then
+	    wse.logout(c)
+	else
+	    msgr:send_msgs{w.cmd, serialize(w)}
+	end
 	print(s, '\n+\n')
 
     elseif ev == ops.ERROR then

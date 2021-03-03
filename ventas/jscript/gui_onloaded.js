@@ -155,7 +155,10 @@
 	    ferre.print = function(a) {
 		const pid = Number(persona.value);
 
-		if ((pid != 0) && (TICKET.items.size == 0)) { return ferre.nadie(); }
+		if ((pid != 0) && (TICKET.items.size == 0)) {
+		    WSE.send({cmd: 'logmeout', fruit: sessionStorage.fruit});
+		    return ferre.nadie();
+		}
 
 		if (pid == 0) { TICKET.empty(); return Promise.resolve(true); }
 
@@ -267,7 +270,10 @@
 	    ferre.logout = () => ferre.print('tabs');
 
 	    ferre.employees = a => {
+		let opt = persona.firstChild;
 		UTILS.clearTable( persona );
+		persona.appendChild(opt);
+		// add all members
 		a.forEach( p => {
 		const pid = Number(p.id);
 		if (p.pin)
