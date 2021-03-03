@@ -10,6 +10,7 @@ local aspath	  = require'carlos.ferre'.aspath
 local asweek	  = require'carlos.ferre'.asweek
 local now	  = require'carlos.ferre'.now
 local uid2week	  = require'carlos.ferre'.uid2week
+local setvoid	  = require'carlos.ferre'.setvoid
 local ticket	  = require'carlos.ticket'.ticket
 local connect	  = require'carlos.sqlite'.connect
 local into	  = require'carlos.sqlite'.into
@@ -363,6 +364,8 @@ tasks:send_msg'OK'
 local router = { query=replyqry, rfc=replyqry,
 		 bixolon=dolpr,  update=newup, ticket=newtkt,
 		 uid=feed, 	 feed=feed,    ledger=feed,   adjust=feed }
+
+setvoid(router)
 
 --
 -- -- -- -- -- --

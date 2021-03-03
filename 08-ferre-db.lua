@@ -13,6 +13,7 @@ local aspath	  = require'carlos.ferre'.aspath
 local dbconn	  = require'carlos.ferre'.dbconn
 local now	  = require'carlos.ferre'.now
 local newuid	  = require'carlos.ferre'.newUID
+local setvoid	  = require'carlos.ferre'.setvoid
 local socket	  = require'lzmq'.socket
 local pollin	  = require'lzmq'.pollin
 
@@ -351,6 +352,8 @@ tasks:send_msg'OK'
 
 local router = { ticket=storetkt,   presupuesto=storetkt, facturar=storetkt,
 		 update=updateitem, eliminar=updateitem,  people=employees }
+
+setvoid(router)
 
 --
 -- -- -- -- -- --

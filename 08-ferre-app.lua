@@ -8,6 +8,7 @@ local reduce	  = require'carlos.fold'.reduce
 local receive	  = require'carlos.ferre'.receive
 local deserialize = require'carlos.ferre'.deserialize
 local serialize   = require'carlos.ferre'.serialize
+local setvoid	  = require'carlos.ferre'.setvoid
 local socket	  = require'lzmq'.socket
 local pollin	  = require'lzmq'.pollin
 local zmq_opt	  = require'lzmq'.opt
@@ -77,9 +78,6 @@ local function handover(skt, msg)
     skt:send_msgs( msg )
 end
 
-local function donothing()
-end
-
 ---------------------------------
 -- Program execution statement --
 ---------------------------------
@@ -114,7 +112,9 @@ local router = { query=toinmem,  rfc=toinmem,      bixolon=toinmem, 	uid=toinmem
 		 update=todb,	 faltate=todb,	   eliminar=todb,	people=todb,
 	 	 ticket=uuid2db, facturar=uuid2db, presupuesto=uuid2db,
 	 	 msgs=tabs2all,  login=tabs2all,   delete=tabs2all,	tabs=tabs2all,
-	 	 reroute=handover, pins=donothing }
+	 	 reroute=handover }
+
+setvoid(router)
 
 --
 -- -- -- -- -- --
