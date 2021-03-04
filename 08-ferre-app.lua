@@ -8,7 +8,7 @@ local reduce	  = require'carlos.fold'.reduce
 local receive	  = require'carlos.ferre'.receive
 local deserialize = require'carlos.ferre'.deserialize
 local serialize   = require'carlos.ferre'.serialize
-local setvoid	  = require'carlos.ferre'.setvoid
+--local setvoid	  = require'carlos.ferre'.setvoid
 local socket	  = require'lzmq'.socket
 local pollin	  = require'lzmq'.pollin
 local zmq_opt	  = require'lzmq'.opt
@@ -24,6 +24,7 @@ local remove	  = table.remove
 local format	  = string.format
 local print	  = print
 local type	  = type
+local pcall	  = pcall
 
 local STREAM	  = os.getenv'STREAM_IPC'
 local REDIS	  = os.getenv'REDISC'
@@ -114,7 +115,22 @@ local router = { query=toinmem,  rfc=toinmem,      bixolon=toinmem, 	uid=toinmem
 	 	 msgs=tabs2all,  login=tabs2all,   delete=tabs2all,	tabs=tabs2all,
 	 	 reroute=handover }
 
-setvoid(router)
+--setvoid(router)
+
+local function catchall(skt, cmd, msg)
+    if type(router[cmd]) == 'function' then
+	local done, ret = pcall(router[cmd], skt, msg)
+	if not done then
+	    local s = serialize{cmd='error', data=msg, msg=ret}
+	    skt:send_msgs{'SSE', s}
+	end
+
+    else
+	local s = serialize{cmd='error', msg='function does not exists', data=msg}
+	skt:send_msgs{'SSE', s}
+
+    end
+end
 
 --
 -- -- -- -- -- --
@@ -135,7 +151,7 @@ print'+\n'
 	print(id, concat(msg, ' '), '\n')
 
 	if cmd == 'OK' then
-	else router[cmd](stream, msg) end
+	else catchall(stream, cmd, msg) end -- router[cmd](stream, msg)
 
     end
 

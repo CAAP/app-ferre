@@ -73,6 +73,11 @@ local function switch( s )
 
     if cmd == 'updatex' then
 --	wss:send( concat(m, ':') ) -- updatex vers overs clave|id b64query
+	return true
+    end
+
+    if cmd == 'error' then
+	return true
     end
 
     assert(cmd, 'error: a valid message must include a "cmd" property at least')
@@ -163,6 +168,19 @@ local wss = assert( MGR.bind('http://0.0.0.0:'..WSE, wsefn, flags) )
 
 print('\nSuccessfully bound to port', WSE, '\n')
 
+-- -- -- -- -- --
+--
+--[[
+local function wssfn(c, ev, ...)
+    if ev == ops.OPEN then
+	wse.open(c)
+
+    elseif ev == ops.ERROR then
+	wse.error(c, ...)
+
+    end
+end
+--]]
 -- -- -- -- -- --
 --
 

@@ -34,6 +34,7 @@ local tonumber    = tonumber
 local tostring	  = tostring
 local print	  = print
 local assert	  = assert
+local type	  = type
 local pcall	  = pcall
 
 local HOY	  = os.date('%d-%b-%y', now())
@@ -354,7 +355,22 @@ tasks:send_msg'OK'
 local router = { ticket=storetkt,   presupuesto=storetkt, facturar=storetkt,
 		 update=updateitem, eliminar=updateitem,  people=employees }
 
-setvoid(router)
+--setvoid(router)
+
+local function catchall(skt, cmd, msg)
+    if type(router[cmd]) == 'function' then
+	local done, ret = pcall(router[cmd], skt, msg)
+	if not done then
+	    local s = serialize{cmd='error', data=msg, msg=ret}
+	    skt:send_msgs{'reroute', 'SSE', s}
+	end
+
+    else
+	local s = serialize{cmd='error', msg='function does not exists', data=msg}
+	skt:send_msgs{'reroute', 'SSE', s}
+
+    end
+end
 
 --
 -- -- -- -- -- --
@@ -376,7 +392,7 @@ print'+\n'
 	print(concat(msg, ' '), '\n')
 
 	if cmd == 'OK' then
-	else router[cmd](tasks, msg) end
+	else catchall(tasks, cmd, msg) end -- router[cmd](tasks, msg)
 
     end
 
