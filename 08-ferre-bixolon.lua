@@ -47,13 +47,8 @@ local function bixolon( w )
     local k = 1
     if w.tag == 'facturar' then k = 2 end
     for j=1,k do
-	local skt = popen(PRINTER, 'w') -- 
-	if #data > 8 then
-	    data = slice(4, data, into, {})
-	    reduce(data, function(v) skt:write(concat(v,'\n'), '\n') end)
-	else
-	    skt:write( concat(data,'\n') )
-	end
+	local skt = stdout -- popen(PRINTER, 'w') -- 
+	skt:write( concat(data,'\n') )
 	skt:close()
     end
 end
