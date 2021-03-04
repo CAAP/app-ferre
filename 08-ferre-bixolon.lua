@@ -39,18 +39,23 @@ local QIDS	  = 'queue:uuids'
 --------------------------------
 --
 
-local function bixolon( uid )
+local function bixolon( w )
+    local uid = w.uid
     assert(uid, "error: uid cannot be nil")
     local data = deserialize(client:hget(QIDS, uid))
     client:hdel(QIDS, uid)
-    local skt = popen(PRINTER, 'w') -- 
-    if #data > 8 then
-	data = slice(4, data, into, {})
-	reduce(data, function(v) skt:write(concat(v,'\n'), '\n') end)
-    else
-	skt:write( concat(data,'\n') )
+    local k = 1
+    if w.tag == 'facturar' then k = 2 end
+    for j=1,k do
+	local skt = popen(PRINTER, 'w') -- 
+	if #data > 8 then
+	    data = slice(4, data, into, {})
+	    reduce(data, function(v) skt:write(concat(v,'\n'), '\n') end)
+	else
+	    skt:write( concat(data,'\n') )
+	end
+	skt:close()
     end
-    skt:close()
 end
 
 
@@ -105,7 +110,7 @@ print'+\n'
 
 	local w = deserialize(s)
 
-	bixolon( w.uid )
+	bixolon( w )
 
     end
 

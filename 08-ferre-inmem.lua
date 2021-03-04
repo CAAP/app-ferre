@@ -322,9 +322,10 @@ local function newtkt(skt, msg)
     addTicket( w.uuid )
     local hdr = lpr( uid )
     hdr.cmd = 'feed'
+    w.tag = hdr.tag
     skt:send_msgs{'reroute', 'SSE', serialize(hdr)}
-    skt:send_msgs{'reroute', 'lpr', s}
-    if hdr.tag == 'facturar' then skt:send_msgs{'reroute', 'lpr', s} end
+    skt:send_msgs{'reroute', 'lpr', serialize(w)}
+--    if hdr.tag == 'facturar' then skt:send_msgs{'reroute', 'lpr', s} end
 end
 
 ---------------------------------

@@ -236,7 +236,7 @@ end
 
 local function storetkt(skt, msg)
     local s = msg[2] -- serialized object {uuid, uid, pid}
-    if not s then print'*****ERROR*****'; return false end
+--    if not s then print'*****ERROR*****'; return false end XXX
     local w = deserialize(s)
     local uuid = addTicket(w.uuid)
     if uuid then
