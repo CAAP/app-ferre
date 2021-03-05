@@ -201,7 +201,7 @@ wsc = assert( MGR.connect(WSPEER, wssfn, flags) )
 
 print('\nSuccessfully connected to remote peer:', WSPEER, '\n')
 
-wsc:opt('label', TIENDA)
+--wsc:opt('label', TIENDA)
 
 -- -- -- -- -- --
 --
