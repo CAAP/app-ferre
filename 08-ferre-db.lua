@@ -13,7 +13,7 @@ local aspath	  = require'carlos.ferre'.aspath
 local dbconn	  = require'carlos.ferre'.dbconn
 local now	  = require'carlos.ferre'.now
 local newuid	  = require'carlos.ferre'.newUID
-local setvoid	  = require'carlos.ferre'.setvoid
+local catchall	  = require'carlos.ferre'.catchall
 local socket	  = require'lzmq'.socket
 local pollin	  = require'lzmq'.pollin
 
