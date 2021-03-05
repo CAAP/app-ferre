@@ -6,6 +6,7 @@ local MGR	  = require'lmg'
 local posix	  = require'posix.signal'
 
 local fd	  = require'carlos.fold'
+local wse	  = require'carlos.ferre.wse'
 
 local concat	  = table.concat
 local assert	  = assert
@@ -20,18 +21,16 @@ _ENV = nil -- or M
 -- Local Variables for module-only access
 --
 
-local ops = MGR.ops
+local ops 	= MGR.ops
 
-local PEERS = {} -- label, conn
+local isvalid 	= wse.isvalid
+
+local PEERS 	= {} -- label, conn
 
 --------------------------------
 -- Local function definitions --
 --------------------------------
 --
-local function isvalid(peer)
-    return peer:opt'accepted' and peer:opt'websocket' and peer:opt'label'
-end
-
 local function switch( c, msg, code )
     local k = 0
 
@@ -74,30 +73,34 @@ posix.signal(posix.SIGINT, shutdown)
 
 local function wsfn(c, ev, ...)
     if ev == ops.ACCEPT then
+	if c:opt'label' then
+	    print('\nNew connection established:', c:opt'label', '\n+\n')
+	else c:opt('closing', true) end
+
+    elseif ev == ops.HTTP then
 	if isvalid(c) then
 	    local ip = c:ip()
-	    print('Peer has connected:', ip, '\n')
+	    print('\nPeer has connected:', ip, '\n+\n')
 	    PEERS[c:opt'label'] = c
-	else
-	    c:opt('closing', true)
-	end
+	else c:opt('closing', true) end
 
     elseif ev == ops.WS then
-	switch( c, ... )
+--	switch( c, ... )
+	print( ... )
 
     elseif ev == ops.ERROR then
-	print('ERROR:', ...)
-	c:opt('closing', true)
+	wse.error(c, ...)
 
-    elseif ev == ops.CLOSE and isvalid(c) then
-	local ip = c:ip()
-	print('Connection to', ip(), 'is closed\n')
-	PEERS[c:opt'label'] = nil
+    elseif ev == ops.CLOSE then
+	print('Connection to', c:ip(), 'is closed\n')
+	if c:opt'label' then PEERS[c:opt'label'] = nil end
 
     end
 end
 
-assert( MGR.bind(WSS, wsfn, ops.websocket|ops.ssl|ops.cert|ops.key) )
+local flags = ops.websocket | ops.ssl | ops.cert | ops.key
+
+local server = assert( MGR.bind(WSS, wsfn, flags) )
 
 local function keepalive()
     fd.reduce(MGR.peers, function(p) if isvalid(p) then p:send'Hi' end end)

@@ -366,24 +366,6 @@ local router = { query=replyqry, rfc=replyqry,
 		 bixolon=dolpr,  update=newup, ticket=newtkt,
 		 uid=feed, 	 feed=feed,    ledger=feed,   adjust=feed }
 
---setvoid(router)
-
-local function catchall(skt, cmd, msg)
-    if type(router[cmd]) == 'function' then
-	local done, ret = pcall(router[cmd], skt, msg)
-	if not done then
-	    local s = serialize{cmd='error', data=msg, msg=ret}
-	    skt:send_msgs{'reroute', 'SSE', s}
-	end
-
-    else
-	local s = serialize{cmd='error', msg='function does not exists', data=msg}
-	skt:send_msgs{'reroute', 'SSE', s}
-
-    end
-end
-
-
 --
 -- -- -- -- -- --
 --
@@ -428,7 +410,7 @@ print'+\n'
 	print(concat(msg, ' '), '\n')
 
 	if cmd == 'OK' then
-	else catchall(tasks, cmd, msg) end -- router[cmd](tasks, msg)
+	else catchall(router, tasks, cmd, msg, {'reroute', 'SSE', ''}) end -- router[cmd](tasks, msg)
 
     end
 

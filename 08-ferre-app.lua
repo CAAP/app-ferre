@@ -24,7 +24,6 @@ local remove	  = table.remove
 local format	  = string.format
 local print	  = print
 local type	  = type
-local pcall	  = pcall
 
 local STREAM	  = os.getenv'STREAM_IPC'
 local REDIS	  = os.getenv'REDISC'
@@ -115,23 +114,6 @@ local router = { query=toinmem,  rfc=toinmem,      bixolon=toinmem, 	uid=toinmem
 	 	 msgs=tabs2all,  login=tabs2all,   delete=tabs2all,	tabs=tabs2all,
 	 	 reroute=handover }
 
---setvoid(router)
-
-local function catchall(skt, cmd, msg)
-    if type(router[cmd]) == 'function' then
-	local done, ret = pcall(router[cmd], skt, msg)
-	if not done then
-	    local s = serialize{cmd='error', data=msg, msg=ret}
-	    skt:send_msgs{'SSE', s}
-	end
-
-    else
-	local s = serialize{cmd='error', msg='function does not exists', data=msg}
-	skt:send_msgs{'SSE', s}
-
-    end
-end
-
 --
 -- -- -- -- -- --
 --
@@ -151,7 +133,7 @@ print'+\n'
 	print(id, concat(msg, ' '), '\n')
 
 	if cmd == 'OK' then
-	else catchall(stream, cmd, msg) end -- router[cmd](stream, msg)
+	else catchall(router, stream, cmd, msg, {'SSE', ''}) end -- router[cmd](stream, msg)
 
     end
 

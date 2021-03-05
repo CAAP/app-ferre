@@ -25,9 +25,9 @@ local assert	  = assert
 local print	  = print
 
 local STREAM	  = os.getenv'STREAM_IPC'
-local HTTP	  = os.getenv'HTTP_PORT'
 local REDIS	  = os.getenv'REDISC'
 local WSE	  = os.getenv'WSE_PORT'
+local WSPEER	  = os.getenve'WSPEER'
 
 
 -- No more external access after this point
@@ -43,6 +43,8 @@ local EGET	 = client:get'tcp:get'
 local isvalid 	 = wse.isvalid
 
 local WEEK	 = asweek(now())
+
+local wsc	 = nil -- placeholder
 
 -- wse message := json{cmd, ppty1, ppty2, ...}
 
@@ -77,6 +79,7 @@ local function switch( s )
     end
 
     if cmd == 'error' then
+	wsc:send( s )
 	return true
     end
 
@@ -142,7 +145,6 @@ local function wsefn(c, ev, ...)
 	    c:send'\n\n'
 	end
 --]]
-
     elseif ev == ops.WS then
 	local s = ...
 	local w = fromJSON(s)
@@ -170,17 +172,37 @@ print('\nSuccessfully bound to port', WSE, '\n')
 
 -- -- -- -- -- --
 --
---[[
+
 local function wssfn(c, ev, ...)
     if ev == ops.OPEN then
 	wse.open(c)
 
+    elseif ev == ops.WS then
+	local s = ...
+	if s:match'Hi' then
+	else
+--	    local w = deserialize(s)
+--	    msgr:send_msgs{w.cmd, s}
+	end
+	print('WSS\t', s, '\n+\n')
+
     elseif ev == ops.ERROR then
 	wse.error(c, ...)
 
+    elseif ev == ops.CLOSE then
+	wse.close(c)
+
     end
 end
---]]
+
+flags = ops.websocket | ops.ssl | ops.ca
+
+wsc = assert( MGR.connect(WSPEER, wssfn, flags) )
+
+print('\nSuccessfully connected to remote peer:', WSPEER, '\n')
+
+wsc:opt('label', TIENDA)
+
 -- -- -- -- -- --
 --
 
