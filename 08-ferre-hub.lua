@@ -73,16 +73,16 @@ posix.signal(posix.SIGINT, shutdown)
 
 local function wsfn(c, ev, ...)
     if ev == ops.ACCEPT then
-	if c:opt'label' then
+--	if c:opt'label' then
 	    print('\nNew connection established:', c:opt'label', '\n+\n')
-	else c:opt('closing', true) end
+--	else c:opt('closing', true) end
 
     elseif ev == ops.HTTP then
-	if isvalid(c) then
+--	if isvalid(c) then
 	    local ip = c:ip()
 	    print('\nPeer has connected:', ip, '\n+\n')
-	    PEERS[c:opt'label'] = c
-	else c:opt('closing', true) end
+--	    PEERS[c:opt'label'] = c
+--	else c:opt('closing', true) end
 
     elseif ev == ops.WS then
 --	switch( c, ... )
@@ -93,7 +93,7 @@ local function wsfn(c, ev, ...)
 
     elseif ev == ops.CLOSE then
 	print('Connection to', c:ip(), 'is closed\n')
-	if c:opt'label' then PEERS[c:opt'label'] = nil end
+--	if c:opt'label' then PEERS[c:opt'label'] = nil end
 
     end
 end
