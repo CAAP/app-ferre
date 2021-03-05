@@ -23,14 +23,15 @@ _ENV = nil -- or M
 
 local ops 	= MGR.ops
 
-local isvalid 	= wse.isvalid
-
 local PEERS 	= {} -- label, conn
 
 --------------------------------
 -- Local function definitions --
 --------------------------------
 --
+
+local function isvalid( c ) return c:opt'accepted' and c:opt'websocket' end
+
 local function switch( c, msg, code )
     local k = 0
 
@@ -73,14 +74,14 @@ posix.signal(posix.SIGINT, shutdown)
 
 local function wsfn(c, ev, ...)
     if ev == ops.ACCEPT then
-	    print('\nNew connection established\n+\n')
+	print('\nNew connection established\n+\n')
 
     elseif ev == ops.HTTP then
 	    local ip = c:ip()
 	    print('\nPeer has connected:', ip, '\n+\n')
 
     elseif ev == ops.WS then
-	print( ... )
+	print('\n', ..., '\n+\n')
 
     elseif ev == ops.ERROR then
 	wse.error(c, ...)
