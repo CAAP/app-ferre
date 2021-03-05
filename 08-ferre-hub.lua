@@ -6,6 +6,7 @@ local MGR	  = require'lmg'
 local posix	  = require'posix.signal'
 
 local fd	  = require'carlos.fold'
+local deserialize = require'carlos.ferre'.deserialize
 local wse	  = require'carlos.ferre.wse'
 
 local concat	  = table.concat
@@ -81,7 +82,9 @@ local function wsfn(c, ev, ...)
 	    print('\nPeer has connected:', ip, '\n+\n')
 
     elseif ev == ops.WS then
-	print('\n', ..., '\n+\n')
+	local s = ...
+	local w = deserialize(s)
+	if w.cmd == 'error' then print('ERROR', s) end
 
     elseif ev == ops.ERROR then
 	wse.error(c, ...)
