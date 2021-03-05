@@ -27,7 +27,7 @@ local print	  = print
 local STREAM	  = os.getenv'STREAM_IPC'
 local REDIS	  = os.getenv'REDISC'
 local WSE	  = os.getenv'WSE_PORT'
-local WSPEER	  = os.getenve'WSPEER'
+local WSPEER	  = os.getenv'WSPEER'
 
 
 -- No more external access after this point
