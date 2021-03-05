@@ -22,7 +22,7 @@ local EGET	 = concat({"HTTP/1.0 200 OK", "Content-Type: text/plain",
 assert( client:lpush('const:fruits', table.unpack(FRTS)) )
 
 --- *SET* ---
-assert( client:sadd('const:dirty', 'clave', 'tbname', 'fruit') )
+assert( client:sadd('const:dirty', 'clave', 'tbname', 'fruit', 'cmd') )
 
 assert( client:sadd('const:istkt', 'ticket', 'presupuesto') ) -- 'surtir', 'tabs'
 
@@ -42,9 +42,9 @@ assert( client:set('tcp:get', EGET) )
 --- *HASH* ---
 assert( client:hset('sql:week', 'tickets', 'uid, tag, prc, clave, desc, costol NUMBER, unidad, precio NUMBER, unitario NUMBER, qty INTEGER, rea INTEGER, totalCents INTEGER, uidSAT, nombre') )
 
-assert( client:hset('sql:week', 'updates', 'vers INTEGER PRIMARY KEY, clave, msg'))
+assert( client:hset('sql:week', 'updates', 'vers PRIMARY KEY, clave, msg'))
 
-assert( client:hset('sql:week', 'queries', 'vers INTEGER PRIMARY KEY, clave, version, query'))
+assert( client:hset('sql:week', 'queries', 'vers PRIMARY KEY, clave, query'))
 
 assert( client:hset('sql:week', 'facturas', 'uid, fapi PRIMARY KEY NOT NULL, rfc NOT NULL, sat NOT NULL'))
 
