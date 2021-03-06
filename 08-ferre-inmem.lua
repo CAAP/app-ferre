@@ -69,6 +69,14 @@ local INDEX 	  = fd.reduce(split(SCHEME, ',', true), fd.map(function(s) return s
 -- Local function definitions --
 --------------------------------
 
+local function fix(w)
+    return function(o)
+	o.fruit = w.fruit
+	o.cmd = w.cmd
+	return o
+    end
+end
+
 local function byDesc(s)
     local qry = format('SELECT clave, "query" cmd FROM datos WHERE desc LIKE %q ORDER BY desc LIMIT 1', s:gsub('*', '%%')..'%')
     local o = fd.first(FERRE.query(qry), function(x) return x end)
@@ -82,17 +90,18 @@ local function byClave(s)
 end
 
 local function query(o)
+    local fn = fix(o)
     if o.rfc then
-	local QRY = format('SELECT *, "rfc" cmd FROM clientes WHERE rfc LIKE "%s%%" LIMIT 4', o.rfc)
-	local ans = fd.reduce(FERRE.query(QRY), fd.into, {})
+	local QRY = format('SELECT * FROM clientes WHERE rfc LIKE "%s%%" LIMIT 4', o.rfc)
+	local ans = fd.reduce(FERRE.query(QRY), fd.map(fn), fd.into, {})
 	return ans
 
     elseif o.desc then
 	local desc = o.desc
-	if desc:match'VV' then return byClave(byDesc(desc))
-	else return byDesc(desc) end
+	if desc:match'VV' then return fn(byClave(byDesc(desc)))
+	else return fn(byDesc(desc)) end
 
-    elseif o.clave then return byClave(o.clave) end
+    elseif o.clave then return fn(byClave(o.clave)) end
 end
 
 local function execUP( f )
