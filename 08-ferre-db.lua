@@ -109,10 +109,6 @@ local function addTicket(uuid)
 	else
 	    fd.reduce(data, into'tickets', WEEK)
 	end
-
---	local k = TTKT..uid:match':(%d+)$'
---	local u = client:get(k) or 'NaN'
---	client:set(k, uid)
 	return uuid
     end
 end
@@ -247,7 +243,8 @@ local function storetkt(skt, msg)
 	w.cmd = 'msgs'
 	skt:send_msgs{'msgs', serialize(w)}
 	-- notify cloud service | external peer
---	skt:send_msgs{'reroute', 'peer', 'ticketx', uid, u}
+--	w.cmd = 'ticketx'
+--	skt:send_msg( s )
     end
 end
 
@@ -257,7 +254,10 @@ local function notify(skt, o)
     client:set(UVER, o.version)
     skt:send_msgs{'reroute', 'inmem', 'update', serialize(o)}
     o.cmd = 'version'
-    o.week = WKDB
+--    o.week = WKDB
+    skt:send_msgs{'reroute', 'SSE', serialize(o)}
+    --
+    o.cmd = 'updatex'
     skt:send_msgs{'reroute', 'SSE', serialize(o)}
 end
 

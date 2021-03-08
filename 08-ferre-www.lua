@@ -40,6 +40,7 @@ local client	 = assert( rconnect(REDIS, '6379') )
 local ops	 = MGR.ops
 
 local EGET	 = client:get'tcp:get'
+local QUPS	 = 'queue:ups:'
 
 local isvalid 	 = wse.isvalid
 
@@ -63,7 +64,7 @@ local function broadcast(o)
     else
 	local j = 0
 	for _,peer in MGR.peers() do if peer:opt'label' then peer:send(msg); j = j + 1 end end
-	print('message broadcasted to', j 'peers')
+	print('message broadcasted to', j, 'peers')
     end
 end
 
@@ -118,18 +119,28 @@ local function switch( s )
     local cmd = w.cmd
 
     if cmd == 'updatex' then
---	wss:send( concat(m, ':') ) -- updatex vers overs clave|id b64query
+	local k = QUPS..w.clave
+	assert( client:exists(k), 'error: key cannot be nil' )
+	w.data = client:lrange(k, 0, -1)
+	if not(wsc:opt'closing') then
+	    wsc:send( serialize(w) ) -- cmd='updatex', version='', clave='', data=...
+	end
+	return true
+    end
+
+    if cmd == 'ticketx' then
+--	if not(wsc:opt'closing') then wsc:send( s ) end
 	return true
     end
 
     if cmd == 'error' then
-	if wsc:opt'writable' then wsc:send( s ) end
+	if not(wsc:opt'closing') then wsc:send( s ) end
 	return true
     end
 
-    if not(cmd) or not(w.fruit) then
-	local o = {cmd='error', msg='error: a valid message must include a "cmd" & "fruit" property', data=w}
-	if wsc:opt'writable' then wsc:send( s ) end
+    if not(cmd) then
+	local o = {cmd='error', msg='error: a valid message must include a "cmd"', data=w}
+	if not(wsc:opt'closing') then wsc:send( serialize(o) ) end
     else
 	broadcast(w)
     end
