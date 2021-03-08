@@ -78,13 +78,13 @@ local function fix(w)
 end
 
 local function byDesc(s)
-    local qry = format('SELECT clave, "query" cmd FROM datos WHERE desc LIKE %q ORDER BY desc LIMIT 1', s:gsub('*', '%%')..'%')
+    local qry = format('SELECT clave FROM datos WHERE desc LIKE %q ORDER BY desc LIMIT 1', s:gsub('*', '%%')..'%')
     local o = fd.first(FERRE.query(qry), function(x) return x end)
     return o
 end
 
 local function byClave(s)
-    local qry = format('SELECT *, "query" cmd FROM  datos WHERE clave LIKE %q LIMIT 1', s)
+    local qry = format('SELECT * FROM  datos WHERE clave LIKE %q LIMIT 1', s)
     local o = fd.first(FERRE.query(qry), function(x) return x end)
     return o
 end
@@ -98,7 +98,7 @@ local function query(o)
 
     elseif o.desc then
 	local desc = o.desc
-	if desc:match'VV' then return fn(byClave(byDesc(desc)))
+	if desc:match'VV' then return fn(byClave(byDesc(desc).clave))
 	else return fn(byDesc(desc)) end
 
     elseif o.clave then return fn(byClave(o.clave)) end
