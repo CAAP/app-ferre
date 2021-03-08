@@ -35,6 +35,7 @@ local tostring	  = tostring
 local print	  = print
 local assert	  = assert
 local type	  = type
+local pcall	  = pcall
 
 local HOY	  = os.date('%d-%b-%y', now())
 
