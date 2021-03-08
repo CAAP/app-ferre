@@ -66,28 +66,6 @@ local function broadcast(o)
     end
 end
 
-local function switch( s )
-    local w = deserialize(s)
-
-    if not(w) then return end
-
-    local cmd = w.cmd
-
-    if cmd == 'updatex' then
---	wss:send( concat(m, ':') ) -- updatex vers overs clave|id b64query
-	return true
-    end
-
-    if cmd == 'error' then
-	wsc:send( s )
-	return true
-    end
-
-    assert(cmd, 'error: a valid message must include a "cmd" property at least')
-    broadcast(w)
-end
-
-
 -------------------------------
 
 local function sendversion(c) c:send(json{cmd='version', version=client:get'app:updates:version', week=WEEK}) end
@@ -125,6 +103,35 @@ assert( msgr:connect( STREAM ) )
 print('\nSuccessfully connected to', STREAM, '\n')
 
 msgr:send_msg'OK'
+
+-- -- -- -- -- --
+--
+
+local function switch( s )
+    local w = deserialize(s)
+
+    if not(w) then return end
+
+    local cmd = w.cmd
+
+    if cmd == 'updatex' then
+--	wss:send( concat(m, ':') ) -- updatex vers overs clave|id b64query
+	return true
+    end
+
+    if cmd == 'error' then
+	if wsc:opt'writable' then wsc:send( s ) end
+	return true
+    end
+
+    if not(cmd) or not(w.fruit) then
+	local o = {cmd='error', msg='error: a valid message must include a "cmd" & "fruit" property', data=w}
+	if wsc:opt'writable' then wsc:send( s ) end
+    else
+	broadcast(w)
+    end
+end
+
 
 -- -- -- -- -- --
 --
@@ -200,6 +207,16 @@ flags = ops.websocket | ops.ssl | ops.ca
 wsc = assert( MGR.connect(WSPEER, wssfn, flags) )
 
 print('\nSuccessfully connected to remote peer:', WSPEER, '\n')
+
+-- -- -- -- -- --
+--
+
+local function retry()
+    print'\n+\nchecking connection status\n+\n'
+    if wsc:opt'closing' then wsc =  assert( MGR.connect(WSPEER, wssfn, flags) ) end
+end
+
+local t1 = assert( MGR.timer(3000, retry, true) )
 
 -- -- -- -- -- --
 --
