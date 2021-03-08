@@ -59,11 +59,11 @@ local function broadcast(o)
     local msg = json(o)
     if fruit then
 	for _,peer in MGR.peers() do if peer:opt'label' == fruit then peer:send(msg); break; end end
-	print(msg, 'broadcasted to', fruit)
+	print('message broadcasted to', fruit)
     else
 	local j = 0
 	for _,peer in MGR.peers() do if peer:opt'label' then peer:send(msg); j = j + 1 end end
-	print(msg, 'broadcasted to', j 'peers')
+	print('message broadcasted to', j 'peers')
     end
 end
 
@@ -109,7 +109,7 @@ msgr:send_msg'OK'
 --
 
 local function switch( s )
-    local done,w = pcall(function() return deserialize(s) end)
+    local done,w = pcall(deserialize, s)
 
     if not(done) then print('ERROR', w) end
 
@@ -131,7 +131,6 @@ local function switch( s )
 	local o = {cmd='error', msg='error: a valid message must include a "cmd" & "fruit" property', data=w}
 	if wsc:opt'writable' then wsc:send( s ) end
     else
-	print'broadcasting'
 	broadcast(w)
     end
 end
@@ -216,7 +215,6 @@ print('\nSuccessfully connected to remote peer:', WSPEER, '\n')
 --
 
 local function retry()
-    print'\n+\nchecking connection status\n+\n'
     if wsc:opt'closing' then wsc =  assert( MGR.connect(WSPEER, wssfn, flags) ) end
 end
 
@@ -226,7 +224,6 @@ local t1 = assert( MGR.timer(3000, retry, true) )
 --
 
 local function pingfn()
-    print'\n+\ntimer round initiated...\n+\n'
     reduce(MGR.peers, function(peer) if isvalid(peer) then sendversion(peer) end end)
 end
 
