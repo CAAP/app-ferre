@@ -68,7 +68,7 @@
 		    let end = new Date(o.version);
 		    let elapsed = (end-start)/(3600*24*1000.0);
 		    if ((typeof localStorage.version != "undefined") && elapsed > 5)
-			return IDB.recreateDB( DATA.STORES.PRICE );
+			return IDB.recreateDB( DATA.STORES.PRICE ).then( DATA.STORES.VERS.update );
 		    else
 			wsend(Object.assign({cmd: 'adjust'}, localStorage, sessionStorage));
 		} else
