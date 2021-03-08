@@ -23,6 +23,7 @@ local format	  = string.format
 local exit	  = os.exit
 local assert	  = assert
 local print	  = print
+local pcall	  = pcall
 
 local STREAM	  = os.getenv'STREAM_IPC'
 local REDIS	  = os.getenv'REDISC'
@@ -58,11 +59,11 @@ local function broadcast(o)
     local msg = json(o)
     if fruit then
 	for _,peer in MGR.peers() do if peer:opt'label' == fruit then peer:send(msg); break; end end
-	return format('Broadcast %s to %s', msg, fruit)
+	print(msg, 'broadcasted to', fruit)
     else
 	local j = 0
 	for _,peer in MGR.peers() do if peer:opt'label' then peer:send(msg); j = j + 1 end end
-	return format('Message %s broadcasted to %d peers', msg, j)
+	print(msg, 'broadcasted to', j 'peers')
     end
 end
 
@@ -108,7 +109,9 @@ msgr:send_msg'OK'
 --
 
 local function switch( s )
-    local w = deserialize(s)
+    local done,w = pcall(function() return deserialize(s) end)
+
+    if not(done) then print('ERROR', w) end
 
     if not(w) then return end
 
@@ -128,6 +131,7 @@ local function switch( s )
 	local o = {cmd='error', msg='error: a valid message must include a "cmd" & "fruit" property', data=w}
 	if wsc:opt'writable' then wsc:send( s ) end
     else
+	print'broadcasting'
 	broadcast(w)
     end
 end
