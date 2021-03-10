@@ -29,6 +29,7 @@ local STREAM	  = os.getenv'STREAM_IPC'
 local REDIS	  = os.getenv'REDISC'
 local WSE	  = os.getenv'WSE_PORT'
 local WSPEER	  = os.getenv'WSPEER'
+local TIENDA	  = os.getenv'TIENDA'
 
 
 -- No more external access after this point
@@ -171,8 +172,7 @@ print('\nSuccessfully bound to port', WSE, '\n')
 local function wssfn(c, ev, ...)
     if ev == ops.OPEN then
 	wse.open(c)
-	c:opt('label', TIENDA)
-	c:send'label'
+	c:send(serialize{ cmd='label', label=TIENDA })
 
     elseif ev == ops.WS then
 	local s = ...
@@ -181,7 +181,7 @@ local function wssfn(c, ev, ...)
 --	    local w = deserialize(s)
 --	    msgr:send_msgs{w.cmd, s}
 	end
-	print('WSS\t', s, '\n+\n')
+	print('\nWSS', s, '\n+\n')
 
     elseif ev == ops.ERROR then
 	wse.error(c, ...)
