@@ -91,7 +91,7 @@ end
 local router = { peers=getpeers, label=itsme, versionx=uptodate, updatex=setgo }
 
 local function switch( c, s, code )
-    print('\nMessage received:', s, '\n')
+    print('\nMessage received:', s, '\n+\n')
     local w = deserialize(s)
     local cmd = w.cmd
     if router[cmd] then router[cmd](c, w, s, code)
