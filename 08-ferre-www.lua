@@ -68,9 +68,26 @@ local function broadcast(o)
     end
 end
 
+local function toserver(s) if not(wsc:opt'closing') then wsc:send( s ) end end
+
+local function toclients(o)
+    if not(o.cmd) then
+	toserver(serialize{cmd='error', msg='error: a valid message must include a "cmd"', data=w})
+    else
+	broadcast(o)
+    end
+end
+
+local function newup(o)
+    local k = QUPS..o.clave
+    assert( client:exists(k), 'error: key cannot be nil' )
+    o.data = client:lrange(k, 0, -1)
+    toserver( serialize(o) ) -- {cmd, version, clave, digest, data}
+end
+
 -------------------------------
 
-local function sendversion(c) c:send(json{cmd='version', version=client:get'app:updates:version', week=WEEK}) end
+local function sendversion(c) c:send(json{cmd='version', version=client:get'app:updates:version'}) end -- week=WEEK
 
 ---------------------------------
 -- Program execution statement --
@@ -109,43 +126,7 @@ msgr:send_msg'OK'
 -- -- -- -- -- --
 --
 
-local function switch( s )
-    local done,w = pcall(deserialize, s)
-
-    if not(done) then print('ERROR', w) end
-
-    if not(w) then return end
-
-    local cmd = w.cmd
-
-    if cmd == 'updatex' then
-	local k = QUPS..w.clave
-	assert( client:exists(k), 'error: key cannot be nil' )
-	w.data = client:lrange(k, 0, -1)
-	if not(wsc:opt'closing') then
-	    wsc:send( serialize(w) ) -- cmd='updatex', version='', clave='', data=...
-	end
-	return true
-    end
-
-    if cmd == 'ticketx' then
---	if not(wsc:opt'closing') then wsc:send( s ) end
-	return true
-    end
-
-    if cmd == 'error' then
-	if not(wsc:opt'closing') then wsc:send( s ) end
-	return true
-    end
-
-    if not(cmd) then
-	local o = {cmd='error', msg='error: a valid message must include a "cmd"', data=w}
-	if not(wsc:opt'closing') then wsc:send( serialize(o) ) end
-    else
-	broadcast(w)
-    end
-end
-
+local router = { updatex=newup,  errorx=toserver }
 
 -- -- -- -- -- --
 --
@@ -158,14 +139,7 @@ local function wsefn(c, ev, ...)
     elseif ev == ops.HTTP then
 	if isvalid(c) then wse.http(c) -- connection established succesfully
 	else c:opt('closing', true) end
---[[
-	local _,uri,query,_ = ...
-	if uri:match'version.json' then
-	    c:send(EGET)
-	    c:send()
-	    c:send'\n\n'
-	end
---]]
+
     elseif ev == ops.WS then
 	local s = ...
 	local w = fromJSON(s)
@@ -197,6 +171,8 @@ print('\nSuccessfully bound to port', WSE, '\n')
 local function wssfn(c, ev, ...)
     if ev == ops.OPEN then
 	wse.open(c)
+	c:opt('label', TIENDA)
+	c:send'label'
 
     elseif ev == ops.WS then
 	local s = ...
@@ -225,9 +201,7 @@ print('\nSuccessfully connected to remote peer:', WSPEER, '\n')
 -- -- -- -- -- --
 --
 
-local function retry()
-    if wsc:opt'closing' then wsc =  assert( MGR.connect(WSPEER, wssfn, flags) ) end
-end
+local function retry() if wsc:opt'closing' then wsc =  assert( MGR.connect(WSPEER, wssfn, flags) ) end end
 
 local t1 = assert( MGR.timer(3000, retry, true) )
 
@@ -243,7 +217,13 @@ local timer = assert( MGR.timer(6000, pingfn, true) )
 -- -- -- -- -- --
 --
 
-print('\n\n+\n\n')
+local function switch(s)
+    local w = deserialize(s)
+    if router[w.cmd] then router[w.cmd](s)
+    else router.toclients(w) end
+end
+
+print('\n+\n')
 
 while true do
 
@@ -259,7 +239,11 @@ while true do
 
 	print('\n+\n\nSTREAM\t', msg, '\n\n+\n')
 
-	switch(msg)
+	if msg == 'OK' then
+	else
+	    local done, err = pcall(switch, msg)
+	    if not done then print('\nERROR', err, '+\n') end
+	end
 
     end
 

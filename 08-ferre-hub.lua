@@ -31,29 +31,41 @@ local PEERS 	= {} -- label, conn
 --------------------------------
 --
 
-local function isvalid( c ) return c:opt'accepted' and c:opt'websocket' end
-
-local function switch( c, msg, code )
+local function toall( s, code )
     local k = 0
+    fd.reduce(PEERS, function(peer) peer:send(s, code); k = k + 1 end)
+    print('Message broadcasted to', k, 'peer(s)\n+\n')
+end
 
-    print('Message received:', msg, '\n')
+local function topeer( peer, s, code )
+    local c = PEERS[peer]
+    c:send( s, code )
+    print('Message broadcasted to', peer, '\n+\n')
+end
 
-    if msg == 'peers' then
-	local a = fd.reduce(fd.keys(PEERS), fd.map(function(_,label) return label end), fd.into, {})
-	c:send(concat(a, '\t'), ops.TEXT)
-	k = 1
+----------------------------------
 
---    elseif msg:match'vers' then
+local function getpeers( c )
+    local a = fd.reduce(fd.keys(PEERS), fd.map(function(_,label) return label end), fd.into, {})
+    c:send(concat(a, '\t'), ops.TEXT)
+end
 
---    elseif msg:match'%' then
+----------------------------------
 
+local router = { peers=getpeers } -- updatex=tomem, 
+
+local function switch( c, s, code )
+    print('\nMessage received:', s, '\n')
+    if s == 'label' then PEERS[c:opt'label'] = c
     else
-	fd.reduce(PEERS, function(peer) peer:send(msg, code); k = k + 1 end)
-
+	local w = deserialize(s)
+	local cmd = w.cmd
+	if router[cmd] then router[cmd](c, cmd, s, code)
+	else
+	    if w.peer then topeer(w.peer, s, code)
+	    else toall(s, code) end
+	end
     end
-
-    print('Message broadcasted to', k, 'peer(s)\n')
-
 end
 
 ---------------------------------
@@ -78,19 +90,19 @@ local function wsfn(c, ev, ...)
 	print('\nNew connection established\n+\n')
 
     elseif ev == ops.HTTP then
-	    local ip = c:ip()
-	    print('\nPeer has connected:', ip, '\n+\n')
+	local ip = c:ip()
+	print('\nPeer has connected:', ip, '\n+\n')
 
     elseif ev == ops.WS then
-	local s = ...
-	local w = deserialize(s)
-	if w.cmd == 'error' then print('ERROR', s) end
+	local done, err = pcall(switch, c, ...)
+	if not done then print('\nERROR', err, '+\n') end
 
     elseif ev == ops.ERROR then
 	wse.error(c, ...)
 
     elseif ev == ops.CLOSE then
 	print('Connection to', c:ip(), 'is closed\n')
+	PEERS[c:opt'label'] = nil
 
     end
 end
@@ -99,9 +111,7 @@ local flags = ops.websocket | ops.ssl | ops.cert | ops.key
 
 local server = assert( MGR.bind(WSS, wsfn, flags) )
 
-local function keepalive()
-    fd.reduce(MGR.peers, function(p) if isvalid(p) then p:send'Hi' end end)
-end
+local function keepalive() fd.reduce(fd.keys(PEERS), function(peer) peer:send'Hi' end) end
 
 local t1 = assert( MGR.timer(120000, keepalive, true) )
 

@@ -14,6 +14,7 @@ local dbconn	  = require'carlos.ferre'.dbconn
 local now	  = require'carlos.ferre'.now
 local newuid	  = require'carlos.ferre'.newUID
 local catchall	  = require'carlos.ferre'.catchall
+local digest	  = require'carlos.ferre'.digest
 local socket	  = require'lzmq'.socket
 local pollin	  = require'lzmq'.pollin
 
@@ -208,7 +209,8 @@ local function updateOne(w)
     qryExec(qry)
     client:rpush(k, qry)
 
-    qry = format(QQRY, u, clave, '$QUERY') -- qry = format(QQRY, u, clave, v, '$QUERY')
+    local dgst = digest(client:get(UVER), u)
+    qry = format(QQRY, u, dgst, '$QUERY') -- md5 digest
 
     client:rpush(k, qry)
     -- QUERY --
@@ -217,7 +219,7 @@ local function updateOne(w)
 
     client:expire(k, 120)
 
-    return u, qry
+    return u, dgst
 end
 
 local function setBlank(o)
@@ -256,7 +258,7 @@ local function notify(skt, o)
     o.cmd = 'version'
 --    o.week = WKDB
     skt:send_msgs{'reroute', 'SSE', serialize(o)}
-    --
+    -- notify external peer --
     o.cmd = 'updatex'
     skt:send_msgs{'reroute', 'SSE', serialize(o)}
 end
@@ -264,17 +266,14 @@ end
 ------------------------------------------------------------
 
 local function updateitem(skt, msg)
-    local vers = client:get(UVER)
     local cmd, s = msg[1], msg[2]
     local w = deserialize(s)
 
     if cmd == 'eliminar' then setBlank(w) end
 
-    local v, q = updateOne(w)
-    notify(skt, {version=v, clave=w.clave})
+    local v, dgst = updateOne(w)
+    notify(skt, {version=v, clave=w.clave, digest=dgst})
     print('\nversion:', v, '\n')
-    -- notify external peer --
---    skt:send_msgs{'', 'peer', 'updatex', v, vers, q}
 end
 
 ------------------------------------------------------------

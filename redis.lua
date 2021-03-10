@@ -44,7 +44,7 @@ assert( client:hset('sql:week', 'tickets', 'uid, tag, prc, clave, desc, costol N
 
 assert( client:hset('sql:week', 'updates', 'vers PRIMARY KEY, clave, msg'))
 
-assert( client:hset('sql:week', 'queries', 'vers PRIMARY KEY, clave, query'))
+assert( client:hset('sql:week', 'queries', 'vers PRIMARY KEY, digest, query'))
 
 assert( client:hset('sql:week', 'facturas', 'uid, fapi PRIMARY KEY NOT NULL, rfc NOT NULL, sat NOT NULL'))
 

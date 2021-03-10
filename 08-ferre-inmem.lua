@@ -188,7 +188,7 @@ local function weeks(week, vers)
 	vers = w.vers
     end
 
-    if week == WKDB then return {format(QS[1], vers)} end
+    if week == WKDB then return {format(QS[1], vers)} end -- assert vers exists XXX
 
     local wks = {WKDB}
     local t = now() - 3600*24*7
@@ -199,7 +199,7 @@ local function weeks(week, vers)
 	w = asweek(t)
     end
     wks[#wks+1] = week
-    wks[#wks+1] = format(QS[2], vers)
+    wks[#wks+1] = format(QS[2], vers) -- assert vers exists XXX
 
     return wks
 end
