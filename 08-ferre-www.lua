@@ -180,9 +180,9 @@ local function wssfn(c, ev, ...)
 	if s:match'Hi' then
 	    c:send(serialize{cmd='versionx', version=client:get(UPS), digest=client:get'app:updates:digest'})
 	else
---	    local w = deserialize(s)
---	    msgr:send_msgs{w.cmd, s}
---	    print('\nWSS', s, '\n+\n')
+	    local w = deserialize(s)
+	    msgr:send_msgs{w.cmd, s}
+	    print('\nWSS', s, '\n+\n')
 	end
 
     elseif ev == ops.ERROR then

@@ -71,7 +71,7 @@ end
 
 local function uptodate( c, o )
     if checkver(o) then
-	o.peer = 'LEDGER'
+	o.peer = TIENDA
 	c:send( serialize(o) )
     end
 end
