@@ -46,6 +46,12 @@ end
 
 ----------------------------------
 
+local function itsme( c, o )
+    local label = o.label
+    c:opt('label', label)
+    PEERS[label] = c
+end
+
 local function getpeers( c )
     local a = fd.reduce(fd.keys(PEERS), fd.map(function(_,label) return label end), fd.into, {})
     c:send(concat(a, '\t'), ops.TEXT)
@@ -53,19 +59,16 @@ end
 
 ----------------------------------
 
-local router = { peers=getpeers } -- updatex=tomem, 
+local router = { peers=getpeers, label=itsme } -- updatex=tomem, 
 
 local function switch( c, s, code )
     print('\nMessage received:', s, '\n')
-    if s == 'label' then PEERS[c:opt'label'] = c
+    local w = deserialize(s)
+    local cmd = w.cmd
+    if router[cmd] then router[cmd](c, w)
     else
-	local w = deserialize(s)
-	local cmd = w.cmd
-	if router[cmd] then router[cmd](c, cmd, s, code)
-	else
-	    if w.peer then topeer(w.peer, s, code)
-	    else toall(s, code) end
-	end
+	if w.peer then topeer(w.peer, s, code)
+	else toall(s, code) end
     end
 end
 
