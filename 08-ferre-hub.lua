@@ -8,6 +8,7 @@ local rconnect	  = require'redis'.connect
 
 local fd	  = require'carlos.fold'
 local deserialize = require'carlos.ferre'.deserialize
+local serialize = require'carlos.ferre'.serialize
 local digest	  = require'carlos.ferre'.digest
 local wse	  = require'carlos.ferre.wse'
 
