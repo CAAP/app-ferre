@@ -13,6 +13,7 @@ local concat	  = table.concat
 local assert	  = assert
 local exit	  = os.exit
 local print	  = print
+local pcall	  = pcall
 
 local WSS	  = os.getenv'HUB_IP'
 
