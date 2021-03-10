@@ -254,6 +254,7 @@ end
 
 local function notify(skt, o)
     client:set(UVER, o.version)
+    client:set('app:version:digest', digest)
     skt:send_msgs{'reroute', 'inmem', 'update', serialize(o)}
     o.cmd = 'version'
 --    o.week = WKDB

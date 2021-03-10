@@ -4,9 +4,11 @@
 --
 local MGR	  = require'lmg'
 local posix	  = require'posix.signal'
+local rconnect	  = require'redis'.connect
 
 local fd	  = require'carlos.fold'
 local deserialize = require'carlos.ferre'.deserialize
+local digest	  = require'carlos.ferre'.digest
 local wse	  = require'carlos.ferre.wse'
 
 local concat	  = table.concat
@@ -16,6 +18,8 @@ local print	  = print
 local pcall	  = pcall
 
 local WSS	  = os.getenv'HUB_IP'
+local REDIS	  = os.getenv'REDISC'
+local TIENDA	  = os.getenv'TIENDA'
 
 -- No more external access after this point
 _ENV = nil -- or M
@@ -23,9 +27,13 @@ _ENV = nil -- or M
 -- Local Variables for module-only access
 --
 
+local client	 = assert( rconnect(REDIS, '6379') )
+
 local ops 	= MGR.ops
 
 local PEERS 	= {} -- label, conn
+
+local UPS	= 'app:updates:version'
 
 --------------------------------
 -- Local function definitions --
@@ -44,7 +52,28 @@ local function topeer( peer, s, code )
     print('Message broadcasted to', peer, '\n+\n')
 end
 
+local function checkver( o )
+    local myv = client:get(UPS)
+    if o.version == myv then return false end
+    o.version = myv
+    return true
+end
+
 ----------------------------------
+
+local function setgo( c, o, s, code )
+    local peer = PEERS[TIENDA]
+    if peer and o.digest == digest(o.version, client:get(UPS)) then
+	peer:send( s, code )
+    end
+end
+
+local function uptodate( c, o )
+    if checkver(o) then
+	o.peer = 'LEDGER'
+	c:send( serialize(o) )
+    end
+end
 
 local function itsme( c, o )
     local label = o.label
@@ -59,13 +88,13 @@ end
 
 ----------------------------------
 
-local router = { peers=getpeers, label=itsme } -- updatex=tomem, 
+local router = { peers=getpeers, label=itsme, versionx=uptodate, updatex=setgo }
 
 local function switch( c, s, code )
     print('\nMessage received:', s, '\n')
     local w = deserialize(s)
     local cmd = w.cmd
-    if router[cmd] then router[cmd](c, w)
+    if router[cmd] then router[cmd](c, w, s, code)
     else
 	if w.peer then topeer(w.peer, s, code)
 	else toall(s, code) end

@@ -42,6 +42,7 @@ local ops	 = MGR.ops
 
 local EGET	 = client:get'tcp:get'
 local QUPS	 = 'queue:ups:'
+local UPS	 = 'app:updates:version'
 
 local isvalid 	 = wse.isvalid
 
@@ -73,7 +74,7 @@ local function toserver(s) if not(wsc:opt'closing') then wsc:send( s ) end end
 
 local function toclients(o)
     if not(o.cmd) then
-	toserver(serialize{cmd='error', msg='error: a valid message must include a "cmd"', data=w})
+	toserver(serialize{cmd='error', msg='error: a valid message must include a "cmd"', data=o})
     else
 	broadcast(o)
     end
@@ -83,12 +84,12 @@ local function newup(o)
     local k = QUPS..o.clave
     assert( client:exists(k), 'error: key cannot be nil' )
     o.data = client:lrange(k, 0, -1)
-    toserver( serialize(o) ) -- {cmd, version, clave, digest, data}
+    toserver( serialize(o) ) -- {cmd='updatex', version, clave, digest, data}
 end
 
 -------------------------------
 
-local function sendversion(c) c:send(json{cmd='version', version=client:get'app:updates:version'}) end -- week=WEEK
+local function sendversion(c) c:send(json{cmd='version', version=client:get(UPS)}) end -- week=WEEK
 
 ---------------------------------
 -- Program execution statement --
@@ -177,11 +178,12 @@ local function wssfn(c, ev, ...)
     elseif ev == ops.WS then
 	local s = ...
 	if s:match'Hi' then
+	    c:send(serialize{cmd='versionx', version=client:get(UPS), digest=client:get'app:updates:digest'})
 	else
 --	    local w = deserialize(s)
 --	    msgr:send_msgs{w.cmd, s}
+--	    print('\nWSS', s, '\n+\n')
 	end
-	print('\nWSS', s, '\n+\n')
 
     elseif ev == ops.ERROR then
 	wse.error(c, ...)
