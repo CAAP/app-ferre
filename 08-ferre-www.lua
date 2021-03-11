@@ -87,7 +87,7 @@ local function newup(o)
     toserver( serialize(o) ) -- {cmd='updatex', version, clave, digest, data}
 end
 
--------------------------------
+---------------------------------
 
 local function sendversion(c) c:send(json{cmd='version', version=client:get(UPS)}) end -- week=WEEK
 
@@ -222,7 +222,7 @@ local timer = assert( MGR.timer(6000, pingfn, true) )
 local function switch(s)
     local w = deserialize(s)
     if router[w.cmd] then router[w.cmd](s)
-    else router.toclients(w) end
+    else toclients(w) end
 end
 
 print('\n+\n')

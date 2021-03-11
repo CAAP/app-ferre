@@ -108,7 +108,7 @@ print('\nSuccessfully bound to:', STREAM, '\n')
 --
 
 local router = { query=toinmem,  rfc=toinmem,      bixolon=toinmem, 	uid=toinmem,
-		 feed=toinmem,   ledger=toinmem,   adjust=toinmem,
+		 feed=toinmem,   ledger=toinmem,   adjust=toinmem,	versionx=toinmem,
 		 update=todb,	 faltate=todb,	   eliminar=todb,	people=todb,
 	 	 ticket=uuid2db, facturar=uuid2db, presupuesto=uuid2db,
 	 	 msgs=tabs2all,  login=tabs2all,   delete=tabs2all,	tabs=tabs2all,

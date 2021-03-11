@@ -371,9 +371,14 @@ tasks:send_msg'OK'
 -- -- -- -- -- --
 --
 
+local function donothing(skt, msg)
+    print(msg[1], msg[2])
+end
+
 local router = { query=replyqry, rfc=replyqry,
 		 bixolon=dolpr,  update=newup, ticket=newtkt,
-		 uid=feed, 	 feed=feed,    ledger=feed,   adjust=feed }
+		 uid=feed, 	 feed=feed,    ledger=feed,   adjust=feed,
+	 	 versionx=donothing}
 
 --
 -- -- -- -- -- --
