@@ -17,7 +17,7 @@ local into	  = require'carlos.sqlite'.into
 local newTable    = require'carlos.sqlite'.newTable
 local split	  = require'carlos.string'.split
 
-local json	  = require'json'.encode
+--local json	  = require'json'.encode
 local fromJSON	  = require'json'.decode
 local serialize	  = require'carlos.ferre'.serialize
 local deserialize = require'carlos.ferre'.deserialize
@@ -183,9 +183,8 @@ local function weeks(week, vers)
 	week = uid2week(week)
     elseif vers == 'queries' then
 	QS = QUERIES.queries
-	local w = fromJSON(week)
-	week = w.week
-	vers = w.vers
+	vers = week
+	week = uid2week(week)
     end
 
     if week == WKDB then return {format(QS[1], vers)} end -- assert vers exists XXX
