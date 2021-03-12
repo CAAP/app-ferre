@@ -229,6 +229,7 @@ local function gather(fruit, wks)
 	assert( conn.exec(QS[3]) )
 	addDATA(conn, wks, QS[4])
 	return fruit, conn, QS[5]
+
     end
 end
 
@@ -255,7 +256,7 @@ local function groupon(uid)
     end
     end
 end
-
+--[[
 local function chain(vers)
     local v = vers
     return function(step)
@@ -266,7 +267,7 @@ local function chain(vers)
     end
     end
 end
-
+--]]
 local function switch( cmd, o )
     local fruit, uid = o.fruit, o.uid
 
@@ -293,6 +294,15 @@ local function switch( cmd, o )
     end
 end
 
+local function setFruit(fruit, cmd)
+    return function(o)
+	o.fruit = fruit
+	o.cmd = cmd
+	return serialize(o)
+    end
+end
+
+
 local function replyqry(skt, msg)
     local cmd, s = msg[1], msg[2]
     -- ambiguous, either object or array are valid, empty object is returned
@@ -305,14 +315,6 @@ local function dolpr(skt, msg)
     skt:send_msgs{'reroute', 'lpr', s}
 end
 
-local function setFruit(fruit, cmd)
-    return function(o)
-	o.fruit = fruit
-	o.cmd = cmd
-	return serialize(o)
-    end
-end
-
 local function feed(skt, msg)
     local cmd, s = msg[1], msg[2]
     local fruit, conn, qry = switch(cmd, deserialize(s))
@@ -320,7 +322,7 @@ local function feed(skt, msg)
     fd.reduce(conn.query(qry), function(o) skt:send_msgs{'reroute', 'SSE', fn(o)} end)
 end
 
-local function newup(skt, msg)
+local function newup(_, msg)
     update( deserialize(msg[2]).clave )
 end
 
@@ -334,7 +336,6 @@ local function newtkt(skt, msg)
     w.tag = hdr.tag
     skt:send_msgs{'reroute', 'SSE', serialize(hdr)}
     skt:send_msgs{'reroute', 'lpr', serialize(w)}
---    if hdr.tag == 'facturar' then skt:send_msgs{'reroute', 'lpr', s} end
 end
 
 ---------------------------------
@@ -371,8 +372,16 @@ tasks:send_msg'OK'
 -- -- -- -- -- --
 --
 
+local function deliver(skt) return function(o) skt:send_msgs{'reroute', 'SSE', serialize(o)} end end
+
 local function donothing(skt, msg)
-    print(msg[1], msg[2])
+    local cmd, s = msg[1], msg[2]
+    local w = deserialize(msg)
+    local peer = w.peer
+
+    local wks = weeks(uid, 'queries')
+    local _, conn, qry = gather('queries', wks)
+    fd.reduce(conn.query(qry), fd.map(function(o) o.peer = peer; return o; end), deliver, tasks)
 end
 
 local router = { query=replyqry, rfc=replyqry,

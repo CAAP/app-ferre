@@ -83,8 +83,8 @@ local function itsme( c, o )
 end
 
 local function getpeers( c )
-    local a = fd.reduce(fd.keys(PEERS), fd.map(function(_,label) return label end), fd.into, {})
-    c:send(concat(a, '\t'), ops.TEXT)
+    local a = fd.reduce(fd.keys(PEERS), fd.map(function(c,label) return format('%q\t%s', label, c:ip()) end), fd.into, {})
+    c:send(concat(a, '\n'), ops.TEXT)
 end
 
 ----------------------------------
