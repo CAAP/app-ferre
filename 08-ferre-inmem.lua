@@ -379,9 +379,9 @@ local function donothing(skt, msg)
     local w = deserialize(s)
     local peer = w.peer
 
-    local wks = weeks(uid, 'queries')
+    local wks = weeks(w.version, 'queries')
     local _, conn, qry = gather('queries', wks)
-    fd.reduce(conn.query(qry), fd.map(function(o) o.peer = peer; return o; end), deliver, tasks)
+    fd.reduce(conn.query(qry), fd.map(function(o) o.peer = peer; o.cmd = 'adjustx'; return o; end), deliver, tasks)
 end
 
 local router = { query=replyqry, rfc=replyqry,
