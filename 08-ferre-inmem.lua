@@ -376,7 +376,7 @@ local function deliver(skt) return function(o) skt:send_msgs{'reroute', 'SSE', s
 
 local function donothing(skt, msg)
     local cmd, s = msg[1], msg[2]
-    local w = deserialize(msg)
+    local w = deserialize(s)
     local peer = w.peer
 
     local wks = weeks(uid, 'queries')
