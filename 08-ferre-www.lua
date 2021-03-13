@@ -84,7 +84,7 @@ local function newup(o)
     local k = QUPS..o.clave
     assert( client:exists(k), 'error: key cannot be nil' )
     o.data = client:lrange(k, 0, -1)
-    toserver( serialize(o) ) -- {cmd='updatex', version, clave, digest, data}
+--    toserver( serialize(o) ) -- {cmd='updatex', version, clave, digest, data}
 end
 
 ---------------------------------
@@ -178,7 +178,7 @@ local function wssfn(c, ev, ...)
     elseif ev == ops.WS then
 	local s = ...
 	if s:match'Hi' then
-	    c:send(serialize{cmd='versionx', version=client:get(UPS), digest=client:get'app:updates:digest'})
+--	    c:send(serialize{cmd='versionx', version=client:get(UPS), digest=client:get'app:updates:digest'})
 	else
 	    local w = deserialize(s)
 	    msgr:send_msgs{w.cmd, s}
@@ -205,7 +205,7 @@ print('\nSuccessfully connected to remote peer:', WSPEER, '\n')
 
 local function retry() if wsc:opt'closing' then wsc =  assert( MGR.connect(WSPEER, wssfn, flags) ) end end
 
-local t1 = assert( MGR.timer(3000, retry, true) )
+--local t1 = assert( MGR.timer(3000, retry, true) )
 
 -- -- -- -- -- --
 --
