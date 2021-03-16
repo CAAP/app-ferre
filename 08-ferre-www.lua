@@ -80,10 +80,11 @@ local function toclients(o)
     end
 end
 
-local function newup(o)
-    local k = QUPS..o.clave
+local function newup(s)
+    local w = deserialize(s)
+    local k = QUPS..w.clave
     assert( client:exists(k), 'error: key cannot be nil' )
-    o.data = client:lrange(k, 0, -1)
+    w.data = client:lrange(k, 0, -1)
 --    toserver( serialize(o) ) -- {cmd='updatex', version, clave, digest, data}
 end
 
@@ -223,6 +224,7 @@ local function switch(s)
     local w = deserialize(s)
     if router[w.cmd] then router[w.cmd](s)
     else toclients(w) end
+    return true
 end
 
 print('\n+\n')
